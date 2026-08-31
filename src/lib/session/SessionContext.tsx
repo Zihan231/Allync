@@ -81,7 +81,7 @@ type SessionContextValue = {
   setCommunity: (community: MockUser["community"]) => void;
   updateProfile: (input: { name?: string; email?: string }) => void;
   login: (input: { email: string; name?: string }) => void;
-  signup: (input: { name: string; email: string; joinAs: Mode }) => void;
+  signup: (input: { name: string; email: string }) => void;
   switchPersona: (personId: string) => void;
   logout: () => void;
 };
@@ -141,7 +141,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const signup: SessionContextValue["signup"] = ({ name, email, joinAs }) => {
+  const signup: SessionContextValue["signup"] = ({ name, email }) => {
     const id = `${slugify(name) || "player"}-${Date.now()}`;
     const personId = `person-${id}`;
     addPerson({
@@ -162,7 +162,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       email,
       initials: initialsFromName(name),
       dpUrl: null,
-      mode: joinAs,
+      mode: "player",
       activeGame: "efootball",
       kycStatus: "unverified",
       verificationStatus: "unverified",

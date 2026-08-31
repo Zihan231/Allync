@@ -1,26 +1,24 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { useSession, type Mode } from "@/lib/session/SessionContext";
+import { useSession } from "@/lib/session/SessionContext";
 import { FormField } from "./FormField";
-import { RoleToggle } from "./RoleToggle";
 import { ArrowRightIcon } from "../icons";
 
 export function SignupForm() {
   const { t } = useLanguage();
   const { signup } = useSession();
   const router = useRouter();
-  const [joinAs, setJoinAs] = useState<Mode>("player");
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
-    signup({ name, email, joinAs });
+    signup({ name, email });
     router.push("/onboarding/verify");
   };
 
@@ -45,13 +43,6 @@ export function SignupForm() {
           autoComplete="new-password"
           required
         />
-
-        <div>
-          <span className="text-sm font-medium text-ink-soft">{t.auth.joinAs}</span>
-          <div className="mt-1.5">
-            <RoleToggle value={joinAs} onChange={setJoinAs} className="w-full" />
-          </div>
-        </div>
 
         <label className="flex items-start gap-2.5 text-sm text-ink-soft">
           <input
