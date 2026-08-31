@@ -64,7 +64,11 @@ export default function CreateTournamentPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader eyebrow={t.dashboard.shell.modeOrganizer} title={t.dashboard.shell.navCreateTournament} />
+      <PageHeader
+        eyebrow={t.dashboard.shell.modeOrganizer}
+        title={t.dashboard.shell.navCreateTournament}
+        backHref="/dashboard/organizer/tournaments"
+      />
 
       <div className="mt-6 flex items-center gap-2">
         {steps.map((s, i) => (

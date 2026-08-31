@@ -228,3 +228,11 @@ export function ArrowRightIcon({ className, style }: IconProps) {
     </svg>
   );
 }
+
+export function ArrowLeftIcon({ className, style }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={style} aria-hidden="true">
+      <path d="M19.5 12h-14M11 17.5 5 12l6-5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

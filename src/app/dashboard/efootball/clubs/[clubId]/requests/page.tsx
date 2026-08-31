@@ -30,7 +30,11 @@ export default function ClubRequestsPage({ params }: { params: Promise<{ clubId:
 
   return (
     <div>
-      <PageHeader eyebrow={club.name} title={t.dashboard.clubs.requestsQueueTitle} />
+      <PageHeader
+        eyebrow={club.name}
+        title={t.dashboard.clubs.requestsQueueTitle}
+        backHref={`/dashboard/efootball/clubs/${club.id}`}
+      />
       <div className="mt-8">
         <JoinRequestQueue requests={requests} onApprove={approveClubRequest} onReject={rejectClubRequest} />
       </div>

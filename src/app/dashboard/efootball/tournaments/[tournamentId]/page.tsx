@@ -37,6 +37,7 @@ export default function TournamentDetailPage({
         eyebrow={`eFootball · ${tournament.organizerName}`}
         title={tournament.name}
         action={<StatusPill tone={statusTone}>{statusLabel}</StatusPill>}
+        backHref="/dashboard/efootball/tournaments"
       />
 
       <div className="mt-6 flex flex-wrap gap-6 font-mono text-sm text-ink-soft">

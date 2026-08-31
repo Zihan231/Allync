@@ -32,7 +32,11 @@ export default function CommunityRequestsPage({ params }: { params: Promise<{ co
 
   return (
     <div>
-      <PageHeader eyebrow={community.name} title={t.dashboard.clubs.requestsQueueTitle} />
+      <PageHeader
+        eyebrow={community.name}
+        title={t.dashboard.clubs.requestsQueueTitle}
+        backHref={`/dashboard/efootball/community/${community.id}`}
+      />
       <div className="mt-8">
         <JoinRequestQueue requests={requests} onApprove={approveCommunityRequest} onReject={rejectCommunityRequest} />
       </div>

@@ -344,6 +344,7 @@ export const translations = {
         coverLabel: "Cover photo",
         viewFullscreen: "View fullscreen",
         close: "Close",
+        back: "Back",
       },
       clubs: {
         browseTitle: "Clubs",
@@ -771,6 +772,7 @@ export const translations = {
         coverLabel: "কভার ছবি",
         viewFullscreen: "পূর্ণ স্ক্রিনে দেখুন",
         close: "বন্ধ করুন",
+        back: "পেছনে",
       },
       clubs: {
         browseTitle: "ক্লাব",

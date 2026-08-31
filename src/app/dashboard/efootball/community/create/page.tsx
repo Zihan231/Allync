@@ -14,7 +14,7 @@ export default function CreateCommunityPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <PageHeader eyebrow="eFootball" title={t.dashboard.community.createCta} />
+      <PageHeader eyebrow="eFootball" title={t.dashboard.community.createCta} backHref="/dashboard/efootball/community" />
       <div className="mt-8 rounded-xl border border-surface-line bg-surface/50 p-6">
         <EntityEditForm
           nameLabel={t.dashboard.community.createNameLabel}

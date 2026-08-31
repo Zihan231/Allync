@@ -26,7 +26,11 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
 
   return (
     <div className="mx-auto max-w-xl">
-      <PageHeader eyebrow={club.name} title={t.dashboard.clubs.editButton} />
+      <PageHeader
+        eyebrow={club.name}
+        title={t.dashboard.clubs.editButton}
+        backHref={`/dashboard/efootball/clubs/${club.id}`}
+      />
       <div className="mt-8 rounded-xl border border-surface-line bg-surface/50 p-6">
         <EntityEditForm
           nameLabel={t.dashboard.clubs.createNameLabel}

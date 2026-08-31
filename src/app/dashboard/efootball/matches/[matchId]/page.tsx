@@ -46,6 +46,7 @@ export default function MatchDetailPage({
         eyebrow={`${match.tournamentName} · ${match.round}`}
         title={`vs ${match.opponent}`}
         action={<StatusPill tone={toneByStatus[match.status]}>{statusLabel[match.status]}</StatusPill>}
+        backHref="/dashboard/efootball/matches"
       />
 
       <div className="mt-8">

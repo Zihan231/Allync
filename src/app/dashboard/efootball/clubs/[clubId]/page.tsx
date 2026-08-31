@@ -7,6 +7,7 @@ import { useSession } from "@/lib/session/SessionContext";
 import { useMockClubs, useMockPeople, useMockJoinRequests, joinClub, leaveClub } from "@/lib/mock/communityStore";
 import { mockCommunities } from "@/lib/mock";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { BackButton } from "@/components/dashboard/BackButton";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
 import { StaffRow } from "@/components/dashboard/StaffRow";
@@ -55,6 +56,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
 
   return (
     <div>
+      <BackButton href="/dashboard/efootball/clubs" />
       <div className="relative">
         <CoverPhoto coverUrl={club.coverUrl} name={club.name} color={club.color} className="h-56 rounded-xl sm:h-72 lg:h-80" />
         <div

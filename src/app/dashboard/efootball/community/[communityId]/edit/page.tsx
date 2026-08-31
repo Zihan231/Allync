@@ -26,7 +26,11 @@ export default function EditCommunityPage({ params }: { params: Promise<{ commun
 
   return (
     <div className="mx-auto max-w-xl">
-      <PageHeader eyebrow={community.name} title={t.dashboard.community.editButton} />
+      <PageHeader
+        eyebrow={community.name}
+        title={t.dashboard.community.editButton}
+        backHref={`/dashboard/efootball/community/${community.id}`}
+      />
       <div className="mt-8 rounded-xl border border-surface-line bg-surface/50 p-6">
         <EntityEditForm
           nameLabel={t.dashboard.community.createNameLabel}

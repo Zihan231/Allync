@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useMockPeople, useMockClubs, useMockCommunities } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { BackButton } from "@/components/dashboard/BackButton";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
 import { RankBadge } from "@/components/dashboard/RankBadge";
@@ -30,6 +31,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
 
   return (
     <div>
+      <BackButton />
       <CoverPhoto coverUrl={person.coverUrl} name={person.name} className="h-56 rounded-xl sm:h-72 lg:h-80" />
 
       <div className="-mt-14 flex items-end gap-4 px-1 sm:-mt-16">

@@ -14,6 +14,7 @@ import {
 } from "@/lib/mock/communityStore";
 import { useMockTournaments } from "@/lib/mock/store";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { BackButton } from "@/components/dashboard/BackButton";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
 import { StaffRow } from "@/components/dashboard/StaffRow";
@@ -78,6 +79,7 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
 
   return (
     <div>
+      <BackButton href="/dashboard/efootball/community" />
       <div className="relative">
         <CoverPhoto
           coverUrl={community.coverUrl}

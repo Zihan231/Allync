@@ -15,7 +15,7 @@ export default function CreateClubPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <PageHeader eyebrow="eFootball" title={t.dashboard.clubs.createCta} />
+      <PageHeader eyebrow="eFootball" title={t.dashboard.clubs.createCta} backHref="/dashboard/efootball/clubs" />
       <div className="mt-8 rounded-xl border border-surface-line bg-surface/50 p-6">
         <EntityEditForm
           nameLabel={t.dashboard.clubs.createNameLabel}

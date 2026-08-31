@@ -38,6 +38,7 @@ export default function OrganizerTournamentDetailPage({
         eyebrow={game.name}
         title={tournament.name}
         action={<StatusPill tone={statusTone}>{statusLabel}</StatusPill>}
+        backHref="/dashboard/organizer/tournaments"
       />
 
       <div className="mt-6 flex flex-wrap gap-6 font-mono text-sm text-ink-soft">
