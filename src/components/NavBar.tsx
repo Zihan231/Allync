@@ -39,7 +39,7 @@ export function NavBar() {
           <LanguageSwitch />
           <Link
             href="/login"
-            className="hidden font-mono text-[13px] uppercase tracking-wide text-ink-soft transition-colors hover:text-ink sm:block"
+            className="hidden rounded-full border border-surface-line-strong px-4 py-2 font-mono text-[13px] uppercase tracking-wide text-ink transition-colors hover:border-accent hover:text-accent-ink sm:block"
           >
             {t.nav.login}
           </Link>
