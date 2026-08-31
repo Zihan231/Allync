@@ -36,7 +36,7 @@ export default function VerifyProfilePage() {
       <div className="relative w-full max-w-lg">
         <div className="mb-6 flex items-center justify-between">
           <Link href="/" className="font-display text-lg font-bold tracking-tight text-ink">
-            ALL<span className="text-accent">Y</span>NC
+            ALL<span className="text-accent">Y</span>NQ
           </Link>
           <LanguageSwitch />
         </div>
