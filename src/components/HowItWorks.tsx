@@ -1,52 +1,34 @@
+"use client";
+
 import { SectionHeading } from "./GameStrip";
 import { Reveal } from "./Reveal";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { UsersIcon, TrophyIcon, BracketIcon, ShieldIcon } from "./icons";
 
-const steps = [
-  {
-    n: "01",
-    icon: UsersIcon,
-    title: "Join a community",
-    body: "Every community is its own league — run by a President, Manager, and Head of Discipline, not a faceless admin panel.",
-  },
-  {
-    n: "02",
-    icon: TrophyIcon,
-    title: "Build or join a club",
-    body: "Clubs sit above any one community — the same squad can register into several at once, like a real football club playing league and cup.",
-  },
-  {
-    n: "03",
-    icon: BracketIcon,
-    title: "Compete in tournaments",
-    body: "Default 4/8-player rooms, custom group-and-knockout brackets, or Club vs Club ties where individual results roll into one team score.",
-  },
-  {
-    n: "04",
-    icon: ShieldIcon,
-    title: "Results, verified",
-    body: "Both sides submit the result with evidence. Matched claims auto-verify; disputes go to a ruling. Paid tournaments settle straight to your wallet.",
-  },
-];
+const stepMeta = [
+  { n: "01", icon: UsersIcon, titleKey: "step1Title", bodyKey: "step1Body" },
+  { n: "02", icon: TrophyIcon, titleKey: "step2Title", bodyKey: "step2Body" },
+  { n: "03", icon: BracketIcon, titleKey: "step3Title", bodyKey: "step3Body" },
+  { n: "04", icon: ShieldIcon, titleKey: "step4Title", bodyKey: "step4Body" },
+] as const;
 
 export function HowItWorks() {
+  const { t } = useLanguage();
+
   return (
     <section id="how-it-works" className="relative overflow-hidden border-t border-surface-line/70 py-24">
       <div className="glow-blue pointer-events-none absolute left-1/2 top-0 h-[420px] w-[720px] -translate-x-1/2 -translate-y-1/2 opacity-60 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-6 lg:px-10">
         <Reveal>
-          <SectionHeading
-            eyebrow="How it works"
-            title="From sign-up to prize pool, in four steps"
-          />
+          <SectionHeading eyebrow={t.howItWorks.eyebrow} title={t.howItWorks.title} />
         </Reveal>
 
         <div className="relative mt-16">
           <div className="pointer-events-none absolute left-0 right-0 top-8 hidden h-px bg-gradient-to-r from-transparent via-surface-line-strong to-transparent lg:block" />
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-            {steps.map((step, i) => (
+            {stepMeta.map((step, i) => (
               <Reveal key={step.n} delay={i * 110}>
                 <div className="group relative">
                   <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-surface-line-strong bg-surface text-accent-ink shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover:-translate-y-1 group-hover:border-accent/60">
@@ -57,10 +39,10 @@ export function HowItWorks() {
                   </div>
 
                   <h3 className="font-display mt-5 text-xl font-semibold text-ink">
-                    {step.title}
+                    {t.howItWorks[step.titleKey]}
                   </h3>
                   <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">
-                    {step.body}
+                    {t.howItWorks[step.bodyKey]}
                   </p>
                 </div>
               </Reveal>

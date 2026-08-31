@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
-
-const roles = [
-  { value: "player", label: "Player" },
-  { value: "organizer", label: "Organizer" },
-];
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export function RoleToggle() {
+  const { t } = useLanguage();
   const [role, setRole] = useState("player");
+
+  const roles = [
+    { value: "player", label: t.auth.player },
+    { value: "organizer", label: t.auth.organizer },
+  ];
 
   return (
     <div>
-      <span className="text-sm font-medium text-ink-soft">Join as</span>
+      <span className="text-sm font-medium text-ink-soft">{t.auth.joinAs}</span>
       <div className="mt-1.5 grid grid-cols-2 gap-2 rounded-lg border border-surface-line bg-surface p-1">
         {roles.map((r) => (
           <button
@@ -32,9 +34,7 @@ export function RoleToggle() {
       </div>
       <input type="hidden" name="role" value={role} />
       <p className="mt-1.5 text-xs text-ink-faint">
-        {role === "player"
-          ? "Join clubs, communities, and tournaments."
-          : "Run tournaments for any game. Paid entry fees need KYC first."}
+        {role === "player" ? t.auth.joinAsPlayerHint : t.auth.joinAsOrganizerHint}
       </p>
     </div>
   );

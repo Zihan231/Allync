@@ -1,44 +1,49 @@
+"use client";
+
 import Image from "next/image";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const games = [
   {
     name: "eFootball",
-    status: "Live",
+    live: true,
     image: "/efootball.png",
     color: "#3fbf7f",
-    blurb: "Communities, clubs, and both tournament formats — fully live.",
+    blurbKey: "efootballBlurb" as const,
   },
   {
     name: "PUBG",
-    status: "Coming soon",
+    live: false,
     image: "/PUBG.webp",
     color: "#e08a3c",
-    blurb: "Squad play, on the same account, once it lands.",
+    blurbKey: "pubgBlurb" as const,
   },
   {
     name: "Free Fire",
-    status: "Coming soon",
+    live: false,
     image: "/FreeFire.jpg",
     color: "#ff6b4a",
-    blurb: "Same clubs, same wallet, a new arena.",
+    blurbKey: "freefireBlurb" as const,
   },
   {
     name: "Valorant",
-    status: "Coming soon",
+    live: false,
     image: "/Valorant.jpg",
     color: "#ff4d5e",
-    blurb: "Tactical 5v5, queued for the Allync framework.",
+    blurbKey: "valorantBlurb" as const,
   },
 ];
 
 export function GameStrip() {
+  const { t } = useLanguage();
+
   return (
     <section id="games" className="relative border-t border-surface-line/70 py-24">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <SectionHeading
-          eyebrow="One account, every arena"
-          title="Pick a game. Everything else already fits."
-          description="Your profile, your wallet, and your reputation carry over — only the arena changes."
+          eyebrow={t.games.eyebrow}
+          title={t.games.title}
+          description={t.games.description}
         />
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -64,12 +69,12 @@ export function GameStrip() {
               <div className="relative flex items-start justify-end p-5">
                 <span
                   className={`rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider backdrop-blur ${
-                    game.status === "Live"
+                    game.live
                       ? "bg-accent-soft text-accent-ink"
                       : "bg-amber-400/90 text-black"
                   }`}
                 >
-                  {game.status}
+                  {game.live ? t.games.live : t.games.comingSoon}
                 </span>
               </div>
 
@@ -86,7 +91,7 @@ export function GameStrip() {
                   {game.name}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                  {game.blurb}
+                  {t.games[game.blurbKey]}
                 </p>
               </div>
             </div>

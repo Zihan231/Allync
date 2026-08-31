@@ -1,11 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { LanguageSwitch } from "./LanguageSwitch";
 
 export function NavBar() {
+  const { t } = useLanguage();
+
   const links = [
-    { label: "Games", href: "#games" },
-    { label: "How it works", href: "#how-it-works" },
-    { label: "Features", href: "#features" },
-    { label: "Organizers", href: "#organizers" },
+    { label: t.nav.games, href: "#games" },
+    { label: t.nav.howItWorks, href: "#how-it-works" },
+    { label: t.nav.features, href: "#features" },
+    { label: t.nav.organizers, href: "#organizers" },
   ];
 
   return (
@@ -30,17 +36,18 @@ export function NavBar() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <LanguageSwitch />
           <Link
             href="/login"
             className="hidden font-mono text-[13px] uppercase tracking-wide text-ink-soft transition-colors hover:text-ink sm:block"
           >
-            Log in
+            {t.nav.login}
           </Link>
           <Link
             href="/signup"
             className="rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(217,165,68,0.4)] transition-transform hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(217,165,68,0.45)]"
           >
-            Get Started
+            {t.nav.getStarted}
           </Link>
         </div>
       </div>

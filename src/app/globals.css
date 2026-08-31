@@ -45,6 +45,7 @@
 :root[data-locale="bn"] {
   --font-display: var(--font-baloo);
   --font-body: var(--font-hind);
+  --font-mono: var(--font-hind);
 }
 
 * {

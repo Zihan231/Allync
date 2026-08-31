@@ -279,4 +279,8 @@ export const translations = {
   },
 } as const;
 
-export type TranslationDict = typeof translations.en;
+type DeepWiden<T> = T extends string
+  ? string
+  : { [K in keyof T]: DeepWiden<T[K]> };
+
+export type TranslationDict = DeepWiden<typeof translations.en>;

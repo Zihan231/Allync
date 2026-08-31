@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { ArrowRightIcon } from "./icons";
 
 function FooterColumn({
@@ -30,31 +33,32 @@ function FooterColumn({
 }
 
 export function CTAFooter() {
+  const { t } = useLanguage();
+
   return (
     <>
       <section id="get-started" className="relative overflow-hidden border-t border-surface-line/70 py-28">
         <div className="glow-gold animate-pulse-slow pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 blur-3xl" />
         <div className="relative mx-auto max-w-3xl px-6 text-center lg:px-10">
           <h2 className="font-display text-balance text-4xl font-bold tracking-tight text-ink sm:text-5xl">
-            Your community is one login away.
+            {t.ctaFooter.title}
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-ink-soft">
-            Create an account, pick eFootball, and find or found a community —
-            player mode and organizer mode, on the same login.
+            {t.ctaFooter.body}
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/signup"
               className="group inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 font-display font-semibold text-bg shadow-[0_0_24px_rgba(217,165,68,0.3)] transition-transform hover:-translate-y-0.5"
             >
-              Create your account
+              {t.ctaFooter.ctaPrimary}
               <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               href="/signup"
               className="inline-flex items-center gap-2 rounded-full border border-surface-line-strong px-7 py-3.5 font-display font-semibold text-ink transition-colors hover:border-blue hover:text-blue-ink"
             >
-              Become an Organizer
+              {t.ctaFooter.ctaSecondary}
             </Link>
           </div>
         </div>
@@ -68,45 +72,41 @@ export function CTAFooter() {
                 ALL<span className="text-accent">Y</span>NC
               </span>
               <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-soft">
-                The infrastructure behind competitive gaming — communities,
-                clubs, and verified tournaments for players, organizers, and
-                brand sponsors alike.
+                {t.ctaFooter.brandBlurb}
               </p>
             </div>
 
             <FooterColumn
-              heading="Platform"
+              heading={t.ctaFooter.colPlatform}
               links={[
-                { label: "Games", href: "#games" },
-                { label: "How it works", href: "#how-it-works" },
-                { label: "Features", href: "#features" },
+                { label: t.ctaFooter.linkGames, href: "#games" },
+                { label: t.ctaFooter.linkHowItWorks, href: "#how-it-works" },
+                { label: t.ctaFooter.linkFeatures, href: "#features" },
               ]}
             />
             <FooterColumn
-              heading="Community"
+              heading={t.ctaFooter.colCommunity}
               links={[
-                { label: "Organizers & brands", href: "#organizers" },
-                { label: "Become an Organizer", href: "/signup" },
-                { label: "Create an account", href: "/signup" },
+                { label: t.ctaFooter.linkOrganizers, href: "#organizers" },
+                { label: t.ctaFooter.linkBecomeOrganizer, href: "/signup" },
+                { label: t.ctaFooter.linkCreateAccount, href: "/signup" },
               ]}
             />
             <FooterColumn
-              heading="Games"
+              heading={t.ctaFooter.colGames}
               links={[
-                { label: "eFootball — live", href: "#games" },
-                { label: "PUBG — coming soon", href: "#games" },
-                { label: "Free Fire — coming soon", href: "#games" },
-                { label: "Valorant — coming soon", href: "#games" },
+                { label: t.ctaFooter.linkEfootball, href: "#games" },
+                { label: t.ctaFooter.linkPubg, href: "#games" },
+                { label: t.ctaFooter.linkFreefire, href: "#games" },
+                { label: t.ctaFooter.linkValorant, href: "#games" },
               ]}
             />
           </div>
 
           <div className="mt-14 flex flex-col gap-4 border-t border-surface-line/70 pt-8 sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-mono text-xs text-ink-faint">
-              &copy; 2026 Allync. All rights reserved.
-            </p>
+            <p className="font-mono text-xs text-ink-faint">{t.ctaFooter.copyright}</p>
             <p className="font-mono text-xs uppercase tracking-wide text-ink-faint">
-              eFootball live · more games queued
+              {t.ctaFooter.tagline}
             </p>
           </div>
         </div>
