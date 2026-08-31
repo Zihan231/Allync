@@ -113,6 +113,9 @@ export function DashboardSidebar({
   return (
     <>
       <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 overflow-y-auto border-r border-surface-line/70 lg:block">
+        <div className="border-b border-surface-line/70 p-3">
+          <RoleToggle value={user.mode} onChange={handleModeChange} className="w-full" />
+        </div>
         {content}
       </aside>
 
@@ -123,7 +126,7 @@ export function DashboardSidebar({
             onClick={onClose}
           />
           <div className="relative flex h-full w-64 flex-col border-r border-surface-line bg-bg-raised shadow-2xl">
-            <div className="border-b border-surface-line/70 p-3 sm:hidden">
+            <div className="border-b border-surface-line/70 p-3">
               <RoleToggle value={user.mode} onChange={handleModeChange} className="w-full" />
             </div>
             {content}

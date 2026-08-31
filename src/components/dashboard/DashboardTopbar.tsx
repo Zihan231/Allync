@@ -4,11 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { useSession, type Mode } from "@/lib/session/SessionContext";
+import { useSession } from "@/lib/session/SessionContext";
 import { games, getGame } from "@/lib/games";
 import { DEMO_PERSONAS } from "@/lib/mock/personas";
 import { LanguageSwitch } from "../LanguageSwitch";
-import { RoleToggle } from "../auth/RoleToggle";
 import { Avatar } from "../common/Avatar";
 import { BellIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, UsersIcon } from "../icons";
 
@@ -20,7 +19,7 @@ export function DashboardTopbar({
   showMenuButton?: boolean;
 }) {
   const { t } = useLanguage();
-  const { user, setMode, logout, switchPersona } = useSession();
+  const { user, logout, switchPersona } = useSession();
   const router = useRouter();
 
   const [gameMenuOpen, setGameMenuOpen] = useState(false);
@@ -28,11 +27,6 @@ export function DashboardTopbar({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const activeGame = getGame(user.activeGame);
-
-  const handleModeChange = (mode: Mode) => {
-    setMode(mode);
-    router.push(mode === "organizer" ? "/dashboard/organizer" : "/dashboard");
-  };
 
   const notifications = [
     t.dashboard.shell.notification1,
@@ -61,10 +55,6 @@ export function DashboardTopbar({
         <Link href="/dashboard" className="font-display text-lg font-bold tracking-tight text-ink">
           ALL<span className="text-accent">Y</span>NQ
         </Link>
-      </div>
-
-      <div className="hidden sm:block">
-        <RoleToggle value={user.mode} onChange={handleModeChange} />
       </div>
 
       <div className="flex items-center gap-2">
