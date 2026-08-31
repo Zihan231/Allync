@@ -112,7 +112,7 @@ export function DashboardSidebar({
 
   return (
     <>
-      <aside className="hidden w-60 shrink-0 border-r border-surface-line/70 lg:block">
+      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 overflow-y-auto border-r border-surface-line/70 lg:block">
         {content}
       </aside>
 
