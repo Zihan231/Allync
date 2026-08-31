@@ -20,6 +20,7 @@ import { Avatar } from "@/components/common/Avatar";
 import { StaffRow } from "@/components/dashboard/StaffRow";
 import { TournamentListItem } from "@/components/dashboard/TournamentListItem";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { ShieldIcon, UsersIcon, TrophyIcon, ArrowRightIcon } from "@/components/icons";
 
 export default function CommunityDetailPage({ params }: { params: Promise<{ communityId: string }> }) {
@@ -152,7 +153,8 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
       ) : null}
 
       <div className="mt-6 max-w-2xl rounded-xl border border-surface-line bg-surface/40 p-4">
-        <h2 className="font-display mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-faint">
+        <h2 className="font-display mb-1.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-warning-ink">
+          <span className="h-1.5 w-1.5 rounded-full bg-warning" />
           {t.dashboard.community.rulesLabel}
         </h2>
         <p className="whitespace-pre-line text-sm leading-relaxed text-ink-soft">{community.rules}</p>
@@ -160,22 +162,22 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
 
       <div className="mt-8 space-y-8">
         <section>
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {t.dashboard.community.staffTitle}
-          </h2>
+          <SectionHeading tone="blue">{t.dashboard.community.staffTitle}</SectionHeading>
           <StaffRow people={officials} />
         </section>
 
         <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-ink-soft">
-              {t.dashboard.community.memberClubsTitle}
-            </h2>
-            <span className="font-mono text-[11px] text-ink-faint">
-              {memberClubs.length} {t.dashboard.rankings.tabClubs.toLowerCase()} · {totalClubMembers}{" "}
-              {t.dashboard.community.totalMembersLabel}
-            </span>
-          </div>
+          <SectionHeading
+            tone="accent"
+            action={
+              <span className="font-mono text-[11px] text-ink-faint">
+                {memberClubs.length} {t.dashboard.rankings.tabClubs.toLowerCase()} · {totalClubMembers}{" "}
+                {t.dashboard.community.totalMembersLabel}
+              </span>
+            }
+          >
+            {t.dashboard.community.memberClubsTitle}
+          </SectionHeading>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {memberClubs.map((club) => (
               <Link
@@ -221,9 +223,7 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
         </section>
 
         <section>
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {t.dashboard.community.tournamentsTitle}
-          </h2>
+          <SectionHeading tone="danger">{t.dashboard.community.tournamentsTitle}</SectionHeading>
           <div className="space-y-2">
             {communityTournaments.map((tour) => (
               <TournamentListItem key={tour.id} tournament={tour} href={`/dashboard/efootball/tournaments/${tour.id}`} />

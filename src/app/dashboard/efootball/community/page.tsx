@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
 import { StatusPill } from "@/components/dashboard/StatusPill";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { PlusIcon, UsersIcon } from "@/components/icons";
 
 export default function CommunityBrowsePage() {
@@ -38,17 +39,13 @@ export default function CommunityBrowsePage() {
 
       {myCommunity ? (
         <div className="mt-8">
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {t.dashboard.community.myClubHeading}
-          </h2>
+          <SectionHeading tone="accent">{t.dashboard.community.myClubHeading}</SectionHeading>
           <CommunityCard community={myCommunity} isMine />
         </div>
       ) : null}
 
       <div className="mt-8">
-        <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-          {t.dashboard.community.allClubsHeading}
-        </h2>
+        <SectionHeading tone="blue">{t.dashboard.community.allClubsHeading}</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {otherCommunities.map((c) => (
             <CommunityCard key={c.id} community={c} />

@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
 import { StatusPill } from "@/components/dashboard/StatusPill";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { PlusIcon, TrophyIcon } from "@/components/icons";
 
 export default function ClubsPage() {
@@ -38,17 +39,13 @@ export default function ClubsPage() {
 
       {myClub ? (
         <div className="mt-8">
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {t.dashboard.clubs.myClubHeading}
-          </h2>
+          <SectionHeading tone="accent">{t.dashboard.clubs.myClubHeading}</SectionHeading>
           <ClubCard club={myClub} isMine />
         </div>
       ) : null}
 
       <div className="mt-8">
-        <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-          {t.dashboard.clubs.allClubsHeading}
-        </h2>
+        <SectionHeading tone="blue">{t.dashboard.clubs.allClubsHeading}</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {otherClubs.map((club) => (
             <ClubCard key={club.id} club={club} />

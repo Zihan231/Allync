@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { DisputeCard } from "@/components/dashboard/DisputeCard";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { GavelIcon } from "@/components/icons";
 
 export default function DisputesPage() {
@@ -30,9 +31,7 @@ export default function DisputesPage() {
 
       {recentlyRuled.length > 0 ? (
         <div className="mt-10">
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {c.recentlyRuled}
-          </h2>
+          <SectionHeading tone="success">{c.recentlyRuled}</SectionHeading>
           <div className="space-y-2">
             {recentlyRuled.map((m) => (
               <div

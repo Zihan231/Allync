@@ -6,6 +6,7 @@ import { useMockMatches } from "@/lib/mock/store";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { ChartIcon, TrophyIcon, CalendarIcon } from "@/components/icons";
 
 export default function ProfilePage() {
@@ -40,9 +41,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-          {t.dashboard.profile.statsTitle}
-        </h2>
+        <SectionHeading tone="accent">{t.dashboard.profile.statsTitle}</SectionHeading>
         <div className="grid gap-4 sm:grid-cols-3">
           <StatTile label={t.dashboard.overview.statWinRate} value="68%" icon={ChartIcon} />
           <StatTile label={t.dashboard.shell.navTournaments} value="4" icon={TrophyIcon} />
@@ -51,9 +50,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-          {t.dashboard.profile.historyTitle}
-        </h2>
+        <SectionHeading tone="blue">{t.dashboard.profile.historyTitle}</SectionHeading>
         <div className="space-y-2">
           {matches.map((m) => (
             <MiniMatchRow key={m.id} match={m} />

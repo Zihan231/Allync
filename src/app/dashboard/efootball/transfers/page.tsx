@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { TransferOfferCard } from "@/components/dashboard/TransferOfferCard";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { SwapIcon } from "@/components/icons";
 
 export default function TransfersPage() {
@@ -28,9 +29,7 @@ export default function TransfersPage() {
       />
 
       <div className="mt-8">
-        <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-          {t.dashboard.transfers.offersTitle}
-        </h2>
+        <SectionHeading tone="warning">{t.dashboard.transfers.offersTitle}</SectionHeading>
         <div className="space-y-2">
           {offers.length > 0 ? (
             offers.map((offer) => <TransferOfferCard key={offer.id} offer={offer} />)

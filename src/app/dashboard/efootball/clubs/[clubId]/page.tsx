@@ -13,6 +13,7 @@ import { Avatar } from "@/components/common/Avatar";
 import { StaffRow } from "@/components/dashboard/StaffRow";
 import { RosterTable } from "@/components/dashboard/RosterTable";
 import { StatusPill } from "@/components/dashboard/StatusPill";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { UsersIcon, TrophyIcon } from "@/components/icons";
 
@@ -128,28 +129,26 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
 
       <div className="mt-8 space-y-8">
         <section>
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {t.dashboard.club.staffTitle}
-          </h2>
+          <SectionHeading tone="blue">{t.dashboard.club.staffTitle}</SectionHeading>
           <StaffRow people={officials} />
         </section>
 
         <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-ink-soft">
-              {t.dashboard.club.rosterTitle}
-            </h2>
-            <StatusPill tone={members.length >= club.maxRoster - 1 ? "warning" : "neutral"}>
-              {t.dashboard.clubs.rosterSizeLabel}: {members.length}/{club.maxRoster}
-            </StatusPill>
-          </div>
+          <SectionHeading
+            tone="accent"
+            action={
+              <StatusPill tone={members.length >= club.maxRoster - 1 ? "warning" : "neutral"}>
+                {t.dashboard.clubs.rosterSizeLabel}: {members.length}/{club.maxRoster}
+              </StatusPill>
+            }
+          >
+            {t.dashboard.club.rosterTitle}
+          </SectionHeading>
           <RosterTable roster={members} />
         </section>
 
         <section>
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {t.dashboard.club.communitiesTitle}
-          </h2>
+          <SectionHeading tone="success">{t.dashboard.club.communitiesTitle}</SectionHeading>
           <div className="flex flex-wrap gap-2">
             {communities.map((c) => (
               <Link

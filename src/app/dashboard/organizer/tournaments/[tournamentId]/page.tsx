@@ -9,6 +9,7 @@ import { StatusPill } from "@/components/dashboard/StatusPill";
 import { AggregateTable } from "@/components/dashboard/AggregateTable";
 import { BracketView } from "@/components/dashboard/BracketView";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { TrophyIcon } from "@/components/icons";
 
 export default function OrganizerTournamentDetailPage({
@@ -52,19 +53,15 @@ export default function OrganizerTournamentDetailPage({
       <div className="mt-8">
         {tournament.aggregateTable ? (
           <>
-            <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-              {t.dashboard.tournaments.aggregateTableTitle}
-            </h2>
+            <SectionHeading tone="accent">{t.dashboard.tournaments.aggregateTableTitle}</SectionHeading>
             <AggregateTable rows={tournament.aggregateTable} />
           </>
         ) : null}
         {tournament.bracket ? (
-          <>
-            <h2 className="font-display mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-              {t.dashboard.tournaments.bracketTitle}
-            </h2>
+          <div className="mt-8">
+            <SectionHeading tone="danger">{t.dashboard.tournaments.bracketTitle}</SectionHeading>
             <BracketView rounds={tournament.bracket} />
-          </>
+          </div>
         ) : null}
       </div>
     </div>

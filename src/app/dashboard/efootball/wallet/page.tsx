@@ -7,6 +7,7 @@ import { mockWalletTransactions } from "@/lib/mock";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { TransactionRow } from "@/components/dashboard/TransactionRow";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { WalletIcon } from "@/components/icons";
 
 export default function WalletPage() {
@@ -31,9 +32,7 @@ export default function WalletPage() {
       ) : null}
 
       <div className="mt-8">
-        <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-          {t.dashboard.wallet.historyTitle}
-        </h2>
+        <SectionHeading tone="success">{t.dashboard.wallet.historyTitle}</SectionHeading>
         <div className="space-y-2">
           {mockWalletTransactions.map((tx) => (
             <TransactionRow key={tx.id} tx={tx} />

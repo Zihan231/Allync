@@ -5,6 +5,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusPill } from "@/components/dashboard/StatusPill";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 
 export default function VerificationPage() {
   const { t } = useLanguage();
@@ -34,13 +35,17 @@ export default function VerificationPage() {
       />
 
       <div className="mt-6 rounded-xl border border-surface-line bg-surface/50 p-5">
-        <h2 className="font-display text-sm font-semibold text-ink">{c.whyTitle}</h2>
+        <SectionHeading tone="blue" size="title" className="mb-0">
+          {c.whyTitle}
+        </SectionHeading>
         <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{c.whyBody}</p>
       </div>
 
       {user.kycStatus === "unverified" ? (
         <div className="mt-6 rounded-xl border border-surface-line bg-surface/50 p-6">
-          <h2 className="font-display mb-4 text-base font-semibold text-ink">{c.submitFormTitle}</h2>
+          <SectionHeading tone="warning" size="title" className="mb-4">
+            {c.submitFormTitle}
+          </SectionHeading>
           {submitted ? (
             <p className="text-sm text-success-ink">{c.submitted}</p>
           ) : (

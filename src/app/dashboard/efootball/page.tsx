@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
 import { StatusPill } from "@/components/dashboard/StatusPill";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { CalendarIcon, TrophyIcon, WalletIcon, ChartIcon, ArrowRightIcon, UsersIcon } from "@/components/icons";
 
 export default function EfootballOverviewPage() {
@@ -49,14 +50,18 @@ export default function EfootballOverviewPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <div className="rounded-xl border border-surface-line bg-surface/50 p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-base font-semibold text-ink">
-              {t.dashboard.overview.upcomingMatchesTitle}
-            </h2>
-            <Link href="/dashboard/efootball/matches" className="text-xs font-medium text-blue-ink hover:underline">
-              {t.dashboard.shell.navMatches} →
-            </Link>
-          </div>
+          <SectionHeading
+            tone="blue"
+            size="title"
+            className="mb-0"
+            action={
+              <Link href="/dashboard/efootball/matches" className="text-xs font-medium text-blue-ink hover:underline">
+                {t.dashboard.shell.navMatches} →
+              </Link>
+            }
+          >
+            {t.dashboard.overview.upcomingMatchesTitle}
+          </SectionHeading>
           <div className="mt-4 space-y-2">
             {upcoming.length > 0 ? (
               upcoming.map((m) => <MiniMatchRow key={m.id} match={m} />)
@@ -68,9 +73,9 @@ export default function EfootballOverviewPage() {
 
         {latestTournament ? (
           <div className="rounded-xl border border-surface-line bg-surface/50 p-5">
-            <h2 className="font-display text-base font-semibold text-ink">
+            <SectionHeading tone="accent" size="title" className="mb-0">
               {t.dashboard.overview.latestTournamentTitle}
-            </h2>
+            </SectionHeading>
             <div className="mt-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-ink">{latestTournament.name}</span>

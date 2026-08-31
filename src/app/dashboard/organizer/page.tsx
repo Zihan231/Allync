@@ -6,6 +6,7 @@ import { useMockTournaments, useMockMatches } from "@/lib/mock/store";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { StatusPill } from "@/components/dashboard/StatusPill";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { TrophyIcon, UsersIcon, GavelIcon, LockIcon } from "@/components/icons";
 
 export default function OrganizerOverviewPage() {
@@ -56,9 +57,9 @@ export default function OrganizerOverviewPage() {
       </div>
 
       <div className="mt-8 rounded-xl border border-surface-line bg-surface/50 p-5">
-        <h2 className="font-display text-base font-semibold text-ink">
+        <SectionHeading tone="blue" size="title" className="mb-0">
           {t.dashboard.organizer.overview.recentActivityTitle}
-        </h2>
+        </SectionHeading>
         <ul className="mt-4 space-y-2.5">
           {activity.map((a, i) => (
             <li key={i} className="text-sm text-ink-soft">{a}</li>

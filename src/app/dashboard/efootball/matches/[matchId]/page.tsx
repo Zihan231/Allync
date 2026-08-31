@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusPill, type StatusTone } from "@/components/dashboard/StatusPill";
 import { ResultSubmissionForm } from "@/components/dashboard/ResultSubmissionForm";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { CalendarIcon } from "@/components/icons";
 import type { Match } from "@/lib/mock/types";
 
@@ -52,9 +53,9 @@ export default function MatchDetailPage({
       <div className="mt-8">
         {match.status === "unplayed" && (
           <div className="rounded-xl border border-surface-line bg-surface/50 p-6">
-            <h2 className="font-display mb-4 text-base font-semibold text-ink">
+            <SectionHeading tone="warning" size="title" className="mb-4">
               {t.dashboard.matches.submitResultTitle}
-            </h2>
+            </SectionHeading>
             <ResultSubmissionForm match={match} />
           </div>
         )}

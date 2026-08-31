@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StaffRow } from "@/components/dashboard/StaffRow";
 import { JoinRequestQueue } from "@/components/dashboard/JoinRequestQueue";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { ShieldIcon } from "@/components/icons";
 
 export default function OrganizerCommunityPage() {
@@ -40,23 +41,17 @@ export default function OrganizerCommunityPage() {
 
       <div className="mt-8 space-y-8">
         <section>
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {c.applicationsTitle}
-          </h2>
+          <SectionHeading tone="danger">{c.applicationsTitle}</SectionHeading>
           <JoinRequestQueue requests={requests} onApprove={approveCommunityRequest} onReject={rejectCommunityRequest} />
         </section>
 
         <section>
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {c.staffTitle}
-          </h2>
+          <SectionHeading tone="blue">{c.staffTitle}</SectionHeading>
           <StaffRow people={officials} />
         </section>
 
         <section>
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {c.windowSchedulerTitle}
-          </h2>
+          <SectionHeading tone="warning">{c.windowSchedulerTitle}</SectionHeading>
           <div className="rounded-xl border border-surface-line bg-surface/40 p-4 font-mono text-sm text-ink-soft">
             {mockTransferWindow.opensAt} → {mockTransferWindow.closesAt}
           </div>
