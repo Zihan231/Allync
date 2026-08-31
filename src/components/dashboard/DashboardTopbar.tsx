@@ -59,7 +59,7 @@ export function DashboardTopbar({
         ) : null}
 
         <Link href="/dashboard" className="font-display text-lg font-bold tracking-tight text-ink">
-          ALL<span className="text-accent">Y</span>NC
+          ALL<span className="text-accent">Y</span>NQ
         </Link>
       </div>
 

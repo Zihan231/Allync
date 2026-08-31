@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { NavBar } from "@/components/NavBar";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { SignupForm } from "@/components/auth/SignupForm";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Create your account — Allync",
+  title: "Create your account — ALLYNQ",
 };
 
 export default function SignupPage() {
@@ -14,6 +15,7 @@ export default function SignupPage() {
       <AuthShell variant="signup">
         <SignupForm />
       </AuthShell>
+      <SiteFooter />
     </>
   );
 }

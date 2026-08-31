@@ -35,7 +35,7 @@ export const translations = {
       efootballBlurb: "Communities, clubs, and both tournament formats — fully live.",
       pubgBlurb: "Squad play, on the same account, once it lands.",
       freefireBlurb: "Same clubs, same wallet, a new arena.",
-      valorantBlurb: "Tactical 5v5, queued for the Allync framework.",
+      valorantBlurb: "Tactical 5v5, queued for the ALLYNQ framework.",
     },
     howItWorks: {
       eyebrow: "How it works",
@@ -96,7 +96,7 @@ export const translations = {
       linkPubg: "PUBG — coming soon",
       linkFreefire: "Free Fire — coming soon",
       linkValorant: "Valorant — coming soon",
-      copyright: "© 2026 Allync. All rights reserved.",
+      copyright: "© 2026 ALLYNQ. All rights reserved.",
       tagline: "eFootball live · more games queued",
     },
     auth: {
@@ -104,14 +104,14 @@ export const translations = {
       loginTitle: "Log in to your arena.",
       loginSubtitle: "One account for every game, every community, and every club you're part of.",
       loginHeading: "Log in",
-      newHere: "New to Allync?",
+      newHere: "New to ALLYNQ?",
       createAccountLink: "Create an account",
       email: "Email",
       password: "Password",
       rememberMe: "Remember me",
       forgotPassword: "Forgot password?",
       loginButton: "Log in",
-      loginLegal: "By logging in you agree to Allync's Terms and Privacy Policy.",
+      loginLegal: "By logging in you agree to ALLYNQ's Terms and Privacy Policy.",
 
       signupEyebrow: "Players · Clubs · Organizers · Brands",
       signupTitle: "Your community is one login away.",
@@ -127,7 +127,7 @@ export const translations = {
       organizer: "Organizer",
       joinAsPlayerHint: "Join clubs, communities, and tournaments.",
       joinAsOrganizerHint: "Run tournaments for any game. Paid entry fees need KYC first.",
-      agreeTerms: "I agree to Allync's Terms and Privacy Policy.",
+      agreeTerms: "I agree to ALLYNQ's Terms and Privacy Policy.",
       createAccountButton: "Create account",
 
       highlight1Title: "One account, every arena",
@@ -170,7 +170,7 @@ export const translations = {
       },
       comingSoon: {
         title: "Coming soon",
-        body: "This game isn't live on Allync yet — the dashboard here will look and feel just like eFootball's once it lands.",
+        body: "This game isn't live on ALLYNQ yet — the dashboard here will look and feel just like eFootball's once it lands.",
         cta: "Back to eFootball",
       },
       hub: {
@@ -413,7 +413,7 @@ export const translations = {
       },
       onboarding: {
         title: "Verify your account",
-        intro: "One more step before you're in — this helps keep Allync free of fake and duplicate accounts.",
+        intro: "One more step before you're in — this helps keep ALLYNQ free of fake and duplicate accounts.",
         photoLabel: "Your photo",
         inGameIdLabel: "eFootball in-game ID",
         facebookLabel: "Facebook profile link",
@@ -463,7 +463,7 @@ export const translations = {
       efootballBlurb: "কমিউনিটি, ক্লাব, আর দু'ধরনের টুর্নামেন্ট ফরম্যাট — পুরোপুরি লাইভ।",
       pubgBlurb: "একই অ্যাকাউন্টে স্কোয়াড প্লে — চালু হলেই।",
       freefireBlurb: "একই ক্লাব, একই ওয়ালেট — শুধু নতুন গেম।",
-      valorantBlurb: "ট্যাকটিক্যাল 5v5 — খুব শীঘ্রই আসছে Allync-এ।",
+      valorantBlurb: "ট্যাকটিক্যাল 5v5 — খুব শীঘ্রই আসছে ALLYNQ-এ।",
     },
     howItWorks: {
       eyebrow: "কীভাবে কাজ করে",
@@ -524,7 +524,7 @@ export const translations = {
       linkPubg: "PUBG — শীঘ্রই আসছে",
       linkFreefire: "ফ্রি ফায়ার — শীঘ্রই আসছে",
       linkValorant: "ভ্যালোর্যান্ট — শীঘ্রই আসছে",
-      copyright: "© ২০২৬ Allync. সর্বস্বত্ব সংরক্ষিত।",
+      copyright: "© ২০২৬ ALLYNQ. সর্বস্বত্ব সংরক্ষিত।",
       tagline: "ইফুটবল লাইভ · আরও গেম আসছে",
     },
     auth: {
@@ -532,14 +532,14 @@ export const translations = {
       loginTitle: "নিজের অ্যারেনায় লগ ইন করুন।",
       loginSubtitle: "একটাই অ্যাকাউন্ট, প্রতিটা গেম, প্রতিটা কমিউনিটি, আর আপনার প্রতিটা ক্লাবের জন্য।",
       loginHeading: "লগ ইন",
-      newHere: "Allync-এ নতুন?",
+      newHere: "ALLYNQ-এ নতুন?",
       createAccountLink: "অ্যাকাউন্ট খুলুন",
       email: "ইমেইল",
       password: "পাসওয়ার্ড",
       rememberMe: "মনে রাখুন",
       forgotPassword: "পাসওয়ার্ড ভুলে গেছেন?",
       loginButton: "লগ ইন",
-      loginLegal: "লগ ইন করলে আপনি Allync-এর শর্তাবলী ও প্রাইভেসি পলিসিতে সম্মত হচ্ছেন।",
+      loginLegal: "লগ ইন করলে আপনি ALLYNQ-এর শর্তাবলী ও প্রাইভেসি পলিসিতে সম্মত হচ্ছেন।",
 
       signupEyebrow: "প্লেয়ার · ক্লাব · অর্গানাইজার · ব্র্যান্ড",
       signupTitle: "আপনার কমিউনিটি মাত্র একটা লগইন দূরে।",
@@ -555,7 +555,7 @@ export const translations = {
       organizer: "অর্গানাইজার",
       joinAsPlayerHint: "ক্লাব, কমিউনিটি, আর টুর্নামেন্টে যোগ দিন।",
       joinAsOrganizerHint: "যেকোনো গেমের টুর্নামেন্ট চালান। পেইড এন্ট্রি ফির আগে লাগবে KYC।",
-      agreeTerms: "আমি Allync-এর শর্তাবলী ও প্রাইভেসি পলিসিতে সম্মত।",
+      agreeTerms: "আমি ALLYNQ-এর শর্তাবলী ও প্রাইভেসি পলিসিতে সম্মত।",
       createAccountButton: "অ্যাকাউন্ট খুলুন",
 
       highlight1Title: "একটা অ্যাকাউন্ট, সব গেম",
@@ -598,7 +598,7 @@ export const translations = {
       },
       comingSoon: {
         title: "শীঘ্রই আসছে",
-        body: "এই গেমটা এখনো Allync-এ লাইভ না — এটা চালু হলে এখানকার ড্যাশবোর্ডও দেখতে হবে ইফুটবলের মতোই।",
+        body: "এই গেমটা এখনো ALLYNQ-এ লাইভ না — এটা চালু হলে এখানকার ড্যাশবোর্ডও দেখতে হবে ইফুটবলের মতোই।",
         cta: "ইফুটবলে ফিরে যান",
       },
       hub: {
@@ -841,7 +841,7 @@ export const translations = {
       },
       onboarding: {
         title: "আপনার অ্যাকাউন্ট ভেরিফাই করুন",
-        intro: "শুরু করার আগে আর একটা ধাপ বাকি — এটা Allync-কে ফেক আর ডুপ্লিকেট অ্যাকাউন্ট থেকে মুক্ত রাখতে সাহায্য করে।",
+        intro: "শুরু করার আগে আর একটা ধাপ বাকি — এটা ALLYNQ-কে ফেক আর ডুপ্লিকেট অ্যাকাউন্ট থেকে মুক্ত রাখতে সাহায্য করে।",
         photoLabel: "আপনার ছবি",
         inGameIdLabel: "ইফুটবল ইন-গেম আইডি",
         facebookLabel: "ফেসবুক প্রোফাইল লিংক",

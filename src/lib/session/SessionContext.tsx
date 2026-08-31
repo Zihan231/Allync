@@ -88,7 +88,7 @@ type SessionContextValue = {
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
-const STORAGE_KEY = "allync-session";
+const STORAGE_KEY = "ALLYNQ-session";
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<MockUser>(defaultUser);

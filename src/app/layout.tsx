@@ -34,9 +34,9 @@ const hindSiliguri = Hind_Siliguri({
 });
 
 export const metadata: Metadata = {
-  title: "Allync — One Platform. Every Arena.",
+  title: "ALLYNQ — One Platform. Every Arena.",
   description:
-    "Allync is the infrastructure behind competitive gaming — communities, clubs, and tournaments for players, organizers, and brand sponsors alike. Starting with eFootball.",
+    "ALLYNQ is the infrastructure behind competitive gaming — communities, clubs, and tournaments for players, organizers, and brand sponsors alike. Starting with eFootball.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

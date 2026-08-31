@@ -55,8 +55,8 @@ export const mockTournaments: Tournament[] = [
     endAt: "2026-09-04T22:00:00+06:00",
   },
   {
-    id: "allync-open-championship",
-    name: "Allync Open Championship",
+    id: "ALLYNQ-open-championship",
+    name: "ALLYNQ Open Championship",
     game: "efootball",
     format: "open",
     status: "open",

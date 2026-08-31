@@ -21,7 +21,7 @@ export function NavBar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-10">
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <span className="font-display text-xl font-bold tracking-tight text-ink">
-            ALL<span className="text-accent">Y</span>NC
+            ALL<span className="text-accent">Y</span>NQ
           </span>
         </Link>
 
