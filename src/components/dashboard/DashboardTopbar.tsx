@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -25,6 +25,21 @@ export function DashboardTopbar({
   const [gameMenuOpen, setGameMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const gameMenuRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (gameMenuRef.current && !gameMenuRef.current.contains(target)) setGameMenuOpen(false);
+      if (notifRef.current && !notifRef.current.contains(target)) setNotifOpen(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) setUserMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, []);
 
   const activeGame = getGame(user.activeGame);
 
@@ -59,7 +74,7 @@ export function DashboardTopbar({
 
       <div className="flex items-center gap-2">
         {user.mode === "player" ? (
-          <div className="relative">
+          <div className="relative" ref={gameMenuRef}>
             <button
               type="button"
               onClick={() => setGameMenuOpen((o) => !o)}
@@ -92,7 +107,7 @@ export function DashboardTopbar({
 
         <LanguageSwitch />
 
-        <div className="relative">
+        <div className="relative" ref={notifRef}>
           <button
             type="button"
             onClick={() => setNotifOpen((o) => !o)}
@@ -117,7 +132,7 @@ export function DashboardTopbar({
           ) : null}
         </div>
 
-        <div className="relative">
+        <div className="relative" ref={userMenuRef}>
           <button type="button" onClick={() => setUserMenuOpen((o) => !o)} className="block">
             <Avatar dpUrl={user.dpUrl} name={user.name} size="sm" mode="static" />
           </button>
