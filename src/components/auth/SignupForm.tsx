@@ -21,7 +21,7 @@ export function SignupForm() {
     const name = String(data.get("name") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
     signup({ name, email, joinAs });
-    router.push("/dashboard");
+    router.push("/onboarding/verify");
   };
 
   return (

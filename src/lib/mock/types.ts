@@ -1,12 +1,41 @@
 import type { ClubRole, CommunityRole, GameId } from "@/lib/session/SessionContext";
 
+export type JoinPolicy = "instant" | "approval";
+
+export type Person = {
+  id: string;
+  name: string;
+  dpUrl: string | null;
+  coverUrl: string | null;
+  clubId: string | null;
+  clubRole: ClubRole | null;
+  communityId: string | null;
+  communityRole: CommunityRole | null;
+  points: number;
+  bio?: string;
+  facebookUrl?: string;
+  inGameId?: string;
+};
+
+export type JoinRequest = {
+  id: string;
+  targetType: "club" | "community";
+  targetId: string;
+  personId: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+};
+
 export type Club = {
   id: string;
   name: string;
   color: string;
   initials: string;
-  staff: { name: string; role: ClubRole }[];
-  roster: { name: string; position: string }[];
+  dpUrl: string | null;
+  coverUrl: string | null;
+  description: string;
+  points: number;
+  joinPolicy: JoinPolicy;
   minRoster: number;
   maxRoster: number;
   communityIds: string[];
@@ -15,7 +44,11 @@ export type Club = {
 export type Community = {
   id: string;
   name: string;
-  staff: { name: string; role: CommunityRole }[];
+  dpUrl: string | null;
+  coverUrl: string | null;
+  rules: string;
+  points: number;
+  joinPolicy: JoinPolicy;
   memberClubIds: string[];
   freeAgentCount: number;
   tournamentIds: string[];

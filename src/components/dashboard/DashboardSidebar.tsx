@@ -49,11 +49,20 @@ export function DashboardSidebar({
   const playerBase = `/dashboard/${user.activeGame}`;
   const playerItems: NavItem[] = [
     { href: playerBase, label: t.dashboard.shell.navOverview, icon: HomeIcon },
-    { href: `${playerBase}/club`, label: t.dashboard.shell.navMyClub, icon: UsersIcon },
-    { href: `${playerBase}/community`, label: t.dashboard.shell.navCommunity, icon: ShieldIcon },
+    {
+      href: `${playerBase}/clubs`,
+      label: user.club ? t.dashboard.shell.navMyClub : t.dashboard.clubs.browseTitle,
+      icon: UsersIcon,
+    },
+    {
+      href: `${playerBase}/community`,
+      label: user.community ? t.dashboard.shell.navCommunity : t.dashboard.community.browseTitle,
+      icon: ShieldIcon,
+    },
     { href: `${playerBase}/tournaments`, label: t.dashboard.shell.navTournaments, icon: TrophyIcon },
     { href: `${playerBase}/matches`, label: t.dashboard.shell.navMatches, icon: CalendarIcon },
     { href: `${playerBase}/transfers`, label: t.dashboard.shell.navTransfers, icon: SwapIcon },
+    { href: `${playerBase}/rankings`, label: t.dashboard.rankings.pageTitle, icon: TrophyIcon },
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
     { href: `${playerBase}/profile`, label: t.dashboard.shell.navProfile, icon: ChartIcon },
   ];

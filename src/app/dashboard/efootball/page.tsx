@@ -4,20 +4,24 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockMatches, useMockTournaments } from "@/lib/mock/store";
+import { useMockPeople } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
 import { StatusPill } from "@/components/dashboard/StatusPill";
-import { CalendarIcon, TrophyIcon, WalletIcon, ChartIcon, ArrowRightIcon } from "@/components/icons";
+import { CalendarIcon, TrophyIcon, WalletIcon, ChartIcon, ArrowRightIcon, UsersIcon } from "@/components/icons";
 
 export default function EfootballOverviewPage() {
   const { t } = useLanguage();
   const { user } = useSession();
   const matches = useMockMatches();
   const tournaments = useMockTournaments();
+  const people = useMockPeople();
 
   const upcoming = matches.filter((m) => m.status === "unplayed" || m.status === "awaiting_opponent").slice(0, 3);
   const latestTournament = tournaments.find((t2) => t2.status === "live") ?? tournaments[0];
+
+  const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === user.personId) + 1;
 
   return (
     <div>
@@ -31,7 +35,12 @@ export default function EfootballOverviewPage() {
         }
       />
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <StatTile
+          label={t.dashboard.overview.rankLabel}
+          value={rank > 0 ? `#${rank}` : "—"}
+          icon={UsersIcon}
+        />
         <StatTile label={t.dashboard.overview.statWinRate} value="68%" icon={ChartIcon} trend={{ value: "+4%", direction: "up" }} />
         <StatTile label={t.dashboard.overview.statTournaments} value={String(tournaments.length)} icon={TrophyIcon} />
         <StatTile label={t.dashboard.overview.statWallet} value={`৳ ${user.wallet.balanceBdt.toLocaleString()}`} icon={WalletIcon} />

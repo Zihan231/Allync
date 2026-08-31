@@ -1,79 +1,104 @@
 "use client";
 
+import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { mockClubs, mockCommunities } from "@/lib/mock";
-import { useMockTournaments } from "@/lib/mock/store";
+import { useMockCommunities } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { StaffRow } from "@/components/dashboard/StaffRow";
-import { TournamentListItem } from "@/components/dashboard/TournamentListItem";
-import { EmptyState } from "@/components/dashboard/EmptyState";
-import { ShieldIcon } from "@/components/icons";
+import { CoverPhoto } from "@/components/common/CoverPhoto";
+import { Avatar } from "@/components/common/Avatar";
+import { StatusPill } from "@/components/dashboard/StatusPill";
+import { PlusIcon, UsersIcon } from "@/components/icons";
 
-export default function CommunityPage() {
+export default function CommunityBrowsePage() {
   const { t } = useLanguage();
   const { user } = useSession();
-  const tournaments = useMockTournaments();
-  const community = user.community ? mockCommunities.find((c) => c.id === user.community!.id) : null;
+  const communities = useMockCommunities();
 
-  if (!community) {
-    return <EmptyState icon={ShieldIcon} title={t.dashboard.club.noClub} body="" />;
-  }
-
-  const memberClubs = mockClubs.filter((c) => community.memberClubIds.includes(c.id));
-  const communityTournaments = tournaments.filter((tour) => tour.communityId === community.id);
+  const myCommunity = user.community ? communities.find((c) => c.id === user.community!.id) : null;
+  const otherCommunities = communities.filter((c) => c.id !== user.community?.id);
 
   return (
     <div>
-      <PageHeader eyebrow={t.dashboard.shell.navCommunity} title={community.name} />
+      <PageHeader
+        eyebrow="eFootball"
+        title={t.dashboard.community.browseTitle}
+        action={
+          !user.community ? (
+            <Link
+              href="/dashboard/efootball/community/create"
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg transition-transform hover:-translate-y-0.5"
+            >
+              <PlusIcon className="h-4 w-4" />
+              {t.dashboard.community.createCta}
+            </Link>
+          ) : undefined
+        }
+      />
 
-      <div className="mt-8 space-y-8">
-        <section>
+      {myCommunity ? (
+        <div className="mt-8">
           <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {t.dashboard.community.staffTitle}
+            {t.dashboard.community.myClubHeading}
           </h2>
-          <StaffRow staff={community.staff} />
-        </section>
+          <CommunityCard community={myCommunity} isMine />
+        </div>
+      ) : null}
 
-        <section>
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {t.dashboard.community.memberClubsTitle}
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {memberClubs.map((club) => (
-              <div
-                key={club.id}
-                className="flex items-center gap-3 rounded-xl border border-surface-line bg-surface/40 p-3.5"
-              >
-                <div
-                  className="flex h-9 w-9 items-center justify-center rounded-full font-display text-xs font-bold"
-                  style={{ backgroundColor: `${club.color}22`, color: club.color }}
-                >
-                  {club.initials}
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-ink">{club.name}</div>
-                  <div className="text-xs text-ink-faint">{club.roster.length} players</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 font-mono text-xs text-ink-faint">
-            {t.dashboard.community.freeAgentsTitle}: {community.freeAgentCount}
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-            {t.dashboard.community.tournamentsTitle}
-          </h2>
-          <div className="space-y-2">
-            {communityTournaments.map((tour) => (
-              <TournamentListItem key={tour.id} tournament={tour} href={`/dashboard/efootball/tournaments/${tour.id}`} />
-            ))}
-          </div>
-        </section>
+      <div className="mt-8">
+        <h2 className="font-display mb-3 text-sm font-semibold uppercase tracking-wide text-ink-soft">
+          {t.dashboard.community.allClubsHeading}
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {otherCommunities.map((c) => (
+            <CommunityCard key={c.id} community={c} />
+          ))}
+        </div>
       </div>
     </div>
+  );
+}
+
+function CommunityCard({
+  community,
+  isMine = false,
+}: {
+  community: ReturnType<typeof useMockCommunities>[number];
+  isMine?: boolean;
+}) {
+  const { t } = useLanguage();
+
+  return (
+    <Link
+      href={`/dashboard/efootball/community/${community.id}`}
+      className="group block overflow-hidden rounded-xl border border-surface-line bg-surface/40 transition-colors hover:border-surface-line-strong"
+    >
+      <div className="h-1.5 w-full bg-blue" />
+      <div className="relative">
+        <CoverPhoto coverUrl={community.coverUrl} name={community.name} color="#4c8dff" className="h-32" />
+        <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 shadow-[0_0_0_1px_rgba(76,141,255,0.4)] backdrop-blur-sm">
+          <UsersIcon className="h-3.5 w-3.5 text-blue-ink" />
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">
+            {t.dashboard.community.entityLabel}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-start gap-3 p-4 pt-0">
+        <div className="-mt-8 rounded-xl border-4 border-bg bg-surface">
+          <Avatar dpUrl={community.dpUrl} name={community.name} size="lg" mode="static" shape="square" />
+        </div>
+        <div className="mt-1 min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate text-sm font-semibold text-ink">{community.name}</span>
+            {isMine ? <StatusPill tone="success">{t.dashboard.community.myClubHeading}</StatusPill> : null}
+          </div>
+          <p className="mt-1 line-clamp-2 text-xs text-ink-soft">{community.rules}</p>
+          <div className="mt-2 flex items-center gap-1.5 font-mono text-[11px] text-ink-faint">
+            <UsersIcon className="h-3.5 w-3.5 text-blue-ink" />
+            {community.memberClubIds.length} clubs · {community.freeAgentCount} free agents
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }

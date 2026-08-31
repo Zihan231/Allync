@@ -8,10 +8,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { addPerson, getPerson, getClub, getCommunity } from "@/lib/mock/communityStore";
 
 export type Mode = "player" | "organizer";
 export type GameId = "efootball" | "pubg" | "freefire" | "valorant";
 export type KycStatus = "unverified" | "pending" | "verified";
+export type VerificationStatus = "unverified" | "pending" | "verified";
 export type ClubRole = "President" | "Manager" | "Captain" | "Player";
 export type CommunityRole =
   | "President"
@@ -23,12 +25,15 @@ export type CommunityRole =
 
 export type MockUser = {
   id: string;
+  personId: string;
   name: string;
   email: string;
   initials: string;
+  dpUrl: string | null;
   mode: Mode;
   activeGame: GameId;
   kycStatus: KycStatus;
+  verificationStatus: VerificationStatus;
   wallet: { balanceBdt: number };
   club: { id: string; name: string; role: ClubRole } | null;
   community: { id: string; name: string; role: CommunityRole } | null;
@@ -41,19 +46,27 @@ function initialsFromName(name: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+function slugify(name: string) {
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
 function defaultUser(): MockUser {
   return {
     id: "demo-user",
+    personId: "person-rakib-hasan",
     name: "Rakib Hasan",
     email: "rakib@example.com",
     initials: "RH",
+    dpUrl: null,
     mode: "player",
     activeGame: "efootball",
     kycStatus: "unverified",
+    verificationStatus: "verified",
     wallet: { balanceBdt: 4200 },
     club: { id: "red-falcons", name: "Red Falcons", role: "Captain" },
     community: { id: "dhaka-elite", name: "Dhaka Elite Community", role: "Member" },
-    // To demo the Organizer "Community Management" page, flip role above to "President".
+    // To demo the Organizer "Community Management" page, flip role above to "President",
+    // or use the Demo Persona switcher in the topbar user menu instead.
   };
 }
 
@@ -62,9 +75,14 @@ type SessionContextValue = {
   setMode: (mode: Mode) => void;
   setActiveGame: (game: GameId) => void;
   setKycStatus: (status: KycStatus) => void;
+  setVerificationStatus: (status: VerificationStatus) => void;
+  setDpUrl: (dpUrl: string | null) => void;
+  setClub: (club: MockUser["club"]) => void;
+  setCommunity: (community: MockUser["community"]) => void;
   updateProfile: (input: { name?: string; email?: string }) => void;
   login: (input: { email: string; name?: string }) => void;
   signup: (input: { name: string; email: string; joinAs: Mode }) => void;
+  switchPersona: (personId: string) => void;
   logout: () => void;
 };
 
@@ -96,6 +114,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const setMode = (mode: Mode) => persist({ ...user, mode });
   const setActiveGame = (activeGame: GameId) => persist({ ...user, activeGame });
   const setKycStatus = (kycStatus: KycStatus) => persist({ ...user, kycStatus });
+  const setVerificationStatus = (verificationStatus: VerificationStatus) =>
+    persist({ ...user, verificationStatus });
+  const setDpUrl = (dpUrl: string | null) => persist({ ...user, dpUrl });
+  const setClub = (club: MockUser["club"]) => persist({ ...user, club });
+  const setCommunity = (community: MockUser["community"]) => persist({ ...user, community });
 
   const updateProfile: SessionContextValue["updateProfile"] = ({ name, email }) => {
     const nextName = name ?? user.name;
@@ -119,20 +142,84 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   };
 
   const signup: SessionContextValue["signup"] = ({ name, email, joinAs }) => {
-    const base = defaultUser();
+    const id = `${slugify(name) || "player"}-${Date.now()}`;
+    const personId = `person-${id}`;
+    addPerson({
+      id: personId,
+      name,
+      dpUrl: null,
+      coverUrl: null,
+      clubId: null,
+      clubRole: null,
+      communityId: null,
+      communityRole: null,
+      points: 0,
+    });
     persist({
-      ...base,
+      id,
+      personId,
       name,
       email,
       initials: initialsFromName(name),
+      dpUrl: null,
       mode: joinAs,
+      activeGame: "efootball",
+      kycStatus: "unverified",
+      verificationStatus: "unverified",
+      wallet: { balanceBdt: 0 },
+      club: null,
+      community: null,
+    });
+  };
+
+  const switchPersona = (personId: string) => {
+    const person = getPerson(personId);
+    if (!person) return;
+    persist({
+      id: personId,
+      personId,
+      name: person.name,
+      email: `${slugify(person.name)}@example.com`,
+      initials: initialsFromName(person.name),
+      dpUrl: person.dpUrl,
+      mode: "player",
+      activeGame: "efootball",
+      kycStatus: "verified",
+      verificationStatus: "verified",
+      wallet: { balanceBdt: 4200 },
+      club:
+        person.clubId && person.clubRole
+          ? { id: person.clubId, name: getClub(person.clubId)?.name ?? person.clubId, role: person.clubRole }
+          : null,
+      community:
+        person.communityId && person.communityRole
+          ? {
+              id: person.communityId,
+              name: getCommunity(person.communityId)?.name ?? person.communityId,
+              role: person.communityRole,
+            }
+          : null,
     });
   };
 
   const logout = () => persist(defaultUser());
 
   const value = useMemo(
-    () => ({ user, setMode, setActiveGame, setKycStatus, updateProfile, login, signup, logout }),
+    () => ({
+      user,
+      setMode,
+      setActiveGame,
+      setKycStatus,
+      setVerificationStatus,
+      setDpUrl,
+      setClub,
+      setCommunity,
+      updateProfile,
+      login,
+      signup,
+      switchPersona,
+      logout,
+    }),
     [user]
   );
 
