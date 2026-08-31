@@ -388,6 +388,9 @@ export const translations = {
         tournamentsTitle: "Community tournaments",
         entityLabel: "Community",
         totalMembersLabel: "members",
+        communityRankLabel: "Community",
+        globalRankLabel: "Global",
+        seeAllClubsCta: "See all clubs",
       },
       players: {
         profileTitle: "Player profile",
@@ -812,6 +815,9 @@ export const translations = {
         tournamentsTitle: "কমিউনিটি টুর্নামেন্ট",
         entityLabel: "কমিউনিটি",
         totalMembersLabel: "মেম্বার",
+        communityRankLabel: "কমিউনিটি",
+        globalRankLabel: "গ্লোবাল",
+        seeAllClubsCta: "সব ক্লাব দেখুন",
       },
       players: {
         profileTitle: "প্লেয়ার প্রোফাইল",

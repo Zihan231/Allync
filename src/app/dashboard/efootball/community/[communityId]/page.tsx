@@ -19,8 +19,7 @@ import { Avatar } from "@/components/common/Avatar";
 import { StaffRow } from "@/components/dashboard/StaffRow";
 import { TournamentListItem } from "@/components/dashboard/TournamentListItem";
 import { EmptyState } from "@/components/dashboard/EmptyState";
-import { RankBadge } from "@/components/dashboard/RankBadge";
-import { ShieldIcon, UsersIcon, TrophyIcon } from "@/components/icons";
+import { ShieldIcon, UsersIcon, TrophyIcon, ArrowRightIcon } from "@/components/icons";
 
 export default function CommunityDetailPage({ params }: { params: Promise<{ communityId: string }> }) {
   const { communityId } = use(params);
@@ -42,8 +41,11 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   const memberClubs = clubs.filter((c) => community.memberClubIds.includes(c.id));
   const communityTournaments = tournaments.filter((tour) => tour.communityId === community.id);
 
-  const clubRanks = new Map(
+  const globalClubRanks = new Map(
     [...clubs].sort((a, b) => b.points - a.points).map((c, i) => [c.id, i + 1])
+  );
+  const communityClubRanks = new Map(
+    [...memberClubs].sort((a, b) => b.points - a.points).map((c, i) => [c.id, i + 1])
   );
   const memberCounts = new Map(
     memberClubs.map((club) => [club.id, people.filter((p) => p.clubId === club.id).length])
@@ -183,11 +185,16 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
                   <Avatar dpUrl={club.dpUrl} name={club.name} size="md" mode="static" shape="circle" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-semibold text-ink">{club.name}</span>
-                    <RankBadge rank={clubRanks.get(club.id) ?? 0} />
+                  <span className="block truncate text-sm font-semibold text-ink">{club.name}</span>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-soft px-2 py-0.5 font-mono text-[10px] font-bold text-blue-ink">
+                      {t.dashboard.community.communityRankLabel} #{communityClubRanks.get(club.id) ?? 0}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 font-mono text-[10px] font-bold text-accent-ink">
+                      {t.dashboard.community.globalRankLabel} #{globalClubRanks.get(club.id) ?? 0}
+                    </span>
                   </div>
-                  <div className="mt-1 flex items-center gap-3 font-mono text-[11px] text-ink-faint">
+                  <div className="mt-1.5 flex items-center gap-3 font-mono text-[11px] text-ink-faint">
                     <span className="inline-flex items-center gap-1">
                       <TrophyIcon className="h-3 w-3" style={{ color: club.color }} />
                       {club.points.toLocaleString()}
@@ -201,6 +208,14 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
               </Link>
             ))}
           </div>
+
+          <Link
+            href="/dashboard/efootball/clubs"
+            className="mt-4 inline-flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wide text-blue-ink transition-colors hover:text-ink"
+          >
+            {t.dashboard.community.seeAllClubsCta}
+            <ArrowRightIcon className="h-3.5 w-3.5" />
+          </Link>
         </section>
 
         <section>
