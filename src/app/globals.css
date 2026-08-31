@@ -17,6 +17,16 @@
   --blue-soft: rgba(76, 141, 255, 0.12);
   --live: #ff5470;
 
+  --success: #3fbf7f;
+  --success-ink: #7fe0ab;
+  --success-soft: rgba(63, 191, 127, 0.14);
+  --warning: #e0a83c;
+  --warning-ink: #f0c878;
+  --warning-soft: rgba(224, 168, 60, 0.14);
+  --danger: #ff5470;
+  --danger-ink: #ff8fa3;
+  --danger-soft: rgba(255, 84, 112, 0.14);
+
   --game-efootball: #3fbf7f;
   --game-pubg: #e08a3c;
   --game-freefire: #ff6b4a;
@@ -34,9 +44,20 @@
   --color-ink-faint: var(--ink-faint);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
   --color-blue: var(--blue);
   --color-blue-ink: var(--blue-ink);
+  --color-blue-soft: var(--blue-soft);
   --color-live: var(--live);
+  --color-success: var(--success);
+  --color-success-ink: var(--success-ink);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-ink: var(--warning-ink);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-ink: var(--danger-ink);
+  --color-danger-soft: var(--danger-soft);
   --font-display: var(--font-space);
   --font-body: var(--font-manrope);
   --font-mono: var(--font-jetbrains);

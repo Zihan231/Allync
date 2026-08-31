@@ -1,12 +1,25 @@
 "use client";
 
+import type { FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSession } from "@/lib/session/SessionContext";
 import { FormField } from "./FormField";
 import { ArrowRightIcon } from "../icons";
 
 export function LoginForm() {
   const { t } = useLanguage();
+  const { login } = useSession();
+  const router = useRouter();
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    const email = String(data.get("email") ?? "").trim();
+    login({ email });
+    router.push("/dashboard");
+  };
 
   return (
     <>
@@ -19,7 +32,7 @@ export function LoginForm() {
           </Link>
         </p>
 
-        <form className="mt-7 space-y-5">
+        <form className="mt-7 space-y-5" onSubmit={handleSubmit}>
           <FormField label={t.auth.email} type="email" name="email" placeholder="you@example.com" autoComplete="email" required />
           <FormField
             label={t.auth.password}

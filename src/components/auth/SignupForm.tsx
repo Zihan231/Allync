@@ -1,12 +1,28 @@
 "use client";
 
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSession, type Mode } from "@/lib/session/SessionContext";
 import { FormField } from "./FormField";
+import { RoleToggle } from "./RoleToggle";
 import { ArrowRightIcon } from "../icons";
 
 export function SignupForm() {
   const { t } = useLanguage();
+  const { signup } = useSession();
+  const router = useRouter();
+  const [joinAs, setJoinAs] = useState<Mode>("player");
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    const name = String(data.get("name") ?? "").trim();
+    const email = String(data.get("email") ?? "").trim();
+    signup({ name, email, joinAs });
+    router.push("/dashboard");
+  };
 
   return (
     <div className="rounded-2xl border border-surface-line bg-surface/60 p-8 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] backdrop-blur">
@@ -18,7 +34,7 @@ export function SignupForm() {
         </Link>
       </p>
 
-      <form className="mt-7 space-y-5">
+      <form className="mt-7 space-y-5" onSubmit={handleSubmit}>
         <FormField label={t.auth.fullName} type="text" name="name" placeholder={t.auth.fullNamePlaceholder} autoComplete="name" required />
         <FormField label={t.auth.email} type="email" name="email" placeholder="you@example.com" autoComplete="email" required />
         <FormField
@@ -29,6 +45,13 @@ export function SignupForm() {
           autoComplete="new-password"
           required
         />
+
+        <div>
+          <span className="text-sm font-medium text-ink-soft">{t.auth.joinAs}</span>
+          <div className="mt-1.5">
+            <RoleToggle value={joinAs} onChange={setJoinAs} className="w-full" />
+          </div>
+        </div>
 
         <label className="flex items-start gap-2.5 text-sm text-ink-soft">
           <input

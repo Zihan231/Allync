@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Manrope, JetBrains_Mono, Baloo_Da_2, Hind_Siliguri } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import { SessionProvider } from "@/lib/session/SessionContext";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space",
@@ -45,7 +46,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${spaceGrotesk.variable} ${manrope.variable} ${jetbrains.variable} ${balooDa2.variable} ${hindSiliguri.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-ink">
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <SessionProvider>{children}</SessionProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
