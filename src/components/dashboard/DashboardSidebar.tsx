@@ -126,6 +126,11 @@ export function DashboardSidebar({
             onClick={onClose}
           />
           <div className="relative flex h-full w-64 flex-col border-r border-surface-line bg-bg-raised shadow-2xl">
+            <div className="flex items-center justify-center border-b border-surface-line/70 px-4 py-3.5">
+              <Link href="/dashboard" onClick={onClose} className="font-display text-lg font-bold tracking-tight text-ink">
+                ALL<span className="text-accent">Y</span>NQ
+              </Link>
+            </div>
             <div className="border-b border-surface-line/70 p-3">
               <RoleToggle value={user.mode} onChange={handleModeChange} className="w-full" />
             </div>
