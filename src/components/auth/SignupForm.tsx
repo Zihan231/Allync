@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { FormField } from "./FormField";
-import { RoleToggle } from "./RoleToggle";
 import { ArrowRightIcon } from "../icons";
 
 export function SignupForm() {
@@ -30,8 +29,6 @@ export function SignupForm() {
           autoComplete="new-password"
           required
         />
-
-        <RoleToggle />
 
         <label className="flex items-start gap-2.5 text-sm text-ink-soft">
           <input
