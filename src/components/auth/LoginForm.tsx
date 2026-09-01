@@ -16,7 +16,7 @@ export function LoginForm() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
-    const email = String(data.get("email") ?? "").trim();
+    const email = String(data.get("email") ?? "").trim() || "demo@example.com";
     login({ email });
     router.push("/dashboard");
   };
@@ -33,14 +33,13 @@ export function LoginForm() {
         </p>
 
         <form className="mt-7 space-y-5" onSubmit={handleSubmit}>
-          <FormField label={t.auth.email} type="email" name="email" placeholder="you@example.com" autoComplete="email" required />
+          <FormField label={t.auth.email} type="email" name="email" placeholder="you@example.com" autoComplete="email" />
           <FormField
             label={t.auth.password}
             type="password"
             name="password"
             placeholder="••••••••"
             autoComplete="current-password"
-            required
           />
 
           <div className="flex items-center justify-between text-sm">

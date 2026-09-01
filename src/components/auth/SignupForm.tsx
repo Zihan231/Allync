@@ -16,8 +16,8 @@ export function SignupForm() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
-    const name = String(data.get("name") ?? "").trim();
-    const email = String(data.get("email") ?? "").trim();
+    const name = String(data.get("name") ?? "").trim() || "New Player";
+    const email = String(data.get("email") ?? "").trim() || "player@example.com";
     signup({ name, email });
     router.push("/onboarding/verify");
   };
@@ -33,22 +33,20 @@ export function SignupForm() {
       </p>
 
       <form className="mt-7 space-y-5" onSubmit={handleSubmit}>
-        <FormField label={t.auth.fullName} type="text" name="name" placeholder={t.auth.fullNamePlaceholder} autoComplete="name" required />
-        <FormField label={t.auth.email} type="email" name="email" placeholder="you@example.com" autoComplete="email" required />
+        <FormField label={t.auth.fullName} type="text" name="name" placeholder={t.auth.fullNamePlaceholder} autoComplete="name" />
+        <FormField label={t.auth.email} type="email" name="email" placeholder="you@example.com" autoComplete="email" />
         <FormField
           label={t.auth.password}
           type="password"
           name="password"
           placeholder={t.auth.passwordPlaceholder}
           autoComplete="new-password"
-          required
         />
 
         <label className="flex items-start gap-2.5 text-sm text-ink-soft">
           <input
             type="checkbox"
             name="agree"
-            required
             className="mt-0.5 h-4 w-4 rounded border-surface-line-strong bg-surface accent-accent"
           />
           <span>{t.auth.agreeTerms}</span>
