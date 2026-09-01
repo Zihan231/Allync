@@ -3,13 +3,17 @@
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
+import { useMemo } from "react";
 import { useMockMatches, useMockTournaments } from "@/lib/mock/store";
-import { useMockPeople } from "@/lib/mock/communityStore";
+import { useMockPeople, useMockClubs } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
+import { PlayerRankingsTable } from "@/components/dashboard/PlayerRankingsTable";
+import { ClubRankingsTable } from "@/components/dashboard/ClubRankingsTable";
+import { getPlayerRankings, getClubRankings } from "@/lib/mock/rankingsData";
 import { CalendarIcon, TrophyIcon, WalletIcon, ChartIcon, ArrowRightIcon, UsersIcon } from "@/components/icons";
 
 export default function EfootballOverviewPage() {
@@ -18,11 +22,19 @@ export default function EfootballOverviewPage() {
   const matches = useMockMatches();
   const tournaments = useMockTournaments();
   const people = useMockPeople();
+  const clubs = useMockClubs();
 
   const upcoming = matches.filter((m) => m.status === "unplayed" || m.status === "awaiting_opponent").slice(0, 3);
   const latestTournament = tournaments.find((t2) => t2.status === "live") ?? tournaments[0];
 
   const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === user.personId) + 1;
+
+  const clubNameById = useMemo(() => new Map(clubs.map((c) => [c.id, c.name])), [clubs]);
+  const topPlayers = useMemo(
+    () => getPlayerRankings("all-time", people, clubNameById).slice(0, 5),
+    [people, clubNameById]
+  );
+  const topClubs = useMemo(() => getClubRankings(clubs).slice(0, 5), [clubs]);
 
   return (
     <div>
@@ -98,6 +110,42 @@ export default function EfootballOverviewPage() {
             </div>
           </div>
         ) : null}
+      </div>
+
+      <div className="mt-8 rounded-xl border border-surface-line bg-surface/50 p-5">
+        <SectionHeading
+          tone="blue"
+          size="title"
+          className="mb-0"
+          action={
+            <Link href="/dashboard/efootball/rankings" className="text-xs font-medium text-blue-ink hover:underline">
+              {t.dashboard.rankings.viewFullRankings} →
+            </Link>
+          }
+        >
+          {t.dashboard.rankings.playerRankingsTitle}
+        </SectionHeading>
+        <div className="mt-4">
+          <PlayerRankingsTable rows={topPlayers} />
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-xl border border-surface-line bg-surface/50 p-5">
+        <SectionHeading
+          tone="accent"
+          size="title"
+          className="mb-0"
+          action={
+            <Link href="/dashboard/efootball/rankings" className="text-xs font-medium text-blue-ink hover:underline">
+              {t.dashboard.rankings.viewFullRankings} →
+            </Link>
+          }
+        >
+          {t.dashboard.rankings.clubRankingsTitle}
+        </SectionHeading>
+        <div className="mt-4">
+          <ClubRankingsTable rows={topClubs} />
+        </div>
       </div>
     </div>
   );
