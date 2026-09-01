@@ -1,27 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { useSession } from "@/lib/session/SessionContext";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { DashboardTopbar } from "@/components/dashboard/DashboardTopbar";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
-  const { user } = useSession();
   const isHub = pathname === "/dashboard";
-
-  useEffect(() => {
-    if (user.verificationStatus !== "verified") {
-      router.replace("/onboarding/verify");
-    }
-  }, [user.verificationStatus, router]);
-
-  if (user.verificationStatus !== "verified") {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-bg">

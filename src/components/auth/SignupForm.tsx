@@ -19,7 +19,7 @@ export function SignupForm() {
     const name = String(data.get("name") ?? "").trim() || "New Player";
     const email = String(data.get("email") ?? "").trim() || "player@example.com";
     signup({ name, email });
-    router.push("/onboarding/verify");
+    router.push("/dashboard");
   };
 
   return (
