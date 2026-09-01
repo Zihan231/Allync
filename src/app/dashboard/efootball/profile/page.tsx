@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockMatches } from "@/lib/mock/store";
@@ -22,7 +23,19 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <PageHeader eyebrow="eFootball" title={t.dashboard.shell.navProfile} description={t.dashboard.profile.crossGameNote} />
+      <PageHeader
+        eyebrow="eFootball"
+        title={t.dashboard.shell.navProfile}
+        description={t.dashboard.profile.crossGameNote}
+        action={
+          <Link
+            href={`/dashboard/efootball/players/${user.personId}`}
+            className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
+          >
+            {t.dashboard.playerProfile.viewPublicProfile}
+          </Link>
+        }
+      />
 
       <div className="relative mt-6">
         <CoverPhoto coverUrl={person?.coverUrl} name={user.name} className="h-40 rounded-xl sm:h-56" />
