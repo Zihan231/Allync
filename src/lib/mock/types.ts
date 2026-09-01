@@ -2,6 +2,23 @@ import type { ClubRole, CommunityRole, GameId } from "@/lib/session/SessionConte
 
 export type JoinPolicy = "instant" | "approval";
 
+export type WorkExperienceEntry = { workplace: string; jobTitle: string };
+export type EducationEntry = {
+  instituteName: string;
+  fieldOfStudy: string;
+  instituteType: "University" | "College" | "School" | "Other";
+};
+export type LatLng = { lat: number; lng: number };
+export type BloodGroup = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
+export type DocumentType =
+  | "national_id"
+  | "passport"
+  | "birth_certificate"
+  | "driver_license"
+  | "university_docs"
+  | "college_docs";
+export type VerificationLevel = 0 | 1 | 2 | 3;
+
 export type Person = {
   id: string;
   name: string;
@@ -15,6 +32,22 @@ export type Person = {
   bio?: string;
   facebookUrl?: string;
   inGameId?: string;
+  facebookProfileName?: string;
+  instagramUrl?: string;
+  konamiUid?: string;
+  deviceName?: string;
+  deviceModel?: string;
+  phoneNumber?: string;
+  birthday?: string;
+  bloodGroup?: BloodGroup;
+  country?: string;
+  permanentAddress?: string;
+  currentLocation?: LatLng | null;
+  workExperience?: WorkExperienceEntry[];
+  education?: EducationEntry[];
+  documentType?: DocumentType;
+  documentDataUrl?: string;
+  verificationLevel?: VerificationLevel;
 };
 
 export type JoinRequest = {

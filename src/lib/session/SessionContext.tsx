@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { addPerson, getPerson, getClub, getCommunity } from "@/lib/mock/communityStore";
+import type { VerificationLevel } from "@/lib/mock/types";
 
 export type Mode = "player" | "organizer";
 export type GameId = "efootball" | "pubg" | "freefire" | "valorant";
@@ -34,6 +35,7 @@ export type MockUser = {
   activeGame: GameId;
   kycStatus: KycStatus;
   verificationStatus: VerificationStatus;
+  verificationLevel: VerificationLevel;
   wallet: { balanceBdt: number };
   club: { id: string; name: string; role: ClubRole } | null;
   community: { id: string; name: string; role: CommunityRole } | null;
@@ -62,6 +64,7 @@ function defaultUser(): MockUser {
     activeGame: "efootball",
     kycStatus: "unverified",
     verificationStatus: "verified",
+    verificationLevel: 3,
     wallet: { balanceBdt: 4200 },
     club: { id: "red-falcons", name: "Red Falcons", role: "Captain" },
     community: { id: "dhaka-elite", name: "Dhaka Elite Community", role: "Member" },
@@ -76,6 +79,7 @@ type SessionContextValue = {
   setActiveGame: (game: GameId) => void;
   setKycStatus: (status: KycStatus) => void;
   setVerificationStatus: (status: VerificationStatus) => void;
+  setVerificationLevel: (level: VerificationLevel) => void;
   setDpUrl: (dpUrl: string | null) => void;
   setClub: (club: MockUser["club"]) => void;
   setCommunity: (community: MockUser["community"]) => void;
@@ -116,6 +120,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const setKycStatus = (kycStatus: KycStatus) => persist({ ...user, kycStatus });
   const setVerificationStatus = (verificationStatus: VerificationStatus) =>
     persist({ ...user, verificationStatus });
+  const setVerificationLevel = (verificationLevel: VerificationLevel) =>
+    persist({ ...user, verificationLevel });
   const setDpUrl = (dpUrl: string | null) => persist({ ...user, dpUrl });
   const setClub = (club: MockUser["club"]) => persist({ ...user, club });
   const setCommunity = (community: MockUser["community"]) => persist({ ...user, community });
@@ -166,6 +172,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       activeGame: "efootball",
       kycStatus: "unverified",
       verificationStatus: "unverified",
+      verificationLevel: 0,
       wallet: { balanceBdt: 0 },
       club: null,
       community: null,
@@ -186,6 +193,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       activeGame: "efootball",
       kycStatus: "verified",
       verificationStatus: "verified",
+      verificationLevel: 3,
       wallet: { balanceBdt: 4200 },
       club:
         person.clubId && person.clubRole
@@ -211,6 +219,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setActiveGame,
       setKycStatus,
       setVerificationStatus,
+      setVerificationLevel,
       setDpUrl,
       setClub,
       setCommunity,
