@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function sanitizeDigits(raw: string) {
   return raw.replace(/[^0-9]/g, "");
@@ -68,6 +68,21 @@ export function DualRangeSlider({
   const [lo, hi] = value;
   const pctLo = ((lo - min) / (max - min)) * 100;
   const pctHi = ((hi - min) / (max - min)) * 100;
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  function handleTrackClick(e: React.MouseEvent<HTMLDivElement>) {
+    const el = trackRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    const clicked = Math.round(min + ratio * (max - min));
+    // Move whichever thumb is closer to the click point.
+    if (Math.abs(clicked - lo) <= Math.abs(clicked - hi)) {
+      onChange([Math.min(clicked, hi), hi]);
+    } else {
+      onChange([lo, Math.max(clicked, lo)]);
+    }
+  }
 
   return (
     <div>
@@ -75,7 +90,7 @@ export function DualRangeSlider({
         <span className="font-medium text-ink">{label}</span>
         <span className="font-mono text-ink-faint">Max {max.toLocaleString()}</span>
       </div>
-      <div className="relative mt-3 h-4">
+      <div ref={trackRef} onClick={handleTrackClick} className="relative mt-3 h-4 cursor-pointer">
         <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-surface-line-strong" />
         <div
           className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-accent"
