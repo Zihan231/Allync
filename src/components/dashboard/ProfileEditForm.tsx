@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { addPerson, getPerson, updatePersonProfile } from "@/lib/mock/communityStore";
@@ -24,8 +24,11 @@ import type {
   DocumentType,
   EducationEntry,
   LatLng,
+  Person,
   WorkExperienceEntry,
 } from "@/lib/mock/types";
+import type { MockUser } from "@/lib/session/SessionContext";
+import { CloseIcon } from "@/components/icons";
 
 const BLOOD_GROUPS: BloodGroup[] = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const INSTITUTE_TYPES: EducationEntry["instituteType"][] = ["University", "College", "School", "Other"];
@@ -81,13 +84,8 @@ type FormState = {
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
 
-export function ProfileEditForm() {
-  const { t } = useLanguage();
-  const pf = t.dashboard.profileForm;
-  const { user, setDpUrl, updateProfile, setVerificationStatus, setVerificationLevel } = useSession();
-  const person = getPerson(user.personId);
-
-  const [form, setForm] = useState<FormState>(() => ({
+function buildForm(person: Person | undefined, user: MockUser): FormState {
+  return {
     dpUrl: person?.dpUrl ?? null,
     coverUrl: person?.coverUrl ?? null,
     email: user.email,
@@ -110,12 +108,109 @@ export function ProfileEditForm() {
     education: person?.education ?? [],
     documentType: person?.documentType ?? "",
     documentDataUrl: person?.documentDataUrl ?? null,
-  }));
+  };
+}
+
+// Shows either the editable control or a read-only value in the same slot,
+// so the layout stays identical between view and edit mode.
+function FieldSlot({
+  editing,
+  label,
+  required,
+  hint,
+  error,
+  displayValue,
+  multiline,
+  children,
+}: {
+  editing: boolean;
+  label: string;
+  required?: boolean;
+  hint?: string;
+  error?: string;
+  displayValue: string;
+  multiline?: boolean;
+  children: ReactNode;
+}) {
+  if (editing) {
+    return (
+      <FormFieldWrapper label={label} required={required} hint={hint} error={error}>
+        {children}
+      </FormFieldWrapper>
+    );
+  }
+  return (
+    <div>
+      <span className="text-sm font-medium text-ink-soft">{label}</span>
+      <p
+        className={`mt-1.5 rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink ${
+          multiline ? "whitespace-pre-wrap" : "truncate"
+        }`}
+      >
+        {displayValue}
+      </p>
+    </div>
+  );
+}
+
+function PhotoField({
+  editing,
+  label,
+  value,
+  onChange,
+  notProvided,
+}: {
+  editing: boolean;
+  label: string;
+  value: string | null;
+  onChange: (v: string) => void;
+  notProvided: string;
+}) {
+  if (editing) {
+    return <ImageUploadControl label={label} value={value} onChange={onChange} />;
+  }
+  return (
+    <div>
+      <span className="text-sm font-medium text-ink-soft">{label}</span>
+      <div className="mt-1.5">
+        {value ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={value} alt="" className="h-16 w-16 rounded-lg object-cover" />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-surface-line-strong text-xs text-ink-faint">
+            {notProvided}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ProfileEditForm() {
+  const { t } = useLanguage();
+  const pf = t.dashboard.profileForm;
+  const dash = pf.notProvided;
+  const { user, setDpUrl, updateProfile, setVerificationStatus, setVerificationLevel } = useSession();
+  const person = getPerson(user.personId);
+
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<FormState>(() => buildForm(person, user));
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState(false);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function startEditing() {
+    setSubmitted(false);
+    setEditing(true);
+  }
+
+  function cancelEditing() {
+    setForm(buildForm(getPerson(user.personId), user));
+    setErrors({});
+    setEditing(false);
   }
 
   function validate(): FormErrors {
@@ -188,42 +283,108 @@ export function ProfileEditForm() {
       setVerificationLevel(getVerificationLevelForDocument(form.documentType));
     }
     setSubmitted(true);
+    setEditing(false);
   }
+
+  const documentTypeLabel = form.documentType
+    ? (pf.documentVerification[
+        DOCUMENT_TYPE_LABEL_KEY[form.documentType] as keyof typeof pf.documentVerification
+      ] as string)
+    : "";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <h2 className="font-display text-xl font-bold text-ink">{pf.title}</h2>
+          {editing ? (
+            <span className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-ink">
+              {pf.editingBadge}
+            </span>
+          ) : null}
+        </div>
+        {!editing ? (
+          <button
+            type="button"
+            onClick={startEditing}
+            className="rounded-full bg-accent px-4 py-2 text-xs font-semibold text-bg transition-transform hover:-translate-y-0.5"
+          >
+            {pf.editCta}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={cancelEditing}
+            aria-label={pf.closeEditCta}
+            title={pf.closeEditCta}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-surface-line-strong text-ink-soft transition-colors hover:text-ink"
+          >
+            <CloseIcon className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {submitted ? <p className="text-sm text-success-ink">{pf.submitSuccessNote}</p> : null}
+
       {/* Account Info */}
       <div className="rounded-2xl border border-surface-line bg-surface/60 p-6">
         <h3 className="font-display text-xl font-bold text-ink">{pf.accountInfo.title}</h3>
         <div className="mt-5 space-y-5">
-          <ImageUploadControl label={t.dashboard.onboarding.photoLabel} value={form.dpUrl} onChange={(v) => set("dpUrl", v)} />
-          <ImageUploadControl label={pf.accountInfo.coverPhotoLabel} value={form.coverUrl} onChange={(v) => set("coverUrl", v)} />
-
-          <FormFieldWrapper label={pf.accountInfo.emailLabel} required error={errors.email}>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => set("email", e.target.value)}
-              className={fieldInputClass}
+          <div className="grid gap-5 sm:grid-cols-2">
+            <PhotoField
+              editing={editing}
+              label={t.dashboard.onboarding.photoLabel}
+              value={form.dpUrl}
+              onChange={(v) => set("dpUrl", v)}
+              notProvided={dash}
             />
-          </FormFieldWrapper>
-
-          <FormFieldWrapper label={pf.accountInfo.passwordLabel} hint={pf.accountInfo.passwordHint} error={errors.password}>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => set("password", e.target.value)}
-              className={fieldInputClass}
+            <PhotoField
+              editing={editing}
+              label={pf.accountInfo.coverPhotoLabel}
+              value={form.coverUrl}
+              onChange={(v) => set("coverUrl", v)}
+              notProvided={dash}
             />
-          </FormFieldWrapper>
+          </div>
 
-          <FormFieldWrapper label={pf.accountInfo.facebookNameLabel} hint={pf.accountInfo.facebookNameHint}>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FieldSlot label={pf.accountInfo.emailLabel} required error={errors.email} editing={editing} displayValue={form.email || dash}>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => set("email", e.target.value)}
+                className={fieldInputClass}
+              />
+            </FieldSlot>
+
+            <FieldSlot
+              label={pf.accountInfo.passwordLabel}
+              hint={pf.accountInfo.passwordHint}
+              error={errors.password}
+              editing={editing}
+              displayValue={form.password ? "••••••••" : dash}
+            >
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => set("password", e.target.value)}
+                className={fieldInputClass}
+              />
+            </FieldSlot>
+          </div>
+
+          <FieldSlot
+            label={pf.accountInfo.facebookNameLabel}
+            hint={pf.accountInfo.facebookNameHint}
+            editing={editing}
+            displayValue={form.facebookProfileName || dash}
+          >
             <input
               value={form.facebookProfileName}
               onChange={(e) => set("facebookProfileName", e.target.value)}
               className={fieldInputClass}
             />
-          </FormFieldWrapper>
+          </FieldSlot>
         </div>
       </div>
 
@@ -231,11 +392,13 @@ export function ProfileEditForm() {
       <div className="rounded-2xl border border-surface-line bg-surface/60 p-6">
         <h3 className="font-display text-xl font-bold text-ink">{pf.socialIds.title}</h3>
         <div className="mt-5 space-y-5">
-          <FormFieldWrapper
+          <FieldSlot
             label={pf.socialIds.facebookLinkLabel}
             required
             hint={pf.socialIds.facebookLinkHint}
             error={errors.facebookUrl}
+            editing={editing}
+            displayValue={form.facebookUrl || dash}
           >
             <input
               value={form.facebookUrl}
@@ -243,25 +406,37 @@ export function ProfileEditForm() {
               placeholder={pf.socialIds.facebookLinkPlaceholder}
               className={fieldInputClass}
             />
-          </FormFieldWrapper>
+          </FieldSlot>
 
-          <FormFieldWrapper label={pf.socialIds.instagramLabel} error={errors.instagramUrl}>
-            <input
-              value={form.instagramUrl}
-              onChange={(e) => set("instagramUrl", e.target.value)}
-              placeholder={pf.socialIds.instagramPlaceholder}
-              className={fieldInputClass}
-            />
-          </FormFieldWrapper>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FieldSlot
+              label={pf.socialIds.instagramLabel}
+              error={errors.instagramUrl}
+              editing={editing}
+              displayValue={form.instagramUrl || dash}
+            >
+              <input
+                value={form.instagramUrl}
+                onChange={(e) => set("instagramUrl", e.target.value)}
+                placeholder={pf.socialIds.instagramPlaceholder}
+                className={fieldInputClass}
+              />
+            </FieldSlot>
 
-          <FormFieldWrapper label={pf.socialIds.konamiUidLabel} error={errors.konamiUid}>
-            <input
-              value={form.konamiUid}
-              onChange={(e) => set("konamiUid", e.target.value.toUpperCase())}
-              placeholder={pf.socialIds.konamiUidPlaceholder}
-              className={`${fieldInputClass} font-mono`}
-            />
-          </FormFieldWrapper>
+            <FieldSlot
+              label={pf.socialIds.konamiUidLabel}
+              error={errors.konamiUid}
+              editing={editing}
+              displayValue={form.konamiUid || dash}
+            >
+              <input
+                value={form.konamiUid}
+                onChange={(e) => set("konamiUid", e.target.value.toUpperCase())}
+                placeholder={pf.socialIds.konamiUidPlaceholder}
+                className={`${fieldInputClass} font-mono`}
+              />
+            </FieldSlot>
+          </div>
         </div>
       </div>
 
@@ -269,21 +444,29 @@ export function ProfileEditForm() {
       <div className="rounded-2xl border border-surface-line bg-surface/60 p-6">
         <h3 className="font-display text-xl font-bold text-ink">{pf.deviceInfo.title}</h3>
         <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <FormFieldWrapper label={pf.deviceInfo.deviceNameLabel}>
+          <FieldSlot
+            label={pf.deviceInfo.deviceNameLabel}
+            editing={editing}
+            displayValue={form.deviceName || dash}
+          >
             <input
               value={form.deviceName}
               onChange={(e) => set("deviceName", e.target.value)}
               placeholder={pf.deviceInfo.deviceNamePlaceholder}
               className={fieldInputClass}
             />
-          </FormFieldWrapper>
-          <FormFieldWrapper label={pf.deviceInfo.deviceModelLabel}>
+          </FieldSlot>
+          <FieldSlot
+            label={pf.deviceInfo.deviceModelLabel}
+            editing={editing}
+            displayValue={form.deviceModel || dash}
+          >
             <input
               value={form.deviceModel}
               onChange={(e) => set("deviceModel", e.target.value)}
               className={fieldInputClass}
             />
-          </FormFieldWrapper>
+          </FieldSlot>
         </div>
       </div>
 
@@ -291,30 +474,61 @@ export function ProfileEditForm() {
       <div className="rounded-2xl border border-surface-line bg-surface/60 p-6">
         <h3 className="font-display text-xl font-bold text-ink">{pf.contactPersonal.title}</h3>
         <div className="mt-5 space-y-5">
-          <FormFieldWrapper
-            label={pf.contactPersonal.phoneLabel}
-            required
-            hint={pf.contactPersonal.phoneHint}
-            error={errors.phoneNumber}
-          >
-            <input
-              value={form.phoneNumber}
-              onChange={(e) => set("phoneNumber", e.target.value)}
-              placeholder="+880171234567"
-              className={fieldInputClass}
-            />
-          </FormFieldWrapper>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FieldSlot
+              label={pf.contactPersonal.phoneLabel}
+              required
+              hint={pf.contactPersonal.phoneHint}
+              error={errors.phoneNumber}
+              editing={editing}
+              displayValue={form.phoneNumber || dash}
+            >
+              <input
+                value={form.phoneNumber}
+                onChange={(e) => set("phoneNumber", e.target.value)}
+                placeholder="+880171234567"
+                className={fieldInputClass}
+              />
+            </FieldSlot>
+
+            <FieldSlot
+              label={pf.contactPersonal.countryLabel}
+              required
+              error={errors.country}
+              editing={editing}
+              displayValue={form.country || dash}
+            >
+              <select value={form.country} onChange={(e) => set("country", e.target.value)} className={fieldInputClass}>
+                <option value="">{pf.contactPersonal.countryPlaceholder}</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </FieldSlot>
+          </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <FormFieldWrapper label={pf.contactPersonal.birthdayLabel} required error={errors.birthday}>
+            <FieldSlot
+              label={pf.contactPersonal.birthdayLabel}
+              required
+              error={errors.birthday}
+              editing={editing}
+              displayValue={form.birthday || dash}
+            >
               <input
                 type="date"
                 value={form.birthday}
                 onChange={(e) => set("birthday", e.target.value)}
                 className={fieldInputClass}
               />
-            </FormFieldWrapper>
-            <FormFieldWrapper label={pf.contactPersonal.bloodGroupLabel}>
+            </FieldSlot>
+            <FieldSlot
+              label={pf.contactPersonal.bloodGroupLabel}
+              editing={editing}
+              displayValue={form.bloodGroup || dash}
+            >
               <select
                 value={form.bloodGroup}
                 onChange={(e) => set("bloodGroup", e.target.value as BloodGroup | "")}
@@ -327,22 +541,15 @@ export function ProfileEditForm() {
                   </option>
                 ))}
               </select>
-            </FormFieldWrapper>
+            </FieldSlot>
           </div>
 
-          <FormFieldWrapper label={pf.contactPersonal.countryLabel} required error={errors.country}>
-            <select value={form.country} onChange={(e) => set("country", e.target.value)} className={fieldInputClass}>
-              <option value="">{pf.contactPersonal.countryPlaceholder}</option>
-              {COUNTRIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </FormFieldWrapper>
-
           <div className="grid gap-5 sm:grid-cols-2">
-            <FormFieldWrapper label={pf.contactPersonal.divisionLabel}>
+            <FieldSlot
+              label={pf.contactPersonal.divisionLabel}
+              editing={editing}
+              displayValue={form.division || dash}
+            >
               <select
                 value={form.division}
                 onChange={(e) => {
@@ -364,8 +571,12 @@ export function ProfileEditForm() {
                   </option>
                 ))}
               </select>
-            </FormFieldWrapper>
-            <FormFieldWrapper label={pf.contactPersonal.districtLabel}>
+            </FieldSlot>
+            <FieldSlot
+              label={pf.contactPersonal.districtLabel}
+              editing={editing}
+              displayValue={form.district || dash}
+            >
               <select
                 value={form.district}
                 onChange={(e) => set("district", e.target.value)}
@@ -379,26 +590,44 @@ export function ProfileEditForm() {
                   </option>
                 ))}
               </select>
-            </FormFieldWrapper>
+            </FieldSlot>
           </div>
 
-          <FormFieldWrapper label={pf.contactPersonal.addressLabel} required error={errors.permanentAddress}>
+          <FieldSlot
+            label={pf.contactPersonal.addressLabel}
+            required
+            error={errors.permanentAddress}
+            editing={editing}
+            multiline
+            displayValue={form.permanentAddress || dash}
+          >
             <textarea
               value={form.permanentAddress}
               onChange={(e) => set("permanentAddress", e.target.value)}
               rows={3}
               className={fieldInputClass}
             />
-          </FormFieldWrapper>
+          </FieldSlot>
 
-          <FormFieldWrapper label={pf.contactPersonal.locationLabel}>
-            <LocationPicker
-              value={form.currentLocation}
-              onChange={(v) => set("currentLocation", v)}
-              geolocateLabel={pf.contactPersonal.geolocateCta}
-              geolocateErrorMessage={pf.contactPersonal.geolocateError}
-            />
-          </FormFieldWrapper>
+          <div>
+            <span className="text-sm font-medium text-ink-soft">{pf.contactPersonal.locationLabel}</span>
+            <div className="mt-1.5">
+              {editing ? (
+                <LocationPicker
+                  value={form.currentLocation}
+                  onChange={(v) => set("currentLocation", v)}
+                  geolocateLabel={pf.contactPersonal.geolocateCta}
+                  geolocateErrorMessage={pf.contactPersonal.geolocateError}
+                />
+              ) : (
+                <p className="rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink">
+                  {form.currentLocation
+                    ? `${form.currentLocation.lat.toFixed(5)}, ${form.currentLocation.lng.toFixed(5)}`
+                    : dash}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -409,93 +638,120 @@ export function ProfileEditForm() {
         <div className="mt-5">
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-semibold text-ink">{pf.workEducation.workTitle}</span>
-            <span className="text-xs text-ink-faint">{pf.workEducation.workMaxNote}</span>
+            {editing ? <span className="text-xs text-ink-faint">{pf.workEducation.workMaxNote}</span> : null}
           </div>
           <div className="mt-3">
-            <RepeatableEntryList<WorkExperienceEntry>
-              items={form.workExperience}
-              onChange={(items) => set("workExperience", items)}
-              max={3}
-              addLabel={pf.workEducation.addWorkCta}
-              removeLabel={pf.workEducation.removeEntry}
-              entryLabel={(i) => `${pf.workEducation.workEntryPrefix}${i + 1}`}
-              emptyEntry={{ workplace: "", jobTitle: "" }}
-              renderEntry={(entry, onEntryChange) => (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <FormFieldWrapper label={pf.workEducation.workplaceLabel}>
-                    <input
-                      value={entry.workplace}
-                      onChange={(e) => onEntryChange({ ...entry, workplace: e.target.value })}
-                      placeholder={pf.workEducation.workplacePlaceholder}
-                      className={fieldInputClass}
-                    />
-                  </FormFieldWrapper>
-                  <FormFieldWrapper label={pf.workEducation.jobTitleLabel}>
-                    <input
-                      value={entry.jobTitle}
-                      onChange={(e) => onEntryChange({ ...entry, jobTitle: e.target.value })}
-                      placeholder={pf.workEducation.jobTitlePlaceholder}
-                      className={fieldInputClass}
-                    />
-                  </FormFieldWrapper>
-                </div>
-              )}
-            />
+            {editing ? (
+              <RepeatableEntryList<WorkExperienceEntry>
+                items={form.workExperience}
+                onChange={(items) => set("workExperience", items)}
+                max={3}
+                addLabel={pf.workEducation.addWorkCta}
+                removeLabel={pf.workEducation.removeEntry}
+                entryLabel={(i) => `${pf.workEducation.workEntryPrefix}${i + 1}`}
+                emptyEntry={{ workplace: "", jobTitle: "" }}
+                renderEntry={(entry, onEntryChange) => (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FormFieldWrapper label={pf.workEducation.workplaceLabel}>
+                      <input
+                        value={entry.workplace}
+                        onChange={(e) => onEntryChange({ ...entry, workplace: e.target.value })}
+                        placeholder={pf.workEducation.workplacePlaceholder}
+                        className={fieldInputClass}
+                      />
+                    </FormFieldWrapper>
+                    <FormFieldWrapper label={pf.workEducation.jobTitleLabel}>
+                      <input
+                        value={entry.jobTitle}
+                        onChange={(e) => onEntryChange({ ...entry, jobTitle: e.target.value })}
+                        placeholder={pf.workEducation.jobTitlePlaceholder}
+                        className={fieldInputClass}
+                      />
+                    </FormFieldWrapper>
+                  </div>
+                )}
+              />
+            ) : form.workExperience.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {form.workExperience.map((entry, i) => (
+                  <div key={i} className="rounded-lg border border-surface-line bg-surface p-4 text-sm">
+                    <p className="font-semibold text-ink">{entry.workplace || dash}</p>
+                    <p className="text-ink-soft">{entry.jobTitle || dash}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink">{dash}</p>
+            )}
           </div>
         </div>
 
         <div className="mt-8">
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-semibold text-ink">{pf.workEducation.educationTitle}</span>
-            <span className="text-xs text-ink-faint">{pf.workEducation.educationMaxNote}</span>
+            {editing ? <span className="text-xs text-ink-faint">{pf.workEducation.educationMaxNote}</span> : null}
           </div>
           <div className="mt-3">
-            <RepeatableEntryList<EducationEntry>
-              items={form.education}
-              onChange={(items) => set("education", items)}
-              max={3}
-              addLabel={pf.workEducation.addEducationCta}
-              removeLabel={pf.workEducation.removeEntry}
-              entryLabel={(i) => `${pf.workEducation.educationEntryPrefix}${i + 1}`}
-              emptyEntry={{ instituteName: "", fieldOfStudy: "", instituteType: "University" }}
-              renderEntry={(entry, onEntryChange) => (
-                <div className="space-y-3">
-                  <FormFieldWrapper label={pf.workEducation.instituteNameLabel}>
-                    <input
-                      value={entry.instituteName}
-                      onChange={(e) => onEntryChange({ ...entry, instituteName: e.target.value })}
-                      placeholder={pf.workEducation.instituteNamePlaceholder}
-                      className={fieldInputClass}
-                    />
-                  </FormFieldWrapper>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <FormFieldWrapper label={pf.workEducation.fieldOfStudyLabel}>
+            {editing ? (
+              <RepeatableEntryList<EducationEntry>
+                items={form.education}
+                onChange={(items) => set("education", items)}
+                max={3}
+                addLabel={pf.workEducation.addEducationCta}
+                removeLabel={pf.workEducation.removeEntry}
+                entryLabel={(i) => `${pf.workEducation.educationEntryPrefix}${i + 1}`}
+                emptyEntry={{ instituteName: "", fieldOfStudy: "", instituteType: "University" }}
+                renderEntry={(entry, onEntryChange) => (
+                  <div className="space-y-3">
+                    <FormFieldWrapper label={pf.workEducation.instituteNameLabel}>
                       <input
-                        value={entry.fieldOfStudy}
-                        onChange={(e) => onEntryChange({ ...entry, fieldOfStudy: e.target.value })}
-                        placeholder={pf.workEducation.fieldOfStudyPlaceholder}
+                        value={entry.instituteName}
+                        onChange={(e) => onEntryChange({ ...entry, instituteName: e.target.value })}
+                        placeholder={pf.workEducation.instituteNamePlaceholder}
                         className={fieldInputClass}
                       />
                     </FormFieldWrapper>
-                    <FormFieldWrapper label={pf.workEducation.instituteTypeLabel}>
-                      <select
-                        value={entry.instituteType}
-                        onChange={(e) =>
-                          onEntryChange({ ...entry, instituteType: e.target.value as EducationEntry["instituteType"] })
-                        }
-                        className={fieldInputClass}
-                      >
-                        {INSTITUTE_TYPES.map((it) => (
-                          <option key={it} value={it}>
-                            {pf.workEducation[INSTITUTE_TYPE_LABEL_KEY[it]]}
-                          </option>
-                        ))}
-                      </select>
-                    </FormFieldWrapper>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <FormFieldWrapper label={pf.workEducation.fieldOfStudyLabel}>
+                        <input
+                          value={entry.fieldOfStudy}
+                          onChange={(e) => onEntryChange({ ...entry, fieldOfStudy: e.target.value })}
+                          placeholder={pf.workEducation.fieldOfStudyPlaceholder}
+                          className={fieldInputClass}
+                        />
+                      </FormFieldWrapper>
+                      <FormFieldWrapper label={pf.workEducation.instituteTypeLabel}>
+                        <select
+                          value={entry.instituteType}
+                          onChange={(e) =>
+                            onEntryChange({ ...entry, instituteType: e.target.value as EducationEntry["instituteType"] })
+                          }
+                          className={fieldInputClass}
+                        >
+                          {INSTITUTE_TYPES.map((it) => (
+                            <option key={it} value={it}>
+                              {pf.workEducation[INSTITUTE_TYPE_LABEL_KEY[it]]}
+                            </option>
+                          ))}
+                        </select>
+                      </FormFieldWrapper>
+                    </div>
                   </div>
-                </div>
-              )}
-            />
+                )}
+              />
+            ) : form.education.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {form.education.map((entry, i) => (
+                  <div key={i} className="rounded-lg border border-surface-line bg-surface p-4 text-sm">
+                    <p className="font-semibold text-ink">{entry.instituteName || dash}</p>
+                    <p className="text-ink-soft">{entry.fieldOfStudy || dash}</p>
+                    <p className="text-xs text-ink-faint">{pf.workEducation[INSTITUTE_TYPE_LABEL_KEY[entry.instituteType]]}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink">{dash}</p>
+            )}
           </div>
         </div>
       </div>
@@ -510,14 +766,20 @@ export function ProfileEditForm() {
           </span>
         </div>
 
-        <div className="mt-5 space-y-2 text-xs text-ink-faint">
-          <p>{pf.documentVerification.levelDescription3}</p>
-          <p>{pf.documentVerification.levelDescription2}</p>
-          <p>{pf.documentVerification.levelDescription1}</p>
-        </div>
+        {editing ? (
+          <div className="mt-5 space-y-2 text-xs text-ink-faint">
+            <p>{pf.documentVerification.levelDescription3}</p>
+            <p>{pf.documentVerification.levelDescription2}</p>
+            <p>{pf.documentVerification.levelDescription1}</p>
+          </div>
+        ) : null}
 
         <div className="mt-5 space-y-5">
-          <FormFieldWrapper label={pf.documentVerification.docTypeLabel}>
+          <FieldSlot
+            label={pf.documentVerification.docTypeLabel}
+            editing={editing}
+            displayValue={documentTypeLabel || dash}
+          >
             <select
               value={form.documentType}
               onChange={(e) => set("documentType", e.target.value as DocumentType | "")}
@@ -534,26 +796,45 @@ export function ProfileEditForm() {
                 </option>
               ))}
             </select>
-          </FormFieldWrapper>
+          </FieldSlot>
 
-          <FileUploadControl
-            label={pf.documentVerification.uploadLabel}
-            value={form.documentDataUrl}
-            onChange={(v) => set("documentDataUrl", v)}
-            uploadLabel={pf.documentVerification.uploadCta}
-            changeLabel={pf.documentVerification.changeCta}
-          />
+          {editing ? (
+            <FileUploadControl
+              label={pf.documentVerification.uploadLabel}
+              value={form.documentDataUrl}
+              onChange={(v) => set("documentDataUrl", v)}
+              uploadLabel={pf.documentVerification.uploadCta}
+              changeLabel={pf.documentVerification.changeCta}
+            />
+          ) : (
+            <PhotoField
+              editing={false}
+              label={pf.documentVerification.uploadLabel}
+              value={form.documentDataUrl}
+              onChange={() => {}}
+              notProvided={dash}
+            />
+          )}
         </div>
       </div>
 
-      {submitted ? <p className="text-sm text-success-ink">{pf.submitSuccessNote}</p> : null}
-
-      <button
-        type="submit"
-        className="w-full rounded-full bg-accent px-6 py-3 font-display font-semibold text-bg transition-transform hover:-translate-y-0.5"
-      >
-        {pf.submitCta}
-      </button>
+      {editing ? (
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={cancelEditing}
+            className="flex-1 rounded-full border border-surface-line-strong px-6 py-3 text-sm font-semibold text-ink-soft transition-colors hover:text-ink"
+          >
+            {pf.cancelCta}
+          </button>
+          <button
+            type="submit"
+            className="flex-1 rounded-full bg-accent px-6 py-3 font-display font-semibold text-bg transition-transform hover:-translate-y-0.5"
+          >
+            {pf.submitCta}
+          </button>
+        </div>
+      ) : null}
     </form>
   );
 }

@@ -340,6 +340,7 @@ export const translations = {
       shared: {
         uploadPhoto: "Upload photo",
         changePhoto: "Change photo",
+        dropHint: "Drag & drop or click to upload",
         dpLabel: "Profile photo",
         coverLabel: "Cover photo",
         viewFullscreen: "View fullscreen",
@@ -449,6 +450,12 @@ export const translations = {
         submitCta: "Submit for verification",
       },
       profileForm: {
+        title: "Profile Details",
+        editCta: "Edit",
+        editingBadge: "Editing",
+        closeEditCta: "Close edit mode",
+        cancelCta: "Cancel",
+        notProvided: "-----",
         verificationLevelLabel: "Verification Level",
         verificationLevelPending: "Pending review",
         accountInfo: {
@@ -893,6 +900,7 @@ export const translations = {
       shared: {
         uploadPhoto: "ছবি আপলোড করুন",
         changePhoto: "ছবি পরিবর্তন করুন",
+        dropHint: "ফাইল টেনে আনুন অথবা ক্লিক করে আপলোড করুন",
         dpLabel: "প্রোফাইল ছবি",
         coverLabel: "কভার ছবি",
         viewFullscreen: "পূর্ণ স্ক্রিনে দেখুন",
@@ -1002,6 +1010,12 @@ export const translations = {
         submitCta: "ভেরিফিকেশনের জন্য জমা দিন",
       },
       profileForm: {
+        title: "প্রোফাইল বিবরণ",
+        editCta: "সম্পাদনা করুন",
+        editingBadge: "সম্পাদনা চলছে",
+        closeEditCta: "সম্পাদনা মোড বন্ধ করুন",
+        cancelCta: "বাতিল",
+        notProvided: "-----",
         verificationLevelLabel: "ভেরিফিকেশন লেভেল",
         verificationLevelPending: "পর্যালোচনাধীন",
         accountInfo: {
