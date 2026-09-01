@@ -460,6 +460,7 @@ export const translations = {
           facebookNameLabel: "Facebook Profile Name",
           facebookNameHint:
             "Your Facebook name will appear publicly after approval. Review usually takes 2-7 days.",
+          coverPhotoLabel: "Cover Photo",
         },
         socialIds: {
           title: "Social & IDs",
@@ -1011,6 +1012,7 @@ export const translations = {
           passwordError: "পাসওয়ার্ড অবশ্যই ৪-১০ অক্ষরের হতে হবে।",
           facebookNameLabel: "ফেসবুক প্রোফাইল নাম",
           facebookNameHint: "অনুমোদনের পর আপনার ফেসবুক নাম সবার জন্য দেখা যাবে। পর্যালোচনায় সাধারণত ২-৭ দিন সময় লাগে।",
+          coverPhotoLabel: "কভার ফটো",
         },
         socialIds: {
           title: "সোশ্যাল ও আইডি",

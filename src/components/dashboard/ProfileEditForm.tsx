@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { getPerson, updatePersonProfile } from "@/lib/mock/communityStore";
+import { addPerson, getPerson, updatePersonProfile } from "@/lib/mock/communityStore";
 import { ImageUploadControl } from "@/components/common/ImageUploadControl";
 import { FileUploadControl } from "@/components/common/FileUploadControl";
 import { LocationPicker } from "@/components/common/LocationPicker";
@@ -56,6 +56,7 @@ const DOCUMENT_TYPE_LABEL_KEY: Record<DocumentType, string> = {
 
 type FormState = {
   dpUrl: string | null;
+  coverUrl: string | null;
   email: string;
   password: string;
   facebookProfileName: string;
@@ -88,6 +89,7 @@ export function ProfileEditForm() {
 
   const [form, setForm] = useState<FormState>(() => ({
     dpUrl: person?.dpUrl ?? null,
+    coverUrl: person?.coverUrl ?? null,
     email: user.email,
     password: "",
     facebookProfileName: person?.facebookProfileName ?? "",
@@ -137,8 +139,9 @@ export function ProfileEditForm() {
     setSubmitted(false);
     if (Object.keys(nextErrors).length > 0) return;
 
-    updatePersonProfile(user.personId, {
+    const patch = {
       dpUrl: form.dpUrl,
+      coverUrl: form.coverUrl,
       facebookProfileName: form.facebookProfileName || undefined,
       facebookUrl: form.facebookUrl,
       instagramUrl: form.instagramUrl || undefined,
@@ -158,7 +161,26 @@ export function ProfileEditForm() {
       documentType: form.documentType || undefined,
       documentDataUrl: form.documentDataUrl ?? undefined,
       verificationLevel: form.documentType ? getVerificationLevelForDocument(form.documentType) : person?.verificationLevel,
-    });
+    };
+
+    // The in-memory Person store resets on a full page reload, so a
+    // signed-up demo user's record can go missing even though their
+    // session (localStorage) survives — recreate it instead of silently
+    // dropping the edit.
+    if (getPerson(user.personId)) {
+      updatePersonProfile(user.personId, patch);
+    } else {
+      addPerson({
+        id: user.personId,
+        name: user.name,
+        clubId: user.club?.id ?? null,
+        clubRole: user.club?.role ?? null,
+        communityId: user.community?.id ?? null,
+        communityRole: user.community?.role ?? null,
+        points: 0,
+        ...patch,
+      });
+    }
     setDpUrl(form.dpUrl);
     updateProfile({ email: form.email });
     setVerificationStatus("pending");
@@ -175,6 +197,7 @@ export function ProfileEditForm() {
         <h3 className="font-display text-xl font-bold text-ink">{pf.accountInfo.title}</h3>
         <div className="mt-5 space-y-5">
           <ImageUploadControl label={t.dashboard.onboarding.photoLabel} value={form.dpUrl} onChange={(v) => set("dpUrl", v)} />
+          <ImageUploadControl label={pf.accountInfo.coverPhotoLabel} value={form.coverUrl} onChange={(v) => set("coverUrl", v)} />
 
           <FormFieldWrapper label={pf.accountInfo.emailLabel} required error={errors.email}>
             <input
