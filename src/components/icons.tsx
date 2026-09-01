@@ -244,3 +244,17 @@ export function CloseIcon({ className, style }: IconProps) {
     </svg>
   );
 }
+
+export function FilterIcon({ className, style }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={style} aria-hidden="true">
+      <path
+        d="M4 5.5h16L14.5 12.8v5.4l-5-1.8v-3.6L4 5.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

@@ -435,6 +435,8 @@ export const translations = {
           "PL means Matches Played, W means Wins, D means Draws, L means Losses, Win% means Win Percentage, GF means Goals For, GA means Goals Against, CS means Clean Sheets, HT means Hat-Tricks, DHT means Double Hat-Tricks, TP means Top Performance, MOTM means Man of the Match, PTS means Total Points, VP means Voluntary Points and is shown in Season 2026 rankings.",
         noResults: "No results match these filters.",
         viewFullRankings: "View full rankings",
+        filtersButton: "Filters",
+        applyFilters: "Apply",
       },
       onboarding: {
         title: "Verify your account",
@@ -888,6 +890,8 @@ export const translations = {
           "PL মানে ম্যাচ খেলেছে, W মানে জয়, D মানে ড্র, L মানে হার, Win% মানে জয়ের হার, GF মানে গোল করেছে, GA মানে গোল হজম করেছে, CS মানে ক্লিন শিট, HT মানে হ্যাট্রিক, DHT মানে ডাবল হ্যাট্রিক, TP মানে টপ পারফরম্যান্স, MOTM মানে ম্যান অফ দ্য ম্যাচ, PTS মানে মোট পয়েন্ট, VP মানে ভলান্টারি পয়েন্ট — সিজন ২০২৬ র‍্যাংকিংয়ে দেখানো হয়।",
         noResults: "এই ফিল্টারে কোনো ফলাফল নেই।",
         viewFullRankings: "সম্পূর্ণ র‍্যাংকিং দেখুন",
+        filtersButton: "ফিল্টার",
+        applyFilters: "প্রয়োগ করুন",
       },
       onboarding: {
         title: "আপনার অ্যাকাউন্ট ভেরিফাই করুন",
