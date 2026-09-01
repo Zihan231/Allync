@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { LatLng } from "@/lib/mock/types";
@@ -26,6 +26,18 @@ function ClickHandler({ onPick }: { onPick: (latlng: LatLng) => void }) {
   return null;
 }
 
+// MapContainer's center/zoom props only apply on initial mount, so panning to
+// a freshly geolocated point requires driving the map instance imperatively.
+function FlyTo({ target }: { target: LatLng | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (target) {
+      map.flyTo([target.lat, target.lng], 15);
+    }
+  }, [target, map]);
+  return null;
+}
+
 export default function LocationPickerInner({
   value,
   onChange,
@@ -38,6 +50,7 @@ export default function LocationPickerInner({
   geolocateErrorMessage: string;
 }) {
   const [geoError, setGeoError] = useState(false);
+  const [flyTarget, setFlyTarget] = useState<LatLng | null>(null);
   const center = value ?? DEFAULT_CENTER;
 
   function usePreciseLocation() {
@@ -47,7 +60,11 @@ export default function LocationPickerInner({
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      (pos) => onChange({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (pos) => {
+        const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        onChange(here);
+        setFlyTarget(here);
+      },
       () => setGeoError(true)
     );
   }
@@ -61,6 +78,7 @@ export default function LocationPickerInner({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <ClickHandler onPick={onChange} />
+          <FlyTo target={flyTarget} />
           {value ? <Marker position={[value.lat, value.lng]} /> : null}
         </MapContainer>
       </div>
