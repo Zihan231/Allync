@@ -1,5 +1,57 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
+function sanitizeDigits(raw: string) {
+  return raw.replace(/[^0-9]/g, "");
+}
+
+function NumberField({
+  value,
+  min,
+  max,
+  align,
+  onCommit,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  align: "left" | "right";
+  onCommit: (n: number) => void;
+}) {
+  const [text, setText] = useState(String(value));
+
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+
+  function commit() {
+    const digits = sanitizeDigits(text);
+    const n = digits === "" ? min : Math.min(max, Math.max(min, parseInt(digits, 10)));
+    setText(String(n));
+    onCommit(n);
+  }
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      value={text}
+      onChange={(e) => setText(sanitizeDigits(e.target.value))}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.currentTarget.blur();
+        }
+      }}
+      className={`w-20 rounded-md border border-surface-line-strong bg-surface px-2 py-1 font-mono text-[11px] text-ink outline-none focus:border-accent ${
+        align === "right" ? "text-right" : "text-left"
+      }`}
+    />
+  );
+}
+
 export function DualRangeSlider({
   label,
   min,
@@ -54,9 +106,22 @@ export function DualRangeSlider({
           style={{ zIndex: 4 }}
         />
       </div>
-      <div className="mt-1.5 flex items-center justify-between font-mono text-[11px] text-ink-faint">
-        <span>{lo.toLocaleString()}</span>
-        <span>{hi.toLocaleString()}</span>
+      <div className="mt-2.5 flex items-center justify-between gap-3">
+        <NumberField
+          value={lo}
+          min={min}
+          max={hi}
+          align="left"
+          onCommit={(n) => onChange([n, hi])}
+        />
+        <span className="text-ink-faint">–</span>
+        <NumberField
+          value={hi}
+          min={lo}
+          max={max}
+          align="right"
+          onCommit={(n) => onChange([lo, n])}
+        />
       </div>
     </div>
   );
