@@ -41,6 +41,8 @@ export type Person = {
   birthday?: string;
   bloodGroup?: BloodGroup;
   country?: string;
+  division?: string;
+  district?: string;
   permanentAddress?: string;
   currentLocation?: LatLng | null;
   workExperience?: WorkExperienceEntry[];

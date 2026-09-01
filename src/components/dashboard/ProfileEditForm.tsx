@@ -10,6 +10,7 @@ import { LocationPicker } from "@/components/common/LocationPicker";
 import { FormFieldWrapper, fieldInputClass } from "./FormFieldWrapper";
 import { RepeatableEntryList } from "./RepeatableEntryList";
 import { COUNTRIES } from "@/lib/countries";
+import { BD_DIVISIONS, BD_DISTRICTS_BY_DIVISION, type BdDivision } from "@/lib/bangladeshLocations";
 import {
   isValidPasswordLength,
   isValidKonamiUid,
@@ -67,6 +68,8 @@ type FormState = {
   birthday: string;
   bloodGroup: BloodGroup | "";
   country: string;
+  division: string;
+  district: string;
   permanentAddress: string;
   currentLocation: LatLng | null;
   workExperience: WorkExperienceEntry[];
@@ -97,6 +100,8 @@ export function ProfileEditForm() {
     birthday: person?.birthday ?? "",
     bloodGroup: person?.bloodGroup ?? "",
     country: person?.country ?? "",
+    division: person?.division ?? "",
+    district: person?.district ?? "",
     permanentAddress: person?.permanentAddress ?? "",
     currentLocation: person?.currentLocation ?? null,
     workExperience: person?.workExperience ?? [],
@@ -144,6 +149,8 @@ export function ProfileEditForm() {
       birthday: form.birthday,
       bloodGroup: form.bloodGroup || undefined,
       country: form.country,
+      division: form.division || undefined,
+      district: form.district || undefined,
       permanentAddress: form.permanentAddress,
       currentLocation: form.currentLocation,
       workExperience: form.workExperience,
@@ -310,6 +317,47 @@ export function ProfileEditForm() {
               ))}
             </select>
           </FormFieldWrapper>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormFieldWrapper label={pf.contactPersonal.divisionLabel}>
+              <select
+                value={form.division}
+                onChange={(e) => {
+                  const division = e.target.value;
+                  setForm((f) => ({
+                    ...f,
+                    division,
+                    district: BD_DISTRICTS_BY_DIVISION[division as BdDivision]?.includes(f.district)
+                      ? f.district
+                      : "",
+                  }));
+                }}
+                className={fieldInputClass}
+              >
+                <option value="">{pf.contactPersonal.divisionPlaceholder}</option>
+                {BD_DIVISIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </FormFieldWrapper>
+            <FormFieldWrapper label={pf.contactPersonal.districtLabel}>
+              <select
+                value={form.district}
+                onChange={(e) => set("district", e.target.value)}
+                disabled={!form.division}
+                className={fieldInputClass}
+              >
+                <option value="">{pf.contactPersonal.districtPlaceholder}</option>
+                {(BD_DISTRICTS_BY_DIVISION[form.division as BdDivision] ?? []).map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </FormFieldWrapper>
+          </div>
 
           <FormFieldWrapper label={pf.contactPersonal.addressLabel} required error={errors.permanentAddress}>
             <textarea
