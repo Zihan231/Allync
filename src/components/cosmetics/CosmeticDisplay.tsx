@@ -47,23 +47,24 @@ export function ThemedCoverArtwork({
     return <CoverPhoto coverUrl={coverUrl} name={name} className={className} />;
   }
 
-  // Interactive View Mode Switch: Toggle between Theme Stage and Cover Photo
+  // Interactive View Mode Switch: Responsive Toggle between Theme Stage and Cover Photo
   const viewToggle = (
-    <div className="absolute top-4 right-4 z-20 flex items-center rounded-full border border-white/20 bg-bg/90 p-1 shadow-2xl backdrop-blur-md">
+    <div className="absolute top-2.5 right-2.5 sm:top-4 sm:right-6 z-20 flex items-center rounded-full border border-white/20 bg-bg/90 p-0.5 sm:p-1 shadow-2xl backdrop-blur-md">
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           setViewMode("theme");
         }}
-        className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-mono font-bold transition-all ${
+        className={`flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-[11px] font-mono font-bold transition-all ${
           viewMode === "theme"
             ? "bg-accent text-bg shadow-md"
             : "text-ink-soft hover:text-ink"
         }`}
       >
         <span>✨</span>
-        <span>Theme Stage</span>
+        <span className="hidden sm:inline">Theme Stage</span>
+        <span className="sm:hidden">Stage</span>
       </button>
       <button
         type="button"
@@ -71,14 +72,15 @@ export function ThemedCoverArtwork({
           e.stopPropagation();
           setViewMode("photo");
         }}
-        className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-mono font-bold transition-all ${
+        className={`flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-[11px] font-mono font-bold transition-all ${
           viewMode === "photo"
             ? "bg-accent text-bg shadow-md"
             : "text-ink-soft hover:text-ink"
         }`}
       >
         <span>📷</span>
-        <span>Cover Photo</span>
+        <span className="hidden sm:inline">Cover Photo</span>
+        <span className="sm:hidden">Cover</span>
       </button>
     </div>
   );
@@ -145,8 +147,8 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute bottom-12 left-[45%] h-5 w-5 text-amber-200 opacity-80 animate-pulse">✦</div>
 
         {/* Theme Title Watermark */}
-        <div className="pointer-events-none absolute top-4 left-6 flex items-center gap-2">
-          <span className="font-mono text-[11px] font-black uppercase tracking-[0.25em] bg-gradient-to-r from-rose-300 via-cyan-200 to-amber-200 bg-clip-text text-transparent animate-rainbow-flow drop-shadow-[0_0_12px_rgba(255,0,128,0.8)]">
+        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
+          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate bg-gradient-to-r from-rose-300 via-cyan-200 to-amber-200 bg-clip-text text-transparent animate-rainbow-flow drop-shadow-[0_0_12px_rgba(255,0,128,0.8)]">
             ✦ CELESTIAL VOID // MYTHIC STAGE ✦
           </span>
         </div>
@@ -202,9 +204,9 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute bottom-16 right-[40%] h-4 w-4 rotate-45 border border-amber-300 bg-amber-200/60 shadow-[0_0_10px_#ffd700] animate-pulse" />
 
         {/* Theme Title Watermark */}
-        <div className="pointer-events-none absolute top-4 left-6 flex items-center gap-2">
-          <span className="font-mono text-[11px] font-black uppercase tracking-[0.25em] bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 bg-clip-text text-transparent animate-gold-radiance drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]">
-            ★ ALLYNQ SOVEREIGN GOLD // 24K IMPERIAL EDITION ★
+        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
+          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 bg-clip-text text-transparent animate-gold-radiance drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]">
+            ★ ALLYNQ SOVEREIGN GOLD // 24K ★
           </span>
         </div>
 
@@ -252,9 +254,9 @@ export function ThemedCoverArtwork({
         </svg>
 
         {/* HUD Data Telemetry Overlay */}
-        <div className="pointer-events-none absolute top-4 left-6 flex items-center gap-2">
-          <span className="font-mono text-[11px] font-black uppercase tracking-[0.25em] text-rose-300 drop-shadow-[0_0_10px_#ff007f]">
-            ⚡ NIGHT CITY // CYBERPUNK 2077 // OVERDRIVE ⚡
+        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
+          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate text-rose-300 drop-shadow-[0_0_10px_#ff007f]">
+            ⚡ NIGHT CITY // CYBERPUNK 2077 ⚡
           </span>
         </div>
 
@@ -296,8 +298,8 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute top-16 right-[45%] h-2 w-2 rounded-full bg-yellow-300 shadow-[0_0_8px_#ffd700] animate-pulse" />
 
         {/* Theme Title Watermark */}
-        <div className="pointer-events-none absolute top-4 left-6 flex items-center gap-2">
-          <span className="font-mono text-[11px] font-black uppercase tracking-[0.25em] text-rose-300 drop-shadow-[0_0_10px_#ff5470]">
+        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
+          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate text-rose-300 drop-shadow-[0_0_10px_#ff5470]">
             ◆ BLOOD MOON // INFERNAL CRUCIBLE ◆
           </span>
         </div>
@@ -340,8 +342,8 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute top-20 right-[35%] h-3 w-3 rotate-45 border border-cyan-200 bg-cyan-100/60 shadow-[0_0_8px_#00f5ff] animate-pulse" />
 
         {/* Theme Title Watermark */}
-        <div className="pointer-events-none absolute top-4 left-6 flex items-center gap-2">
-          <span className="font-mono text-[11px] font-black uppercase tracking-[0.25em] text-cyan-200 drop-shadow-[0_0_10px_#00f5ff]">
+        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
+          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate text-cyan-200 drop-shadow-[0_0_10px_#00f5ff]">
             ◆ GLACIAL CRYO-FROST // SUB-ZERO ◆
           </span>
         </div>
@@ -379,8 +381,8 @@ export function ThemedCoverArtwork({
         </svg>
 
         {/* Theme Title Watermark */}
-        <div className="pointer-events-none absolute top-4 left-6 flex items-center gap-2">
-          <span className="font-mono text-[11px] font-black uppercase tracking-[0.25em] text-emerald-300 drop-shadow-[0_0_10px_#3fbf7f]">
+        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
+          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate text-emerald-300 drop-shadow-[0_0_10px_#3fbf7f]">
             ▲ CHAMPIONS ARENA // NIGHT FIXTURE ▲
           </span>
         </div>
@@ -411,8 +413,8 @@ export function ThemedCoverArtwork({
         <circle cx="50%" cy="40%" r="120" fill="none" stroke="#4c8dff" strokeWidth="1.5" strokeDasharray="8 6" />
         <circle cx="50%" cy="40%" r="180" fill="none" stroke="#00f5ff" strokeWidth="0.75" />
       </svg>
-      <div className="pointer-events-none absolute top-4 left-6 flex items-center gap-2">
-        <span className="font-mono text-[11px] font-black uppercase tracking-[0.25em] text-blue-300 drop-shadow-[0_0_8px_#4c8dff]">
+      <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
+        <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate text-blue-300 drop-shadow-[0_0_8px_#4c8dff]">
           ▲ DEEP CYBER ABYSS // OCEANIC STAGE ▲
         </span>
       </div>
@@ -723,22 +725,35 @@ export function CosmeticAvatarFrame({
 }) {
   if (!frame) {
     return (
-      <div className="rounded-full border-4 border-bg bg-surface shadow-md">
+      <div className="inline-flex w-fit shrink-0 items-center justify-center rounded-full border-4 border-bg bg-surface shadow-md">
         <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
       </div>
     );
   }
 
+  // Calculate scale factor for orbit particles so they scale with avatar size
+  const orbitScale =
+    size === "sm"
+      ? "scale-[0.32]"
+      : size === "md"
+      ? "scale-[0.5]"
+      : size === "lg"
+      ? "scale-[0.72]"
+      : "scale-[0.85] sm:scale-100";
+
+  const paddingClass =
+    size === "sm" ? "p-1.5" : size === "md" ? "p-2.5" : "p-3 sm:p-4";
+
   // --- 1. MYTHIC FRAME (Celestial Void Singularity - High-Speed Dual Vortex + 4 Orbiting Satellites) ---
   if (frame.id === "frame-void-singularity" || frame.rarity === "mythic") {
     return (
-      <div className="relative flex items-center justify-center p-4 group">
+      <div className={`relative inline-flex w-fit shrink-0 items-center justify-center ${paddingClass} group`}>
         {/* Outer Expanding Supernova Shockwave */}
-        <div className="pointer-events-none absolute -inset-4 rounded-full border-2 border-rose-400/90 animate-shockwave" />
+        <div className="pointer-events-none absolute -inset-2 sm:-inset-4 rounded-full border-2 border-rose-400/90 animate-shockwave" />
 
         {/* High-Speed Outer Clockwise Vortex Ring (3.5s) */}
         <div
-          className="pointer-events-none absolute -inset-3 rounded-full animate-vortex-spin-fast opacity-100 blur-[1px]"
+          className="pointer-events-none absolute -inset-1.5 sm:-inset-3 rounded-full animate-vortex-spin-fast opacity-100 blur-[1px]"
           style={{
             background:
               "conic-gradient(from 0deg, #ff007f 0%, #00f5ff 25%, #ffd700 50%, #a855f7 75%, #ff007f 100%)",
@@ -747,7 +762,7 @@ export function CosmeticAvatarFrame({
 
         {/* High-Speed Inner Counter-Clockwise Vortex Ring (2.8s) */}
         <div
-          className="pointer-events-none absolute -inset-1.5 rounded-full animate-vortex-spin-reverse-fast opacity-95"
+          className="pointer-events-none absolute -inset-1 sm:-inset-1.5 rounded-full animate-vortex-spin-reverse-fast opacity-95"
           style={{
             background:
               "conic-gradient(from 180deg, #00f5ff 0%, transparent 35%, #ff007f 65%, transparent 100%)",
@@ -755,7 +770,7 @@ export function CosmeticAvatarFrame({
         />
 
         {/* 4 DYNAMIC ORBITING SATELLITE PARTICLES (Continuous Circular Motion) */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className={`pointer-events-none absolute inset-0 flex items-center justify-center ${orbitScale} origin-center`}>
           <div className="absolute h-3.5 w-3.5 rounded-full bg-cyan-300 shadow-[0_0_16px_#00f5ff] animate-orbit-1" />
           <div className="absolute h-3.5 w-3.5 rounded-full bg-rose-400 shadow-[0_0_16px_#ff007f] animate-orbit-2" />
           <div className="absolute h-3.5 w-3.5 rounded-full bg-amber-300 shadow-[0_0_16px_#ffd700] animate-orbit-3" />
@@ -773,13 +788,13 @@ export function CosmeticAvatarFrame({
   // --- 2. LEGENDARY FRAME 1 (Solar Phoenix Radiant Halo - Flaming Corona + Orbiting Sparks) ---
   if (frame.id === "frame-solar-phoenix") {
     return (
-      <div className="relative flex items-center justify-center p-4 group">
+      <div className={`relative inline-flex w-fit shrink-0 items-center justify-center ${paddingClass} group`}>
         {/* Outer Solar Flare Shockwave */}
-        <div className="pointer-events-none absolute -inset-4 rounded-full border-2 border-amber-400/90 animate-shockwave" />
+        <div className="pointer-events-none absolute -inset-2 sm:-inset-4 rounded-full border-2 border-amber-400/90 animate-shockwave" />
 
         {/* High-Heat Flaming Core */}
         <div
-          className="pointer-events-none absolute -inset-3 rounded-full animate-inferno-flames opacity-100 blur-[2px]"
+          className="pointer-events-none absolute -inset-1.5 sm:-inset-3 rounded-full animate-inferno-flames opacity-100 blur-[2px]"
           style={{
             background:
               "radial-gradient(circle, rgba(255,107,74,1) 0%, rgba(224,168,60,0.85) 50%, transparent 80%)",
@@ -793,7 +808,7 @@ export function CosmeticAvatarFrame({
         />
 
         {/* Orbiting Solar Sparks */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className={`pointer-events-none absolute inset-0 flex items-center justify-center ${orbitScale} origin-center`}>
           <div className="absolute h-3.5 w-3.5 rounded-full bg-amber-300 shadow-[0_0_14px_#ffd700] animate-orbit-1" />
           <div className="absolute h-3.5 w-3.5 rounded-full bg-orange-400 shadow-[0_0_14px_#ff6b4a] animate-orbit-3" />
         </div>
@@ -808,13 +823,13 @@ export function CosmeticAvatarFrame({
   // --- 3. LEGENDARY FRAME 2 (Crown of Kings 24K Gold - Rotating Corona & Cardinal Jewels) ---
   if (frame.id === "frame-royal-gold" || frame.rarity === "legendary") {
     return (
-      <div className="relative flex items-center justify-center p-4 group">
+      <div className={`relative inline-flex w-fit shrink-0 items-center justify-center ${paddingClass} group`}>
         {/* Expanding Gold Shockwave Ring */}
-        <div className="pointer-events-none absolute -inset-4 rounded-full border-2 border-amber-300/90 animate-shockwave" />
+        <div className="pointer-events-none absolute -inset-2 sm:-inset-4 rounded-full border-2 border-amber-300/90 animate-shockwave" />
 
         {/* Radiant 24K Gold Sunburst Halo */}
         <div
-          className="pointer-events-none absolute -inset-3 rounded-full animate-gold-radiance opacity-100 blur-[2px]"
+          className="pointer-events-none absolute -inset-1.5 sm:-inset-3 rounded-full animate-gold-radiance opacity-100 blur-[2px]"
           style={{
             background:
               "radial-gradient(circle, rgba(255,215,0,0.95) 0%, rgba(217,165,68,0.5) 65%, transparent 100%)",
@@ -823,12 +838,12 @@ export function CosmeticAvatarFrame({
 
         {/* High-Speed Rotating 24K Gilded Dashed Ring */}
         <div
-          className="pointer-events-none absolute -inset-1.5 rounded-full border-2 border-amber-300 shadow-[0_0_26px_rgba(255,215,0,1)] animate-vortex-spin-fast"
+          className="pointer-events-none absolute -inset-1 sm:-inset-1.5 rounded-full border-2 border-amber-300 shadow-[0_0_26px_rgba(255,215,0,1)] animate-vortex-spin-fast"
           style={{ borderStyle: "dashed" }}
         />
 
         {/* Orbiting Diamond Jewels */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className={`pointer-events-none absolute inset-0 flex items-center justify-center ${orbitScale} origin-center`}>
           <div className="absolute h-3 w-3 rotate-45 bg-amber-200 border border-amber-400 shadow-[0_0_14px_#ffd700] animate-orbit-2" />
           <div className="absolute h-3 w-3 rotate-45 bg-amber-200 border border-amber-400 shadow-[0_0_14px_#ffd700] animate-orbit-4" />
         </div>
@@ -843,19 +858,19 @@ export function CosmeticAvatarFrame({
   // --- 4. EPIC FRAME 1 (Cyberpunk Matrix Glitch - Matrix Flash & Scanner Radar) ---
   if (frame.id === "frame-cyber-glitch") {
     return (
-      <div className="relative flex items-center justify-center p-3.5 group">
+      <div className={`relative inline-flex w-fit shrink-0 items-center justify-center ${paddingClass} group`}>
         <div
-          className="pointer-events-none absolute -inset-2.5 rounded-full animate-cyber-flash opacity-100"
+          className="pointer-events-none absolute -inset-1.5 sm:-inset-2.5 rounded-full animate-cyber-flash opacity-100"
           style={{
             background:
               "radial-gradient(circle, rgba(168,85,247,0.85) 0%, rgba(0,245,255,0.6) 60%, transparent 85%)",
           }}
         />
         {/* High-Speed Cyan Scanner Radar */}
-        <div className="pointer-events-none absolute -inset-1 rounded-full border-2 border-purple-400 shadow-[0_0_22px_rgba(168,85,247,1)] animate-vortex-spin-fast" />
+        <div className="pointer-events-none absolute -inset-0.5 sm:-inset-1 rounded-full border-2 border-purple-400 shadow-[0_0_22px_rgba(168,85,247,1)] animate-vortex-spin-fast" />
 
         {/* Orbiting Cyber Data Bits */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className={`pointer-events-none absolute inset-0 flex items-center justify-center ${orbitScale} origin-center`}>
           <div className="absolute h-2.5 w-2.5 bg-cyan-300 shadow-[0_0_12px_#00f5ff] animate-orbit-1" />
           <div className="absolute h-2.5 w-2.5 bg-purple-300 shadow-[0_0_12px_#a855f7] animate-orbit-3" />
         </div>
@@ -870,20 +885,20 @@ export function CosmeticAvatarFrame({
   // --- 5. EPIC FRAME 2 (Infernal Dragon Blazecore - Roaring Flames & Rising Embers) ---
   if (frame.id === "frame-inferno" || frame.rarity === "epic") {
     return (
-      <div className="relative flex items-center justify-center p-3.5 group">
+      <div className={`relative inline-flex w-fit shrink-0 items-center justify-center ${paddingClass} group`}>
         <div
-          className="pointer-events-none absolute -inset-2.5 rounded-full animate-inferno-flames opacity-100 blur-[2px]"
+          className="pointer-events-none absolute -inset-1.5 sm:-inset-2.5 rounded-full animate-inferno-flames opacity-100 blur-[2px]"
           style={{
             background:
               "radial-gradient(circle, rgba(255,84,112,1) 0%, rgba(255,107,74,0.7) 60%, transparent 100%)",
           }}
         />
         <div
-          className="pointer-events-none absolute -inset-1 rounded-full border-2 border-rose-400 shadow-[0_0_26px_rgba(255,84,112,1)] animate-vortex-spin-fast"
+          className="pointer-events-none absolute -inset-0.5 sm:-inset-1 rounded-full border-2 border-rose-400 shadow-[0_0_26px_rgba(255,84,112,1)] animate-vortex-spin-fast"
           style={{ borderStyle: "dashed" }}
         />
-        <div className="pointer-events-none absolute -top-2.5 h-4 w-4 rounded-full bg-rose-400 shadow-[0_0_16px_#ff5470] animate-bounce" />
-        <div className="pointer-events-none absolute -bottom-2.5 h-3.5 w-3.5 rounded-full bg-orange-400 shadow-[0_0_14px_#ff6b4a] animate-pulse" />
+        <div className="pointer-events-none absolute -top-2 h-3 sm:h-4 w-3 sm:w-4 rounded-full bg-rose-400 shadow-[0_0_16px_#ff5470] animate-bounce" />
+        <div className="pointer-events-none absolute -bottom-2 h-2.5 sm:h-3.5 w-2.5 sm:w-3.5 rounded-full bg-orange-400 shadow-[0_0_14px_#ff6b4a] animate-pulse" />
 
         <div className="relative rounded-full border-2 border-rose-500 bg-bg p-0.5 shadow-[0_0_24px_rgba(255,84,112,0.95)] transition-transform duration-300 group-hover:scale-105">
           <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
@@ -895,9 +910,9 @@ export function CosmeticAvatarFrame({
   // --- 6. RARE FRAME (Emerald Overdrive - Pitch Floodlight & Radar Sweep) ---
   if (frame.id === "frame-emerald-edge" || frame.rarity === "rare") {
     return (
-      <div className="relative flex items-center justify-center p-3 group">
+      <div className={`relative inline-flex w-fit shrink-0 items-center justify-center ${paddingClass} group`}>
         <div
-          className="pointer-events-none absolute -inset-2 rounded-full animate-stadium-floodlight opacity-100"
+          className="pointer-events-none absolute -inset-1.5 sm:-inset-2 rounded-full animate-stadium-floodlight opacity-100"
           style={{
             background: "radial-gradient(circle, rgba(63,191,127,0.85) 0%, rgba(0,255,135,0.45) 55%, transparent 75%)",
           }}
@@ -912,7 +927,7 @@ export function CosmeticAvatarFrame({
 
   // --- 7. COMMON FRAME (Cyber Aegis) ---
   return (
-    <div className="relative flex items-center justify-center p-2.5 group">
+    <div className={`relative inline-flex w-fit shrink-0 items-center justify-center ${paddingClass} group`}>
       <div
         className="pointer-events-none absolute inset-0 rounded-full border-2 shadow-[0_0_18px_rgba(76,141,255,0.85)] animate-halo-expand"
         style={{ borderColor: frame.color }}
@@ -934,148 +949,148 @@ export function CosmeticThemeAmbient({
 }) {
   if (!theme) {
     return (
-      <>
-        <div className="glow-gold pointer-events-none absolute left-1/2 top-0 -z-10 h-[500px] w-[500px] -translate-x-1/2 blur-3xl opacity-50" />
-        <div className="glow-blue pointer-events-none absolute right-0 top-32 -z-10 h-[380px] w-[380px] blur-3xl opacity-40" />
-      </>
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div className="glow-gold pointer-events-none absolute left-1/2 top-0 h-[450px] w-[450px] -translate-x-1/2 blur-3xl opacity-50" />
+        <div className="glow-blue pointer-events-none absolute right-0 top-32 h-[350px] w-[350px] blur-3xl opacity-40" />
+      </div>
     );
   }
 
   // 1. Cosmic Hyper-Nebula (Mythic)
   if (theme.id === "theme-celestial-nebula" || theme.rarity === "mythic") {
     return (
-      <>
-        <div className="bg-stars-pattern pointer-events-none fixed inset-0 -z-20 opacity-85 animate-cosmic-stars" />
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div className="bg-stars-pattern pointer-events-none absolute inset-0 opacity-85 animate-cosmic-stars" />
         <div
-          className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[750px] w-[750px] -translate-x-1/2 blur-[120px] animate-cosmic-drift opacity-95"
+          className="pointer-events-none absolute left-1/2 top-0 h-[700px] w-[700px] -translate-x-1/2 blur-[120px] animate-cosmic-drift opacity-95"
           style={{
             background:
               "radial-gradient(circle, rgba(139,127,224,0.65) 0%, rgba(255,0,128,0.45) 45%, transparent 75%)",
           }}
         />
         <div
-          className="pointer-events-none absolute right-0 top-16 -z-10 h-[600px] w-[600px] blur-[110px] opacity-90"
+          className="pointer-events-none absolute right-0 top-16 h-[500px] w-[500px] blur-[110px] opacity-90"
           style={{
             background:
               "radial-gradient(circle, rgba(0,245,255,0.5) 0%, rgba(139,127,224,0.3) 50%, transparent 70%)",
           }}
         />
         <div
-          className="pointer-events-none absolute left-0 top-64 -z-10 h-[550px] w-[550px] blur-[100px] opacity-80"
+          className="pointer-events-none absolute left-0 top-64 h-[450px] w-[450px] blur-[100px] opacity-80"
           style={{
             background:
               "radial-gradient(circle, rgba(255,84,112,0.45) 0%, transparent 65%)",
           }}
         />
-      </>
+      </div>
     );
   }
 
   // 2. Cyberpunk 2077 Night City (Legendary)
   if (theme.id === "theme-cyberpunk-night") {
     return (
-      <>
-        <div className="bg-cyber-grid pointer-events-none fixed inset-0 -z-20 opacity-75" />
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div className="bg-cyber-grid pointer-events-none absolute inset-0 opacity-75" />
         <div
-          className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[700px] w-[700px] -translate-x-1/2 blur-[110px] opacity-95"
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] opacity-95"
           style={{
             background:
               "radial-gradient(circle, rgba(255,0,128,0.6) 0%, rgba(0,245,255,0.4) 50%, transparent 75%)",
           }}
         />
         <div
-          className="pointer-events-none absolute right-0 top-24 -z-10 h-[500px] w-[500px] blur-[100px] opacity-85"
+          className="pointer-events-none absolute right-0 top-24 h-[450px] w-[450px] blur-[100px] opacity-85"
           style={{
             background:
               "radial-gradient(circle, rgba(0,245,255,0.55) 0%, transparent 70%)",
           }}
         />
-      </>
+      </div>
     );
   }
 
   // 3. 24K Sovereign Solar Gold (Legendary)
   if (theme.id === "theme-allynq-gold" || theme.rarity === "legendary") {
     return (
-      <>
-        <div className="bg-honeycomb pointer-events-none fixed inset-0 -z-20 opacity-90" />
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div className="bg-honeycomb pointer-events-none absolute inset-0 opacity-90" />
         <div
-          className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[720px] w-[720px] -translate-x-1/2 blur-[110px] animate-gold-radiance opacity-95"
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] animate-gold-radiance opacity-95"
           style={{
             background:
               "radial-gradient(circle, rgba(255,215,0,0.55) 0%, rgba(217,165,68,0.4) 50%, transparent 75%)",
           }}
         />
         <div
-          className="pointer-events-none absolute right-0 top-24 -z-10 h-[500px] w-[500px] blur-[100px] opacity-85"
+          className="pointer-events-none absolute right-0 top-24 h-[450px] w-[450px] blur-[100px] opacity-85"
           style={{
             background:
               "radial-gradient(circle, rgba(255,183,3,0.5) 0%, rgba(217,165,68,0.2) 60%, transparent 70%)",
           }}
         />
-      </>
+      </div>
     );
   }
 
   // 4. Glacial Cryo-Frost (Epic)
   if (theme.id === "theme-frostbite") {
     return (
-      <>
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
         <div
-          className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[680px] w-[680px] -translate-x-1/2 blur-[110px] animate-pulse-glow opacity-90"
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] animate-pulse-glow opacity-90"
           style={{
             background:
               "radial-gradient(circle, rgba(0,245,255,0.6) 0%, rgba(255,255,255,0.25) 45%, transparent 75%)",
           }}
         />
         <div
-          className="pointer-events-none absolute right-0 top-28 -z-10 h-[480px] w-[480px] blur-[90px] opacity-80"
+          className="pointer-events-none absolute right-0 top-28 h-[450px] w-[450px] blur-[90px] opacity-80"
           style={{
             background: "radial-gradient(circle, rgba(0,245,255,0.45) 0%, transparent 70%)",
           }}
         />
-      </>
+      </div>
     );
   }
 
   // 5. Crimson Blood Moon (Epic)
   if (theme.id === "theme-crimson" || theme.rarity === "epic") {
     return (
-      <>
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
         <div
-          className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[700px] w-[700px] -translate-x-1/2 blur-[110px] animate-flame-flicker opacity-95"
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] animate-flame-flicker opacity-95"
           style={{
             background:
               "radial-gradient(circle, rgba(255,84,112,0.6) 0%, rgba(255,107,74,0.3) 50%, transparent 70%)",
           }}
         />
         <div
-          className="pointer-events-none absolute right-0 top-28 -z-10 h-[480px] w-[480px] blur-[100px] opacity-85"
+          className="pointer-events-none absolute right-0 top-28 h-[450px] w-[450px] blur-[100px] opacity-85"
           style={{
             background:
               "radial-gradient(circle, rgba(255,84,112,0.45) 0%, transparent 65%)",
           }}
         />
-      </>
+      </div>
     );
   }
 
   // Rare / Common themes
   return (
-    <>
+    <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
       <div
-        className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[620px] w-[620px] -translate-x-1/2 blur-3xl opacity-90"
+        className="pointer-events-none absolute left-1/2 top-0 h-[580px] w-[580px] -translate-x-1/2 blur-3xl opacity-90"
         style={{
           background: `radial-gradient(circle, ${theme.color}60 0%, ${theme.secondaryColor ?? theme.color}25 50%, transparent 70%)`,
         }}
       />
       <div
-        className="pointer-events-none absolute right-0 top-28 -z-10 h-[440px] w-[440px] blur-3xl opacity-80"
+        className="pointer-events-none absolute right-0 top-28 h-[400px] w-[400px] blur-3xl opacity-80"
         style={{
           background: `radial-gradient(circle, ${theme.secondaryColor ?? theme.color}50 0%, transparent 70%)`,
         }}
       />
-    </>
+    </div>
   );
 }
 
@@ -1098,33 +1113,44 @@ export function ThemedProfileHeroBanner({
     : theme.rarity === "legendary"
     ? "theme-card-legendary"
     : theme.id === "theme-frostbite"
-    ? "theme-card-epic-frost"
+    ? "theme-card-frost"
     : theme.rarity === "epic"
-    ? "theme-card-epic-fire"
-    : "theme-card-rare";
+    ? "theme-card-crimson"
+    : theme.id === "theme-emerald"
+    ? "theme-card-emerald"
+    : "theme-card-ocean";
 
   return (
-    <div className={`relative overflow-hidden rounded-3xl border transition-all duration-500 shadow-2xl ${cardClass}`}>
-      {/* Holographic light sweep ray across banner */}
-      <div className="pointer-events-none absolute -inset-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-holographic-sweep" />
+    <div
+      className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border transition-all duration-300 ${cardClass}`}
+    >
+      {/* Top Border Laser Runner */}
+      {theme ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[2px] opacity-90 animate-holographic-sweep"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${theme.color} 50%, transparent 100%)`,
+          }}
+        />
+      ) : null}
 
-      {/* Themed corner laser notches */}
+      {/* Cyber Corner Markers */}
       {theme ? (
         <>
           <div
-            className="pointer-events-none absolute top-0 left-0 h-5 w-5 border-t-2 border-l-2"
+            className="pointer-events-none absolute top-0 left-0 z-20 h-3 sm:h-5 w-3 sm:w-5 border-t-2 border-l-2"
             style={{ borderColor: theme.color }}
           />
           <div
-            className="pointer-events-none absolute top-0 right-0 h-5 w-5 border-t-2 border-r-2"
+            className="pointer-events-none absolute top-0 right-0 z-20 h-3 sm:h-5 w-3 sm:w-5 border-t-2 border-r-2"
             style={{ borderColor: theme.color }}
           />
           <div
-            className="pointer-events-none absolute bottom-0 left-0 h-5 w-5 border-b-2 border-l-2"
+            className="pointer-events-none absolute bottom-0 left-0 z-20 h-3 sm:h-5 w-3 sm:w-5 border-b-2 border-l-2"
             style={{ borderColor: theme.color }}
           />
           <div
-            className="pointer-events-none absolute bottom-0 right-0 h-5 w-5 border-b-2 border-r-2"
+            className="pointer-events-none absolute bottom-0 right-0 z-20 h-3 sm:h-5 w-3 sm:w-5 border-b-2 border-r-2"
             style={{ borderColor: theme.color }}
           />
         </>
@@ -1136,8 +1162,270 @@ export function ThemedProfileHeroBanner({
 }
 
 // ============================================================================
-// 7. THEMED CARD CONTAINER (Applies matching aura to Stat Tiles / Sections)
+// 7. THEMED CARD WRAPPER (For Profile Sections & Containers)
 // ============================================================================
+export function ThemedCard({
+  theme,
+  children,
+  className = "",
+}: {
+  theme: CosmeticItem | null | undefined;
+  children: ReactNode;
+  className?: string;
+}) {
+  const tokens = getThemeTokens(theme);
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 ${tokens.cardClass} ${className}`}
+      style={{
+        boxShadow: theme ? tokens.glowShadow : undefined,
+      }}
+    >
+      {/* Theme art watermark */}
+      <ThemeSectionArt theme={theme} />
+
+      {/* Top Holographic Laser Line */}
+      {theme ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-80 animate-holographic-sweep"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${tokens.secondary} 50%, transparent 100%)`,
+          }}
+        />
+      ) : null}
+
+      {/* Cyber Corner Notches */}
+      {theme ? (
+        <>
+          <div className="pointer-events-none absolute top-0 left-0 h-4 w-4 border-t-2 border-l-2" style={{ borderColor: tokens.secondary }} />
+          <div className="pointer-events-none absolute top-0 right-0 h-4 w-4 border-t-2 border-r-2" style={{ borderColor: tokens.secondary }} />
+          <div className="pointer-events-none absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2" style={{ borderColor: tokens.secondary }} />
+          <div className="pointer-events-none absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2" style={{ borderColor: tokens.secondary }} />
+        </>
+      ) : null}
+
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
+}
+
+// ============================================================================
+// 8. FOOTBALL PLAYER AVATAR (eFootball Pro Card Crest, Stars & Position)
+// ============================================================================
+export function FootballPlayerAvatar({
+  frame,
+  dpUrl,
+  name,
+  position = "CF",
+  rating = 92,
+  theme,
+}: {
+  frame: CosmeticItem | null | undefined;
+  dpUrl: string | null;
+  name: string;
+  position?: string;
+  rating?: number;
+  theme?: CosmeticItem | null;
+}) {
+  const accentColor = theme?.color ?? "#ffd700";
+
+  return (
+    <div className="relative inline-flex w-fit shrink-0 items-center justify-center group self-start">
+      {/* 5-Star Gold Crest on Top of Avatar with Staggered Twinkles */}
+      <div className="absolute -top-3 sm:-top-3.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-0.5 rounded-full border border-amber-300/90 bg-bg/95 px-2 py-0.2 sm:px-2.5 sm:py-0.5 text-[8px] sm:text-[9px] font-black text-amber-300 shadow-[0_0_16px_rgba(255,215,0,0.85)] backdrop-blur animate-gold-radiance whitespace-nowrap">
+        <span className="animate-jewel-sparkle">★</span>
+        <span className="animate-jewel-sparkle" style={{ animationDelay: "0.2s" }}>★</span>
+        <span className="text-[9px] sm:text-[10px] text-amber-100 animate-jewel-sparkle" style={{ animationDelay: "0.4s" }}>★</span>
+        <span className="animate-jewel-sparkle" style={{ animationDelay: "0.6s" }}>★</span>
+        <span className="animate-jewel-sparkle" style={{ animationDelay: "0.8s" }}>★</span>
+      </div>
+
+      {/* Main Avatar with Animated Frame */}
+      <CosmeticAvatarFrame
+        frame={frame}
+        dpUrl={dpUrl}
+        name={name}
+        size="xl"
+        mode="lightbox"
+      />
+
+      {/* Football Tactical Position & OVR Rating Tag at Bottom */}
+      <div
+        className="absolute -bottom-2 sm:-bottom-2.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 sm:gap-1.5 rounded-full border px-2 py-0.2 sm:px-2.5 sm:py-0.5 shadow-2xl backdrop-blur transition-transform group-hover:scale-110 whitespace-nowrap"
+        style={{
+          borderColor: `${accentColor}80`,
+          backgroundColor: "rgba(10, 8, 20, 0.95)",
+          boxShadow: `0 0 14px ${accentColor}50`,
+        }}
+      >
+        <span
+          className="font-mono text-[8px] sm:text-[9px] font-black uppercase px-1 sm:px-1.5 py-0.2 rounded shadow-sm"
+          style={{
+            backgroundColor: accentColor,
+            color: "#000000",
+          }}
+        >
+          {position}
+        </span>
+        <span className="font-mono text-[9px] sm:text-[10px] font-black text-white">
+          {rating}
+        </span>
+        <span className="h-1 sm:h-1.5 w-1 sm:w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
+      </div>
+
+      {/* Spinning Golden Soccer Ball Particle at Bottom Right */}
+      <div
+        className="pointer-events-none absolute bottom-0 right-0 z-30 flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full border border-amber-300 bg-bg/90 shadow-[0_0_10px_#ffd700] backdrop-blur animate-football-spin"
+      >
+        <span className="text-[9px] sm:text-[11px]">⚽</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// 9. BANNER PLAYER STAGE HUD (eFootball Telemetry in Banner Space)
+// ============================================================================
+export function BannerPlayerStageHUD({
+  theme,
+  rank,
+  points,
+  winRate,
+  totalWins,
+}: {
+  theme?: CosmeticItem | null;
+  rank: number;
+  points: number;
+  winRate: number;
+  totalWins: number;
+}) {
+  const accentColor = theme?.color ?? "#d9a544";
+
+  return (
+    <div className="pointer-events-none absolute top-3 left-3 sm:top-5 sm:left-6 z-10 max-w-[85%] sm:max-w-[70%]">
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        {/* Division & Rating Badge */}
+        <div className="flex items-center gap-1 sm:gap-1.5 rounded-full border border-white/20 bg-bg/85 px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-mono font-bold text-ink backdrop-blur-md shadow-lg">
+          <span className="text-amber-400 text-[10px] sm:text-xs">🏆</span>
+          <span>DIV {rank <= 3 ? "1 PRO" : rank <= 10 ? "2 ELITE" : "3"}</span>
+          <span className="text-ink-faint">|</span>
+          <span className="text-accent-ink font-mono">{points.toLocaleString()} PTS</span>
+        </div>
+
+        {/* Live Form / Win Rate Indicator */}
+        <div className="flex items-center gap-1 sm:gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-950/80 px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-mono font-bold text-emerald-300 backdrop-blur-md shadow-lg">
+          <span className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>FORM: EXCELLENT</span>
+          <span className="text-emerald-500">|</span>
+          <span>{winRate}% WIN</span>
+        </div>
+
+        {/* Career Recorded Wins */}
+        <div className="hidden min-[480px]:flex items-center gap-1.5 rounded-full border border-white/15 bg-bg/75 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-mono font-bold text-ink-soft backdrop-blur-md shadow-md">
+          <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
+          <span>{totalWins} WINS</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// 10. THEMED STAT CARD (Pro eFootball Ultimate Stat Card)
+// ============================================================================
+export function ThemedStatCard({
+  label,
+  value,
+  icon: Icon,
+  theme,
+}: {
+  label: string;
+  value: string;
+  icon: IconComponent;
+  tone?: "blue" | "success" | "accent" | "danger" | "warning";
+  theme?: CosmeticItem | null;
+}) {
+  const tokens = getThemeTokens(theme);
+
+  return (
+    <div
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-3.5 sm:p-5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${tokens.cardClass}`}
+      style={{
+        boxShadow: theme ? tokens.glowShadow : undefined,
+      }}
+    >
+      {/* Animated Theme Vector Background */}
+      <ThemeSectionArt theme={theme} />
+
+      {/* Top Holographic Laser Line */}
+      {theme ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-90 animate-holographic-sweep"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${tokens.secondary} 50%, transparent 100%)`,
+          }}
+        />
+      ) : null}
+
+      {/* Cyber Corner Notches */}
+      {theme ? (
+        <>
+          <div className="pointer-events-none absolute top-0 left-0 h-3.5 w-3.5 border-t-2 border-l-2" style={{ borderColor: tokens.secondary }} />
+          <div className="pointer-events-none absolute top-0 right-0 h-3.5 w-3.5 border-t-2 border-r-2" style={{ borderColor: tokens.secondary }} />
+          <div className="pointer-events-none absolute bottom-0 left-0 h-3.5 w-3.5 border-b-2 border-l-2" style={{ borderColor: tokens.secondary }} />
+          <div className="pointer-events-none absolute bottom-0 right-0 h-3.5 w-3.5 border-b-2 border-r-2" style={{ borderColor: tokens.secondary }} />
+        </>
+      ) : null}
+
+      {/* Header: Label and Tone Icon */}
+      <div className="relative z-10 flex items-center justify-between gap-2">
+        <span
+          className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider truncate"
+          style={{ color: tokens.mutedText }}
+        >
+          {label}
+        </span>
+        <div
+          className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl border shadow-md transition-transform group-hover:scale-110"
+          style={{
+            borderColor: tokens.innerBorder,
+            backgroundColor: tokens.innerBg,
+            color: tokens.accentText,
+            boxShadow: theme ? `0 0 12px ${tokens.primary}40` : undefined,
+          }}
+        >
+          <Icon className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+        </div>
+      </div>
+
+      {/* Value Counter & Football Rating Badge */}
+      <div className="relative z-10 mt-3 sm:mt-4 flex flex-wrap items-baseline justify-between gap-1.5">
+        <span
+          className="font-display text-2xl sm:text-3xl font-black tracking-tight drop-shadow-md transition-colors"
+          style={{
+            color: tokens.headingText,
+            filter: theme ? `drop-shadow(0 0 8px ${tokens.primary}40)` : undefined,
+          }}
+        >
+          {value}
+        </span>
+        <div
+          className="flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[8px] sm:text-[9px] font-black uppercase shadow-md backdrop-blur shrink-0"
+          style={{
+            borderColor: tokens.highlightBorder,
+            backgroundColor: tokens.highlightBg,
+            color: tokens.highlightText,
+          }}
+        >
+          <span className="text-[9px]">▲</span>
+          <span>PRO</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ============================================================================
 // 7. THEMED ART ENGINE & THEMED TOKENS
 // ============================================================================
@@ -1460,248 +1748,7 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
   }
 }
 
-export function ThemedCard({
-  theme,
-  children,
-  className = "",
-}: {
-  theme: CosmeticItem | null | undefined;
-  children: ReactNode;
-  className?: string;
-}) {
-  const cardClass = getThemeCardClass(theme);
 
-  return (
-    <div className={`group relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 ${cardClass} ${className}`}>
-      <ThemeSectionArt theme={theme} />
-      {theme ? (
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-80 animate-holographic-sweep"
-          style={{
-            background: `linear-gradient(90deg, transparent 0%, ${theme.color} 50%, transparent 100%)`,
-          }}
-        />
-      ) : null}
-      <div className="relative z-10">{children}</div>
-    </div>
-  );
-}
-
-// ============================================================================
-// 8. FOOTBALL PLAYER AVATAR (eFootball Pro Card Crest, Stars & Position)
-// ============================================================================
-export function FootballPlayerAvatar({
-  frame,
-  dpUrl,
-  name,
-  position = "CF",
-  rating = 92,
-  theme,
-}: {
-  frame: CosmeticItem | null | undefined;
-  dpUrl: string | null;
-  name: string;
-  position?: string;
-  rating?: number;
-  theme?: CosmeticItem | null;
-}) {
-  const accentColor = theme?.color ?? "#ffd700";
-
-  return (
-    <div className="relative group">
-      {/* 5-Star Gold Crest on Top of Avatar with Staggered Twinkles */}
-      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-0.5 rounded-full border border-amber-300/90 bg-bg/95 px-2.5 py-0.5 text-[9px] font-black text-amber-300 shadow-[0_0_16px_rgba(255,215,0,0.85)] backdrop-blur animate-gold-radiance">
-        <span className="animate-jewel-sparkle">★</span>
-        <span className="animate-jewel-sparkle" style={{ animationDelay: "0.2s" }}>★</span>
-        <span className="text-[10px] text-amber-100 animate-jewel-sparkle" style={{ animationDelay: "0.4s" }}>★</span>
-        <span className="animate-jewel-sparkle" style={{ animationDelay: "0.6s" }}>★</span>
-        <span className="animate-jewel-sparkle" style={{ animationDelay: "0.8s" }}>★</span>
-      </div>
-
-      {/* Main Avatar with Animated Frame */}
-      <CosmeticAvatarFrame
-        frame={frame}
-        dpUrl={dpUrl}
-        name={name}
-        size="xl"
-        mode="lightbox"
-      />
-
-      {/* Football Tactical Position & OVR Rating Tag at Bottom */}
-      <div
-        className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 shadow-2xl backdrop-blur transition-transform group-hover:scale-110"
-        style={{
-          borderColor: `${accentColor}80`,
-          backgroundColor: "rgba(10, 8, 20, 0.95)",
-          boxShadow: `0 0 14px ${accentColor}50`,
-        }}
-      >
-        <span
-          className="font-mono text-[9px] font-black uppercase px-1.5 py-0.2 rounded shadow-sm"
-          style={{
-            backgroundColor: accentColor,
-            color: "#000000",
-          }}
-        >
-          {position}
-        </span>
-        <span className="font-mono text-[10px] font-black text-white">
-          {rating}
-        </span>
-        <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
-      </div>
-
-      {/* Spinning Golden Soccer Ball Particle at Bottom Right */}
-      <div
-        className="pointer-events-none absolute -bottom-1 -right-1 z-30 flex h-6 w-6 items-center justify-center rounded-full border border-amber-300 bg-bg/90 shadow-[0_0_10px_#ffd700] backdrop-blur animate-football-spin"
-      >
-        <span className="text-[11px]">⚽</span>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// 9. BANNER PLAYER STAGE HUD (eFootball Telemetry in Banner Space)
-// ============================================================================
-export function BannerPlayerStageHUD({
-  theme,
-  rank,
-  points,
-  winRate,
-  totalWins,
-}: {
-  theme?: CosmeticItem | null;
-  rank: number;
-  points: number;
-  winRate: number;
-  totalWins: number;
-}) {
-  const accentColor = theme?.color ?? "#d9a544";
-
-  return (
-    <div className="pointer-events-none absolute top-12 left-6 sm:top-14 sm:left-6 z-10 max-w-[85%] sm:max-w-[70%]">
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Division & Rating Badge */}
-        <div className="flex items-center gap-1.5 rounded-full border border-white/20 bg-bg/85 px-3 py-1 text-[11px] font-mono font-bold text-ink backdrop-blur-md shadow-lg">
-          <span className="text-amber-400">🏆</span>
-          <span>DIV {rank <= 3 ? "1 PRO" : rank <= 10 ? "2 ELITE" : "3"}</span>
-          <span className="text-ink-faint">|</span>
-          <span className="text-accent-ink font-mono">{points.toLocaleString()} PTS</span>
-        </div>
-
-        {/* Live Form / Win Rate Indicator */}
-        <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-950/80 px-3 py-1 text-[11px] font-mono font-bold text-emerald-300 backdrop-blur-md shadow-lg">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-          <span>FORM: EXCELLENT</span>
-          <span className="text-emerald-500">|</span>
-          <span>{winRate}% WIN RATE</span>
-        </div>
-
-        {/* Career Recorded Wins */}
-        <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-white/15 bg-bg/75 px-3 py-1 text-[10px] font-mono font-bold text-ink-soft backdrop-blur-md shadow-md">
-          <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
-          <span>{totalWins} WINS</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// 10. THEMED STAT CARD (Pro eFootball Ultimate Stat Card)
-// ============================================================================
-export function ThemedStatCard({
-  label,
-  value,
-  icon: Icon,
-  theme,
-}: {
-  label: string;
-  value: string;
-  icon: IconComponent;
-  tone?: "blue" | "success" | "accent" | "danger" | "warning";
-  theme?: CosmeticItem | null;
-}) {
-  const tokens = getThemeTokens(theme);
-
-  return (
-    <div
-      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${tokens.cardClass}`}
-      style={{
-        boxShadow: theme ? tokens.glowShadow : undefined,
-      }}
-    >
-      {/* Animated Theme Vector Background */}
-      <ThemeSectionArt theme={theme} />
-
-      {/* Top Holographic Laser Line */}
-      {theme ? (
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-90 animate-holographic-sweep"
-          style={{
-            background: `linear-gradient(90deg, transparent 0%, ${tokens.secondary} 50%, transparent 100%)`,
-          }}
-        />
-      ) : null}
-
-      {/* Cyber Corner Notches */}
-      {theme ? (
-        <>
-          <div className="pointer-events-none absolute top-0 left-0 h-3.5 w-3.5 border-t-2 border-l-2" style={{ borderColor: tokens.secondary }} />
-          <div className="pointer-events-none absolute top-0 right-0 h-3.5 w-3.5 border-t-2 border-r-2" style={{ borderColor: tokens.secondary }} />
-          <div className="pointer-events-none absolute bottom-0 left-0 h-3.5 w-3.5 border-b-2 border-l-2" style={{ borderColor: tokens.secondary }} />
-          <div className="pointer-events-none absolute bottom-0 right-0 h-3.5 w-3.5 border-b-2 border-r-2" style={{ borderColor: tokens.secondary }} />
-        </>
-      ) : null}
-
-      {/* Header: Label and Tone Icon */}
-      <div className="relative z-10 flex items-center justify-between">
-        <span
-          className="font-mono text-[11px] font-bold uppercase tracking-wider"
-          style={{ color: tokens.mutedText }}
-        >
-          {label}
-        </span>
-        <div
-          className="flex h-9 w-9 items-center justify-center rounded-xl border shadow-md transition-transform group-hover:scale-110"
-          style={{
-            borderColor: tokens.innerBorder,
-            backgroundColor: tokens.innerBg,
-            color: tokens.accentText,
-            boxShadow: theme ? `0 0 12px ${tokens.primary}40` : undefined,
-          }}
-        >
-          <Icon className="h-4.5 w-4.5" />
-        </div>
-      </div>
-
-      {/* Value Counter & Football Rating Badge */}
-      <div className="relative z-10 mt-4 flex items-baseline justify-between">
-        <span
-          className="font-display text-3xl font-black tracking-tight drop-shadow-md transition-colors"
-          style={{
-            color: tokens.headingText,
-            filter: theme ? `drop-shadow(0 0 8px ${tokens.primary}40)` : undefined,
-          }}
-        >
-          {value}
-        </span>
-        <div
-          className="flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[9px] font-black uppercase shadow-md backdrop-blur"
-          style={{
-            borderColor: tokens.highlightBorder,
-            backgroundColor: tokens.highlightBg,
-            color: tokens.highlightText,
-          }}
-        >
-          <span className="text-[10px]">▲</span>
-          <span>PRO ELITE</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ============================================================================
 // 11. PLAYER COSMETICS SHOWCASE (Trophy Locker & Loadout Display)

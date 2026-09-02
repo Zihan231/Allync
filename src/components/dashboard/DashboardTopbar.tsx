@@ -50,39 +50,39 @@ export function DashboardTopbar({
   ];
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-surface-line/70 bg-bg/90 px-4 backdrop-blur lg:px-6">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 flex h-14 min-[400px]:h-16 items-center justify-between gap-1.5 min-[400px]:gap-3 border-b border-surface-line/70 bg-bg/90 px-2.5 min-[400px]:px-4 backdrop-blur lg:px-6 max-w-[100vw] overflow-x-clip">
+      <div className="flex items-center gap-1.5 min-[400px]:gap-3 shrink-0">
         {showMenuButton ? (
           <button
             type="button"
             onClick={onMenuClick}
             aria-label="Toggle menu"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-surface-line-strong text-ink lg:hidden"
+            className="flex h-8 w-8 min-[400px]:h-9 min-[400px]:w-9 items-center justify-center rounded-full border border-surface-line-strong text-ink shrink-0 lg:hidden"
           >
-            <span className="relative block h-3.5 w-4">
-              <span className="absolute left-0 top-0 block h-[1.5px] w-4 bg-current" />
-              <span className="absolute left-0 top-1/2 block h-[1.5px] w-4 -translate-y-1/2 bg-current" />
-              <span className="absolute bottom-0 left-0 block h-[1.5px] w-4 bg-current" />
+            <span className="relative block h-3 w-3.5 min-[400px]:h-3.5 min-[400px]:w-4">
+              <span className="absolute left-0 top-0 block h-[1.5px] w-full bg-current" />
+              <span className="absolute left-0 top-1/2 block h-[1.5px] w-full -translate-y-1/2 bg-current" />
+              <span className="absolute bottom-0 left-0 block h-[1.5px] w-full bg-current" />
             </span>
           </button>
         ) : null}
 
-        <Link href="/dashboard" className="font-display text-lg font-bold tracking-tight text-ink">
+        <Link href="/dashboard" className="font-display text-base min-[400px]:text-lg font-bold tracking-tight text-ink shrink-0">
           ALL<span className="text-accent">Y</span>NQ
         </Link>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 min-[380px]:gap-2 shrink-0">
         {user.mode === "player" ? (
-          <div className="relative" ref={gameMenuRef}>
+          <div className="relative shrink-0" ref={gameMenuRef}>
             <button
               type="button"
               onClick={() => setGameMenuOpen((o) => !o)}
-              className="flex items-center gap-2 rounded-full border border-surface-line-strong px-3 py-1.5 text-sm text-ink"
+              className="flex h-8 min-[400px]:h-auto items-center gap-1 min-[400px]:gap-2 rounded-full border border-surface-line-strong px-2 min-[400px]:px-3 py-1 min-[400px]:py-1.5 text-xs min-[400px]:text-sm text-ink shrink-0"
             >
-              <activeGame.icon className="h-4 w-4" style={{ color: activeGame.color }} />
+              <activeGame.icon className="h-3.5 w-3.5 min-[400px]:h-4 min-[400px]:w-4 shrink-0" style={{ color: activeGame.color }} />
               <span className="hidden sm:inline">{activeGame.name}</span>
-              <ChevronDownIcon className="h-3.5 w-3.5 text-ink-faint" />
+              <ChevronDownIcon className="h-3 w-3 min-[400px]:h-3.5 min-[400px]:w-3.5 text-ink-faint hidden min-[360px]:inline" />
             </button>
             {gameMenuOpen ? (
               <div className="absolute right-0 top-full z-40 mt-2 w-48 rounded-xl border border-surface-line bg-surface p-1.5 shadow-2xl">
@@ -107,14 +107,14 @@ export function DashboardTopbar({
 
         <LanguageSwitch />
 
-        <div className="relative" ref={notifRef}>
+        <div className="relative shrink-0" ref={notifRef}>
           <button
             type="button"
             onClick={() => setNotifOpen((o) => !o)}
             aria-label={t.dashboard.shell.notificationsLabel}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-surface-line-strong text-ink-soft hover:text-ink"
+            className="flex h-8 w-8 min-[400px]:h-9 min-[400px]:w-9 items-center justify-center rounded-full border border-surface-line-strong text-ink-soft hover:text-ink shrink-0"
           >
-            <BellIcon className="h-4.5 w-4.5" />
+            <BellIcon className="h-4 w-4 min-[400px]:h-4.5 min-[400px]:w-4.5" />
           </button>
           {notifOpen ? (
             <div className="absolute right-0 top-full z-40 mt-2 w-64 rounded-xl border border-surface-line bg-surface p-3 shadow-2xl">
@@ -132,8 +132,8 @@ export function DashboardTopbar({
           ) : null}
         </div>
 
-        <div className="relative" ref={userMenuRef}>
-          <button type="button" onClick={() => setUserMenuOpen((o) => !o)} className="block">
+        <div className="relative shrink-0" ref={userMenuRef}>
+          <button type="button" onClick={() => setUserMenuOpen((o) => !o)} className="block shrink-0">
             <Avatar dpUrl={user.dpUrl} name={user.name} size="sm" mode="static" />
           </button>
           {userMenuOpen ? (

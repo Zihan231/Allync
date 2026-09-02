@@ -45,7 +45,7 @@ export default function ProfilePage() {
     .filter((c): c is CosmeticItem => c != null && c.category === "badge");
 
   return (
-    <div className="relative pb-16">
+    <div className="relative pb-16 overflow-x-clip max-w-full">
       {/* Dynamic Profile Theme Ambient Lighting */}
       <CosmeticThemeAmbient theme={equippedTheme} />
 
@@ -73,13 +73,13 @@ export default function ProfilePage() {
       />
 
       {/* Grand Themed Profile Hero Banner with Pro HUD Telemetry */}
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         <ThemedProfileHeroBanner theme={equippedTheme}>
           <ThemedCoverArtwork
             theme={equippedTheme}
             coverUrl={person?.coverUrl}
             name={user.name}
-            className="h-64 sm:h-80 lg:h-96"
+            className="h-56 min-[450px]:h-64 sm:h-80 lg:h-96"
           />
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 h-28 opacity-30"
@@ -100,11 +100,11 @@ export default function ProfilePage() {
       </div>
 
       {/* Football-Themed Avatar, Name, Title, Badges Showcase */}
-      <div className="relative px-2 sm:px-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+      <div className="relative px-3 sm:px-6">
+        <div className="flex flex-col items-center text-center sm:flex-row sm:items-end sm:text-left sm:justify-between">
+          <div className="flex flex-col items-center sm:flex-row sm:items-end gap-3 sm:gap-4">
             {/* Football Player Avatar with Gold Star Crest & Position Tag */}
-            <div className="-mt-16 sm:-mt-22 shrink-0 z-10">
+            <div className="-mt-14 min-[450px]:-mt-16 sm:-mt-22 w-fit shrink-0 z-10 mx-auto sm:mx-0">
               <FootballPlayerAvatar
                 frame={equippedFrame}
                 dpUrl={person?.dpUrl ?? user.dpUrl}
@@ -116,9 +116,9 @@ export default function ProfilePage() {
             </div>
 
             {/* Name, Title, Badges positioned cleanly below cover */}
-            <div className="pt-2 sm:pt-0 sm:pb-1 flex-1 min-w-0">
+            <div className="pt-2 sm:pt-0 sm:pb-1 flex-1 min-w-0 flex flex-col items-center sm:items-start">
               <h1
-                className="font-display text-2xl font-black sm:text-3xl tracking-tight"
+                className="font-display text-2xl min-[450px]:text-3xl font-black tracking-tight text-center sm:text-left"
                 style={{ color: tokens.headingText }}
               >
                 {user.name}
@@ -126,18 +126,18 @@ export default function ProfilePage() {
 
               {/* Equipped Title Display */}
               {equippedTitle ? (
-                <div className="mt-1.5 flex items-center">
+                <div className="mt-1 sm:mt-1.5 flex flex-wrap items-center justify-center sm:justify-start">
                   <CosmeticTitleText item={equippedTitle} size="lg" />
                 </div>
               ) : null}
 
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-2.5 sm:mt-3 flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
                 {/* Equipped Badge */}
                 {equippedBadge ? <CosmeticBadgePill item={equippedBadge} /> : null}
 
                 {user.club ? (
                   <span
-                    className="rounded-full border px-3 py-1 text-xs font-semibold backdrop-blur"
+                    className="rounded-full border px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold backdrop-blur"
                     style={{
                       borderColor: tokens.innerBorder,
                       backgroundColor: tokens.innerBg,
@@ -149,7 +149,7 @@ export default function ProfilePage() {
                 ) : null}
                 {user.community ? (
                   <span
-                    className="rounded-full border px-3 py-1 text-xs font-semibold backdrop-blur"
+                    className="rounded-full border px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold backdrop-blur"
                     style={{
                       borderColor: tokens.innerBorder,
                       backgroundColor: tokens.innerBg,
@@ -166,7 +166,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Holographic eFootball Stat Overview */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 sm:mt-8 grid gap-2.5 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <ThemedStatCard label={t.dashboard.overview.statWinRate} value="68%" icon={ChartIcon} tone="accent" theme={equippedTheme} />
         <ThemedStatCard label={t.dashboard.shell.navTournaments} value="4" icon={TrophyIcon} tone="warning" theme={equippedTheme} />
         <ThemedStatCard label={t.dashboard.profile.historyTitle} value={String(matches.length)} icon={CalendarIcon} tone="blue" theme={equippedTheme} />

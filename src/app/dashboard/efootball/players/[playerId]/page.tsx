@@ -97,7 +97,7 @@ function SectionCard({
 
   return (
     <div
-      className={`group relative mt-6 overflow-hidden rounded-2xl border p-6 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl ${tokens.cardClass} ${className}`}
+      className={`group relative mt-6 overflow-hidden rounded-2xl border p-4 sm:p-6 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl ${tokens.cardClass} ${className}`}
       style={{
         boxShadow: theme ? tokens.glowShadow : undefined,
       }}
@@ -119,28 +119,28 @@ function SectionCard({
       {theme ? (
         <>
           <div
-            className="pointer-events-none absolute top-0 left-0 h-4 w-4 border-t-2 border-l-2"
+            className="pointer-events-none absolute top-0 left-0 h-3 sm:h-4 w-3 sm:w-4 border-t-2 border-l-2"
             style={{ borderColor: tokens.secondary }}
           />
           <div
-            className="pointer-events-none absolute top-0 right-0 h-4 w-4 border-t-2 border-r-2"
+            className="pointer-events-none absolute top-0 right-0 h-3 sm:h-4 w-3 sm:w-4 border-t-2 border-r-2"
             style={{ borderColor: tokens.secondary }}
           />
           <div
-            className="pointer-events-none absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2"
+            className="pointer-events-none absolute bottom-0 left-0 h-3 sm:h-4 w-3 sm:w-4 border-b-2 border-l-2"
             style={{ borderColor: tokens.secondary }}
           />
           <div
-            className="pointer-events-none absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2"
+            className="pointer-events-none absolute bottom-0 right-0 h-3 sm:h-4 w-3 sm:w-4 border-b-2 border-r-2"
             style={{ borderColor: tokens.secondary }}
           />
         </>
       ) : null}
 
-      <div className="relative z-10 flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="relative z-10 flex flex-wrap items-start justify-between gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border shadow-md transition-transform group-hover:scale-105"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl border shadow-md transition-transform group-hover:scale-105"
             style={{
               borderColor: tokens.innerBorder,
               backgroundColor: tokens.innerBg,
@@ -148,24 +148,24 @@ function SectionCard({
               boxShadow: theme ? `0 0 15px ${tokens.primary}35` : undefined,
             }}
           >
-            <Icon className="h-5 w-5" />
+            <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h3
-              className="font-display text-lg font-bold tracking-tight flex items-center gap-2"
+              className="font-display text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 truncate"
               style={{ color: tokens.headingText }}
             >
               {title}
             </h3>
             {subtitle ? (
-              <p className="text-sm font-medium" style={{ color: tokens.mutedText }}>
+              <p className="text-xs sm:text-sm font-medium truncate" style={{ color: tokens.mutedText }}>
                 {subtitle}
               </p>
             ) : null}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {theme ? (
             <span
               className="hidden sm:flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider backdrop-blur shadow-sm"
@@ -182,7 +182,7 @@ function SectionCard({
           {action}
         </div>
       </div>
-      <div className="relative z-10 mt-5">{children}</div>
+      <div className="relative z-10 mt-4 sm:mt-5">{children}</div>
     </div>
   );
 }
@@ -201,7 +201,7 @@ function SnapshotRow({
 
   return (
     <div
-      className="group relative overflow-hidden rounded-xl border p-4 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+      className="group relative overflow-hidden rounded-xl border p-3.5 sm:p-4 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
       style={{
         borderColor: tokens.innerBorder,
         backgroundColor: tokens.innerBg,
@@ -214,13 +214,13 @@ function SnapshotRow({
         />
       ) : null}
       <div
-        className="font-mono text-[10px] uppercase font-bold tracking-wide"
+        className="font-mono text-[9px] sm:text-[10px] uppercase font-bold tracking-wide"
         style={{ color: tokens.accentText }}
       >
         {label}
       </div>
       <div
-        className="mt-1.5 text-sm font-bold transition-colors"
+        className="mt-1 sm:mt-1.5 text-xs sm:text-sm font-bold transition-colors break-words"
         style={{ color: tokens.headingText }}
       >
         {value}
@@ -245,20 +245,20 @@ function StatCell({
 
   return (
     <div
-      className="group relative overflow-hidden rounded-xl border px-2 py-3 text-center backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+      className="group relative overflow-hidden rounded-xl border px-1.5 py-2 sm:px-2 sm:py-3 text-center backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
       style={{
         borderColor: highlight ? tokens.highlightBorder : tokens.innerBorder,
         backgroundColor: highlight ? tokens.highlightBg : tokens.innerBg,
       }}
     >
       <div
-        className="font-mono text-[10px] uppercase font-bold tracking-wide"
+        className="font-mono text-[9px] sm:text-[10px] uppercase font-bold tracking-wide truncate"
         style={{ color: highlight ? tokens.highlightText : tokens.mutedText }}
       >
         {label}
       </div>
       <div
-        className="mt-1 font-display text-sm font-black transition-colors"
+        className="mt-0.5 sm:mt-1 font-display text-xs sm:text-sm font-black transition-colors"
         style={{ color: highlight ? tokens.highlightText : tokens.headingText }}
       >
         {value}
@@ -318,7 +318,7 @@ function StatsTable({
       action={
         <button
           type="button"
-          className="rounded-full border px-3.5 py-1.5 text-xs font-semibold backdrop-blur transition-all"
+          className="rounded-full border px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold backdrop-blur transition-all"
           style={{
             borderColor: tokens.innerBorder,
             backgroundColor: tokens.innerBg,
@@ -330,12 +330,12 @@ function StatsTable({
       }
     >
       <div
-        className="-mt-1 mb-4 flex items-center gap-1.5 text-xs font-medium"
+        className="-mt-1 mb-3 sm:mb-4 flex flex-wrap items-center gap-1.5 text-xs font-medium"
         style={{ color: tokens.mutedText }}
       >
-        {pf.rankLabel} <RankBadge rank={row.rank} />
+        <span>{pf.rankLabel}</span> <RankBadge rank={row.rank} />
       </div>
-      <div className="grid grid-cols-5 gap-3 sm:grid-cols-10">
+      <div className="grid grid-cols-2 min-[420px]:grid-cols-5 sm:grid-cols-5 lg:grid-cols-10 gap-1.5 sm:gap-2.5">
         {cells.map((c) => (
           <StatCell key={c.label} {...c} theme={theme} />
         ))}
@@ -385,7 +385,7 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
   const education = person.education && person.education.length > 0 ? person.education : insights.personalInfo.education;
 
   return (
-    <div className="relative">
+    <div className="relative pb-12 overflow-x-clip max-w-full">
       {/* Dynamic Profile Theme Ambient Lighting */}
       <CosmeticThemeAmbient theme={equippedTheme} />
 
@@ -394,7 +394,7 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
         {person.id !== user.personId ? (
           <Link
             href="/dashboard/efootball/profile"
-            className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
+            className="rounded-full border border-surface-line-strong px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
           >
             {pf.myProfile}
           </Link>
@@ -402,13 +402,13 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
       </div>
 
       {/* Grand Themed Profile Hero Banner with Pro HUD Telemetry */}
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         <ThemedProfileHeroBanner theme={equippedTheme}>
           <ThemedCoverArtwork
             theme={equippedTheme}
             coverUrl={person.coverUrl}
             name={person.name}
-            className="h-64 sm:h-80 lg:h-96"
+            className="h-56 min-[450px]:h-64 sm:h-80 lg:h-96"
           />
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 h-28 opacity-30"
@@ -429,11 +429,11 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
       </div>
 
       {/* Football-Themed Avatar, Name, Title, Badges Showcase */}
-      <div className="relative px-2 sm:px-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+      <div className="relative px-3 sm:px-6">
+        <div className="flex flex-col items-center text-center sm:flex-row sm:items-end sm:text-left sm:justify-between">
+          <div className="flex flex-col items-center sm:flex-row sm:items-end gap-3 sm:gap-4">
             {/* Football Player Avatar with Gold Star Crest & Position Tag */}
-            <div className="-mt-16 sm:-mt-22 shrink-0 z-10">
+            <div className="-mt-14 min-[450px]:-mt-16 sm:-mt-22 w-fit shrink-0 z-10 mx-auto sm:mx-0">
               <FootballPlayerAvatar
                 frame={equippedFrame}
                 dpUrl={person.dpUrl}
@@ -445,9 +445,9 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
             </div>
 
             {/* Name, Title, Badges positioned cleanly below cover */}
-            <div className="pt-2 sm:pt-0 sm:pb-1 flex-1 min-w-0">
+            <div className="pt-2 sm:pt-0 sm:pb-1 flex-1 min-w-0 flex flex-col items-center sm:items-start">
               <h1
-                className="font-display text-2xl font-black sm:text-3xl tracking-tight"
+                className="font-display text-2xl min-[450px]:text-3xl font-black tracking-tight text-center sm:text-left"
                 style={{ color: tokens.headingText }}
               >
                 {person.name}
@@ -455,16 +455,16 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
 
               {/* Equipped Title Display */}
               {equippedTitle ? (
-                <div className="mt-1.5 flex items-center">
+                <div className="mt-1 sm:mt-1.5 flex flex-wrap items-center justify-center sm:justify-start">
                   <CosmeticTitleText item={equippedTitle} size="lg" />
                 </div>
               ) : null}
 
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-2.5 sm:mt-3 flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
                 {club ? (
                   <Link
                     href={`/dashboard/efootball/clubs/${club.id}`}
-                    className="rounded-full border px-3 py-1 text-xs font-semibold backdrop-blur transition-all hover:scale-105"
+                    className="rounded-full border px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold backdrop-blur transition-all hover:scale-105"
                     style={{
                       borderColor: tokens.innerBorder,
                       backgroundColor: tokens.innerBg,
@@ -477,7 +477,7 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
                 {community ? (
                   <Link
                     href={`/dashboard/efootball/community/${community.id}`}
-                    className="rounded-full border px-3 py-1 text-xs font-semibold backdrop-blur transition-all hover:scale-105"
+                    className="rounded-full border px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold backdrop-blur transition-all hover:scale-105"
                     style={{
                       borderColor: tokens.innerBorder,
                       backgroundColor: tokens.innerBg,
@@ -488,7 +488,7 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
                   </Link>
                 ) : null}
                 <span
-                  className="rounded-full border px-2.5 py-1 font-mono text-[11px] font-bold backdrop-blur"
+                  className="rounded-full border px-2.5 sm:px-3 py-0.5 sm:py-1 font-mono text-[10px] sm:text-[11px] font-bold backdrop-blur"
                   style={{
                     borderColor: tokens.highlightBorder,
                     backgroundColor: tokens.highlightBg,
@@ -506,13 +506,13 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
       </div>
 
       {person.bio ? (
-        <p className="mt-6 max-w-xl text-sm leading-relaxed" style={{ color: tokens.bodyText }}>
+        <p className="mt-3 sm:mt-5 max-w-xl text-xs sm:text-sm leading-relaxed text-center sm:text-left" style={{ color: tokens.bodyText }}>
           {person.bio}
         </p>
       ) : null}
 
       {/* Holographic eFootball Stat Overview with Goal Net Vectors */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 sm:mt-8 grid gap-2.5 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         <ThemedStatCard label={pf.statTotalMatches} value={String(insights.totalMatches)} icon={ChartIcon} tone="blue" theme={equippedTheme} />
         <ThemedStatCard label={pf.statTotalWins} value={String(insights.totalWins)} icon={TrophyIcon} tone="success" theme={equippedTheme} />
         <ThemedStatCard label={pf.statWinRate} value={`${insights.winRate}%`} icon={CrosshairIcon} tone="accent" theme={equippedTheme} />
