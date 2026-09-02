@@ -221,7 +221,7 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
           <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-amber-400/40 shadow-[0_0_24px_rgba(165,0,68,0.35)]">
             <img
-              src="/barca/vecteezy_fc-barcelona-logo-on-transparent-background_14414712.jpg"
+              src="/barca/barca-logo-transparent.png"
               alt="FC Barcelona Crest"
               className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(237,187,0,0.7)]"
             />
@@ -298,7 +298,7 @@ export function ThemedCoverArtwork({
         </div>
 
         {/* Floating Bengal Fire Embers */}
-        <div className="pointer-events-none absolute top-16 left-[30%] h-3 w-3 rounded-full bg-red-500 shadow-[0_0_10px_#f42a41] animate-bounce z-10" />
+        <div className="pointer-events-none absolute top-16 left-[30%] h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_10px_#00ff87] animate-bounce z-10" />
 
         {/* Interactive View Toggle */}
         {viewToggle}
@@ -318,6 +318,17 @@ export function ThemedCoverArtwork({
         className={`relative w-full overflow-hidden select-none ${className}`}
         style={{ background: "linear-gradient(135deg, #100204 0%, #280408 45%, #080103 100%)" }}
       >
+        {/* Emirates Stadium / Arsenal Wallpaper Backdrop */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img
+            src="/arsenal/Arsenal HD Wallpaper For Desktop iPhone iPad And Android.jpg"
+            alt="Emirates Stadium"
+            className="h-full w-full object-cover opacity-45 mix-blend-luminosity scale-105 transition-transform duration-1000"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#100204] via-[#100204]/75 to-[#100204]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#100204] via-transparent to-[#100204]/90" />
+        </div>
+
         {/* Highbury / Emirates Crimson & Navy Floodlights */}
         <div
           className="pointer-events-none absolute -top-10 left-1/4 h-64 w-80 rounded-full blur-[75px] opacity-50"
@@ -338,7 +349,7 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
           <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/20 to-black/80 backdrop-blur-md border border-red-500/40 shadow-[0_0_24px_rgba(219,0,7,0.4)]">
             <img
-              src="/arsenal/vecteezy_arsenal-logo-on-transparent-background_15863617.jpg"
+              src="/arsenal/arsenal-logo-transparent.png"
               alt="Arsenal FC Crest"
               className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(219,0,7,0.7)]"
             />
@@ -403,7 +414,7 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
           <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-amber-400/40 shadow-[0_0_24px_rgba(218,41,28,0.4)]">
             <img
-              src="/manu/vecteezy_manchester-united-football-club-logo-symbol-design-england_10994300.jpg"
+              src="/manu/manu-logo-transparent.png"
               alt="Manchester United Crest"
               className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(255,229,0,0.7)]"
             />
@@ -441,6 +452,17 @@ export function ThemedCoverArtwork({
         className={`relative w-full overflow-hidden select-none ${className}`}
         style={{ background: "linear-gradient(135deg, #010c22 0%, #032152 45%, #010714 100%)" }}
       >
+        {/* Stamford Bridge / Chelsea Wallpaper Backdrop */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img
+            src="/chelsea/Chelsea Fc Wallpaper By Shangeeth Sugumar Shangeeths On.jpg"
+            alt="Stamford Bridge"
+            className="h-full w-full object-cover opacity-45 mix-blend-luminosity scale-105 transition-transform duration-1000"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#010c22] via-[#010c22]/75 to-[#010c22]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#010c22] via-transparent to-[#010c22]/90" />
+        </div>
+
         {/* Royal Chelsea Blue Spotlight */}
         <div
           className="pointer-events-none absolute -top-10 left-1/3 h-64 w-80 rounded-full blur-[75px] opacity-45"
@@ -457,7 +479,7 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
           <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-blue-400/40 shadow-[0_0_24px_rgba(3,70,148,0.4)]">
             <img
-              src="/chelsea/vecteezy_chelsea-logo-on-transparent-background_15863613.jpg"
+              src="/chelsea/chelsea-logo-transparent.png"
               alt="Chelsea FC Crest"
               className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(219,161,17,0.7)]"
             />
@@ -495,6 +517,17 @@ export function ThemedCoverArtwork({
         className={`relative w-full overflow-hidden select-none ${className}`}
         style={{ background: "linear-gradient(135deg, #020b18 0%, #071f3d 45%, #01060f 100%)" }}
       >
+        {/* Etihad / Manchester City Celebration Backdrop */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img
+            src="/man city/Manchester City Vs United Full Time Win Derby.jpg"
+            alt="Etihad Stadium"
+            className="h-full w-full object-cover opacity-45 mix-blend-luminosity scale-105 transition-transform duration-1000"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#020b18] via-[#020b18]/75 to-[#020b18]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#020b18] via-transparent to-[#020b18]/90" />
+        </div>
+
         {/* Etihad Electric Sky Blue Ambient */}
         <div
           className="pointer-events-none absolute -top-10 left-1/3 h-64 w-80 rounded-full blur-[75px] opacity-45"
@@ -511,7 +544,7 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
           <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-sky-400/40 shadow-[0_0_24px_rgba(108,171,221,0.4)]">
             <img
-              src="/man city/vecteezy_manchester-city-football-club-logo-symbol-design-england_10994439.jpg"
+              src="/man city/mancity-logo-transparent.png"
               alt="Manchester City Crest"
               className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(108,171,221,0.7)]"
             />
@@ -549,6 +582,17 @@ export function ThemedCoverArtwork({
         className={`relative w-full overflow-hidden select-none ${className}`}
         style={{ background: "linear-gradient(135deg, #100305 0%, #26070a 45%, #080203 100%)" }}
       >
+        {/* Cívitas Metropolitano Stadium / Atletico Wallpaper Backdrop */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img
+            src="/atleteco di madrid/wallpaperflare.com_wallpaper.jpg"
+            alt="Cívitas Metropolitano"
+            className="h-full w-full object-cover opacity-45 mix-blend-luminosity scale-105 transition-transform duration-1000"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#100305] via-[#100305]/75 to-[#100305]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#100305] via-transparent to-[#100305]/90" />
+        </div>
+
         {/* Rojiblanco Crimson Spotlight */}
         <div
           className="pointer-events-none absolute -top-10 left-1/3 h-64 w-80 rounded-full blur-[75px] opacity-45"
@@ -563,22 +607,12 @@ export function ThemedCoverArtwork({
 
         {/* Official Atletico Crest Showcase Badge on Lower Right */}
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
-          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-rose-400/40 shadow-[0_0_24px_rgba(203,53,36,0.4)]">
-            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(203,53,36,0.7)]">
-              <path d="M 10,10 L 110,10 L 110,75 Q 110,120 60,135 Q 10,120 10,75 Z" fill="#080203" stroke="#192231" strokeWidth="3" />
-              <polygon points="13,13 107,13 60,55" fill="#192231" />
-              <circle cx="35" cy="20" r="2" fill="#ffffff" />
-              <circle cx="48" cy="17" r="2" fill="#ffffff" />
-              <circle cx="60" cy="15" r="2.5" fill="#ffffff" />
-              <circle cx="72" cy="17" r="2" fill="#ffffff" />
-              <circle cx="85" cy="20" r="2" fill="#ffffff" />
-              <circle cx="50" cy="28" r="2" fill="#ffffff" />
-              <circle cx="70" cy="28" r="2" fill="#ffffff" />
-              <path d="M 13,55 L 107,55 L 107,75 Q 107,118 60,133 Q 13,118 13,75 Z" fill="#ffffff" />
-              <rect x="25" y="55" width="14" height="65" fill="#cb3524" />
-              <rect x="53" y="55" width="14" height="70" fill="#cb3524" />
-              <rect x="81" y="55" width="14" height="65" fill="#cb3524" />
-            </svg>
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-rose-400/40 shadow-[0_0_24px_rgba(203,53,36,0.4)]">
+            <img
+              src="/atleteco di madrid/atletico-logo-transparent.png"
+              alt="Atlético de Madrid Crest"
+              className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(203,53,36,0.7)]"
+            />
           </div>
           <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-rose-200 drop-shadow">
             CORAJE Y CORAZÓN
@@ -685,7 +719,7 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
           <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-red-400/40 shadow-[0_0_24px_rgba(220,5,45,0.4)]">
             <img
-              src="/bayern/vecteezy_fc-bayern-munchen-logo-on-transparent-background_14414704.jpg"
+              src="/bayern/bayern-logo-transparent.png"
               alt="FC Bayern München Crest"
               className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(255,215,0,0.7)]"
             />
@@ -2819,7 +2853,7 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-red-600/30 blur-3xl animate-flame-flicker" />
           <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
             <img
-              src="/manu/vecteezy_manchester-united-football-club-logo-symbol-design-england_10994300.jpg"
+              src="/manu/manu-logo-transparent.png"
               alt=""
               className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(255,229,0,0.6)]"
             />
@@ -2843,7 +2877,7 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
           <div className="absolute -top-10 right-0 h-64 w-64 rounded-full bg-blue-700/25 blur-3xl" />
           <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
             <img
-              src="/chelsea/vecteezy_chelsea-logo-on-transparent-background_15863613.jpg"
+              src="/chelsea/chelsea-logo-transparent.png"
               alt=""
               className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(3,70,148,0.6)]"
             />
@@ -2867,7 +2901,7 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
           <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-sky-500/25 blur-3xl" />
           <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
             <img
-              src="/man city/vecteezy_manchester-city-football-club-logo-symbol-design-england_10994439.jpg"
+              src="/man city/mancity-logo-transparent.png"
               alt=""
               className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(108,171,221,0.6)]"
             />
@@ -2889,6 +2923,13 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
       return (
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
           <div className="absolute -bottom-10 left-0 h-64 w-64 rounded-full bg-red-600/25 blur-3xl" />
+          <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
+            <img
+              src="/atleteco di madrid/atletico-logo-transparent.png"
+              alt=""
+              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(203,53,36,0.6)]"
+            />
+          </div>
           <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="atleti-stars" width="40" height="40" patternUnits="userSpaceOnUse">
