@@ -317,6 +317,191 @@ body {
   50% { opacity: 1; transform: scale(1.05); }
 }
 
+/* ==========================================================================
+   HEAVY SPECTACULAR ANIMATIONS (Avatar Frames, Badges & Titles)
+   ========================================================================== */
+@keyframes vortex-spin-fast {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes vortex-spin-reverse-fast {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes orbit-satellite-1 {
+  0% { transform: rotate(0deg) translateX(58px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(58px) rotate(-360deg); }
+}
+
+@keyframes orbit-satellite-2 {
+  0% { transform: rotate(90deg) translateX(58px) rotate(-90deg); }
+  100% { transform: rotate(450deg) translateX(58px) rotate(-450deg); }
+}
+
+@keyframes orbit-satellite-3 {
+  0% { transform: rotate(180deg) translateX(58px) rotate(-180deg); }
+  100% { transform: rotate(540deg) translateX(58px) rotate(-540deg); }
+}
+
+@keyframes orbit-satellite-4 {
+  0% { transform: rotate(270deg) translateX(58px) rotate(-270deg); }
+  100% { transform: rotate(630deg) translateX(58px) rotate(-630deg); }
+}
+
+@keyframes shockwave-ring {
+  0% { transform: scale(0.9); opacity: 0.95; }
+  50% { transform: scale(1.2); opacity: 0.5; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+
+@keyframes inferno-flames {
+  0%, 100% {
+    filter: drop-shadow(0 -4px 12px #ff5470) drop-shadow(0 -8px 24px #ff6b4a) brightness(1.2);
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 -8px 22px #ff2a55) drop-shadow(0 -16px 36px #ffd700) brightness(1.5);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes cyber-matrix-flash {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px #ff007f) drop-shadow(0 0 20px #00f5ff);
+    transform: translate(0, 0);
+  }
+  20% {
+    filter: drop-shadow(-3px 0 16px #ff007f) drop-shadow(3px 0 26px #00f5ff);
+    transform: translate(-1.5px, 1px);
+  }
+  40% {
+    filter: drop-shadow(3px -1px 20px #00f5ff) drop-shadow(-3px 1px 30px #a855f7);
+    transform: translate(1.5px, -1px);
+  }
+  60% {
+    filter: drop-shadow(0 0 25px #ff007f) drop-shadow(0 0 40px #00f5ff);
+    transform: translate(-1px, 0);
+  }
+  80% {
+    filter: drop-shadow(0 0 15px #00f5ff);
+    transform: translate(1px, 0);
+  }
+}
+
+@keyframes gold-sunburst-spin {
+  0% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.85)); }
+  50% { transform: rotate(180deg) scale(1.08); filter: drop-shadow(0 0 32px rgba(255, 215, 0, 1)) brightness(1.35); }
+  100% { transform: rotate(360deg) scale(1); filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.85)); }
+}
+
+@keyframes laser-glare-sweep {
+  0% { transform: translateX(-200%) skewX(-25deg); opacity: 0; }
+  15% { opacity: 0.95; }
+  85% { opacity: 0.95; }
+  100% { transform: translateX(350%) skewX(-25deg); opacity: 0; }
+}
+
+@keyframes levitate-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes neon-text-glow {
+  0%, 100% {
+    text-shadow: 0 0 12px currentColor, 0 0 24px currentColor, 0 0 36px currentColor;
+    filter: brightness(1.15);
+  }
+  50% {
+    text-shadow: 0 0 24px currentColor, 0 0 48px currentColor, 0 0 72px currentColor;
+    filter: brightness(1.45);
+  }
+}
+
+@keyframes badge-shockwave {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.12); opacity: 0.3; }
+  100% { transform: scale(1.24); opacity: 0; }
+}
+
+.animate-vortex-spin-fast {
+  animation: vortex-spin-fast 3.5s linear infinite;
+}
+
+.animate-vortex-spin-reverse-fast {
+  animation: vortex-spin-reverse-fast 2.8s linear infinite;
+}
+
+.animate-orbit-1 {
+  animation: orbit-satellite-1 3.5s linear infinite;
+}
+
+.animate-orbit-2 {
+  animation: orbit-satellite-2 3.5s linear infinite;
+}
+
+.animate-orbit-3 {
+  animation: orbit-satellite-3 3.5s linear infinite;
+}
+
+.animate-orbit-4 {
+  animation: orbit-satellite-4 3.5s linear infinite;
+}
+
+.animate-shockwave {
+  animation: shockwave-ring 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.animate-inferno-flames {
+  animation: inferno-flames 2.2s ease-in-out infinite;
+}
+
+.animate-cyber-flash {
+  animation: cyber-matrix-flash 1.8s steps(2, jump-none) infinite;
+}
+
+.animate-gold-sunburst {
+  animation: gold-sunburst-spin 6s linear infinite;
+}
+
+.animate-laser-glare {
+  animation: laser-glare-sweep 1.8s ease-in-out infinite;
+}
+
+.animate-levitate {
+  animation: levitate-float 3s ease-in-out infinite;
+}
+
+.animate-neon-text {
+  animation: neon-text-glow 2s ease-in-out infinite;
+}
+
+.animate-badge-shockwave {
+  animation: badge-shockwave 2.2s ease-out infinite;
+}
+
+.animate-liquid-chroma {
+  background-size: 300% auto;
+  animation: liquid-chroma 2s ease infinite;
+}
+
+.animate-laser-sweep-fast {
+  animation: laser-sweep-fast 2s ease-in-out infinite;
+}
+
+.animate-jewel-sparkle {
+  animation: jewel-sparkle 1.8s ease-in-out infinite;
+}
+
+.animate-title-energy {
+  animation: title-energy-glow 2s ease-in-out infinite;
+}
+
+.animate-halo-expand {
+  animation: halo-expand-pulse 2.2s ease-in-out infinite;
+}
+
 .animate-gold-corona {
   animation: gold-corona-sweep 10s linear infinite;
 }

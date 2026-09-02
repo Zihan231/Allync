@@ -426,7 +426,7 @@ export function ThemedCoverArtwork({
 }
 
 // ============================================================================
-// 2. COSMETIC TITLE DISPLAY (Kinetic Glowing Typography)
+// 2. COSMETIC TITLE DISPLAY (Kinetic Animated Glowing Typography)
 // ============================================================================
 export function CosmeticTitleText({
   item,
@@ -442,60 +442,120 @@ export function CosmeticTitleText({
       ? "text-base sm:text-lg"
       : "text-sm";
 
+  // MYTHIC: High-Speed Liquid Chromatic Rainbow Lightning Title with Laser Glare
   if (item.rarity === "mythic") {
     return (
-      <span
-        className={`inline-block font-mono font-black uppercase tracking-widest bg-gradient-to-r from-rose-400 via-cyan-300 to-amber-300 bg-clip-text text-transparent animate-rainbow-flow drop-shadow-[0_0_16px_rgba(255,0,128,0.85)] ${sizeClasses}`}
-      >
-        « {item.name} »
+      <span className="group relative inline-flex items-center gap-2 transition-transform duration-300 hover:scale-110">
+        <span className="inline-block font-mono text-cyan-300 animate-jewel-sparkle text-sm sm:text-base drop-shadow-[0_0_12px_#00f5ff]">
+          ⚡
+        </span>
+        <span
+          className={`relative inline-block font-mono font-black uppercase tracking-widest bg-gradient-to-r from-fuchsia-400 via-cyan-300 via-amber-300 via-rose-400 to-fuchsia-400 bg-clip-text text-transparent animate-liquid-chroma animate-neon-text drop-shadow-[0_0_24px_rgba(255,0,128,1)] overflow-hidden ${sizeClasses}`}
+        >
+          {item.name}
+          {/* Rapid laser sweep glare beam */}
+          <span className="pointer-events-none absolute inset-0 -skew-x-25 bg-gradient-to-r from-transparent via-white/70 to-transparent animate-laser-glare" />
+        </span>
+        <span className="inline-block font-mono text-rose-400 animate-jewel-sparkle text-sm sm:text-base drop-shadow-[0_0_12px_#ff007f]">
+          ⚡
+        </span>
       </span>
     );
   }
 
+  // LEGENDARY: 24K Solar Gold / Blood Ruby Metallic Flow Title
   if (item.rarity === "legendary") {
+    const isCrimson = item.tone === "danger" || item.color === "#ff5470";
+    const gradient = isCrimson
+      ? "from-rose-400 via-amber-200 via-rose-300 to-amber-300"
+      : "from-amber-200 via-yellow-100 via-amber-400 to-yellow-200";
+    const shadowColor = isCrimson ? "rgba(255,84,112,1)" : "rgba(255,215,0,1)";
+
     return (
-      <span
-        className={`inline-block font-mono font-extrabold uppercase tracking-widest bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 bg-clip-text text-transparent animate-gold-radiance drop-shadow-[0_0_14px_rgba(255,215,0,0.75)] ${sizeClasses}`}
-      >
-        « {item.name} »
+      <span className="group relative inline-flex items-center gap-2 transition-transform duration-300 hover:scale-110">
+        <span className="inline-block font-mono text-amber-300 animate-jewel-sparkle text-sm drop-shadow-[0_0_10px_#ffd700]">
+          ★
+        </span>
+        <span
+          className={`relative inline-block font-mono font-black uppercase tracking-widest bg-gradient-to-r ${gradient} bg-clip-text text-transparent animate-liquid-chroma drop-shadow-[0_0_22px_${shadowColor}] overflow-hidden ${sizeClasses}`}
+        >
+          {item.name}
+          <span className="pointer-events-none absolute inset-0 -skew-x-25 bg-gradient-to-r from-transparent via-amber-100/60 to-transparent animate-laser-glare" />
+        </span>
+        <span className="inline-block font-mono text-amber-300 animate-jewel-sparkle text-sm drop-shadow-[0_0_10px_#ffd700]">
+          ★
+        </span>
       </span>
     );
   }
 
+  // EPIC: Fiery Magma Inferno / Cyber Matrix Glitch Title
   if (item.rarity === "epic") {
+    const isFire = item.effect === "fire" || item.tone === "danger";
+    const animClass = isFire ? "animate-inferno-flames" : "animate-cyber-flash";
+
     return (
-      <span
-        className={`inline-block font-mono font-extrabold uppercase tracking-wider text-rose-300 animate-flame-flicker drop-shadow-[0_0_12px_rgba(255,84,112,0.9)] ${sizeClasses}`}
-        style={{ color: item.color }}
-      >
-        « {item.name} »
+      <span className="group relative inline-flex items-center gap-1.5 transition-transform duration-300 hover:scale-110">
+        <span className={`font-mono text-sm ${isFire ? "animate-bounce" : "animate-pulse"}`}>
+          {isFire ? "🔥" : "⚡"}
+        </span>
+        <span
+          className={`relative inline-block font-mono font-black uppercase tracking-wider ${animClass} ${sizeClasses}`}
+          style={{
+            color: item.color,
+            textShadow: `0 0 16px ${item.color}, 0 0 32px ${item.secondaryColor ?? item.color}`,
+          }}
+        >
+          {item.name}
+        </span>
+        <span className={`font-mono text-sm ${isFire ? "animate-bounce" : "animate-pulse"}`}>
+          {isFire ? "🔥" : "⚡"}
+        </span>
       </span>
     );
   }
 
+  // RARE: Tactical Stadium Overdrive Title
   if (item.rarity === "rare") {
     return (
-      <span
-        className={`inline-block font-mono font-bold uppercase tracking-wide text-emerald-300 drop-shadow-[0_0_10px_rgba(63,191,127,0.75)] ${sizeClasses}`}
-        style={{ color: item.color }}
-      >
-        « {item.name} »
+      <span className="group relative inline-flex items-center gap-1.5 transition-transform duration-300 hover:scale-110">
+        <span className="font-mono text-emerald-300 animate-pulse text-xs">
+          ✦
+        </span>
+        <span
+          className={`inline-block font-mono font-bold uppercase tracking-wide animate-title-energy drop-shadow-[0_0_16px_rgba(63,191,127,1)] ${sizeClasses}`}
+          style={{
+            color: item.color,
+            textShadow: `0 0 16px ${item.color}`,
+          }}
+        >
+          {item.name}
+        </span>
+        <span className="font-mono text-emerald-300 animate-pulse text-xs">
+          ✦
+        </span>
       </span>
     );
   }
 
+  // COMMON: Clean Cyber Aegis Title
   return (
-    <span
-      className={`inline-block font-mono font-semibold uppercase tracking-wide text-blue-300 drop-shadow-[0_0_6px_rgba(76,141,255,0.65)] ${sizeClasses}`}
-      style={{ color: item.color }}
-    >
-      « {item.name} »
+    <span className="group relative inline-flex items-center gap-1 transition-transform duration-300 hover:scale-105">
+      <span
+        className={`inline-block font-mono font-semibold uppercase tracking-wide drop-shadow-[0_0_12px_rgba(76,141,255,0.9)] ${sizeClasses}`}
+        style={{
+          color: item.color,
+          textShadow: `0 0 12px ${item.color}`,
+        }}
+      >
+        « {item.name} »
+      </span>
     </span>
   );
 }
 
 // ============================================================================
-// 3. COSMETIC BADGE PILL (3D Metallic Plaques with Rarity Jewel Auras)
+// 3. COSMETIC BADGE PILL (Animated 3D Metallic Badges with Laser Sweeps)
 // ============================================================================
 export function CosmeticBadgePill({
   item,
@@ -508,21 +568,31 @@ export function CosmeticBadgePill({
 }) {
   const Icon = COSMETIC_ICON_MAP[item.icon] ?? ShieldIcon;
 
+  // MYTHIC BADGE (Prismatic Rainbow Wave, Outer Shockwave & Laser Glare)
   if (item.rarity === "mythic") {
     return (
       <span
-        className={`relative inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-black tracking-wide border border-rose-400/90 bg-gradient-to-r from-rose-950/95 via-purple-950/95 to-cyan-950/95 text-rose-200 shadow-[0_0_20px_rgba(255,0,128,0.6)] overflow-hidden ${
-          isEquipped ? "ring-2 ring-rose-400 shadow-[0_0_25px_rgba(255,0,128,0.8)]" : ""
+        className={`group relative inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-black tracking-wide border-2 border-rose-400 bg-gradient-to-r from-rose-950 via-purple-950 to-cyan-950 text-rose-100 shadow-[0_0_30px_rgba(255,0,128,0.95)] overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-[0_0_40px_rgba(255,0,128,1)] animate-levitate ${
+          isEquipped ? "ring-2 ring-rose-400 ring-offset-2 ring-offset-bg shadow-[0_0_35px_rgba(255,0,128,1)]" : ""
         }`}
       >
-        <span className="absolute inset-0 bg-gradient-to-r from-rose-500/30 via-cyan-500/30 to-amber-500/30 animate-rainbow-flow" />
-        <span className="relative flex items-center gap-1.5">
-          <Icon className="h-4 w-4 text-rose-300 animate-pulse" />
-          <span className="bg-gradient-to-r from-rose-200 via-cyan-200 to-amber-100 bg-clip-text text-transparent font-bold">
+        {/* Pulsating Outer Shockwave Ring */}
+        <span className="pointer-events-none absolute -inset-1 rounded-full border-2 border-rose-400/80 animate-badge-shockwave" />
+
+        {/* Animated fluid rainbow backdrop stream */}
+        <span className="absolute inset-0 bg-gradient-to-r from-rose-500/40 via-cyan-500/40 via-amber-400/40 to-rose-500/40 animate-liquid-chroma" />
+
+        {/* Rapid Laser Shimmer Glare Bar */}
+        <span className="pointer-events-none absolute inset-0 -skew-x-25 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-laser-glare" />
+
+        <span className="relative z-10 flex items-center gap-1.5">
+          <Icon className="h-4 w-4 text-rose-300 animate-jewel-sparkle" />
+          <span className="bg-gradient-to-r from-rose-200 via-cyan-200 to-amber-100 bg-clip-text text-transparent font-black tracking-wide">
             {item.name}
           </span>
+          <span className="inline-block text-[11px] text-cyan-300 animate-jewel-sparkle">✦</span>
           {isEquipped && equippedLabel ? (
-            <span className="ml-1 text-[9px] font-mono font-bold uppercase text-amber-300 bg-amber-500/30 px-1.5 py-0.2 rounded-full border border-amber-400/40">
+            <span className="ml-1 text-[9px] font-mono font-black uppercase text-amber-300 bg-amber-500/40 px-2 py-0.5 rounded-full border border-amber-300 shadow-[0_0_8px_#ffd700]">
               {equippedLabel}
             </span>
           ) : null}
@@ -531,81 +601,112 @@ export function CosmeticBadgePill({
     );
   }
 
+  // LEGENDARY BADGE (24K Gold Radiant Foil with Sparkle Twinkles & Shockwaves)
   if (item.rarity === "legendary") {
+    const isDanger = item.tone === "danger" || item.color === "#ff5470";
+    const borderGrad = isDanger ? "border-rose-400" : "border-amber-400";
+    const bgGrad = isDanger
+      ? "from-rose-950 via-orange-950 to-rose-950"
+      : "from-amber-950 via-yellow-950 to-amber-950";
+    const glowColor = isDanger ? "rgba(255,84,112,0.95)" : "rgba(255,215,0,0.95)";
+
     return (
       <span
-        className={`relative inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-extrabold border border-amber-400/90 bg-gradient-to-r from-amber-950/95 via-yellow-950/90 to-amber-950/95 text-amber-200 shadow-[0_0_16px_rgba(217,165,68,0.6)] ${
-          isEquipped ? "ring-2 ring-amber-300 shadow-[0_0_22px_rgba(255,215,0,0.7)]" : ""
+        className={`group relative inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-black border-2 ${borderGrad} bg-gradient-to-r ${bgGrad} text-amber-100 shadow-[0_0_26px_${glowColor}] overflow-hidden transition-all duration-300 hover:scale-110 animate-levitate ${
+          isEquipped ? "ring-2 ring-amber-300 ring-offset-2 ring-offset-bg shadow-[0_0_32px_rgba(255,215,0,1)]" : ""
         }`}
       >
-        <Icon className="h-4 w-4 text-yellow-300 animate-gold-radiance" />
-        <span className="bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-300 bg-clip-text text-transparent font-bold">
-          {item.name}
+        {/* Shockwave border */}
+        <span className="pointer-events-none absolute -inset-1 rounded-full border-2 border-amber-300/80 animate-badge-shockwave" />
+
+        {/* Continuous 24K Gold Laser Sweep */}
+        <span className="pointer-events-none absolute inset-0 -skew-x-25 bg-gradient-to-r from-transparent via-amber-200/50 to-transparent animate-laser-glare" />
+
+        <span className="relative z-10 flex items-center gap-1.5">
+          <Icon className="h-4 w-4 text-yellow-300 animate-gold-radiance" />
+          <span className="bg-gradient-to-r from-amber-100 via-yellow-100 to-amber-300 bg-clip-text text-transparent font-black tracking-wide">
+            {item.name}
+          </span>
+          <span className="inline-block text-[10px] text-amber-300 animate-jewel-sparkle">★</span>
+          {isEquipped && equippedLabel ? (
+            <span className="ml-1 text-[9px] font-mono font-black uppercase text-bg bg-amber-400 px-2 py-0.5 rounded-full font-black shadow-[0_0_10px_#ffd700]">
+              {equippedLabel}
+            </span>
+          ) : null}
         </span>
-        {isEquipped && equippedLabel ? (
-          <span className="ml-1 text-[9px] font-mono font-bold uppercase text-bg bg-amber-400 px-1.5 py-0.2 rounded-full font-black">
-            {equippedLabel}
-          </span>
-        ) : null}
       </span>
     );
   }
 
+  // EPIC BADGE (Pulsating Cyber Glitch & Ember Flare)
   if (item.rarity === "epic") {
+    const isFire = item.effect === "fire" || item.tone === "danger";
+
     return (
       <span
-        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border border-purple-400/70 bg-purple-950/80 text-purple-200 shadow-[0_0_14px_rgba(168,85,247,0.5)] ${
-          isEquipped ? "ring-2 ring-purple-400 shadow-[0_0_18px_rgba(168,85,247,0.7)]" : ""
+        className={`group relative inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold border-2 border-purple-400 bg-gradient-to-r from-purple-950 to-indigo-950 text-purple-200 shadow-[0_0_20px_rgba(168,85,247,0.85)] overflow-hidden transition-all duration-300 hover:scale-105 ${
+          isEquipped ? "ring-2 ring-purple-400 shadow-[0_0_26px_rgba(168,85,247,1)]" : ""
         }`}
       >
-        <Icon className="h-3.5 w-3.5 text-purple-300" />
-        {item.name}
-        {isEquipped && equippedLabel ? (
-          <span className="ml-1 text-[9px] font-mono font-bold uppercase text-purple-200 bg-purple-500/40 px-1.5 py-0.2 rounded-full border border-purple-400/40">
-            {equippedLabel}
-          </span>
-        ) : null}
+        <span className="pointer-events-none absolute inset-0 -skew-x-20 bg-gradient-to-r from-transparent via-purple-300/40 to-transparent animate-laser-glare" />
+        <span className="relative z-10 flex items-center gap-1.5">
+          <Icon className={`h-3.5 w-3.5 text-purple-300 ${isFire ? "animate-bounce" : "animate-pulse"}`} />
+          <span>{item.name}</span>
+          {isEquipped && equippedLabel ? (
+            <span className="ml-1 text-[9px] font-mono font-bold uppercase text-purple-200 bg-purple-500/40 px-1.5 py-0.2 rounded-full border border-purple-400/40">
+              {equippedLabel}
+            </span>
+          ) : null}
+        </span>
       </span>
     );
   }
 
+  // RARE BADGE (Bioluminescent Pitch Overdrive)
   if (item.rarity === "rare") {
     return (
       <span
-        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border border-emerald-400/60 bg-emerald-950/70 text-emerald-200 shadow-[0_0_12px_rgba(63,191,127,0.4)] ${
-          isEquipped ? "ring-2 ring-emerald-400 shadow-[0_0_16px_rgba(63,191,127,0.6)]" : ""
+        className={`group relative inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border-2 border-emerald-400 bg-gradient-to-r from-emerald-950 to-teal-950 text-emerald-200 shadow-[0_0_18px_rgba(63,191,127,0.75)] overflow-hidden transition-all duration-300 hover:scale-105 ${
+          isEquipped ? "ring-2 ring-emerald-400 shadow-[0_0_24px_rgba(63,191,127,0.9)]" : ""
         }`}
       >
-        <Icon className="h-3.5 w-3.5 text-emerald-300" />
-        {item.name}
-        {isEquipped && equippedLabel ? (
-          <span className="ml-1 text-[9px] font-mono font-bold uppercase text-emerald-200 bg-emerald-500/40 px-1.5 py-0.2 rounded-full border border-emerald-400/40">
-            {equippedLabel}
-          </span>
-        ) : null}
+        <span className="pointer-events-none absolute inset-0 -skew-x-20 bg-gradient-to-r from-transparent via-emerald-300/35 to-transparent animate-laser-glare" />
+        <span className="relative z-10 flex items-center gap-1.5">
+          <Icon className="h-3.5 w-3.5 text-emerald-300 animate-pulse" />
+          <span>{item.name}</span>
+          {isEquipped && equippedLabel ? (
+            <span className="ml-1 text-[9px] font-mono font-bold uppercase text-emerald-200 bg-emerald-500/40 px-1.5 py-0.2 rounded-full border border-emerald-400/40">
+              {equippedLabel}
+            </span>
+          ) : null}
+        </span>
       </span>
     );
   }
 
+  // COMMON BADGE (Cyber Aegis)
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border border-blue-400/50 bg-blue-950/60 text-blue-200 shadow-[0_0_10px_rgba(76,141,255,0.35)] ${
-        isEquipped ? "ring-2 ring-blue-400 shadow-[0_0_14px_rgba(76,141,255,0.55)]" : ""
+      className={`group relative inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border border-blue-400 bg-gradient-to-r from-blue-950 to-indigo-950 text-blue-200 shadow-[0_0_14px_rgba(76,141,255,0.6)] overflow-hidden transition-all duration-300 hover:scale-105 ${
+        isEquipped ? "ring-2 ring-blue-400 shadow-[0_0_20px_rgba(76,141,255,0.8)]" : ""
       }`}
     >
-      <Icon className="h-3.5 w-3.5 text-blue-300" />
-      {item.name}
-      {isEquipped && equippedLabel ? (
-        <span className="ml-1 text-[9px] font-mono font-bold uppercase text-blue-200 bg-blue-500/40 px-1.5 py-0.2 rounded-full border border-blue-400/40">
-          {equippedLabel}
-        </span>
-      ) : null}
+      <span className="pointer-events-none absolute inset-0 -skew-x-20 bg-gradient-to-r from-transparent via-blue-300/30 to-transparent animate-laser-glare" />
+      <span className="relative z-10 flex items-center gap-1.5">
+        <Icon className="h-3.5 w-3.5 text-blue-300" />
+        <span>{item.name}</span>
+        {isEquipped && equippedLabel ? (
+          <span className="ml-1 text-[9px] font-mono font-bold uppercase text-blue-200 bg-blue-500/40 px-1.5 py-0.2 rounded-full border border-blue-400/40">
+            {equippedLabel}
+          </span>
+        ) : null}
+      </span>
     </span>
   );
 }
 
 // ============================================================================
-// 4. COSMETIC AVATAR FRAME (Grand Multi-Layered Rotating Halos)
+// 4. COSMETIC AVATAR FRAME (Grand Multi-Layered Rotating Animated Halos)
 // ============================================================================
 export function CosmeticAvatarFrame({
   frame,
@@ -628,155 +729,195 @@ export function CosmeticAvatarFrame({
     );
   }
 
-  // --- MYTHIC FRAME (Celestial Void Singularity) ---
+  // --- 1. MYTHIC FRAME (Celestial Void Singularity - High-Speed Dual Vortex + 4 Orbiting Satellites) ---
   if (frame.id === "frame-void-singularity" || frame.rarity === "mythic") {
     return (
-      <div className="relative flex items-center justify-center p-3">
-        <div
-          className="pointer-events-none absolute -inset-2 rounded-full animate-spin-slow opacity-95 blur-[2px]"
-          style={{
-            background:
-              "conic-gradient(from 0deg, #ff007f, #00f5ff, #8b7fe0, #ffd700, #ff007f)",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute -inset-1 rounded-full animate-spin-reverse-slow opacity-90"
-          style={{
-            background:
-              "conic-gradient(from 180deg, transparent 15%, #00f5ff 45%, transparent 65%, #ff007f 85%, transparent)",
-          }}
-        />
-        <div className="pointer-events-none absolute -top-2 h-3 w-3 rounded-full bg-cyan-300 shadow-[0_0_12px_#00f5ff] animate-pulse" />
-        <div className="pointer-events-none absolute -bottom-2 h-3 w-3 rounded-full bg-rose-400 shadow-[0_0_12px_#ff007f] animate-pulse" />
-        <div className="pointer-events-none absolute -left-2 h-3 w-3 rounded-full bg-amber-300 shadow-[0_0_12px_#ffd700] animate-pulse" />
-        <div className="pointer-events-none absolute -right-2 h-3 w-3 rounded-full bg-purple-400 shadow-[0_0_12px_#a855f7] animate-pulse" />
+      <div className="relative flex items-center justify-center p-4 group">
+        {/* Outer Expanding Supernova Shockwave */}
+        <div className="pointer-events-none absolute -inset-4 rounded-full border-2 border-rose-400/90 animate-shockwave" />
 
-        <div className="relative rounded-full border-2 border-bg bg-bg p-0.5 shadow-2xl">
+        {/* High-Speed Outer Clockwise Vortex Ring (3.5s) */}
+        <div
+          className="pointer-events-none absolute -inset-3 rounded-full animate-vortex-spin-fast opacity-100 blur-[1px]"
+          style={{
+            background:
+              "conic-gradient(from 0deg, #ff007f 0%, #00f5ff 25%, #ffd700 50%, #a855f7 75%, #ff007f 100%)",
+          }}
+        />
+
+        {/* High-Speed Inner Counter-Clockwise Vortex Ring (2.8s) */}
+        <div
+          className="pointer-events-none absolute -inset-1.5 rounded-full animate-vortex-spin-reverse-fast opacity-95"
+          style={{
+            background:
+              "conic-gradient(from 180deg, #00f5ff 0%, transparent 35%, #ff007f 65%, transparent 100%)",
+          }}
+        />
+
+        {/* 4 DYNAMIC ORBITING SATELLITE PARTICLES (Continuous Circular Motion) */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="absolute h-3.5 w-3.5 rounded-full bg-cyan-300 shadow-[0_0_16px_#00f5ff] animate-orbit-1" />
+          <div className="absolute h-3.5 w-3.5 rounded-full bg-rose-400 shadow-[0_0_16px_#ff007f] animate-orbit-2" />
+          <div className="absolute h-3.5 w-3.5 rounded-full bg-amber-300 shadow-[0_0_16px_#ffd700] animate-orbit-3" />
+          <div className="absolute h-3.5 w-3.5 rounded-full bg-purple-400 shadow-[0_0_16px_#a855f7] animate-orbit-4" />
+        </div>
+
+        {/* Center Avatar Container */}
+        <div className="relative rounded-full border-2 border-bg bg-bg p-0.5 shadow-[0_0_30px_rgba(255,0,128,0.9)] transition-transform duration-300 group-hover:scale-105">
           <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
         </div>
       </div>
     );
   }
 
-  // --- LEGENDARY FRAME 1 (Solar Phoenix Radiant Halo) ---
+  // --- 2. LEGENDARY FRAME 1 (Solar Phoenix Radiant Halo - Flaming Corona + Orbiting Sparks) ---
   if (frame.id === "frame-solar-phoenix") {
     return (
-      <div className="relative flex items-center justify-center p-3">
+      <div className="relative flex items-center justify-center p-4 group">
+        {/* Outer Solar Flare Shockwave */}
+        <div className="pointer-events-none absolute -inset-4 rounded-full border-2 border-amber-400/90 animate-shockwave" />
+
+        {/* High-Heat Flaming Core */}
         <div
-          className="pointer-events-none absolute -inset-2 rounded-full animate-flame-flicker opacity-95 blur-[2px]"
+          className="pointer-events-none absolute -inset-3 rounded-full animate-inferno-flames opacity-100 blur-[2px]"
           style={{
             background:
-              "radial-gradient(circle, rgba(255,107,74,0.85) 0%, rgba(224,168,60,0.6) 50%, transparent 80%)",
+              "radial-gradient(circle, rgba(255,107,74,1) 0%, rgba(224,168,60,0.85) 50%, transparent 80%)",
           }}
         />
+
+        {/* High-Speed Rotating Solar Crown */}
         <div
-          className="pointer-events-none absolute inset-0 rounded-full border-2 border-amber-300 shadow-[0_0_18px_rgba(255,183,3,0.9)] animate-spin-slow"
+          className="pointer-events-none absolute -inset-1 rounded-full border-2 border-amber-300 shadow-[0_0_28px_rgba(255,183,3,1)] animate-gold-sunburst"
           style={{ borderStyle: "dotted" }}
         />
-        <div className="pointer-events-none absolute -top-1.5 h-3 w-3 rounded-full bg-amber-300 shadow-[0_0_10px_#ffd700] animate-pulse" />
-        <div className="pointer-events-none absolute -bottom-1.5 h-3 w-3 rounded-full bg-orange-400 shadow-[0_0_10px_#ff6b4a] animate-pulse" />
-        <div className="relative rounded-full border-2 border-amber-400 bg-bg p-0.5 shadow-2xl">
+
+        {/* Orbiting Solar Sparks */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="absolute h-3.5 w-3.5 rounded-full bg-amber-300 shadow-[0_0_14px_#ffd700] animate-orbit-1" />
+          <div className="absolute h-3.5 w-3.5 rounded-full bg-orange-400 shadow-[0_0_14px_#ff6b4a] animate-orbit-3" />
+        </div>
+
+        <div className="relative rounded-full border-2 border-amber-400 bg-bg p-0.5 shadow-[0_0_26px_rgba(255,183,3,0.9)] transition-transform duration-300 group-hover:scale-105">
           <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
         </div>
       </div>
     );
   }
 
-  // --- LEGENDARY FRAME 2 (Crown of Kings 24K Gold) ---
+  // --- 3. LEGENDARY FRAME 2 (Crown of Kings 24K Gold - Rotating Corona & Cardinal Jewels) ---
   if (frame.id === "frame-royal-gold" || frame.rarity === "legendary") {
     return (
-      <div className="relative flex items-center justify-center p-3">
+      <div className="relative flex items-center justify-center p-4 group">
+        {/* Expanding Gold Shockwave Ring */}
+        <div className="pointer-events-none absolute -inset-4 rounded-full border-2 border-amber-300/90 animate-shockwave" />
+
+        {/* Radiant 24K Gold Sunburst Halo */}
         <div
-          className="pointer-events-none absolute -inset-2 rounded-full animate-gold-radiance opacity-90 blur-[2px]"
+          className="pointer-events-none absolute -inset-3 rounded-full animate-gold-radiance opacity-100 blur-[2px]"
           style={{
             background:
-              "radial-gradient(circle, rgba(255,215,0,0.8) 0%, rgba(217,165,68,0.3) 70%, transparent 100%)",
+              "radial-gradient(circle, rgba(255,215,0,0.95) 0%, rgba(217,165,68,0.5) 65%, transparent 100%)",
           }}
         />
+
+        {/* High-Speed Rotating 24K Gilded Dashed Ring */}
         <div
-          className="pointer-events-none absolute inset-0.5 rounded-full border-2 border-amber-300 shadow-[0_0_18px_rgba(255,215,0,0.85)] animate-spin-slow"
+          className="pointer-events-none absolute -inset-1.5 rounded-full border-2 border-amber-300 shadow-[0_0_26px_rgba(255,215,0,1)] animate-vortex-spin-fast"
           style={{ borderStyle: "dashed" }}
         />
-        <div className="pointer-events-none absolute top-0 h-2.5 w-2.5 rotate-45 bg-amber-200 border border-amber-400 shadow-[0_0_10px_#ffd700]" />
-        <div className="pointer-events-none absolute bottom-0 h-2.5 w-2.5 rotate-45 bg-amber-200 border border-amber-400 shadow-[0_0_10px_#ffd700]" />
-        <div className="pointer-events-none absolute left-0 h-2.5 w-2.5 rotate-45 bg-amber-200 border border-amber-400 shadow-[0_0_10px_#ffd700]" />
-        <div className="pointer-events-none absolute right-0 h-2.5 w-2.5 rotate-45 bg-amber-200 border border-amber-400 shadow-[0_0_10px_#ffd700]" />
-        <div className="relative rounded-full border-2 border-amber-400 bg-bg p-0.5 shadow-2xl">
+
+        {/* Orbiting Diamond Jewels */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="absolute h-3 w-3 rotate-45 bg-amber-200 border border-amber-400 shadow-[0_0_14px_#ffd700] animate-orbit-2" />
+          <div className="absolute h-3 w-3 rotate-45 bg-amber-200 border border-amber-400 shadow-[0_0_14px_#ffd700] animate-orbit-4" />
+        </div>
+
+        <div className="relative rounded-full border-2 border-amber-400 bg-bg p-0.5 shadow-[0_0_28px_rgba(255,215,0,0.95)] transition-transform duration-300 group-hover:scale-105">
           <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
         </div>
       </div>
     );
   }
 
-  // --- EPIC FRAME 1 (Cyberpunk Matrix Glitch) ---
+  // --- 4. EPIC FRAME 1 (Cyberpunk Matrix Glitch - Matrix Flash & Scanner Radar) ---
   if (frame.id === "frame-cyber-glitch") {
     return (
-      <div className="relative flex items-center justify-center p-2.5">
+      <div className="relative flex items-center justify-center p-3.5 group">
         <div
-          className="pointer-events-none absolute -inset-1.5 rounded-full animate-pulse-glow opacity-90"
-          style={{
-            background: "radial-gradient(circle, rgba(168,85,247,0.7) 0%, rgba(0,245,255,0.4) 60%, transparent 85%)",
-          }}
-        />
-        <div className="pointer-events-none absolute inset-0 rounded-full border-2 border-purple-400 shadow-[0_0_14px_rgba(168,85,247,0.85)]" />
-        <div className="pointer-events-none absolute top-1 left-1 h-2 w-2 bg-cyan-300 shadow-[0_0_8px_#00f5ff]" />
-        <div className="pointer-events-none absolute bottom-1 right-1 h-2 w-2 bg-purple-300 shadow-[0_0_8px_#a855f7]" />
-        <div className="relative rounded-full border-2 border-purple-500 bg-bg p-0.5 shadow-xl">
-          <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
-        </div>
-      </div>
-    );
-  }
-
-  // --- EPIC FRAME 2 (Infernal Dragon Blazecore) ---
-  if (frame.id === "frame-inferno" || frame.rarity === "epic") {
-    return (
-      <div className="relative flex items-center justify-center p-2.5">
-        <div
-          className="pointer-events-none absolute -inset-1.5 rounded-full animate-flame-flicker opacity-95 blur-[2px]"
+          className="pointer-events-none absolute -inset-2.5 rounded-full animate-cyber-flash opacity-100"
           style={{
             background:
-              "radial-gradient(circle, rgba(255,84,112,0.9) 0%, rgba(255,107,74,0.5) 60%, transparent 100%)",
+              "radial-gradient(circle, rgba(168,85,247,0.85) 0%, rgba(0,245,255,0.6) 60%, transparent 85%)",
           }}
         />
-        <div
-          className="pointer-events-none absolute inset-0.5 rounded-full border-2 border-rose-400 shadow-[0_0_18px_rgba(255,84,112,0.9)]"
-        />
-        <div className="pointer-events-none absolute -top-1.5 h-3 w-3 rounded-full bg-rose-400 shadow-[0_0_12px_#ff5470] animate-bounce" />
-        <div className="pointer-events-none absolute -bottom-1.5 h-2.5 w-2.5 rounded-full bg-orange-400 shadow-[0_0_10px_#ff6b4a] animate-pulse" />
-        <div className="relative rounded-full border-2 border-rose-500 bg-bg p-0.5 shadow-xl">
+        {/* High-Speed Cyan Scanner Radar */}
+        <div className="pointer-events-none absolute -inset-1 rounded-full border-2 border-purple-400 shadow-[0_0_22px_rgba(168,85,247,1)] animate-vortex-spin-fast" />
+
+        {/* Orbiting Cyber Data Bits */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="absolute h-2.5 w-2.5 bg-cyan-300 shadow-[0_0_12px_#00f5ff] animate-orbit-1" />
+          <div className="absolute h-2.5 w-2.5 bg-purple-300 shadow-[0_0_12px_#a855f7] animate-orbit-3" />
+        </div>
+
+        <div className="relative rounded-full border-2 border-purple-500 bg-bg p-0.5 shadow-[0_0_22px_rgba(168,85,247,0.9)] transition-transform duration-300 group-hover:scale-105">
           <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
         </div>
       </div>
     );
   }
 
-  // --- RARE FRAME (Emerald Overdrive) ---
+  // --- 5. EPIC FRAME 2 (Infernal Dragon Blazecore - Roaring Flames & Rising Embers) ---
+  if (frame.id === "frame-inferno" || frame.rarity === "epic") {
+    return (
+      <div className="relative flex items-center justify-center p-3.5 group">
+        <div
+          className="pointer-events-none absolute -inset-2.5 rounded-full animate-inferno-flames opacity-100 blur-[2px]"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(255,84,112,1) 0%, rgba(255,107,74,0.7) 60%, transparent 100%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute -inset-1 rounded-full border-2 border-rose-400 shadow-[0_0_26px_rgba(255,84,112,1)] animate-vortex-spin-fast"
+          style={{ borderStyle: "dashed" }}
+        />
+        <div className="pointer-events-none absolute -top-2.5 h-4 w-4 rounded-full bg-rose-400 shadow-[0_0_16px_#ff5470] animate-bounce" />
+        <div className="pointer-events-none absolute -bottom-2.5 h-3.5 w-3.5 rounded-full bg-orange-400 shadow-[0_0_14px_#ff6b4a] animate-pulse" />
+
+        <div className="relative rounded-full border-2 border-rose-500 bg-bg p-0.5 shadow-[0_0_24px_rgba(255,84,112,0.95)] transition-transform duration-300 group-hover:scale-105">
+          <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
+        </div>
+      </div>
+    );
+  }
+
+  // --- 6. RARE FRAME (Emerald Overdrive - Pitch Floodlight & Radar Sweep) ---
   if (frame.id === "frame-emerald-edge" || frame.rarity === "rare") {
     return (
-      <div className="relative flex items-center justify-center p-2">
+      <div className="relative flex items-center justify-center p-3 group">
         <div
-          className="pointer-events-none absolute -inset-1 rounded-full animate-pulse-glow opacity-90"
+          className="pointer-events-none absolute -inset-2 rounded-full animate-stadium-floodlight opacity-100"
           style={{
-            background: "radial-gradient(circle, rgba(63,191,127,0.65) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(63,191,127,0.85) 0%, rgba(0,255,135,0.45) 55%, transparent 75%)",
           }}
         />
-        <div className="pointer-events-none absolute inset-0 rounded-full border-2 border-emerald-400 shadow-[0_0_14px_rgba(63,191,127,0.85)]" />
-        <div className="relative rounded-full border-2 border-bg bg-bg p-0.5 shadow-md">
+        <div className="pointer-events-none absolute inset-0 rounded-full border-2 border-emerald-400 shadow-[0_0_22px_rgba(63,191,127,1)] animate-vortex-spin-fast" />
+        <div className="relative rounded-full border-2 border-bg bg-bg p-0.5 shadow-[0_0_18px_rgba(63,191,127,0.85)] transition-transform duration-300 group-hover:scale-105">
           <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
         </div>
       </div>
     );
   }
 
-  // --- COMMON FRAME (Cyber Aegis) ---
+  // --- 7. COMMON FRAME (Cyber Aegis) ---
   return (
-    <div className="relative flex items-center justify-center p-1.5">
+    <div className="relative flex items-center justify-center p-2.5 group">
       <div
-        className="pointer-events-none absolute inset-0 rounded-full border-2 border-blue-400 shadow-[0_0_12px_rgba(76,141,255,0.55)]"
+        className="pointer-events-none absolute inset-0 rounded-full border-2 shadow-[0_0_18px_rgba(76,141,255,0.85)] animate-halo-expand"
         style={{ borderColor: frame.color }}
       />
-      <div className="relative rounded-full border-2 border-bg bg-bg p-0.5 shadow-md">
+      <div className="relative rounded-full border-2 border-bg bg-bg p-0.5 shadow-md transition-transform duration-300 group-hover:scale-105">
         <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
       </div>
     </div>
@@ -1368,16 +1509,16 @@ export function FootballPlayerAvatar({
 
   return (
     <div className="relative group">
-      {/* 5-Star Gold Crest on Top of Avatar */}
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-0.5 rounded-full border border-amber-400/80 bg-bg/95 px-2 py-0.5 text-[8px] font-black text-amber-300 shadow-[0_0_12px_rgba(255,215,0,0.7)] backdrop-blur animate-pulse">
-        <span>★</span>
-        <span>★</span>
-        <span>★</span>
-        <span>★</span>
-        <span>★</span>
+      {/* 5-Star Gold Crest on Top of Avatar with Staggered Twinkles */}
+      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-0.5 rounded-full border border-amber-300/90 bg-bg/95 px-2.5 py-0.5 text-[9px] font-black text-amber-300 shadow-[0_0_16px_rgba(255,215,0,0.85)] backdrop-blur animate-gold-radiance">
+        <span className="animate-jewel-sparkle">★</span>
+        <span className="animate-jewel-sparkle" style={{ animationDelay: "0.2s" }}>★</span>
+        <span className="text-[10px] text-amber-100 animate-jewel-sparkle" style={{ animationDelay: "0.4s" }}>★</span>
+        <span className="animate-jewel-sparkle" style={{ animationDelay: "0.6s" }}>★</span>
+        <span className="animate-jewel-sparkle" style={{ animationDelay: "0.8s" }}>★</span>
       </div>
 
-      {/* Main Avatar with Frame */}
+      {/* Main Avatar with Animated Frame */}
       <CosmeticAvatarFrame
         frame={frame}
         dpUrl={dpUrl}
@@ -1387,16 +1528,27 @@ export function FootballPlayerAvatar({
       />
 
       {/* Football Tactical Position & OVR Rating Tag at Bottom */}
-      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 rounded-full border border-surface-line-strong bg-bg/95 px-2.5 py-0.5 shadow-xl backdrop-blur">
+      <div
+        className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 shadow-2xl backdrop-blur transition-transform group-hover:scale-110"
+        style={{
+          borderColor: `${accentColor}80`,
+          backgroundColor: "rgba(10, 8, 20, 0.95)",
+          boxShadow: `0 0 14px ${accentColor}50`,
+        }}
+      >
         <span
-          className="font-mono text-[9px] font-black uppercase px-1.5 py-0.2 rounded text-bg"
-          style={{ backgroundColor: accentColor }}
+          className="font-mono text-[9px] font-black uppercase px-1.5 py-0.2 rounded shadow-sm"
+          style={{
+            backgroundColor: accentColor,
+            color: "#000000",
+          }}
         >
           {position}
         </span>
-        <span className="font-mono text-[10px] font-black text-ink">
+        <span className="font-mono text-[10px] font-black text-white">
           {rating}
         </span>
+        <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: accentColor }} />
       </div>
 
       {/* Spinning Golden Soccer Ball Particle at Bottom Right */}
@@ -1635,25 +1787,25 @@ export function PlayerCosmeticsShowcase({
       <div className="relative z-10 mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {/* Equipped Theme Tile */}
         <div
-          className="flex items-center gap-3 rounded-xl border p-3.5 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          className="flex items-center gap-3 rounded-xl border p-3.5 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
           style={{
             borderColor: tokens.innerBorder,
             backgroundColor: tokens.innerBg,
           }}
         >
           <div
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border shadow-md animate-pulse"
             style={{
               borderColor: theme?.color ?? tokens.innerBorder,
               backgroundColor: `${theme?.color ?? tokens.primary}25`,
               color: theme?.color ?? tokens.accentText,
             }}
           >
-            <ShieldIcon className="h-5.5 w-5.5" />
+            <ShieldIcon className="h-6 w-6" />
           </div>
           <div className="min-w-0 flex-1">
             <span
-              className="block font-mono text-[9px] uppercase tracking-wider"
+              className="block font-mono text-[9px] uppercase tracking-wider font-bold"
               style={{ color: tokens.mutedText }}
             >
               Active Stage Theme
@@ -1667,27 +1819,39 @@ export function PlayerCosmeticsShowcase({
           </div>
         </div>
 
-        {/* Equipped Avatar Frame Tile */}
+        {/* Equipped Avatar Frame Tile with Mini Live Preview */}
         <div
-          className="flex items-center gap-3 rounded-xl border p-3.5 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          className="flex items-center gap-3 rounded-xl border p-3.5 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
           style={{
             borderColor: tokens.innerBorder,
             backgroundColor: tokens.innerBg,
           }}
         >
-          <div
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm"
-            style={{
-              borderColor: frame?.color ?? tokens.innerBorder,
-              backgroundColor: `${frame?.color ?? tokens.primary}25`,
-              color: frame?.color ?? tokens.accentText,
-            }}
-          >
-            <CrosshairIcon className="h-5.5 w-5.5" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center">
+            {frame ? (
+              <CosmeticAvatarFrame
+                frame={frame}
+                dpUrl={null}
+                name="⚽"
+                size="sm"
+                mode="static"
+              />
+            ) : (
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-full border shadow-sm"
+                style={{
+                  borderColor: tokens.innerBorder,
+                  backgroundColor: tokens.innerBg,
+                  color: tokens.accentText,
+                }}
+              >
+                <CrosshairIcon className="h-5 w-5" />
+              </div>
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <span
-              className="block font-mono text-[9px] uppercase tracking-wider"
+              className="block font-mono text-[9px] uppercase tracking-wider font-bold"
               style={{ color: tokens.mutedText }}
             >
               Avatar Halo Frame
@@ -1701,71 +1865,73 @@ export function PlayerCosmeticsShowcase({
           </div>
         </div>
 
-        {/* Equipped Kinetic Title Tile */}
+        {/* Equipped Kinetic Title Tile with Live Title Component */}
         <div
-          className="flex items-center gap-3 rounded-xl border p-3.5 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          className="flex items-center gap-3 rounded-xl border p-3.5 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
           style={{
             borderColor: tokens.innerBorder,
             backgroundColor: tokens.innerBg,
           }}
         >
           <div
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border shadow-md animate-inferno-flames"
             style={{
               borderColor: title?.color ?? tokens.innerBorder,
               backgroundColor: `${title?.color ?? tokens.primary}25`,
               color: title?.color ?? tokens.accentText,
             }}
           >
-            <FlameIcon className="h-5.5 w-5.5" />
+            <FlameIcon className="h-6 w-6" />
           </div>
           <div className="min-w-0 flex-1">
             <span
-              className="block font-mono text-[9px] uppercase tracking-wider"
+              className="block font-mono text-[9px] uppercase tracking-wider font-bold"
               style={{ color: tokens.mutedText }}
             >
               Kinetic Title
             </span>
-            <span
-              className="block text-xs font-black truncate"
-              style={{ color: title?.color ?? tokens.headingText }}
-            >
-              {title?.name ?? "No Title"}
-            </span>
+            <div className="mt-0.5 truncate">
+              {title ? (
+                <CosmeticTitleText item={title} size="sm" />
+              ) : (
+                <span className="text-xs font-bold text-ink-faint">No Title</span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Equipped Badge Pill Tile */}
+        {/* Equipped Badge Pill Tile with Live Badge Component */}
         <div
-          className="flex items-center gap-3 rounded-xl border p-3.5 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          className="flex items-center gap-3 rounded-xl border p-3.5 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
           style={{
             borderColor: tokens.innerBorder,
             backgroundColor: tokens.innerBg,
           }}
         >
           <div
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border shadow-md animate-gold-radiance"
             style={{
               borderColor: badge?.color ?? tokens.innerBorder,
               backgroundColor: `${badge?.color ?? tokens.primary}25`,
               color: badge?.color ?? tokens.accentText,
             }}
           >
-            <TrophyIcon className="h-5.5 w-5.5" />
+            <TrophyIcon className="h-6 w-6" />
           </div>
           <div className="min-w-0 flex-1">
             <span
-              className="block font-mono text-[9px] uppercase tracking-wider"
+              className="block font-mono text-[9px] uppercase tracking-wider font-bold"
               style={{ color: tokens.mutedText }}
             >
               Prestigious Badge
             </span>
-            <span
-              className="block text-xs font-black truncate"
-              style={{ color: badge?.color ?? tokens.headingText }}
-            >
-              {badge?.name ?? "Rookie Mark"}
-            </span>
+            <div className="mt-0.5 truncate">
+              {badge ? (
+                <CosmeticBadgePill item={badge} isEquipped={true} />
+              ) : (
+                <span className="text-xs font-bold text-ink-faint">Rookie Mark</span>
+              )}
+            </div>
           </div>
         </div>
       </div>
