@@ -113,7 +113,7 @@ export function DashboardSidebar({
 
   return (
     <>
-      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 overflow-y-auto border-r border-surface-line/70 lg:block">
+      <aside className="fixed top-14 min-[400px]:top-16 left-0 bottom-0 z-20 hidden w-60 shrink-0 overflow-y-auto border-r border-surface-line/70 bg-bg/95 backdrop-blur-md lg:block">
         <div className="border-b border-surface-line/70 p-3">
           <RoleToggle value={user.mode} onChange={handleModeChange} className="w-full" />
         </div>
@@ -126,7 +126,7 @@ export function DashboardSidebar({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
-          <div className="relative flex h-full w-64 flex-col border-r border-surface-line bg-bg-raised shadow-2xl">
+          <div className="relative flex h-full w-64 flex-col border-r border-surface-line bg-bg-raised shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-center border-b border-surface-line/70 px-4 py-3.5">
               <Link href="/dashboard" onClick={onClose} className="font-display text-lg font-bold tracking-tight text-ink">
                 ALL<span className="text-accent">Y</span>NQ

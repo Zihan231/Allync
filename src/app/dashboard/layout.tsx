@@ -29,7 +29,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-bg">
       <DashboardTopbar onMenuClick={() => setMenuOpen(true)} showMenuButton={!isHub} />
       <div className="flex">
-        {!isHub ? <DashboardSidebar open={menuOpen} onClose={() => setMenuOpen(false)} /> : null}
+        {!isHub ? (
+          <>
+            <DashboardSidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
+            <div className="hidden lg:block w-60 shrink-0" aria-hidden="true" />
+          </>
+        ) : null}
         <main className="min-w-0 flex-1 px-4 py-8 lg:px-8">{children}</main>
       </div>
     </div>

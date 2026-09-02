@@ -75,7 +75,7 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
 }
 
@@ -83,8 +83,27 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-body), system-ui, sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
+}
+
+/* Sleek scrollbar for sidebars and panels */
+aside::-webkit-scrollbar,
+nav::-webkit-scrollbar {
+  width: 4px;
+}
+aside::-webkit-scrollbar-track,
+nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+aside::-webkit-scrollbar-thumb,
+nav::-webkit-scrollbar-thumb {
+  background: var(--surface-line-strong);
+  border-radius: 4px;
+}
+aside::-webkit-scrollbar-thumb:hover,
+nav::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 
 ::selection {
