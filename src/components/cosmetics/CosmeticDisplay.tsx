@@ -100,6 +100,612 @@ export function ThemedCoverArtwork({
     );
   }
 
+  // ==========================================================================
+  // --- 1. REAL MADRID CF (Los Blancos · 15x European Champions) ---
+  // ==========================================================================
+  if (theme.id === "theme-real-madrid") {
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: "linear-gradient(135deg, #070914 0%, #0d1326 45%, #05070e 100%)" }}
+      >
+        {/* Santiago Bernabéu Stadium Backdrop Image (/real.jpg) */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img
+            src="/real.jpg"
+            alt="Estadio Santiago Bernabéu"
+            className="h-full w-full object-cover opacity-50 mix-blend-luminosity scale-105 transition-transform duration-1000"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#070914] via-[#070914]/75 to-[#070914]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#070914] via-transparent to-[#070914]/90" />
+        </div>
+
+        {/* Subtle Top Floodlights (No center blowout) */}
+        <div
+          className="pointer-events-none absolute -top-16 left-1/4 h-64 w-80 rounded-full blur-[70px] opacity-35"
+          style={{ background: "radial-gradient(circle, rgba(254,190,16,0.6) 0%, transparent 70%)" }}
+        />
+        <div
+          className="pointer-events-none absolute -top-16 right-1/4 h-64 w-80 rounded-full blur-[70px] opacity-30"
+          style={{ background: "radial-gradient(circle, rgba(121,59,156,0.6) 0%, transparent 70%)" }}
+        />
+
+        {/* Santiago Bernabéu Facade Ribs & 15 UCL Stars */}
+        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-55 z-10" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 0,220 Q 250,140 500,220 Q 750,140 1000,220" fill="none" stroke="#febe10" strokeWidth="1" strokeDasharray="8 6" opacity="0.35" />
+          <path d="M 0,260 Q 250,180 500,260 Q 750,180 1000,260" fill="none" stroke="#ffffff" strokeWidth="0.75" opacity="0.25" />
+
+          {/* 15 UCL Stars Constellation */}
+          <g fill="#febe10" opacity="0.85">
+            <text x="32%" y="30%" fontSize="12">★</text>
+            <text x="35%" y="22%" fontSize="14">★</text>
+            <text x="39%" y="18%" fontSize="16">★</text>
+            <text x="43%" y="16%" fontSize="18">★ 15x UCL</text>
+            <text x="54%" y="18%" fontSize="16">★</text>
+            <text x="58%" y="22%" fontSize="14">★</text>
+            <text x="61%" y="30%" fontSize="12">★</text>
+          </g>
+        </svg>
+
+        {/* Official Real Madrid Crest Showcase Badge on Lower Right */}
+        <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-amber-400/40 shadow-[0_0_24px_rgba(254,190,16,0.35)]">
+            <img
+              src="/real madrid/real-madrid-logo-preview.png"
+              alt="Real Madrid CF Crest"
+              className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(254,190,16,0.7)]"
+            />
+          </div>
+          <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-amber-300 drop-shadow">
+            15★ REYES DE EUROPA
+          </span>
+        </div>
+
+        {/* Subtle Watermark in Bottom-Center */}
+        <div className="pointer-events-none absolute bottom-3 left-32 sm:left-44 z-10 hidden min-[540px]:flex items-center gap-1.5 opacity-35">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-amber-200">
+            👑 ¡HALA MADRID Y NADA MÁS!
+          </span>
+        </div>
+
+        {/* Floating Golden Crystals */}
+        <div className="pointer-events-none absolute top-16 left-[30%] h-3 w-3 rotate-45 border border-amber-300 bg-amber-100 shadow-[0_0_10px_#ffd700] animate-pulse z-10" />
+        <div className="pointer-events-none absolute bottom-14 left-[42%] h-2.5 w-2.5 rotate-45 border border-amber-300 bg-white shadow-[0_0_8px_#ffffff] animate-pulse z-10" />
+
+        {/* Interactive View Toggle */}
+        {viewToggle}
+
+        {/* Bottom Horizon Glow */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg via-bg/60 to-transparent z-10" />
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // --- 2. FC BARCELONA (Blaugrana · Més que un club) ---
+  // ==========================================================================
+  if (theme.id === "theme-fc-barcelona") {
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: "linear-gradient(135deg, #010614 0%, #12031a 50%, #030a1c 100%)" }}
+      >
+        {/* Camp Nou Backdrop Image (/barca.jpg) */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img
+            src="/barca.jpg"
+            alt="Spotify Camp Nou"
+            className="h-full w-full object-cover opacity-45 mix-blend-luminosity scale-105 transition-transform duration-1000"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#010614] via-[#010614]/75 to-[#010614]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#010614] via-transparent to-[#010614]/90" />
+        </div>
+
+        {/* Blaugrana Deep Blue & Garnet Spotlight Waves */}
+        <div
+          className="pointer-events-none absolute -top-10 left-1/4 h-64 w-80 rounded-full blur-[75px] opacity-45"
+          style={{ background: "radial-gradient(circle, rgba(0,77,152,0.7) 0%, transparent 70%)" }}
+        />
+        <div
+          className="pointer-events-none absolute -top-10 right-1/4 h-64 w-80 rounded-full blur-[75px] opacity-45"
+          style={{ background: "radial-gradient(circle, rgba(165,0,68,0.7) 0%, transparent 70%)" }}
+        />
+
+        {/* Spotify Camp Nou & FC Barcelona Official Vector Crest */}
+        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-55 z-10" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 0,280 Q 500,100 1000,280" fill="none" stroke="#edbb00" strokeWidth="1.5" opacity="0.4" />
+          <path d="M 0,300 Q 500,120 1000,300" fill="none" stroke="#004d98" strokeWidth="1" strokeDasharray="10 6" opacity="0.3" />
+        </svg>
+
+        {/* Official FC Barcelona Crest Showcase Badge on Lower Right */}
+        <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-amber-400/40 shadow-[0_0_24px_rgba(165,0,68,0.35)]">
+            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(237,187,0,0.7)]">
+              <defs>
+                <linearGradient id="senyeraMini" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#edbb00" />
+                  <stop offset="25%" stopColor="#da291c" />
+                  <stop offset="50%" stopColor="#edbb00" />
+                  <stop offset="75%" stopColor="#da291c" />
+                  <stop offset="100%" stopColor="#edbb00" />
+                </linearGradient>
+              </defs>
+              <path d="M 10,10 Q 60,0 110,10 L 110,65 Q 110,115 60,135 Q 10,115 10,65 Z" fill="#020b1e" stroke="#edbb00" strokeWidth="3" />
+              <rect x="13" y="12" width="47" height="42" fill="#ffffff" />
+              <line x1="13" y1="33" x2="60" y2="33" stroke="#da291c" strokeWidth="6" />
+              <line x1="36" y1="12" x2="36" y2="54" stroke="#da291c" strokeWidth="6" />
+              <rect x="60" y="12" width="47" height="42" fill="url(#senyeraMini)" />
+              <rect x="11" y="54" width="98" height="15" fill="#edbb00" />
+              <text x="60" y="66" fill="#004d98" fontSize="11" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">FCB</text>
+              <path d="M 13,69 L 107,69 L 107,75 Q 107,115 60,133 Q 13,115 13,75 Z" fill="#004d98" />
+              <rect x="32" y="69" width="16" height="60" fill="#a50044" />
+              <rect x="72" y="69" width="16" height="60" fill="#a50044" />
+              <circle cx="60" cy="102" r="13" fill="#edbb00" stroke="#ffffff" strokeWidth="1" />
+            </svg>
+          </div>
+          <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-amber-300 drop-shadow">
+            MÉS QUE UN CLUB
+          </span>
+        </div>
+
+        {/* Subtle Watermark in Bottom-Center */}
+        <div className="pointer-events-none absolute bottom-3 left-32 sm:left-44 z-10 hidden min-[540px]:flex items-center gap-1.5 opacity-35">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-rose-300">
+            🔴🔵 SPOTIFY CAMP NOU
+          </span>
+        </div>
+
+        {/* Floating Senyera Sparkles */}
+        <div className="pointer-events-none absolute top-16 left-[25%] h-3 w-3 rounded-full bg-amber-400 shadow-[0_0_10px_#edbb00] animate-pulse z-10" />
+
+        {/* Interactive View Toggle */}
+        {viewToggle}
+
+        {/* Bottom Horizon Glow */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg via-bg/60 to-transparent z-10" />
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // --- 3. BANGLADESH NATIONAL TEAM (Bengal Tigers · লাল-সবুজ) ---
+  // ==========================================================================
+  if (theme.id === "theme-bangladesh-tigers") {
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: "linear-gradient(135deg, #01140e 0%, #032b1d 45%, #020f0a 100%)" }}
+      >
+        {/* Lush Bengal Pitch Green & Solar Red Disc Ambient */}
+        <div
+          className="pointer-events-none absolute -top-10 left-1/3 h-64 w-80 rounded-full blur-[75px] opacity-45"
+          style={{ background: "radial-gradient(circle, rgba(244,42,65,0.6) 0%, transparent 70%)" }}
+        />
+        <div
+          className="pointer-events-none absolute -top-10 right-1/3 h-64 w-80 rounded-full blur-[75px] opacity-40"
+          style={{ background: "radial-gradient(circle, rgba(0,106,78,0.7) 0%, transparent 70%)" }}
+        />
+
+        {/* Official Bangladesh Solar Red Disc Vector & Claw Stripes */}
+        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-55 z-10" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="38%" cy="45%" r="100" fill="#f42a41" opacity="0.35" />
+          <circle cx="38%" cy="45%" r="120" fill="none" stroke="#f9a825" strokeWidth="1.5" strokeDasharray="8 6" opacity="0.4" />
+          <path d="M 0,240 Q 300,160 600,240 Q 800,180 1000,240" fill="none" stroke="#00ff87" strokeWidth="1" opacity="0.35" />
+        </svg>
+
+        {/* Official Bengal Tigers Crest Showcase Badge on Lower Right */}
+        <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-emerald-400/40 shadow-[0_0_24px_rgba(0,106,78,0.4)]">
+            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(244,42,65,0.7)]">
+              <path d="M 10,10 L 110,10 L 110,75 Q 110,120 60,135 Q 10,120 10,75 Z" fill="#003828" stroke="#f9a825" strokeWidth="3" />
+              <circle cx="60" cy="65" r="32" fill="#f42a41" />
+              <path d="M 40,50 Q 60,40 80,50 Q 85,70 75,85 Q 60,90 45,85 Q 35,70 40,50 Z" fill="#f9a825" />
+              <polygon points="50,60 55,70 45,70" fill="#ffffff" />
+              <polygon points="70,60 75,70 65,70" fill="#ffffff" />
+              <path d="M 52,75 Q 60,82 68,75" stroke="#003828" strokeWidth="2.5" fill="none" />
+              <text x="60" y="122" fill="#f9a825" fontSize="9" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">BANGLADESH</text>
+            </svg>
+          </div>
+          <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-emerald-300 drop-shadow">
+            BENGAL TIGERS · লাল-সবুজ
+          </span>
+        </div>
+
+        {/* Subtle Watermark in Bottom-Center */}
+        <div className="pointer-events-none absolute bottom-3 left-32 sm:left-44 z-10 hidden min-[540px]:flex items-center gap-1.5 opacity-35">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-emerald-200">
+            🐯 BANGABANDHU STADIUM
+          </span>
+        </div>
+
+        {/* Floating Bengal Fire Embers */}
+        <div className="pointer-events-none absolute top-16 left-[30%] h-3 w-3 rounded-full bg-red-500 shadow-[0_0_10px_#f42a41] animate-bounce z-10" />
+
+        {/* Interactive View Toggle */}
+        {viewToggle}
+
+        {/* Bottom Horizon Glow */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg via-bg/60 to-transparent z-10" />
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // --- 4. MANCHESTER UNITED FC (Red Devils · Theatre of Dreams) ---
+  // ==========================================================================
+  if (theme.id === "theme-man-united") {
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: "linear-gradient(135deg, #100304 0%, #260508 45%, #080203 100%)" }}
+      >
+        {/* Old Trafford Backdrop Image (/Manu.jpg) */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img
+            src="/Manu.jpg"
+            alt="Old Trafford"
+            className="h-full w-full object-cover opacity-45 mix-blend-luminosity scale-105 transition-transform duration-1000"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#100304] via-[#100304]/75 to-[#100304]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#100304] via-transparent to-[#100304]/90" />
+        </div>
+
+        {/* Old Trafford Fiery Red & Amber Spotlight */}
+        <div
+          className="pointer-events-none absolute -top-10 left-1/3 h-64 w-80 rounded-full blur-[75px] opacity-45 animate-flame-flicker"
+          style={{ background: "radial-gradient(circle, rgba(218,41,28,0.7) 0%, transparent 70%)" }}
+        />
+
+        {/* Steel Lattice Architecture Vector */}
+        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-55 z-10" xmlns="http://www.w3.org/2000/svg">
+          <line x1="0" y1="180" x2="1000" y2="180" stroke="#da291c" strokeWidth="2" opacity="0.35" />
+          <line x1="0" y1="220" x2="1000" y2="220" stroke="#ffe500" strokeWidth="1" strokeDasharray="12 6" opacity="0.25" />
+        </svg>
+
+        {/* Official Red Devil Crest Showcase Badge on Lower Right */}
+        <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-amber-400/40 shadow-[0_0_24px_rgba(218,41,28,0.4)]">
+            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(255,229,0,0.7)]">
+              <path d="M 10,10 L 110,10 L 110,75 Q 110,120 60,135 Q 10,120 10,75 Z" fill="#080304" stroke="#ffe500" strokeWidth="3" />
+              <rect x="13" y="13" width="94" height="26" fill="#da291c" />
+              <polygon points="45,35 60,20 75,35" fill="#ffe500" />
+              <rect x="11" y="42" width="98" height="12" fill="#ffe500" />
+              <text x="60" y="51" fill="#080304" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">MANCHESTER</text>
+              <path d="M 45,65 Q 60,55 75,65 L 70,95 Q 60,105 50,95 Z" fill="#da291c" />
+              <line x1="72" y1="58" x2="72" y2="105" stroke="#ffe500" strokeWidth="2.5" />
+              <polygon points="68,60 72,52 76,60" fill="#ffe500" />
+              <text x="60" y="125" fill="#ffe500" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">UNITED</text>
+            </svg>
+          </div>
+          <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-amber-300 drop-shadow">
+            THEATRE OF DREAMS
+          </span>
+        </div>
+
+        {/* Subtle Watermark in Bottom-Center */}
+        <div className="pointer-events-none absolute bottom-3 left-32 sm:left-44 z-10 hidden min-[540px]:flex items-center gap-1.5 opacity-35">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-red-300">
+            👹 OLD TRAFFORD
+          </span>
+        </div>
+
+        {/* Rising Spark Embers */}
+        <div className="pointer-events-none absolute bottom-12 left-[30%] h-3 w-3 rounded-full bg-red-500 shadow-[0_0_10px_#da291c] animate-bounce z-10" />
+
+        {/* Interactive View Toggle */}
+        {viewToggle}
+
+        {/* Bottom Horizon Glow */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg via-bg/60 to-transparent z-10" />
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // --- 5. CHELSEA FC (The Blues · Pride of London) ---
+  // ==========================================================================
+  if (theme.id === "theme-chelsea-fc") {
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: "linear-gradient(135deg, #010c22 0%, #032152 45%, #010714 100%)" }}
+      >
+        {/* Royal Chelsea Blue Spotlight */}
+        <div
+          className="pointer-events-none absolute -top-10 left-1/3 h-64 w-80 rounded-full blur-[75px] opacity-45"
+          style={{ background: "radial-gradient(circle, rgba(3,70,148,0.8) 0%, transparent 70%)" }}
+        />
+
+        {/* Stamford Bridge Wave Arc */}
+        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-55 z-10" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 0,260 Q 500,130 1000,260" fill="none" stroke="#034694" strokeWidth="2" opacity="0.5" />
+          <path d="M 0,280 Q 500,150 1000,280" fill="none" stroke="#dba111" strokeWidth="1" strokeDasharray="8 6" opacity="0.3" />
+        </svg>
+
+        {/* Official Chelsea Lion Crest Showcase Badge on Lower Right */}
+        <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-blue-400/40 shadow-[0_0_24px_rgba(3,70,148,0.4)]">
+            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(219,161,17,0.7)]">
+              <circle cx="60" cy="70" r="52" fill="#011233" stroke="#034694" strokeWidth="5" />
+              <circle cx="60" cy="70" r="45" fill="none" stroke="#dba111" strokeWidth="2" />
+              <path d="M 50,50 Q 65,35 75,45 Q 70,65 80,75 Q 65,90 50,80 Q 40,70 50,50 Z" fill="#034694" stroke="#ffffff" strokeWidth="2" />
+              <line x1="72" y1="40" x2="72" y2="95" stroke="#dba111" strokeWidth="3" />
+              <circle cx="72" cy="38" r="4" fill="#dba111" />
+              <text x="60" y="24" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">CHELSEA</text>
+              <text x="60" y="118" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">FOOTBALL CLUB</text>
+            </svg>
+          </div>
+          <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-amber-300 drop-shadow">
+            PRIDE OF LONDON
+          </span>
+        </div>
+
+        {/* Subtle Watermark in Bottom-Center */}
+        <div className="pointer-events-none absolute bottom-3 left-32 sm:left-44 z-10 hidden min-[540px]:flex items-center gap-1.5 opacity-35">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-blue-200">
+            🦁 STAMFORD BRIDGE
+          </span>
+        </div>
+
+        {/* Floating Gold Stars */}
+        <div className="pointer-events-none absolute top-16 left-[30%] h-3 w-3 rotate-45 border border-amber-300 bg-amber-200 shadow-[0_0_8px_#dba111] animate-pulse z-10" />
+
+        {/* Interactive View Toggle */}
+        {viewToggle}
+
+        {/* Bottom Horizon Glow */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg via-bg/60 to-transparent z-10" />
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // --- 6. MANCHESTER CITY FC (Cityzens · Treble Winners) ---
+  // ==========================================================================
+  if (theme.id === "theme-man-city") {
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: "linear-gradient(135deg, #020b18 0%, #071f3d 45%, #01060f 100%)" }}
+      >
+        {/* Etihad Electric Sky Blue Ambient */}
+        <div
+          className="pointer-events-none absolute -top-10 left-1/3 h-64 w-80 rounded-full blur-[75px] opacity-45"
+          style={{ background: "radial-gradient(circle, rgba(108,171,221,0.7) 0%, transparent 70%)" }}
+        />
+
+        {/* Etihad Modern Wave & Sine Curves */}
+        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-55 z-10" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 0,220 Q 250,150 500,220 T 1000,220" fill="none" stroke="#6cabdd" strokeWidth="1.5" opacity="0.4" />
+          <path d="M 0,250 Q 250,180 500,250 T 1000,250" fill="none" stroke="#ffffff" strokeWidth="0.75" strokeDasharray="8 6" opacity="0.25" />
+        </svg>
+
+        {/* Official Man City Crest Showcase Badge on Lower Right */}
+        <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-sky-400/40 shadow-[0_0_24px_rgba(108,171,221,0.4)]">
+            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(108,171,221,0.7)]">
+              <circle cx="60" cy="70" r="52" fill="#030d22" stroke="#6cabdd" strokeWidth="5" />
+              <circle cx="60" cy="70" r="45" fill="none" stroke="#ffffff" strokeWidth="1.5" />
+              <polygon points="40,45 60,28 80,45" fill="#ffd700" />
+              <rect x="35" y="45" width="50" height="8" fill="#ffd700" />
+              <line x1="42" y1="65" x2="78" y2="65" stroke="#6cabdd" strokeWidth="3" />
+              <line x1="45" y1="73" x2="75" y2="73" stroke="#6cabdd" strokeWidth="3" />
+              <line x1="48" y1="81" x2="72" y2="81" stroke="#6cabdd" strokeWidth="3" />
+              <circle cx="60" cy="95" r="5" fill="#da291c" stroke="#ffffff" strokeWidth="1" />
+              <text x="60" y="24" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">MANCHESTER</text>
+              <text x="60" y="118" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">CITY</text>
+            </svg>
+          </div>
+          <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-sky-200 drop-shadow">
+            TREBLE WINNERS
+          </span>
+        </div>
+
+        {/* Subtle Watermark in Bottom-Center */}
+        <div className="pointer-events-none absolute bottom-3 left-32 sm:left-44 z-10 hidden min-[540px]:flex items-center gap-1.5 opacity-35">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-sky-200">
+            🌊 ETIHAD STADIUM
+          </span>
+        </div>
+
+        {/* Shimmering Sky Blue Sparkles */}
+        <div className="pointer-events-none absolute top-16 left-[35%] h-3 w-3 rounded-full bg-cyan-300 shadow-[0_0_10px_#6cabdd] animate-pulse z-10" />
+
+        {/* Interactive View Toggle */}
+        {viewToggle}
+
+        {/* Bottom Horizon Glow */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg via-bg/60 to-transparent z-10" />
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // --- 7. ATLÉTICO DE MADRID (Colchoneros · Coraje y Corazón) ---
+  // ==========================================================================
+  if (theme.id === "theme-atletico-madrid") {
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: "linear-gradient(135deg, #100305 0%, #26070a 45%, #080203 100%)" }}
+      >
+        {/* Rojiblanco Crimson Spotlight */}
+        <div
+          className="pointer-events-none absolute -top-10 left-1/3 h-64 w-80 rounded-full blur-[75px] opacity-45"
+          style={{ background: "radial-gradient(circle, rgba(203,53,36,0.7) 0%, transparent 70%)" }}
+        />
+
+        {/* Rojiblanco Stripes & 7 Stars */}
+        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-55 z-10" xmlns="http://www.w3.org/2000/svg">
+          <line x1="200" y1="0" x2="350" y2="400" stroke="#cb3524" strokeWidth="24" opacity="0.25" />
+          <line x1="280" y1="0" x2="430" y2="400" stroke="#ffffff" strokeWidth="24" opacity="0.15" />
+        </svg>
+
+        {/* Official Atletico Crest Showcase Badge on Lower Right */}
+        <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-rose-400/40 shadow-[0_0_24px_rgba(203,53,36,0.4)]">
+            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(203,53,36,0.7)]">
+              <path d="M 10,10 L 110,10 L 110,75 Q 110,120 60,135 Q 10,120 10,75 Z" fill="#080203" stroke="#192231" strokeWidth="3" />
+              <polygon points="13,13 107,13 60,55" fill="#192231" />
+              <circle cx="35" cy="20" r="2" fill="#ffffff" />
+              <circle cx="48" cy="17" r="2" fill="#ffffff" />
+              <circle cx="60" cy="15" r="2.5" fill="#ffffff" />
+              <circle cx="72" cy="17" r="2" fill="#ffffff" />
+              <circle cx="85" cy="20" r="2" fill="#ffffff" />
+              <circle cx="50" cy="28" r="2" fill="#ffffff" />
+              <circle cx="70" cy="28" r="2" fill="#ffffff" />
+              <path d="M 13,55 L 107,55 L 107,75 Q 107,118 60,133 Q 13,118 13,75 Z" fill="#ffffff" />
+              <rect x="25" y="55" width="14" height="65" fill="#cb3524" />
+              <rect x="53" y="55" width="14" height="70" fill="#cb3524" />
+              <rect x="81" y="55" width="14" height="65" fill="#cb3524" />
+            </svg>
+          </div>
+          <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-rose-200 drop-shadow">
+            CORAJE Y CORAZÓN
+          </span>
+        </div>
+
+        {/* Subtle Watermark in Bottom-Center */}
+        <div className="pointer-events-none absolute bottom-3 left-32 sm:left-44 z-10 hidden min-[540px]:flex items-center gap-1.5 opacity-35">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-rose-200">
+            🐻 CÍVITAS METROPOLITANO
+          </span>
+        </div>
+
+        {/* Interactive View Toggle */}
+        {viewToggle}
+
+        {/* Bottom Horizon Glow */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg via-bg/60 to-transparent z-10" />
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // --- 8. PARIS SAINT-GERMAIN (PSG · Ici c'est Paris) ---
+  // ==========================================================================
+  if (theme.id === "theme-psg") {
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: "linear-gradient(135deg, #010814 0%, #051630 45%, #01040a 100%)" }}
+      >
+        {/* Parisian Midnight Navy & Rouge Glow */}
+        <div
+          className="pointer-events-none absolute -top-10 left-1/3 h-64 w-80 rounded-full blur-[75px] opacity-45"
+          style={{ background: "radial-gradient(circle, rgba(0,65,112,0.8) 0%, transparent 70%)" }}
+        />
+
+        {/* Center Parisian Rouge Stripe Vector */}
+        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-55 z-10" xmlns="http://www.w3.org/2000/svg">
+          <rect x="48%" y="0" width="40" height="100%" fill="#da291c" opacity="0.25" />
+          <rect x="47%" y="0" width="5" height="100%" fill="#ffffff" opacity="0.25" />
+          <rect x="52%" y="0" width="5" height="100%" fill="#ffffff" opacity="0.25" />
+        </svg>
+
+        {/* Official PSG Crest Showcase Badge on Lower Right */}
+        <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-blue-400/40 shadow-[0_0_24px_rgba(0,65,112,0.4)]">
+            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(218,41,28,0.7)]">
+              <circle cx="60" cy="70" r="52" fill="#020d20" stroke="#004170" strokeWidth="5" />
+              <circle cx="60" cy="70" r="45" fill="none" stroke="#da291c" strokeWidth="2" />
+              <polygon points="56,35 64,35 68,85 52,85" fill="#da291c" />
+              <line x1="50" y1="65" x2="70" y2="65" stroke="#ffffff" strokeWidth="2" />
+              <polygon points="60,88 65,96 55,96" fill="#d4af37" />
+              <text x="60" y="24" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">PARIS</text>
+              <text x="60" y="118" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">SAINT-GERMAIN</text>
+            </svg>
+          </div>
+          <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-sky-200 drop-shadow">
+            ICI C'EST PARIS
+          </span>
+        </div>
+
+        {/* Subtle Watermark in Bottom-Center */}
+        <div className="pointer-events-none absolute bottom-3 left-32 sm:left-44 z-10 hidden min-[540px]:flex items-center gap-1.5 opacity-35">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-sky-200">
+            🗼 PARC DES PRINCES
+          </span>
+        </div>
+
+        {/* Floating Parisian Gold Stars */}
+        <div className="pointer-events-none absolute top-16 left-[30%] h-3 w-3 rotate-45 border border-amber-300 bg-amber-200 shadow-[0_0_8px_#d4af37] animate-pulse z-10" />
+
+        {/* Interactive View Toggle */}
+        {viewToggle}
+
+        {/* Bottom Horizon Glow */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg via-bg/60 to-transparent z-10" />
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // --- 9. FC BAYERN MÜNCHEN (Mia San Mia · 5-Star Meister) ---
+  // ==========================================================================
+  if (theme.id === "theme-bayern-munchen") {
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: "linear-gradient(135deg, #150005 0%, #30020a 45%, #080002 100%)" }}
+      >
+        {/* Bavarian Crimson & Blue Spotlight */}
+        <div
+          className="pointer-events-none absolute -top-10 left-1/3 h-64 w-80 rounded-full blur-[75px] opacity-45"
+          style={{ background: "radial-gradient(circle, rgba(220,5,45,0.75) 0%, transparent 70%)" }}
+        />
+
+        {/* Allianz Arena Elliptical Facade */}
+        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-55 z-10" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="50%" cy="40%" rx="350" ry="120" fill="none" stroke="#dc052d" strokeWidth="2" opacity="0.35" />
+          <ellipse cx="50%" cy="40%" rx="280" ry="90" fill="none" stroke="#ffffff" strokeWidth="1" strokeDasharray="8 6" opacity="0.25" />
+        </svg>
+
+        {/* Official Bayern Crest Showcase Badge on Lower Right */}
+        <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-red-400/40 shadow-[0_0_24px_rgba(220,5,45,0.4)]">
+            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(255,215,0,0.7)]">
+              <defs>
+                <pattern id="bavarianMini" width="16" height="16" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                  <rect width="8" height="16" fill="#0066b2" />
+                  <rect x="8" width="8" height="16" fill="#ffffff" />
+                </pattern>
+              </defs>
+              <circle cx="60" cy="70" r="52" fill="#150005" stroke="#dc052d" strokeWidth="5" />
+              <circle cx="60" cy="70" r="45" fill="none" stroke="#ffffff" strokeWidth="1.5" />
+              <circle cx="60" cy="70" r="30" fill="url(#bavarianMini)" stroke="#dc052d" strokeWidth="1.5" />
+              <text x="60" y="24" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">FC BAYERN</text>
+              <text x="60" y="118" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">MÜNCHEN</text>
+            </svg>
+          </div>
+          <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-red-300 drop-shadow">
+            MIA SAN MIA · 5★
+          </span>
+        </div>
+
+        {/* Subtle Watermark in Bottom-Center */}
+        <div className="pointer-events-none absolute bottom-3 left-32 sm:left-44 z-10 hidden min-[540px]:flex items-center gap-1.5 opacity-35">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-red-300">
+            🔴💎 ALLIANZ ARENA
+          </span>
+        </div>
+
+        {/* Floating Crimson Diamonds */}
+        <div className="pointer-events-none absolute top-16 left-[30%] h-3 w-3 rotate-45 border border-red-300 bg-red-500 shadow-[0_0_8px_#dc052d] animate-pulse z-10" />
+
+        {/* Interactive View Toggle */}
+        {viewToggle}
+
+        {/* Bottom Horizon Glow */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg via-bg/60 to-transparent z-10" />
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // --- ESPORTS CONCEPT THEMES ---
+  // ==========================================================================
+
   // 1. MYTHIC: Cosmic Hyper-Nebula
   if (theme.id === "theme-celestial-nebula" || theme.rarity === "mythic") {
     return (
@@ -145,13 +751,6 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute top-10 left-[20%] h-6 w-6 text-cyan-300 opacity-90 animate-pulse">✦</div>
         <div className="pointer-events-none absolute top-20 right-[25%] h-8 w-8 text-rose-300 opacity-90 animate-pulse">✧</div>
         <div className="pointer-events-none absolute bottom-12 left-[45%] h-5 w-5 text-amber-200 opacity-80 animate-pulse">✦</div>
-
-        {/* Theme Title Watermark */}
-        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
-          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate bg-gradient-to-r from-rose-300 via-cyan-200 to-amber-200 bg-clip-text text-transparent animate-rainbow-flow drop-shadow-[0_0_12px_rgba(255,0,128,0.8)]">
-            ✦ CELESTIAL VOID // MYTHIC STAGE ✦
-          </span>
-        </div>
 
         {/* Interactive View Toggle */}
         {viewToggle}
@@ -203,13 +802,6 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute top-24 right-[28%] h-3 w-3 rotate-45 border border-amber-300 bg-amber-200/60 shadow-[0_0_8px_#ffd700] animate-pulse" />
         <div className="pointer-events-none absolute bottom-16 right-[40%] h-4 w-4 rotate-45 border border-amber-300 bg-amber-200/60 shadow-[0_0_10px_#ffd700] animate-pulse" />
 
-        {/* Theme Title Watermark */}
-        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
-          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 bg-clip-text text-transparent animate-gold-radiance drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]">
-            ★ ALLYNQ SOVEREIGN GOLD // 24K ★
-          </span>
-        </div>
-
         {/* Interactive View Toggle */}
         {viewToggle}
 
@@ -253,13 +845,6 @@ export function ThemedCoverArtwork({
           <rect x="78%" y="15%" width="50" height="200" fill="#00f5ff" opacity="0.18" />
         </svg>
 
-        {/* HUD Data Telemetry Overlay */}
-        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
-          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate text-rose-300 drop-shadow-[0_0_10px_#ff007f]">
-            ⚡ NIGHT CITY // CYBERPUNK 2077 ⚡
-          </span>
-        </div>
-
         {/* Interactive View Toggle */}
         {viewToggle}
 
@@ -296,13 +881,6 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute bottom-10 left-[25%] h-3 w-3 rounded-full bg-rose-400 shadow-[0_0_10px_#ff5470] animate-bounce" />
         <div className="pointer-events-none absolute bottom-16 right-[30%] h-2.5 w-2.5 rounded-full bg-orange-400 shadow-[0_0_8px_#ff6b4a] animate-pulse" />
         <div className="pointer-events-none absolute top-16 right-[45%] h-2 w-2 rounded-full bg-yellow-300 shadow-[0_0_8px_#ffd700] animate-pulse" />
-
-        {/* Theme Title Watermark */}
-        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
-          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate text-rose-300 drop-shadow-[0_0_10px_#ff5470]">
-            ◆ BLOOD MOON // INFERNAL CRUCIBLE ◆
-          </span>
-        </div>
 
         {/* Interactive View Toggle */}
         {viewToggle}
@@ -341,13 +919,6 @@ export function ThemedCoverArtwork({
         <div className="pointer-events-none absolute top-12 left-[40%] h-4 w-4 rotate-45 border border-cyan-200 bg-white/70 shadow-[0_0_12px_#00f5ff] animate-pulse" />
         <div className="pointer-events-none absolute top-20 right-[35%] h-3 w-3 rotate-45 border border-cyan-200 bg-cyan-100/60 shadow-[0_0_8px_#00f5ff] animate-pulse" />
 
-        {/* Theme Title Watermark */}
-        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
-          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate text-cyan-200 drop-shadow-[0_0_10px_#00f5ff]">
-            ◆ GLACIAL CRYO-FROST // SUB-ZERO ◆
-          </span>
-        </div>
-
         {/* Interactive View Toggle */}
         {viewToggle}
 
@@ -380,13 +951,6 @@ export function ThemedCoverArtwork({
           <line x1="50%" y1="0" x2="50%" y2="100%" stroke="#3fbf7f" strokeWidth="1" opacity="0.6" />
         </svg>
 
-        {/* Theme Title Watermark */}
-        <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
-          <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate text-emerald-300 drop-shadow-[0_0_10px_#3fbf7f]">
-            ▲ CHAMPIONS ARENA // NIGHT FIXTURE ▲
-          </span>
-        </div>
-
         {/* Interactive View Toggle */}
         {viewToggle}
 
@@ -413,11 +977,6 @@ export function ThemedCoverArtwork({
         <circle cx="50%" cy="40%" r="120" fill="none" stroke="#4c8dff" strokeWidth="1.5" strokeDasharray="8 6" />
         <circle cx="50%" cy="40%" r="180" fill="none" stroke="#00f5ff" strokeWidth="0.75" />
       </svg>
-      <div className="pointer-events-none absolute top-2.5 left-2.5 sm:top-4 sm:left-6 flex items-center gap-1.5 max-w-[48%] sm:max-w-[55%] md:max-w-none">
-        <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider sm:tracking-[0.25em] truncate text-blue-300 drop-shadow-[0_0_8px_#4c8dff]">
-          ▲ DEEP CYBER ABYSS // OCEANIC STAGE ▲
-        </span>
-      </div>
 
       {/* Interactive View Toggle */}
       {viewToggle}
@@ -956,6 +1515,201 @@ export function CosmeticThemeAmbient({
     );
   }
 
+  // --- Official Team 1: Real Madrid CF ---
+  if (theme.id === "theme-real-madrid") {
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 h-[700px] w-[700px] -translate-x-1/2 blur-[120px] animate-gold-radiance opacity-95"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(254,190,16,0.65) 0%, rgba(255,255,255,0.3) 40%, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-20 h-[500px] w-[500px] blur-[110px] opacity-75"
+          style={{ background: "radial-gradient(circle, rgba(82,41,107,0.7) 0%, transparent 70%)" }}
+        />
+      </div>
+    );
+  }
+
+  // --- Official Team 2: FC Barcelona ---
+  if (theme.id === "theme-fc-barcelona") {
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div
+          className="pointer-events-none absolute left-1/3 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] opacity-90"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(0,77,152,0.75) 0%, rgba(165,0,68,0.55) 50%, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-24 h-[500px] w-[500px] blur-[100px] opacity-85"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(165,0,68,0.7) 0%, rgba(237,187,0,0.3) 50%, transparent 70%)",
+          }}
+        />
+      </div>
+    );
+  }
+
+  // --- Official Team 3: Bangladesh National Team ---
+  if (theme.id === "theme-bangladesh-tigers") {
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 h-[680px] w-[680px] -translate-x-1/2 blur-[115px] opacity-95"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(244,42,65,0.75) 0%, rgba(0,106,78,0.65) 50%, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-24 h-[450px] w-[450px] blur-[100px] opacity-80"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(249,168,37,0.5) 0%, rgba(0,106,78,0.4) 50%, transparent 70%)",
+          }}
+        />
+      </div>
+    );
+  }
+
+  // --- Official Team 4: Manchester United ---
+  if (theme.id === "theme-man-united") {
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] animate-flame-flicker opacity-95"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(218,41,28,0.75) 0%, rgba(255,229,0,0.35) 50%, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-24 h-[450px] w-[450px] blur-[100px] opacity-85"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(218,41,28,0.55) 0%, transparent 70%)",
+          }}
+        />
+      </div>
+    );
+  }
+
+  // --- Official Team 5: Chelsea FC ---
+  if (theme.id === "theme-chelsea-fc") {
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] opacity-95"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(3,70,148,0.8) 0%, rgba(219,161,17,0.35) 50%, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-24 h-[450px] w-[450px] blur-[100px] opacity-85"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(219,161,17,0.45) 0%, transparent 70%)",
+          }}
+        />
+      </div>
+    );
+  }
+
+  // --- Official Team 6: Manchester City ---
+  if (theme.id === "theme-man-city") {
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] opacity-95"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(108,171,221,0.75) 0%, rgba(28,44,91,0.45) 50%, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-24 h-[450px] w-[450px] blur-[100px] opacity-85"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(108,171,221,0.55) 0%, transparent 70%)",
+          }}
+        />
+      </div>
+    );
+  }
+
+  // --- Official Team 7: Atlético de Madrid ---
+  if (theme.id === "theme-atletico-madrid") {
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] opacity-95"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(203,53,36,0.75) 0%, rgba(255,255,255,0.25) 45%, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-24 h-[450px] w-[450px] blur-[100px] opacity-85"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(25,34,49,0.7) 0%, transparent 70%)",
+          }}
+        />
+      </div>
+    );
+  }
+
+  // --- Official Team 8: Paris Saint-Germain ---
+  if (theme.id === "theme-psg") {
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] opacity-95"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(0,65,112,0.8) 0%, rgba(218,41,28,0.5) 50%, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-24 h-[450px] w-[450px] blur-[100px] opacity-85"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(212,175,55,0.45) 0%, transparent 70%)",
+          }}
+        />
+      </div>
+    );
+  }
+
+  // --- Official Team 9: FC Bayern München ---
+  if (theme.id === "theme-bayern-munchen") {
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] opacity-95"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(220,5,45,0.8) 0%, rgba(0,102,178,0.4) 50%, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-24 h-[450px] w-[450px] blur-[100px] opacity-85"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(220,5,45,0.5) 0%, transparent 70%)",
+          }}
+        />
+      </div>
+    );
+  }
+
   // 1. Cosmic Hyper-Nebula (Mythic)
   if (theme.id === "theme-celestial-nebula" || theme.rarity === "mythic") {
     return (
@@ -1095,6 +1849,57 @@ export function CosmeticThemeAmbient({
 }
 
 // ============================================================================
+// 5.5 OFFICIAL TEAM ATTACHMENT BADGE (Club Crest, Stadium, & Historical Motto)
+// ============================================================================
+export function ThemeTeamAttachmentBadge({ theme }: { theme?: CosmeticItem | null }) {
+  if (!theme?.teamDetails) return null;
+  const d = theme.teamDetails;
+  return (
+    <div className="relative mt-3 inline-flex flex-wrap items-center gap-2.5 rounded-2xl border border-white/20 bg-surface-deep/85 px-3.5 py-2 backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-white/40">
+      {/* Team Crest Icon */}
+      {theme.id === "theme-real-madrid" ? (
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 p-0.5 shadow-inner">
+          <img
+            src="/real madrid/real-madrid-logo-preview.png"
+            alt="Real Madrid CF"
+            className="h-full w-full object-contain filter drop-shadow-[0_0_6px_rgba(254,190,16,0.8)]"
+          />
+        </div>
+      ) : (
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-surface-line text-base shadow-inner">
+          {d.badgeSymbol}
+        </span>
+      )}
+      {/* Club Name & Motto */}
+      <div className="flex flex-col text-left">
+        <div className="flex items-center gap-2">
+          <span className="font-heading text-xs sm:text-sm font-black tracking-wide text-white">
+            {d.clubName}
+          </span>
+          <span className="rounded bg-accent/20 px-1.5 py-0.5 text-[9px] font-mono font-bold text-accent-ink">
+            EST. {d.founded}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-ink-soft">
+          <span className="italic font-medium text-ink">"{d.motto}"</span>
+          {d.championshipCount ? (
+            <>
+              <span className="text-white/30">•</span>
+              <span className="font-semibold text-amber-300">🏆 {d.championshipCount}</span>
+            </>
+          ) : null}
+        </div>
+      </div>
+      {/* Stadium Tag */}
+      <div className="ml-auto hidden min-[480px]:flex items-center gap-1.5 rounded-lg border border-white/10 bg-black/50 px-2.5 py-1 font-mono text-[10px] text-ink-soft">
+        <span>🏟️</span>
+        <span className="truncate max-w-[160px] font-semibold text-white">{d.stadium}</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // 6. THEMED PROFILE HERO BANNER WRAPPER (Holographic Foil & Light Sweep)
 // ============================================================================
 export function ThemedProfileHeroBanner({
@@ -1106,6 +1911,24 @@ export function ThemedProfileHeroBanner({
 }) {
   const cardClass = !theme
     ? "border-surface-line shadow-2xl"
+    : theme.id === "theme-real-madrid"
+    ? "theme-card-legendary"
+    : theme.id === "theme-fc-barcelona"
+    ? "theme-card-cyber"
+    : theme.id === "theme-bangladesh-tigers"
+    ? "theme-card-rare-emerald"
+    : theme.id === "theme-man-united"
+    ? "theme-card-epic-fire"
+    : theme.id === "theme-chelsea-fc"
+    ? "theme-card-rare-ocean"
+    : theme.id === "theme-man-city"
+    ? "theme-card-epic-frost"
+    : theme.id === "theme-atletico-madrid"
+    ? "theme-card-epic-fire"
+    : theme.id === "theme-psg"
+    ? "theme-card-rare-ocean"
+    : theme.id === "theme-bayern-munchen"
+    ? "theme-card-epic-fire"
     : theme.rarity === "mythic"
     ? "theme-card-mythic"
     : theme.id === "theme-cyberpunk-night"
@@ -1473,6 +2296,204 @@ export function getThemeTokens(theme: CosmeticItem | null | undefined): ThemeTok
   }
 
   switch (theme.id) {
+    // --- Official Team 1: Real Madrid CF ---
+    case "theme-real-madrid":
+      return {
+        id: theme.id,
+        name: theme.name,
+        rarity: "mythic",
+        primary: "#febe10",
+        secondary: "#ffffff",
+        accentText: "#febe10",
+        headingText: "#ffffff",
+        bodyText: "#f8fafc",
+        mutedText: "#cbd5e1",
+        cardClass: "theme-card-legendary",
+        innerBg: "rgba(254, 190, 16, 0.12)",
+        innerBorder: "rgba(254, 190, 16, 0.38)",
+        innerHoverBorder: "rgba(255, 255, 255, 0.7)",
+        highlightBg: "rgba(254, 190, 16, 0.2)",
+        highlightBorder: "rgba(254, 190, 16, 0.6)",
+        highlightText: "#febe10",
+        glowShadow: "0 0 25px rgba(254, 190, 16, 0.4)",
+      };
+
+    // --- Official Team 2: FC Barcelona ---
+    case "theme-fc-barcelona":
+      return {
+        id: theme.id,
+        name: theme.name,
+        rarity: "legendary",
+        primary: "#a50044",
+        secondary: "#004d98",
+        accentText: "#edbb00",
+        headingText: "#ffffff",
+        bodyText: "#f8fafc",
+        mutedText: "#93c5fd",
+        cardClass: "theme-card-cyber",
+        innerBg: "rgba(0, 77, 152, 0.15)",
+        innerBorder: "rgba(165, 0, 68, 0.45)",
+        innerHoverBorder: "rgba(237, 187, 0, 0.7)",
+        highlightBg: "rgba(165, 0, 68, 0.25)",
+        highlightBorder: "rgba(237, 187, 0, 0.6)",
+        highlightText: "#edbb00",
+        glowShadow: "0 0 25px rgba(165, 0, 68, 0.4)",
+      };
+
+    // --- Official Team 3: Bangladesh National Team ---
+    case "theme-bangladesh-tigers":
+      return {
+        id: theme.id,
+        name: theme.name,
+        rarity: "mythic",
+        primary: "#006a4e",
+        secondary: "#f42a41",
+        accentText: "#f9a825",
+        headingText: "#ffffff",
+        bodyText: "#f0fdf4",
+        mutedText: "#86efac",
+        cardClass: "theme-card-rare-emerald",
+        innerBg: "rgba(0, 106, 78, 0.16)",
+        innerBorder: "rgba(0, 106, 78, 0.45)",
+        innerHoverBorder: "rgba(244, 42, 65, 0.7)",
+        highlightBg: "rgba(244, 42, 65, 0.2)",
+        highlightBorder: "rgba(249, 168, 37, 0.6)",
+        highlightText: "#f9a825",
+        glowShadow: "0 0 25px rgba(0, 106, 78, 0.45)",
+      };
+
+    // --- Official Team 4: Manchester United ---
+    case "theme-man-united":
+      return {
+        id: theme.id,
+        name: theme.name,
+        rarity: "legendary",
+        primary: "#da291c",
+        secondary: "#ffe500",
+        accentText: "#ffe500",
+        headingText: "#ffffff",
+        bodyText: "#ffe4e6",
+        mutedText: "#fca5a5",
+        cardClass: "theme-card-epic-fire",
+        innerBg: "rgba(218, 41, 28, 0.14)",
+        innerBorder: "rgba(218, 41, 28, 0.4)",
+        innerHoverBorder: "rgba(255, 229, 0, 0.7)",
+        highlightBg: "rgba(218, 41, 28, 0.25)",
+        highlightBorder: "rgba(255, 229, 0, 0.6)",
+        highlightText: "#ffe500",
+        glowShadow: "0 0 25px rgba(218, 41, 28, 0.4)",
+      };
+
+    // --- Official Team 5: Chelsea FC ---
+    case "theme-chelsea-fc":
+      return {
+        id: theme.id,
+        name: theme.name,
+        rarity: "epic",
+        primary: "#034694",
+        secondary: "#dba111",
+        accentText: "#dba111",
+        headingText: "#ffffff",
+        bodyText: "#f0f9ff",
+        mutedText: "#7dd3fc",
+        cardClass: "theme-card-rare-ocean",
+        innerBg: "rgba(3, 70, 148, 0.14)",
+        innerBorder: "rgba(3, 70, 148, 0.4)",
+        innerHoverBorder: "rgba(219, 161, 17, 0.7)",
+        highlightBg: "rgba(3, 70, 148, 0.25)",
+        highlightBorder: "rgba(219, 161, 17, 0.6)",
+        highlightText: "#dba111",
+        glowShadow: "0 0 25px rgba(3, 70, 148, 0.4)",
+      };
+
+    // --- Official Team 6: Manchester City ---
+    case "theme-man-city":
+      return {
+        id: theme.id,
+        name: theme.name,
+        rarity: "legendary",
+        primary: "#6cabdd",
+        secondary: "#1c2c5b",
+        accentText: "#6cabdd",
+        headingText: "#ffffff",
+        bodyText: "#f0f9ff",
+        mutedText: "#bae6fd",
+        cardClass: "theme-card-epic-frost",
+        innerBg: "rgba(108, 171, 221, 0.14)",
+        innerBorder: "rgba(108, 171, 221, 0.4)",
+        innerHoverBorder: "rgba(255, 255, 255, 0.7)",
+        highlightBg: "rgba(108, 171, 221, 0.2)",
+        highlightBorder: "rgba(108, 171, 221, 0.6)",
+        highlightText: "#6cabdd",
+        glowShadow: "0 0 25px rgba(108, 171, 221, 0.4)",
+      };
+
+    // --- Official Team 7: Atlético de Madrid ---
+    case "theme-atletico-madrid":
+      return {
+        id: theme.id,
+        name: theme.name,
+        rarity: "epic",
+        primary: "#cb3524",
+        secondary: "#ffffff",
+        accentText: "#cb3524",
+        headingText: "#ffffff",
+        bodyText: "#fff1f2",
+        mutedText: "#fecdd3",
+        cardClass: "theme-card-epic-fire",
+        innerBg: "rgba(203, 53, 36, 0.14)",
+        innerBorder: "rgba(203, 53, 36, 0.4)",
+        innerHoverBorder: "rgba(255, 255, 255, 0.7)",
+        highlightBg: "rgba(203, 53, 36, 0.2)",
+        highlightBorder: "rgba(203, 53, 36, 0.6)",
+        highlightText: "#ffffff",
+        glowShadow: "0 0 25px rgba(203, 53, 36, 0.4)",
+      };
+
+    // --- Official Team 8: Paris Saint-Germain ---
+    case "theme-psg":
+      return {
+        id: theme.id,
+        name: theme.name,
+        rarity: "epic",
+        primary: "#004170",
+        secondary: "#da291c",
+        accentText: "#d4af37",
+        headingText: "#ffffff",
+        bodyText: "#f8fafc",
+        mutedText: "#94a3b8",
+        cardClass: "theme-card-rare-ocean",
+        innerBg: "rgba(0, 65, 112, 0.15)",
+        innerBorder: "rgba(0, 65, 112, 0.45)",
+        innerHoverBorder: "rgba(212, 175, 55, 0.7)",
+        highlightBg: "rgba(218, 41, 28, 0.2)",
+        highlightBorder: "rgba(212, 175, 55, 0.6)",
+        highlightText: "#d4af37",
+        glowShadow: "0 0 25px rgba(0, 65, 112, 0.4)",
+      };
+
+    // --- Official Team 9: FC Bayern München ---
+    case "theme-bayern-munchen":
+      return {
+        id: theme.id,
+        name: theme.name,
+        rarity: "legendary",
+        primary: "#dc052d",
+        secondary: "#0066b2",
+        accentText: "#ffd700",
+        headingText: "#ffffff",
+        bodyText: "#fff1f2",
+        mutedText: "#fecdd3",
+        cardClass: "theme-card-epic-fire",
+        innerBg: "rgba(220, 5, 45, 0.14)",
+        innerBorder: "rgba(220, 5, 45, 0.45)",
+        innerHoverBorder: "rgba(255, 215, 0, 0.7)",
+        highlightBg: "rgba(220, 5, 45, 0.22)",
+        highlightBorder: "rgba(255, 215, 0, 0.6)",
+        highlightText: "#ffd700",
+        glowShadow: "0 0 25px rgba(220, 5, 45, 0.4)",
+      };
+
     case "theme-celestial-nebula":
       return {
         id: theme.id,
@@ -1631,6 +2652,174 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
   if (!theme) return null;
 
   switch (theme.id) {
+    // --- Official Team 1: Real Madrid CF ---
+    case "theme-real-madrid":
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-amber-400/20 blur-3xl animate-gold-corona" />
+          {/* Official Real Madrid Logo Crest Watermark */}
+          <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
+            <img
+              src="/real madrid/real-madrid-logo-preview.png"
+              alt=""
+              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(254,190,16,0.6)]"
+            />
+          </div>
+          <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="madrid-crown-grid" width="48" height="48" patternUnits="userSpaceOnUse">
+                <path d="M 12 36 L 24 16 L 36 36 Z" fill="none" stroke="#febe10" strokeWidth="0.8" opacity="0.35" />
+                <circle cx="24" cy="14" r="2" fill="#ffffff" opacity="0.6" />
+                <circle cx="12" cy="36" r="1.5" fill="#febe10" opacity="0.5" />
+                <circle cx="36" cy="36" r="1.5" fill="#febe10" opacity="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#madrid-crown-grid)" />
+          </svg>
+        </div>
+      );
+
+    // --- Official Team 2: FC Barcelona ---
+    case "theme-fc-barcelona":
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-red-600/20 blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-64 w-64 rounded-full bg-blue-600/20 blur-3xl" />
+          <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="fcb-stripes" width="36" height="36" patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="18" height="36" fill="#004d98" opacity="0.15" />
+                <rect x="18" y="0" width="18" height="36" fill="#a50044" opacity="0.15" />
+                <circle cx="18" cy="18" r="2" fill="#edbb00" opacity="0.6" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#fcb-stripes)" />
+          </svg>
+        </div>
+      );
+
+    // --- Official Team 3: Bangladesh National Team ---
+    case "theme-bangladesh-tigers":
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-72 w-72 rounded-full bg-red-600/25 blur-3xl" />
+          <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="bd-tiger-grid" width="44" height="44" patternUnits="userSpaceOnUse">
+                <circle cx="22" cy="22" r="10" fill="none" stroke="#f42a41" strokeWidth="0.8" opacity="0.35" />
+                <path d="M 12 22 L 32 22 M 22 12 L 22 32" stroke="#006a4e" strokeWidth="0.6" opacity="0.3" />
+                <circle cx="22" cy="22" r="2" fill="#f9a825" opacity="0.7" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#bd-tiger-grid)" />
+          </svg>
+        </div>
+      );
+
+    // --- Official Team 4: Manchester United ---
+    case "theme-man-united":
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-red-600/30 blur-3xl animate-flame-flicker" />
+          <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="manu-trident" width="40" height="40" patternUnits="userSpaceOnUse">
+                <line x1="20" y1="8" x2="20" y2="32" stroke="#da291c" strokeWidth="1" opacity="0.4" />
+                <polygon points="16,14 20,8 24,14" fill="#ffe500" opacity="0.6" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#manu-trident)" />
+          </svg>
+        </div>
+      );
+
+    // --- Official Team 5: Chelsea FC ---
+    case "theme-chelsea-fc":
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute -top-10 right-0 h-64 w-64 rounded-full bg-blue-700/25 blur-3xl" />
+          <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="chelsea-lion-grid" width="42" height="42" patternUnits="userSpaceOnUse">
+                <circle cx="21" cy="21" r="14" fill="none" stroke="#034694" strokeWidth="0.8" opacity="0.4" />
+                <circle cx="21" cy="21" r="3" fill="#dba111" opacity="0.6" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#chelsea-lion-grid)" />
+          </svg>
+        </div>
+      );
+
+    // --- Official Team 6: Manchester City ---
+    case "theme-man-city":
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-sky-500/25 blur-3xl" />
+          <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="mancity-wave" width="36" height="36" patternUnits="userSpaceOnUse">
+                <path d="M 0 18 Q 9 9 18 18 T 36 18" fill="none" stroke="#6cabdd" strokeWidth="0.8" opacity="0.4" />
+                <circle cx="18" cy="18" r="1.5" fill="#ffffff" opacity="0.7" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#mancity-wave)" />
+          </svg>
+        </div>
+      );
+
+    // --- Official Team 7: Atlético de Madrid ---
+    case "theme-atletico-madrid":
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute -bottom-10 left-0 h-64 w-64 rounded-full bg-red-600/25 blur-3xl" />
+          <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="atleti-stars" width="40" height="40" patternUnits="userSpaceOnUse">
+                <circle cx="10" cy="10" r="1.5" fill="#ffffff" opacity="0.7" />
+                <circle cx="20" cy="15" r="1.5" fill="#cb3524" opacity="0.7" />
+                <circle cx="30" cy="10" r="1.5" fill="#ffffff" opacity="0.7" />
+                <line x1="0" y1="40" x2="40" y2="0" stroke="#cb3524" strokeWidth="0.6" opacity="0.25" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#atleti-stars)" />
+          </svg>
+        </div>
+      );
+
+    // --- Official Team 8: Paris Saint-Germain ---
+    case "theme-psg":
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-blue-800/30 blur-3xl" />
+          <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="psg-eiffel" width="44" height="44" patternUnits="userSpaceOnUse">
+                <path d="M 22 6 L 16 38 L 28 38 Z" fill="none" stroke="#da291c" strokeWidth="0.8" opacity="0.35" />
+                <circle cx="22" cy="6" r="2" fill="#d4af37" opacity="0.7" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#psg-eiffel)" />
+          </svg>
+        </div>
+      );
+
+    // --- Official Team 9: FC Bayern München ---
+    case "theme-bayern-munchen":
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute -top-10 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-red-600/30 blur-3xl" />
+          <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="bayern-diamond" width="32" height="32" patternUnits="userSpaceOnUse">
+                <path d="M 16 0 L 32 16 L 16 32 L 0 16 Z" fill="none" stroke="#dc052d" strokeWidth="0.8" opacity="0.35" />
+                <circle cx="16" cy="16" r="1.5" fill="#0066b2" opacity="0.7" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#bayern-diamond)" />
+          </svg>
+        </div>
+      );
+
     case "theme-celestial-nebula":
       return (
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">

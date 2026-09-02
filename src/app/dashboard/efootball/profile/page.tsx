@@ -23,6 +23,7 @@ import {
   ThemedStatCard,
   PlayerCosmeticsShowcase,
   getThemeTokens,
+  ThemeTeamAttachmentBadge,
 } from "@/components/cosmetics/CosmeticDisplay";
 
 export default function ProfilePage() {
@@ -160,6 +161,13 @@ export default function ProfilePage() {
                   </span>
                 ) : null}
               </div>
+
+              {/* Official Team Theme Attachment (Crest, Stadium, Motto) */}
+              {equippedTheme?.teamDetails ? (
+                <div className="flex justify-center sm:justify-start">
+                  <ThemeTeamAttachmentBadge theme={equippedTheme} />
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

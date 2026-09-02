@@ -125,6 +125,7 @@ export default function StorePage() {
   const { user } = useSession();
   const people = useMockPeople();
   const [activeCategory, setActiveCategory] = useState<CosmeticCategory>("theme");
+  const [themeFilter, setThemeFilter] = useState<"all" | "team" | "esports">("all");
   const [selectedRarity, setSelectedRarity] = useState<CosmeticRarity | "all">("all");
   const [lastEquippedItem, setLastEquippedItem] = useState<CosmeticItem | null>(null);
 
@@ -147,10 +148,15 @@ export default function StorePage() {
   ];
 
   const rawItems = getCosmeticsByCategory(activeCategory);
-  const items =
-    selectedRarity === "all"
-      ? rawItems
-      : rawItems.filter((i) => i.rarity === selectedRarity);
+  const items = rawItems
+    .filter((i) => {
+      if (activeCategory === "theme" && themeFilter !== "all") {
+        if (themeFilter === "team") return i.subCategory === "team" || Boolean(i.teamDetails);
+        if (themeFilter === "esports") return i.subCategory !== "team" && !i.teamDetails;
+      }
+      return true;
+    })
+    .filter((i) => (selectedRarity === "all" ? true : i.rarity === selectedRarity));
 
   const handleInstantEquip = (item: CosmeticItem) => {
     if (!person) return;
@@ -231,41 +237,87 @@ export default function StorePage() {
       </div>
 
       {/* Category tabs */}
-      <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-1.5 rounded-full border border-surface-line-strong p-1 w-fit bg-surface/60 backdrop-blur">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setActiveCategory(cat.id)}
-              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-                activeCategory === cat.id
-                  ? "bg-accent text-bg shadow-md"
-                  : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+      {/* Category tabs & Theme Sub-filter */}
+      <div className="mt-8 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-wrap gap-1.5 rounded-full border border-surface-line-strong p-1 w-fit bg-surface/60 backdrop-blur">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => {
+                  setActiveCategory(cat.id);
+                  if (cat.id !== "theme") setThemeFilter("all");
+                }}
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
+                  activeCategory === cat.id
+                    ? "bg-accent text-bg shadow-md"
+                    : "text-ink-soft hover:text-ink"
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Rarity filter pills */}
+          <div className="flex flex-wrap gap-1.5">
+            {rarities.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => setSelectedRarity(r.id)}
+                className={`rounded-full px-3 py-1 text-[11px] font-mono font-medium transition-colors border ${
+                  selectedRarity === r.id
+                    ? "border-accent bg-accent-soft text-accent-ink shadow-sm"
+                    : "border-surface-line bg-surface/40 text-ink-faint hover:text-ink"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Rarity filter pills */}
-        <div className="flex flex-wrap gap-1.5">
-          {rarities.map((r) => (
+        {/* Theme Sub-filter Tabs (When Themes category is active) */}
+        {activeCategory === "theme" ? (
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-surface-line/50">
+            <span className="text-xs font-mono font-bold text-ink-faint mr-1">THEME CATEGORY:</span>
             <button
-              key={r.id}
               type="button"
-              onClick={() => setSelectedRarity(r.id)}
-              className={`rounded-full px-3 py-1 text-[11px] font-mono font-medium transition-colors border ${
-                selectedRarity === r.id
-                  ? "border-accent bg-accent-soft text-accent-ink shadow-sm"
-                  : "border-surface-line bg-surface/40 text-ink-faint hover:text-ink"
+              onClick={() => setThemeFilter("all")}
+              className={`rounded-xl px-3 py-1 text-xs font-bold transition-all border ${
+                themeFilter === "all"
+                  ? "border-accent bg-accent text-bg shadow-sm"
+                  : "border-surface-line bg-surface/40 text-ink-soft hover:text-ink"
               }`}
             >
-              {r.label}
+              All Themes ({rawItems.length})
             </button>
-          ))}
-        </div>
+            <button
+              type="button"
+              onClick={() => setThemeFilter("team")}
+              className={`rounded-xl px-3 py-1 text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                themeFilter === "team"
+                  ? "border-amber-400 bg-amber-400/20 text-amber-200 shadow-sm"
+                  : "border-surface-line bg-surface/40 text-ink-soft hover:text-amber-300"
+              }`}
+            >
+              <span>🏟️</span> Official Team Themes ({rawItems.filter((i) => i.subCategory === "team" || Boolean(i.teamDetails)).length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setThemeFilter("esports")}
+              className={`rounded-xl px-3 py-1 text-xs font-bold transition-all border flex items-center gap-1.5 ${
+                themeFilter === "esports"
+                  ? "border-cyan-400 bg-cyan-400/20 text-cyan-200 shadow-sm"
+                  : "border-surface-line bg-surface/40 text-ink-soft hover:text-cyan-300"
+              }`}
+            >
+              <span>⚡</span> Esports Concepts ({rawItems.filter((i) => i.subCategory !== "team" && !i.teamDetails).length})
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* Items Grid */}
@@ -274,6 +326,7 @@ export default function StorePage() {
           const isEquipped = isItemEquipped(item);
           const Icon = COSMETIC_ICON_MAP[item.icon] ?? ShieldIcon;
           const rarityCfg = RARITY_CONFIG[item.rarity];
+          const tDetails = item.teamDetails;
 
           return (
             <div
@@ -329,8 +382,30 @@ export default function StorePage() {
                   <CardPreview item={item} userName={user.name} dpUrl={user.dpUrl} />
                 </div>
 
+                {/* Team Details Attachment Pill if applicable */}
+                {tDetails ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-black/40 p-2 text-left font-mono text-[10px] backdrop-blur">
+                    {item.id === "theme-real-madrid" ? (
+                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 p-0.5">
+                        <img
+                          src="/real madrid/real-madrid-logo-preview.png"
+                          alt="Real Madrid"
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-xs">
+                        {tDetails.badgeSymbol}
+                      </span>
+                    )}
+                    <span className="font-bold text-white truncate max-w-[120px]">{tDetails.clubName}</span>
+                    <span className="text-ink-muted">•</span>
+                    <span className="text-ink-soft truncate max-w-[110px]">🏟️ {tDetails.stadium}</span>
+                  </div>
+                ) : null}
+
                 {/* Description */}
-                <p className="mt-3 text-xs leading-relaxed text-ink-soft min-h-[36px]">
+                <p className="mt-2.5 text-xs leading-relaxed text-ink-soft min-h-[36px]">
                   {item.description}
                 </p>
               </div>

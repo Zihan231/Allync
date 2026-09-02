@@ -37,6 +37,7 @@ import {
   PlayerCosmeticsShowcase,
   ThemeSectionArt,
   getThemeTokens,
+  ThemeTeamAttachmentBadge,
 } from "@/components/cosmetics/CosmeticDisplay";
 import type { StatsRow, TransferEntry } from "@/lib/mock/playerInsights";
 
@@ -500,6 +501,13 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
                 {/* Equipped Badge Pill */}
                 {equippedBadge ? <CosmeticBadgePill item={equippedBadge} /> : null}
               </div>
+
+              {/* Official Team Theme Attachment (Crest, Stadium, Motto) */}
+              {equippedTheme?.teamDetails ? (
+                <div className="flex justify-center sm:justify-start">
+                  <ThemeTeamAttachmentBadge theme={equippedTheme} />
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
