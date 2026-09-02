@@ -35,6 +35,8 @@ export type CosmeticItem = {
     primaryHex: string;
     secondaryHex: string;
     accentHex: string;
+    logoUrl?: string;
+    coverUrl?: string;
   };
 };
 
@@ -624,6 +626,8 @@ export const mockCosmetics: CosmeticItem[] = [
       primaryHex: "#ffffff",
       secondaryHex: "#febe10",
       accentHex: "#52296b",
+      logoUrl: "/real madrid/real-madrid-logo-preview.png",
+      coverUrl: "/real.jpg",
     },
   },
   {
@@ -656,6 +660,8 @@ export const mockCosmetics: CosmeticItem[] = [
       primaryHex: "#004d98",
       secondaryHex: "#a50044",
       accentHex: "#edbb00",
+      logoUrl: "/barca/vecteezy_fc-barcelona-logo-on-transparent-background_14414712.jpg",
+      coverUrl: "/barca.jpg",
     },
   },
   {
@@ -688,6 +694,40 @@ export const mockCosmetics: CosmeticItem[] = [
       primaryHex: "#006a4e",
       secondaryHex: "#f42a41",
       accentHex: "#f9a825",
+      logoUrl: "/Bangladesh/bangladesh-football-federation-seeklogo.png",
+    },
+  },
+  {
+    id: "theme-arsenal-fc",
+    category: "theme",
+    subCategory: "team",
+    tier: "free",
+    rarity: "legendary",
+    unlockMethod: "free",
+    name: "Arsenal FC · The Gunners",
+    tagline: "Victoria Concordia Crescit",
+    description: "Iconic Gunners forward-facing brass cannon on London red-and-white armor with Emirates Stadium electricity.",
+    icon: "crosshair",
+    tone: "danger",
+    color: "#db0007",
+    secondaryColor: "#023474",
+    glowColor: "rgba(219, 0, 7, 0.85)",
+    effect: "fire",
+    priceBdt: 0,
+    teamDetails: {
+      shortName: "Arsenal",
+      clubName: "Arsenal Football Club",
+      motto: "Victoria Concordia Crescit (Victory Through Harmony)",
+      stadium: "Emirates Stadium",
+      city: "London",
+      country: "England",
+      founded: "1886",
+      championshipCount: "14x FA Cup Champions · 13x League (Invincibles)",
+      badgeSymbol: "🔴⚪",
+      primaryHex: "#db0007",
+      secondaryHex: "#023474",
+      accentHex: "#9c824a",
+      logoUrl: "/arsenal/vecteezy_arsenal-logo-on-transparent-background_15863617.jpg",
     },
   },
   {
@@ -720,6 +760,8 @@ export const mockCosmetics: CosmeticItem[] = [
       primaryHex: "#da291c",
       secondaryHex: "#06080c",
       accentHex: "#ffe500",
+      logoUrl: "/manu/vecteezy_manchester-united-football-club-logo-symbol-design-england_10994300.jpg",
+      coverUrl: "/Manu.jpg",
     },
   },
   {
@@ -752,6 +794,7 @@ export const mockCosmetics: CosmeticItem[] = [
       primaryHex: "#034694",
       secondaryHex: "#dba111",
       accentHex: "#ffffff",
+      logoUrl: "/chelsea/vecteezy_chelsea-logo-on-transparent-background_15863613.jpg",
     },
   },
   {
@@ -784,6 +827,7 @@ export const mockCosmetics: CosmeticItem[] = [
       primaryHex: "#6cabdd",
       secondaryHex: "#1c2c5b",
       accentHex: "#ffffff",
+      logoUrl: "/man city/vecteezy_manchester-city-football-club-logo-symbol-design-england_10994439.jpg",
     },
   },
   {
@@ -880,6 +924,7 @@ export const mockCosmetics: CosmeticItem[] = [
       primaryHex: "#dc052d",
       secondaryHex: "#0066b2",
       accentHex: "#ffffff",
+      logoUrl: "/bayern/vecteezy_fc-bayern-munchen-logo-on-transparent-background_14414704.jpg",
     },
   },
 ];

@@ -219,29 +219,12 @@ export function ThemedCoverArtwork({
 
         {/* Official FC Barcelona Crest Showcase Badge on Lower Right */}
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
-          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-amber-400/40 shadow-[0_0_24px_rgba(165,0,68,0.35)]">
-            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(237,187,0,0.7)]">
-              <defs>
-                <linearGradient id="senyeraMini" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#edbb00" />
-                  <stop offset="25%" stopColor="#da291c" />
-                  <stop offset="50%" stopColor="#edbb00" />
-                  <stop offset="75%" stopColor="#da291c" />
-                  <stop offset="100%" stopColor="#edbb00" />
-                </linearGradient>
-              </defs>
-              <path d="M 10,10 Q 60,0 110,10 L 110,65 Q 110,115 60,135 Q 10,115 10,65 Z" fill="#020b1e" stroke="#edbb00" strokeWidth="3" />
-              <rect x="13" y="12" width="47" height="42" fill="#ffffff" />
-              <line x1="13" y1="33" x2="60" y2="33" stroke="#da291c" strokeWidth="6" />
-              <line x1="36" y1="12" x2="36" y2="54" stroke="#da291c" strokeWidth="6" />
-              <rect x="60" y="12" width="47" height="42" fill="url(#senyeraMini)" />
-              <rect x="11" y="54" width="98" height="15" fill="#edbb00" />
-              <text x="60" y="66" fill="#004d98" fontSize="11" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">FCB</text>
-              <path d="M 13,69 L 107,69 L 107,75 Q 107,115 60,133 Q 13,115 13,75 Z" fill="#004d98" />
-              <rect x="32" y="69" width="16" height="60" fill="#a50044" />
-              <rect x="72" y="69" width="16" height="60" fill="#a50044" />
-              <circle cx="60" cy="102" r="13" fill="#edbb00" stroke="#ffffff" strokeWidth="1" />
-            </svg>
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-amber-400/40 shadow-[0_0_24px_rgba(165,0,68,0.35)]">
+            <img
+              src="/barca/vecteezy_fc-barcelona-logo-on-transparent-background_14414712.jpg"
+              alt="FC Barcelona Crest"
+              className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(237,187,0,0.7)]"
+            />
           </div>
           <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-amber-300 drop-shadow">
             MÉS QUE UN CLUB
@@ -295,16 +278,12 @@ export function ThemedCoverArtwork({
 
         {/* Official Bengal Tigers Crest Showcase Badge on Lower Right */}
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
-          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-emerald-400/40 shadow-[0_0_24px_rgba(0,106,78,0.4)]">
-            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(244,42,65,0.7)]">
-              <path d="M 10,10 L 110,10 L 110,75 Q 110,120 60,135 Q 10,120 10,75 Z" fill="#003828" stroke="#f9a825" strokeWidth="3" />
-              <circle cx="60" cy="65" r="32" fill="#f42a41" />
-              <path d="M 40,50 Q 60,40 80,50 Q 85,70 75,85 Q 60,90 45,85 Q 35,70 40,50 Z" fill="#f9a825" />
-              <polygon points="50,60 55,70 45,70" fill="#ffffff" />
-              <polygon points="70,60 75,70 65,70" fill="#ffffff" />
-              <path d="M 52,75 Q 60,82 68,75" stroke="#003828" strokeWidth="2.5" fill="none" />
-              <text x="60" y="122" fill="#f9a825" fontSize="9" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">BANGLADESH</text>
-            </svg>
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-emerald-400/40 shadow-[0_0_24px_rgba(0,106,78,0.4)]">
+            <img
+              src="/Bangladesh/bangladesh-football-federation-seeklogo.png"
+              alt="Bangladesh Football Federation Crest"
+              className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(244,42,65,0.7)]"
+            />
           </div>
           <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-emerald-300 drop-shadow">
             BENGAL TIGERS · লাল-সবুজ
@@ -331,7 +310,65 @@ export function ThemedCoverArtwork({
   }
 
   // ==========================================================================
-  // --- 4. MANCHESTER UNITED FC (Red Devils · Theatre of Dreams) ---
+  // --- 4. ARSENAL FC (The Gunners · Victoria Concordia Crescit) ---
+  // ==========================================================================
+  if (theme.id === "theme-arsenal-fc") {
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: "linear-gradient(135deg, #100204 0%, #280408 45%, #080103 100%)" }}
+      >
+        {/* Highbury / Emirates Crimson & Navy Floodlights */}
+        <div
+          className="pointer-events-none absolute -top-10 left-1/4 h-64 w-80 rounded-full blur-[75px] opacity-50"
+          style={{ background: "radial-gradient(circle, rgba(219,0,7,0.75) 0%, transparent 70%)" }}
+        />
+        <div
+          className="pointer-events-none absolute -top-10 right-1/4 h-64 w-80 rounded-full blur-[75px] opacity-40"
+          style={{ background: "radial-gradient(circle, rgba(2,52,116,0.8) 0%, transparent 70%)" }}
+        />
+
+        {/* Emirates Stadium Arch & Gold Cannon Laser Ribs */}
+        <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-55 z-10" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 0,260 Q 500,120 1000,260" fill="none" stroke="#db0007" strokeWidth="2" opacity="0.45" />
+          <path d="M 0,285 Q 500,145 1000,285" fill="none" stroke="#9c824a" strokeWidth="1" strokeDasharray="10 6" opacity="0.35" />
+        </svg>
+
+        {/* Official Arsenal Cannon Crest Showcase Badge on Lower Right */}
+        <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/20 to-black/80 backdrop-blur-md border border-red-500/40 shadow-[0_0_24px_rgba(219,0,7,0.4)]">
+            <img
+              src="/arsenal/vecteezy_arsenal-logo-on-transparent-background_15863617.jpg"
+              alt="Arsenal FC Crest"
+              className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(219,0,7,0.7)]"
+            />
+          </div>
+          <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-amber-300 drop-shadow">
+            THE GUNNERS · INVINCIBLES
+          </span>
+        </div>
+
+        {/* Subtle Watermark in Bottom-Center */}
+        <div className="pointer-events-none absolute bottom-3 left-32 sm:left-44 z-10 hidden min-[540px]:flex items-center gap-1.5 opacity-35">
+          <span className="font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-red-200">
+            🔴⚪ EMIRATES STADIUM
+          </span>
+        </div>
+
+        {/* Floating Gunpowder Spark */}
+        <div className="pointer-events-none absolute top-16 left-[32%] h-3 w-3 rounded-full bg-red-400 shadow-[0_0_10px_#db0007] animate-bounce z-10" />
+
+        {/* Interactive View Toggle */}
+        {viewToggle}
+
+        {/* Bottom Horizon Glow */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-bg via-bg/60 to-transparent z-10" />
+      </div>
+    );
+  }
+
+  // ==========================================================================
+  // --- 5. MANCHESTER UNITED FC (Red Devils · Theatre of Dreams) ---
   // ==========================================================================
   if (theme.id === "theme-man-united") {
     return (
@@ -364,18 +401,12 @@ export function ThemedCoverArtwork({
 
         {/* Official Red Devil Crest Showcase Badge on Lower Right */}
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
-          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-amber-400/40 shadow-[0_0_24px_rgba(218,41,28,0.4)]">
-            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(255,229,0,0.7)]">
-              <path d="M 10,10 L 110,10 L 110,75 Q 110,120 60,135 Q 10,120 10,75 Z" fill="#080304" stroke="#ffe500" strokeWidth="3" />
-              <rect x="13" y="13" width="94" height="26" fill="#da291c" />
-              <polygon points="45,35 60,20 75,35" fill="#ffe500" />
-              <rect x="11" y="42" width="98" height="12" fill="#ffe500" />
-              <text x="60" y="51" fill="#080304" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">MANCHESTER</text>
-              <path d="M 45,65 Q 60,55 75,65 L 70,95 Q 60,105 50,95 Z" fill="#da291c" />
-              <line x1="72" y1="58" x2="72" y2="105" stroke="#ffe500" strokeWidth="2.5" />
-              <polygon points="68,60 72,52 76,60" fill="#ffe500" />
-              <text x="60" y="125" fill="#ffe500" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">UNITED</text>
-            </svg>
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-amber-400/40 shadow-[0_0_24px_rgba(218,41,28,0.4)]">
+            <img
+              src="/manu/vecteezy_manchester-united-football-club-logo-symbol-design-england_10994300.jpg"
+              alt="Manchester United Crest"
+              className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(255,229,0,0.7)]"
+            />
           </div>
           <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-amber-300 drop-shadow">
             THEATRE OF DREAMS
@@ -402,7 +433,7 @@ export function ThemedCoverArtwork({
   }
 
   // ==========================================================================
-  // --- 5. CHELSEA FC (The Blues · Pride of London) ---
+  // --- 6. CHELSEA FC (The Blues · Pride of London) ---
   // ==========================================================================
   if (theme.id === "theme-chelsea-fc") {
     return (
@@ -424,16 +455,12 @@ export function ThemedCoverArtwork({
 
         {/* Official Chelsea Lion Crest Showcase Badge on Lower Right */}
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
-          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-blue-400/40 shadow-[0_0_24px_rgba(3,70,148,0.4)]">
-            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(219,161,17,0.7)]">
-              <circle cx="60" cy="70" r="52" fill="#011233" stroke="#034694" strokeWidth="5" />
-              <circle cx="60" cy="70" r="45" fill="none" stroke="#dba111" strokeWidth="2" />
-              <path d="M 50,50 Q 65,35 75,45 Q 70,65 80,75 Q 65,90 50,80 Q 40,70 50,50 Z" fill="#034694" stroke="#ffffff" strokeWidth="2" />
-              <line x1="72" y1="40" x2="72" y2="95" stroke="#dba111" strokeWidth="3" />
-              <circle cx="72" cy="38" r="4" fill="#dba111" />
-              <text x="60" y="24" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">CHELSEA</text>
-              <text x="60" y="118" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">FOOTBALL CLUB</text>
-            </svg>
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-blue-400/40 shadow-[0_0_24px_rgba(3,70,148,0.4)]">
+            <img
+              src="/chelsea/vecteezy_chelsea-logo-on-transparent-background_15863613.jpg"
+              alt="Chelsea FC Crest"
+              className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(219,161,17,0.7)]"
+            />
           </div>
           <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-amber-300 drop-shadow">
             PRIDE OF LONDON
@@ -460,7 +487,7 @@ export function ThemedCoverArtwork({
   }
 
   // ==========================================================================
-  // --- 6. MANCHESTER CITY FC (Cityzens · Treble Winners) ---
+  // --- 7. MANCHESTER CITY FC (Cityzens · Treble Winners) ---
   // ==========================================================================
   if (theme.id === "theme-man-city") {
     return (
@@ -482,19 +509,12 @@ export function ThemedCoverArtwork({
 
         {/* Official Man City Crest Showcase Badge on Lower Right */}
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
-          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-sky-400/40 shadow-[0_0_24px_rgba(108,171,221,0.4)]">
-            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(108,171,221,0.7)]">
-              <circle cx="60" cy="70" r="52" fill="#030d22" stroke="#6cabdd" strokeWidth="5" />
-              <circle cx="60" cy="70" r="45" fill="none" stroke="#ffffff" strokeWidth="1.5" />
-              <polygon points="40,45 60,28 80,45" fill="#ffd700" />
-              <rect x="35" y="45" width="50" height="8" fill="#ffd700" />
-              <line x1="42" y1="65" x2="78" y2="65" stroke="#6cabdd" strokeWidth="3" />
-              <line x1="45" y1="73" x2="75" y2="73" stroke="#6cabdd" strokeWidth="3" />
-              <line x1="48" y1="81" x2="72" y2="81" stroke="#6cabdd" strokeWidth="3" />
-              <circle cx="60" cy="95" r="5" fill="#da291c" stroke="#ffffff" strokeWidth="1" />
-              <text x="60" y="24" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">MANCHESTER</text>
-              <text x="60" y="118" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">CITY</text>
-            </svg>
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-sky-400/40 shadow-[0_0_24px_rgba(108,171,221,0.4)]">
+            <img
+              src="/man city/vecteezy_manchester-city-football-club-logo-symbol-design-england_10994439.jpg"
+              alt="Manchester City Crest"
+              className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(108,171,221,0.7)]"
+            />
           </div>
           <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-sky-200 drop-shadow">
             TREBLE WINNERS
@@ -521,7 +541,7 @@ export function ThemedCoverArtwork({
   }
 
   // ==========================================================================
-  // --- 7. ATLÉTICO DE MADRID (Colchoneros · Coraje y Corazón) ---
+  // --- 8. ATLÉTICO DE MADRID (Colchoneros · Coraje y Corazón) ---
   // ==========================================================================
   if (theme.id === "theme-atletico-madrid") {
     return (
@@ -582,7 +602,7 @@ export function ThemedCoverArtwork({
   }
 
   // ==========================================================================
-  // --- 8. PARIS SAINT-GERMAIN (PSG · Ici c'est Paris) ---
+  // --- 9. PARIS SAINT-GERMAIN (PSG · Ici c'est Paris) ---
   // ==========================================================================
   if (theme.id === "theme-psg") {
     return (
@@ -641,7 +661,7 @@ export function ThemedCoverArtwork({
   }
 
   // ==========================================================================
-  // --- 9. FC BAYERN MÜNCHEN (Mia San Mia · 5-Star Meister) ---
+  // --- 10. FC BAYERN MÜNCHEN (Mia San Mia · 5-Star Meister) ---
   // ==========================================================================
   if (theme.id === "theme-bayern-munchen") {
     return (
@@ -663,20 +683,12 @@ export function ThemedCoverArtwork({
 
         {/* Official Bayern Crest Showcase Badge on Lower Right */}
         <div className="pointer-events-none absolute bottom-4 right-4 sm:bottom-5 sm:right-8 z-20 flex flex-col items-center gap-1.5 opacity-95">
-          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl p-2 bg-gradient-to-b from-white/15 to-black/70 backdrop-blur-md border border-red-400/40 shadow-[0_0_24px_rgba(220,5,45,0.4)]">
-            <svg viewBox="0 0 120 140" className="h-full w-full drop-shadow-[0_0_8px_rgba(255,215,0,0.7)]">
-              <defs>
-                <pattern id="bavarianMini" width="16" height="16" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                  <rect width="8" height="16" fill="#0066b2" />
-                  <rect x="8" width="8" height="16" fill="#ffffff" />
-                </pattern>
-              </defs>
-              <circle cx="60" cy="70" r="52" fill="#150005" stroke="#dc052d" strokeWidth="5" />
-              <circle cx="60" cy="70" r="45" fill="none" stroke="#ffffff" strokeWidth="1.5" />
-              <circle cx="60" cy="70" r="30" fill="url(#bavarianMini)" stroke="#dc052d" strokeWidth="1.5" />
-              <text x="60" y="24" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">FC BAYERN</text>
-              <text x="60" y="118" fill="#ffffff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">MÜNCHEN</text>
-            </svg>
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl overflow-hidden p-1.5 bg-gradient-to-b from-white/15 to-black/80 backdrop-blur-md border border-red-400/40 shadow-[0_0_24px_rgba(220,5,45,0.4)]">
+            <img
+              src="/bayern/vecteezy_fc-bayern-munchen-logo-on-transparent-background_14414704.jpg"
+              alt="FC Bayern München Crest"
+              className="h-full w-full object-contain filter drop-shadow-[0_0_8px_rgba(255,215,0,0.7)]"
+            />
           </div>
           <span className="font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-red-300 drop-shadow">
             MIA SAN MIA · 5★
@@ -1578,6 +1590,28 @@ export function CosmeticThemeAmbient({
     );
   }
 
+  // --- Official Team 4: Arsenal FC ---
+  if (theme.id === "theme-arsenal-fc") {
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 h-[650px] w-[650px] -translate-x-1/2 blur-[110px] animate-flame-flicker opacity-95"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(219,0,7,0.75) 0%, rgba(156,130,74,0.35) 50%, transparent 75%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute right-0 top-24 h-[450px] w-[450px] blur-[100px] opacity-85"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(2,52,116,0.55) 0%, transparent 70%)",
+          }}
+        />
+      </div>
+    );
+  }
+
   // --- Official Team 4: Manchester United ---
   if (theme.id === "theme-man-united") {
     return (
@@ -1857,12 +1891,12 @@ export function ThemeTeamAttachmentBadge({ theme }: { theme?: CosmeticItem | nul
   return (
     <div className="relative mt-3 inline-flex flex-wrap items-center gap-2.5 rounded-2xl border border-white/20 bg-surface-deep/85 px-3.5 py-2 backdrop-blur-xl shadow-xl transition-all duration-300 hover:scale-[1.02] hover:border-white/40">
       {/* Team Crest Icon */}
-      {theme.id === "theme-real-madrid" ? (
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 p-0.5 shadow-inner">
+      {d.logoUrl ? (
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-white/10 p-0.5 shadow-inner">
           <img
-            src="/real madrid/real-madrid-logo-preview.png"
-            alt="Real Madrid CF"
-            className="h-full w-full object-contain filter drop-shadow-[0_0_6px_rgba(254,190,16,0.8)]"
+            src={d.logoUrl}
+            alt={d.clubName}
+            className="h-full w-full object-contain filter drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]"
           />
         </div>
       ) : (
@@ -1917,6 +1951,8 @@ export function ThemedProfileHeroBanner({
     ? "theme-card-cyber"
     : theme.id === "theme-bangladesh-tigers"
     ? "theme-card-rare-emerald"
+    : theme.id === "theme-arsenal-fc"
+    ? "theme-card-epic-fire"
     : theme.id === "theme-man-united"
     ? "theme-card-epic-fire"
     : theme.id === "theme-chelsea-fc"
@@ -2362,7 +2398,29 @@ export function getThemeTokens(theme: CosmeticItem | null | undefined): ThemeTok
         glowShadow: "0 0 25px rgba(0, 106, 78, 0.45)",
       };
 
-    // --- Official Team 4: Manchester United ---
+    // --- Official Team 4: Arsenal FC ---
+    case "theme-arsenal-fc":
+      return {
+        id: theme.id,
+        name: theme.name,
+        rarity: "legendary",
+        primary: "#db0007",
+        secondary: "#023474",
+        accentText: "#9c824a",
+        headingText: "#ffffff",
+        bodyText: "#fff1f2",
+        mutedText: "#fca5a5",
+        cardClass: "theme-card-epic-fire",
+        innerBg: "rgba(219, 0, 7, 0.14)",
+        innerBorder: "rgba(219, 0, 7, 0.4)",
+        innerHoverBorder: "rgba(156, 130, 74, 0.7)",
+        highlightBg: "rgba(219, 0, 7, 0.25)",
+        highlightBorder: "rgba(156, 130, 74, 0.6)",
+        highlightText: "#9c824a",
+        glowShadow: "0 0 25px rgba(219, 0, 7, 0.4)",
+      };
+
+    // --- Official Team 5: Manchester United ---
     case "theme-man-united":
       return {
         id: theme.id,
@@ -2685,6 +2743,13 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
           <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-red-600/20 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-64 w-64 rounded-full bg-blue-600/20 blur-3xl" />
+          <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
+            <img
+              src="/barca/vecteezy_fc-barcelona-logo-on-transparent-background_14414712.jpg"
+              alt=""
+              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(237,187,0,0.6)]"
+            />
+          </div>
           <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="fcb-stripes" width="36" height="36" patternUnits="userSpaceOnUse">
@@ -2703,6 +2768,13 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
       return (
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-72 w-72 rounded-full bg-red-600/25 blur-3xl" />
+          <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-25">
+            <img
+              src="/Bangladesh/bangladesh-football-federation-seeklogo.png"
+              alt=""
+              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(244,42,65,0.6)]"
+            />
+          </div>
           <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="bd-tiger-grid" width="44" height="44" patternUnits="userSpaceOnUse">
@@ -2716,11 +2788,42 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
         </div>
       );
 
-    // --- Official Team 4: Manchester United ---
+    // --- Official Team 4: Arsenal FC ---
+    case "theme-arsenal-fc":
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+          <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-red-600/25 blur-3xl" />
+          <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-25">
+            <img
+              src="/arsenal/vecteezy_arsenal-logo-on-transparent-background_15863617.jpg"
+              alt=""
+              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(219,0,7,0.6)]"
+            />
+          </div>
+          <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="arsenal-cannon-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <line x1="10" y1="20" x2="30" y2="20" stroke="#db0007" strokeWidth="1.2" opacity="0.4" />
+                <circle cx="20" cy="20" r="2.5" fill="#9c824a" opacity="0.7" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#arsenal-cannon-grid)" />
+          </svg>
+        </div>
+      );
+
+    // --- Official Team 5: Manchester United ---
     case "theme-man-united":
       return (
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-red-600/30 blur-3xl animate-flame-flicker" />
+          <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
+            <img
+              src="/manu/vecteezy_manchester-united-football-club-logo-symbol-design-england_10994300.jpg"
+              alt=""
+              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(255,229,0,0.6)]"
+            />
+          </div>
           <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="manu-trident" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -2733,11 +2836,18 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
         </div>
       );
 
-    // --- Official Team 5: Chelsea FC ---
+    // --- Official Team 6: Chelsea FC ---
     case "theme-chelsea-fc":
       return (
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
           <div className="absolute -top-10 right-0 h-64 w-64 rounded-full bg-blue-700/25 blur-3xl" />
+          <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
+            <img
+              src="/chelsea/vecteezy_chelsea-logo-on-transparent-background_15863613.jpg"
+              alt=""
+              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(3,70,148,0.6)]"
+            />
+          </div>
           <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="chelsea-lion-grid" width="42" height="42" patternUnits="userSpaceOnUse">
@@ -2750,11 +2860,18 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
         </div>
       );
 
-    // --- Official Team 6: Manchester City ---
+    // --- Official Team 7: Manchester City ---
     case "theme-man-city":
       return (
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
           <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-sky-500/25 blur-3xl" />
+          <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
+            <img
+              src="/man city/vecteezy_manchester-city-football-club-logo-symbol-design-england_10994439.jpg"
+              alt=""
+              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(108,171,221,0.6)]"
+            />
+          </div>
           <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="mancity-wave" width="36" height="36" patternUnits="userSpaceOnUse">
@@ -2767,7 +2884,7 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
         </div>
       );
 
-    // --- Official Team 7: Atlético de Madrid ---
+    // --- Official Team 8: Atlético de Madrid ---
     case "theme-atletico-madrid":
       return (
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
@@ -2786,7 +2903,7 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
         </div>
       );
 
-    // --- Official Team 8: Paris Saint-Germain ---
+    // --- Official Team 9: Paris Saint-Germain ---
     case "theme-psg":
       return (
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
@@ -2803,11 +2920,18 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
         </div>
       );
 
-    // --- Official Team 9: FC Bayern München ---
+    // --- Official Team 10: FC Bayern München ---
     case "theme-bayern-munchen":
       return (
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-red-600/30 blur-3xl" />
+          <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
+            <img
+              src="/bayern/vecteezy_fc-bayern-munchen-logo-on-transparent-background_14414704.jpg"
+              alt=""
+              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(255,215,0,0.6)]"
+            />
+          </div>
           <svg className="absolute inset-0 h-full w-full opacity-35" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="bayern-diamond" width="32" height="32" patternUnits="userSpaceOnUse">

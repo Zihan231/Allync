@@ -385,16 +385,16 @@ export default function StorePage() {
                 {/* Team Details Attachment Pill if applicable */}
                 {tDetails ? (
                   <div className="mt-3 flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-black/40 p-2 text-left font-mono text-[10px] backdrop-blur">
-                    {item.id === "theme-real-madrid" ? (
-                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 p-0.5">
+                    {tDetails.logoUrl ? (
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md overflow-hidden bg-white/10 p-0.5 shadow-inner">
                         <img
-                          src="/real madrid/real-madrid-logo-preview.png"
-                          alt="Real Madrid"
+                          src={tDetails.logoUrl}
+                          alt={tDetails.clubName}
                           className="h-full w-full object-contain"
                         />
                       </div>
                     ) : (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-xs">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white/10 text-xs">
                         {tDetails.badgeSymbol}
                       </span>
                     )}
