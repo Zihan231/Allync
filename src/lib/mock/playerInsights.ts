@@ -118,6 +118,20 @@ function pick<T>(arr: T[], rand: () => number): T {
   return arr[Math.floor(rand() * arr.length)];
 }
 
+// A `.sort(() => rand() - 0.5)` shuffle calls the comparator an
+// engine-dependent number of times, which desyncs the seeded RNG stream
+// between the server's V8 and the browser's engine and causes hydration
+// mismatches. Fisher-Yates calls rand() exactly arr.length - 1 times,
+// deterministic regardless of engine.
+function shuffle<T>(arr: T[], rand: () => number): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 export type TrendPoint = { label: string; rank: number };
 export type MatchLoadPoint = { label: string; matches: number; wins: number; goalsFor: number };
 export type SeasonRankingRow = { label: string; rank: number; wins: number };
@@ -270,7 +284,7 @@ export function getPlayerInsights(person: Person): PlayerInsights {
   const transferHistory: TransferEntry[] = [];
   let cursor = addDays(REFERENCE_NOW, -Math.round(rand() * 5));
   let previousClub: string | null = null;
-  const shuffledClubs = [...TRANSFER_CLUB_POOL].sort(() => rand() - 0.5);
+  const shuffledClubs = shuffle(TRANSFER_CLUB_POOL, rand);
   for (let i = 0; i < transferCount; i++) {
     const club = shuffledClubs[i % shuffledClubs.length];
     transferHistory.push({
@@ -290,7 +304,7 @@ export function getPlayerInsights(person: Person): PlayerInsights {
   const district = pick(BD_DISTRICTS_BY_DIVISION[division as BdDivision], rand);
   const birthdayDate = new Date(2000, Math.floor(rand() * 12), 1 + Math.floor(rand() * 28));
   const educationCount = 1 + Math.round(rand());
-  const shuffledInstitutes = [...INSTITUTE_NAMES].sort(() => rand() - 0.5);
+  const shuffledInstitutes = shuffle(INSTITUTE_NAMES, rand);
   const education = Array.from({ length: educationCount }, (_, i) => ({
     instituteName: shuffledInstitutes[i % shuffledInstitutes.length],
     fieldOfStudy: pick(FIELDS_OF_STUDY, rand),

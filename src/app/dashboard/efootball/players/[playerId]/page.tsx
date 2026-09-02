@@ -3,6 +3,7 @@
 import { use, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useSession } from "@/lib/session/SessionContext";
 import { useMockPeople, useMockClubs, useMockCommunities } from "@/lib/mock/communityStore";
 import { getPlayerInsights } from "@/lib/mock/playerInsights";
 import { BackButton } from "@/components/dashboard/BackButton";
@@ -199,6 +200,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
   const { playerId } = use(params);
   const { t } = useLanguage();
   const pf = t.dashboard.playerProfile;
+  const { user } = useSession();
   const people = useMockPeople();
   const clubs = useMockClubs();
   const communities = useMockCommunities();
@@ -231,7 +233,17 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       <div className="glow-gold pointer-events-none absolute left-1/2 top-0 -z-10 h-[420px] w-[420px] -translate-x-1/2 blur-3xl" />
       <div className="glow-blue pointer-events-none absolute right-0 top-32 -z-10 h-[320px] w-[320px] blur-3xl" />
 
-      <BackButton />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <BackButton />
+        {person.id !== user.personId ? (
+          <Link
+            href="/dashboard/efootball/profile"
+            className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
+          >
+            {pf.myProfile}
+          </Link>
+        ) : null}
+      </div>
 
       <div className="relative overflow-hidden rounded-xl">
         <CoverPhoto coverUrl={person.coverUrl} name={person.name} className="h-56 sm:h-72 lg:h-80" />
@@ -475,11 +487,35 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
 // the container's height is locked to that same ratio via `aspectRatio`, so
 // the road and the point labels stay in sync at any screen size without
 // measuring real pixel heights.
+// Smooth spline through every point (Catmull-Rom converted to cubic Bezier
+// segments) rather than independent per-segment S-curves — each control
+// point is derived from the point's actual neighbors, so the road passes
+// through every waypoint without overshooting past them and looping back on
+// itself the way a naive same-x S-curve does when the horizontal swing is
+// large relative to the vertical spacing.
+function smoothPath(points: { x: number; y: number }[]) {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i === 0 ? i : i - 1];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y}`;
+  }
+  return d;
+}
+
 function TransferJourney({ entries }: { entries: TransferEntry[] }) {
   const W = 100;
-  const ROW = 13;
-  const RAIL_LEFT = 30;
-  const RAIL_RIGHT = 70;
+  const ROW = 20;
+  const RAIL_LEFT = 35;
+  const RAIL_RIGHT = 65;
   const ordered = [...entries].reverse(); // oldest (debut) first, newest (current) last
   const n = ordered.length;
   const H = Math.max(ROW * 1.5, n * ROW);
@@ -492,16 +528,7 @@ function TransferJourney({ entries }: { entries: TransferEntry[] }) {
     return { x, y, tr };
   });
 
-  let roadPath = "";
-  points.forEach((p, i) => {
-    if (i === 0) {
-      roadPath += `M ${p.x} ${p.y}`;
-    } else {
-      const prev = points[i - 1];
-      const midY = (prev.y + p.y) / 2;
-      roadPath += ` C ${prev.x} ${midY}, ${p.x} ${midY}, ${p.x} ${p.y}`;
-    }
-  });
+  const roadPath = smoothPath(points);
 
   return (
     <div className="mx-auto w-full max-w-sm" style={{ aspectRatio: `${W} / ${H}` }}>

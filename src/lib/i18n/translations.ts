@@ -405,6 +405,7 @@ export const translations = {
       },
       playerProfile: {
         viewPublicProfile: "View public profile",
+        myProfile: "Go to my profile",
         statTotalMatches: "Total Matches",
         statTotalWins: "Total Wins",
         statWinRate: "Win Rate",
@@ -1036,6 +1037,7 @@ export const translations = {
       },
       playerProfile: {
         viewPublicProfile: "পাবলিক প্রোফাইল দেখুন",
+        myProfile: "আমার প্রোফাইলে যান",
         statTotalMatches: "মোট ম্যাচ",
         statTotalWins: "মোট জয়",
         statWinRate: "জয়ের হার",
