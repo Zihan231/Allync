@@ -81,6 +81,7 @@ type SessionContextValue = {
   setVerificationStatus: (status: VerificationStatus) => void;
   setVerificationLevel: (level: VerificationLevel) => void;
   setDpUrl: (dpUrl: string | null) => void;
+  spendBdt: (amountBdt: number) => boolean;
   setClub: (club: MockUser["club"]) => void;
   setCommunity: (community: MockUser["community"]) => void;
   updateProfile: (input: { name?: string; email?: string }) => void;
@@ -101,6 +102,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUser(JSON.parse(stored) as MockUser);
       } catch {
         // fall back to the seeded default
@@ -123,6 +125,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const setVerificationLevel = (verificationLevel: VerificationLevel) =>
     persist({ ...user, verificationLevel });
   const setDpUrl = (dpUrl: string | null) => persist({ ...user, dpUrl });
+  const spendBdt = (amountBdt: number): boolean => {
+    if (amountBdt <= 0 || user.wallet.balanceBdt < amountBdt) return false;
+    persist({ ...user, wallet: { balanceBdt: user.wallet.balanceBdt - amountBdt } });
+    return true;
+  };
   const setClub = (club: MockUser["club"]) => persist({ ...user, club });
   const setCommunity = (community: MockUser["community"]) => persist({ ...user, community });
 
@@ -221,6 +228,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setVerificationStatus,
       setVerificationLevel,
       setDpUrl,
+      spendBdt,
       setClub,
       setCommunity,
       updateProfile,

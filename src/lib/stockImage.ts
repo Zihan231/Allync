@@ -4,7 +4,8 @@
 // image provider built for exactly this purpose, not a substitute for
 // any real brand or person.
 
-export function stockAvatarUrl(_seed: string): string {
+export function stockAvatarUrl(seed?: string): string {
+  void seed;
   return "/user.jpg";
 }
 

@@ -6,3 +6,4 @@ export * from "./matches";
 export * from "./wallet";
 export * from "./transfers";
 export * from "./store";
+export * from "./cosmetics";

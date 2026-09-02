@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 function sanitizeDigits(raw: string) {
   return raw.replace(/[^0-9]/g, "");
@@ -20,10 +20,12 @@ function NumberField({
   onCommit: (n: number) => void;
 }) {
   const [text, setText] = useState(String(value));
+  const [prevValue, setPrevValue] = useState(value);
 
-  useEffect(() => {
+  if (prevValue !== value) {
+    setPrevValue(value);
     setText(String(value));
-  }, [value]);
+  }
 
   function commit() {
     const digits = sanitizeDigits(text);

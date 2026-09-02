@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import type { Club, Community, JoinRequest, Person } from "./types";
+import type { CosmeticCategory } from "./cosmetics";
 import { mockClubs } from "./clubs";
 import { mockCommunities } from "./communities";
 import { mockPeople } from "./people";
@@ -62,6 +63,22 @@ function updatePerson(id: string, patch: Partial<Person>) {
 
 export function updatePersonProfile(id: string, patch: Partial<Person>) {
   updatePerson(id, patch);
+}
+
+export function purchaseCosmetic(personId: string, cosmeticId: string) {
+  const person = getPerson(personId);
+  if (!person) return;
+  const owned = person.ownedCosmeticIds ?? [];
+  if (owned.includes(cosmeticId)) return;
+  updatePerson(personId, { ownedCosmeticIds: [...owned, cosmeticId] });
+}
+
+export function equipCosmetic(personId: string, category: CosmeticCategory, cosmeticId: string | null) {
+  const field =
+    category === "badge" ? "equippedBadgeId" :
+    category === "title" ? "equippedTitleId" :
+    category === "frame" ? "equippedFrameId" : "equippedThemeId";
+  updatePerson(personId, { [field]: cosmeticId } as Partial<Person>);
 }
 
 // ---- Clubs ----

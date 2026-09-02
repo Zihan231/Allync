@@ -13,7 +13,6 @@ import {
   leaveCommunity,
 } from "@/lib/mock/communityStore";
 import { useMockTournaments } from "@/lib/mock/store";
-import { PageHeader } from "@/components/dashboard/PageHeader";
 import { BackButton } from "@/components/dashboard/BackButton";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";

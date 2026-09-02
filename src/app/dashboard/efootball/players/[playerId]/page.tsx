@@ -7,15 +7,13 @@ import { useSession } from "@/lib/session/SessionContext";
 import { useMockPeople, useMockClubs, useMockCommunities } from "@/lib/mock/communityStore";
 import { getPlayerInsights } from "@/lib/mock/playerInsights";
 import { BackButton } from "@/components/dashboard/BackButton";
-import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
 import { RankBadge } from "@/components/dashboard/RankBadge";
-import { SectionHeading, type SectionTone } from "@/components/dashboard/SectionHeading";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { type SectionTone } from "@/components/dashboard/SectionHeading";
 import { RankTrendChart } from "@/components/dashboard/RankTrendChart";
 import { MatchLoadChart } from "@/components/dashboard/MatchLoadChart";
 import {
-  BallIcon,
   ChartIcon,
   TrophyIcon,
   CrosshairIcon,
@@ -26,6 +24,20 @@ import {
   SwapIcon,
   SettingsIcon,
 } from "@/components/icons";
+import { getCosmetic, type CosmeticItem } from "@/lib/mock/cosmetics";
+import {
+  CosmeticBadgePill,
+  CosmeticTitleText,
+  CosmeticThemeAmbient,
+  ThemedProfileHeroBanner,
+  ThemedCoverArtwork,
+  FootballPlayerAvatar,
+  BannerPlayerStageHUD,
+  ThemedStatCard,
+  PlayerCosmeticsShowcase,
+  ThemeSectionArt,
+  getThemeTokens,
+} from "@/components/cosmetics/CosmeticDisplay";
 import type { StatsRow, TransferEntry } from "@/lib/mock/playerInsights";
 
 type IconComponent = (props: { className?: string }) => React.ReactElement;
@@ -37,14 +49,6 @@ const INSTITUTE_TYPE_LABEL_KEY = {
   Other: "instituteTypeOther",
 } as const;
 
-const TONE_BUBBLE: Record<SectionTone, string> = {
-  blue: "bg-blue-soft text-blue-ink",
-  accent: "bg-accent-soft text-accent-ink",
-  success: "bg-success-soft text-success-ink",
-  danger: "bg-danger-soft text-danger-ink",
-  warning: "bg-warning-soft text-warning-ink",
-};
-
 function formatBloodGroup(bg: string) {
   return bg.endsWith("+") ? `${bg.slice(0, -1)}(+)` : bg.endsWith("-") ? `${bg.slice(0, -1)}(-)` : bg;
 }
@@ -55,78 +59,210 @@ function formatBirthday(iso: string) {
   return d.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 }
 
-function InfoPill({ label, value }: { label: string; value: string }) {
+function InfoPill({ label, value, theme }: { label: string; value: string; theme?: CosmeticItem | null }) {
+  const tokens = getThemeTokens(theme);
   return (
-    <span className="rounded-full border border-surface-line-strong bg-bg-raised px-3 py-1.5 text-xs font-medium text-ink">
-      <span className="text-ink-faint">{label}:</span> {value}
+    <span
+      className="rounded-full border px-3 py-1.5 text-xs font-semibold backdrop-blur"
+      style={{
+        borderColor: tokens.innerBorder,
+        backgroundColor: tokens.innerBg,
+        color: tokens.headingText,
+      }}
+    >
+      <span style={{ color: tokens.mutedText }}>{label}:</span> {value}
     </span>
   );
 }
 
 function SectionCard({
   icon: Icon,
-  tone,
   title,
   subtitle,
   action,
   children,
   className = "",
+  theme,
 }: {
   icon: IconComponent;
-  tone: SectionTone;
+  tone?: SectionTone;
   title: string;
   subtitle?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  theme?: CosmeticItem | null;
 }) {
+  const tokens = getThemeTokens(theme);
+
   return (
-    <div className={`mt-6 rounded-2xl border border-surface-line bg-surface/60 p-6 ${className}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div
+      className={`group relative mt-6 overflow-hidden rounded-2xl border p-6 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl ${tokens.cardClass} ${className}`}
+      style={{
+        boxShadow: theme ? tokens.glowShadow : undefined,
+      }}
+    >
+      {/* Animated Theme Vector Background Art */}
+      <ThemeSectionArt theme={theme} />
+
+      {/* Top Holographic Light Sweep Line */}
+      {theme ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-80 animate-holographic-sweep"
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${tokens.secondary} 50%, transparent 100%)`,
+          }}
+        />
+      ) : null}
+
+      {/* Corner Cyber Notches */}
+      {theme ? (
+        <>
+          <div
+            className="pointer-events-none absolute top-0 left-0 h-4 w-4 border-t-2 border-l-2"
+            style={{ borderColor: tokens.secondary }}
+          />
+          <div
+            className="pointer-events-none absolute top-0 right-0 h-4 w-4 border-t-2 border-r-2"
+            style={{ borderColor: tokens.secondary }}
+          />
+          <div
+            className="pointer-events-none absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2"
+            style={{ borderColor: tokens.secondary }}
+          />
+          <div
+            className="pointer-events-none absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2"
+            style={{ borderColor: tokens.secondary }}
+          />
+        </>
+      ) : null}
+
+      <div className="relative z-10 flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${TONE_BUBBLE[tone]}`}>
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border shadow-md transition-transform group-hover:scale-105"
+            style={{
+              borderColor: tokens.innerBorder,
+              backgroundColor: tokens.innerBg,
+              color: tokens.accentText,
+              boxShadow: theme ? `0 0 15px ${tokens.primary}35` : undefined,
+            }}
+          >
             <Icon className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-display text-lg font-bold text-ink">{title}</h3>
-            {subtitle ? <p className="text-sm text-ink-soft">{subtitle}</p> : null}
+            <h3
+              className="font-display text-lg font-bold tracking-tight flex items-center gap-2"
+              style={{ color: tokens.headingText }}
+            >
+              {title}
+            </h3>
+            {subtitle ? (
+              <p className="text-sm font-medium" style={{ color: tokens.mutedText }}>
+                {subtitle}
+              </p>
+            ) : null}
           </div>
         </div>
-        {action}
-      </div>
-      <div className="mt-5">{children}</div>
-    </div>
-  );
-}
 
-function StatTileCard({ label, value, icon: Icon, tone }: { label: string; value: string; icon: IconComponent; tone: SectionTone }) {
-  return (
-    <div className="rounded-xl border border-surface-line bg-surface/50 p-5">
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-xs uppercase tracking-wide text-ink-faint">{label}</span>
-        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${TONE_BUBBLE[tone]}`}>
-          <Icon className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          {theme ? (
+            <span
+              className="hidden sm:flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider backdrop-blur shadow-sm"
+              style={{
+                borderColor: tokens.highlightBorder,
+                backgroundColor: tokens.highlightBg,
+                color: tokens.highlightText,
+              }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ backgroundColor: tokens.primary }} />
+              {theme.name}
+            </span>
+          ) : null}
+          {action}
         </div>
       </div>
-      <div className="font-display mt-3 text-2xl font-bold text-ink">{value}</div>
+      <div className="relative z-10 mt-5">{children}</div>
     </div>
   );
 }
 
-function SnapshotRow({ label, value, tone = "accent" }: { label: string; value: string; tone?: SectionTone }) {
+function SnapshotRow({
+  label,
+  value,
+  theme,
+}: {
+  label: string;
+  value: string;
+  tone?: SectionTone;
+  theme?: CosmeticItem | null;
+}) {
+  const tokens = getThemeTokens(theme);
+
   return (
-    <div className="rounded-lg border border-surface-line bg-surface px-4 py-3">
-      <div className={`font-mono text-[10px] uppercase tracking-wide ${TONE_BUBBLE[tone].split(" ")[1]}`}>{label}</div>
-      <div className="mt-1 text-sm font-medium text-ink">{value}</div>
+    <div
+      className="group relative overflow-hidden rounded-xl border p-4 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+      style={{
+        borderColor: tokens.innerBorder,
+        backgroundColor: tokens.innerBg,
+      }}
+    >
+      {theme ? (
+        <div
+          className="pointer-events-none absolute left-0 top-0 bottom-0 w-1 rounded-l opacity-90"
+          style={{ backgroundColor: tokens.primary }}
+        />
+      ) : null}
+      <div
+        className="font-mono text-[10px] uppercase font-bold tracking-wide"
+        style={{ color: tokens.accentText }}
+      >
+        {label}
+      </div>
+      <div
+        className="mt-1.5 text-sm font-bold transition-colors"
+        style={{ color: tokens.headingText }}
+      >
+        {value}
+      </div>
     </div>
   );
 }
 
-function StatCell({ label, value, tone }: { label: string; value: string; tone: SectionTone }) {
+function StatCell({
+  label,
+  value,
+  theme,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  tone?: SectionTone;
+  theme?: CosmeticItem | null;
+  highlight?: boolean;
+}) {
+  const tokens = getThemeTokens(theme);
+
   return (
-    <div className="rounded-lg border border-surface-line bg-surface px-2 py-2.5 text-center">
-      <div className={`font-mono text-[10px] uppercase tracking-wide ${TONE_BUBBLE[tone].split(" ")[1]}`}>{label}</div>
-      <div className="mt-1 font-display text-sm font-bold text-ink">{value}</div>
+    <div
+      className="group relative overflow-hidden rounded-xl border px-2 py-3 text-center backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+      style={{
+        borderColor: highlight ? tokens.highlightBorder : tokens.innerBorder,
+        backgroundColor: highlight ? tokens.highlightBg : tokens.innerBg,
+      }}
+    >
+      <div
+        className="font-mono text-[10px] uppercase font-bold tracking-wide"
+        style={{ color: highlight ? tokens.highlightText : tokens.mutedText }}
+      >
+        {label}
+      </div>
+      <div
+        className="mt-1 font-display text-sm font-black transition-colors"
+        style={{ color: highlight ? tokens.highlightText : tokens.headingText }}
+      >
+        {value}
+      </div>
     </div>
   );
 }
@@ -137,6 +273,7 @@ function StatsTable({
   pf,
   tone,
   icon,
+  theme,
 }: {
   title: string;
   row: StatsRow;
@@ -156,18 +293,20 @@ function StatsTable({
     motm: string;
     rt: string;
   };
+  theme?: CosmeticItem | null;
 }) {
-  const cells: { label: string; value: string; tone: SectionTone }[] = [
+  const tokens = getThemeTokens(theme);
+  const cells: { label: string; value: string; tone: SectionTone; highlight?: boolean }[] = [
     { label: pf.m, value: String(row.m), tone: "blue" },
     { label: pf.w, value: String(row.w), tone: "success" },
     { label: pf.d, value: String(row.d), tone: "blue" },
     { label: pf.l, value: String(row.l), tone: "danger" },
-    { label: pf.winPct, value: `${row.winPct}%`, tone: "accent" },
-    { label: pf.gf, value: String(row.gf), tone: "success" },
+    { label: pf.winPct, value: `${row.winPct}%`, tone: "accent", highlight: true },
+    { label: pf.gf, value: String(row.gf), tone: "success", highlight: true },
     { label: pf.ga, value: String(row.ga), tone: "danger" },
     { label: pf.cs, value: String(row.cs), tone: "blue" },
-    { label: pf.motm, value: String(row.motm), tone: "accent" },
-    { label: pf.rt, value: String(row.rt), tone: "warning" },
+    { label: pf.motm, value: String(row.motm), tone: "accent", highlight: true },
+    { label: pf.rt, value: String(row.rt), tone: "warning", highlight: true },
   ];
 
   return (
@@ -175,21 +314,30 @@ function StatsTable({
       icon={icon}
       tone={tone}
       title={title}
+      theme={theme}
       action={
         <button
           type="button"
-          className="rounded-full border border-surface-line-strong px-3.5 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:text-ink"
+          className="rounded-full border px-3.5 py-1.5 text-xs font-semibold backdrop-blur transition-all"
+          style={{
+            borderColor: tokens.innerBorder,
+            backgroundColor: tokens.innerBg,
+            color: tokens.mutedText,
+          }}
         >
           {pf.download}
         </button>
       }
     >
-      <div className="-mt-1 mb-4 flex items-center gap-1.5 text-xs text-ink-faint">
+      <div
+        className="-mt-1 mb-4 flex items-center gap-1.5 text-xs font-medium"
+        style={{ color: tokens.mutedText }}
+      >
         {pf.rankLabel} <RankBadge rank={row.rank} />
       </div>
       <div className="grid grid-cols-5 gap-3 sm:grid-cols-10">
         {cells.map((c) => (
-          <StatCell key={c.label} {...c} />
+          <StatCell key={c.label} {...c} theme={theme} />
         ))}
       </div>
     </SectionCard>
@@ -217,6 +365,14 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
   const club = person.clubId ? clubs.find((c) => c.id === person.clubId) : null;
   const community = person.communityId ? communities.find((c) => c.id === person.communityId) : null;
   const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === person.id) + 1;
+const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleId) : null;
+  const equippedBadge = person.equippedBadgeId ? getCosmetic(person.equippedBadgeId) : null;
+  const equippedFrame = person.equippedFrameId ? getCosmetic(person.equippedFrameId) : null;
+  const equippedTheme = person.equippedThemeId ? getCosmetic(person.equippedThemeId) : null;
+  const tokens = getThemeTokens(equippedTheme);
+  const ownedBadges = (person.ownedCosmeticIds ?? [])
+    .map(getCosmetic)
+    .filter((c): c is CosmeticItem => c != null && c.category === "badge");
 
   const birthday = (person.birthday ? formatBirthday(person.birthday) : null) ?? insights.personalInfo.birthday;
   const bloodGroup = formatBloodGroup(person.bloodGroup ?? insights.personalInfo.bloodGroup);
@@ -230,8 +386,8 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
 
   return (
     <div className="relative">
-      <div className="glow-gold pointer-events-none absolute left-1/2 top-0 -z-10 h-[420px] w-[420px] -translate-x-1/2 blur-3xl" />
-      <div className="glow-blue pointer-events-none absolute right-0 top-32 -z-10 h-[320px] w-[320px] blur-3xl" />
+      {/* Dynamic Profile Theme Ambient Lighting */}
+      <CosmeticThemeAmbient theme={equippedTheme} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BackButton />
@@ -245,132 +401,306 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
         ) : null}
       </div>
 
-      <div className="relative overflow-hidden rounded-xl">
-        <CoverPhoto coverUrl={person.coverUrl} name={person.name} className="h-56 sm:h-72 lg:h-80" />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 opacity-30"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(115deg, transparent 0 26px, rgba(255,255,255,0.12) 26px 52px)",
-          }}
-        />
-        <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-bg/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-accent-ink backdrop-blur">
-          <BallIcon className="h-3.5 w-3.5" />
-          {t.dashboard.shell.navProfile}
-        </div>
+      {/* Grand Themed Profile Hero Banner with Pro HUD Telemetry */}
+      <div className="mt-6">
+        <ThemedProfileHeroBanner theme={equippedTheme}>
+          <ThemedCoverArtwork
+            theme={equippedTheme}
+            coverUrl={person.coverUrl}
+            name={person.name}
+            className="h-64 sm:h-80 lg:h-96"
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-28 opacity-30"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(115deg, transparent 0 26px, rgba(255,255,255,0.12) 26px 52px)",
+            }}
+          />
+          {/* Banner Player Stage HUD Overlay */}
+          <BannerPlayerStageHUD
+            theme={equippedTheme}
+            rank={rank > 0 ? rank : 1}
+            points={person.points}
+            winRate={insights.winRate}
+            totalWins={insights.totalWins}
+          />
+        </ThemedProfileHeroBanner>
       </div>
 
-      <div className="-mt-14 flex items-end gap-4 px-1 sm:-mt-16">
-        <div className="rounded-full border-4 border-bg bg-surface">
-          <Avatar dpUrl={person.dpUrl} name={person.name} size="xl" mode="lightbox" />
-        </div>
-        <div className="pb-1">
-          <h1 className="font-display text-2xl font-bold text-ink">{person.name}</h1>
-          <div className="mt-1 flex items-center gap-2">
-            <RankBadge rank={rank} />
-            <span className="font-mono text-xs text-ink-faint">
-              {person.points.toLocaleString()} {t.dashboard.players.rankLabel.toLowerCase()}
-            </span>
+      {/* Football-Themed Avatar, Name, Title, Badges Showcase */}
+      <div className="relative px-2 sm:px-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            {/* Football Player Avatar with Gold Star Crest & Position Tag */}
+            <div className="-mt-16 sm:-mt-22 shrink-0 z-10">
+              <FootballPlayerAvatar
+                frame={equippedFrame}
+                dpUrl={person.dpUrl}
+                name={person.name}
+                position={person.gamePosition ?? "CF"}
+                rating={94}
+                theme={equippedTheme}
+              />
+            </div>
+
+            {/* Name, Title, Badges positioned cleanly below cover */}
+            <div className="pt-2 sm:pt-0 sm:pb-1 flex-1 min-w-0">
+              <h1
+                className="font-display text-2xl font-black sm:text-3xl tracking-tight"
+                style={{ color: tokens.headingText }}
+              >
+                {person.name}
+              </h1>
+
+              {/* Equipped Title Display */}
+              {equippedTitle ? (
+                <div className="mt-1.5 flex items-center">
+                  <CosmeticTitleText item={equippedTitle} size="lg" />
+                </div>
+              ) : null}
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {club ? (
+                  <Link
+                    href={`/dashboard/efootball/clubs/${club.id}`}
+                    className="rounded-full border px-3 py-1 text-xs font-semibold backdrop-blur transition-all hover:scale-105"
+                    style={{
+                      borderColor: tokens.innerBorder,
+                      backgroundColor: tokens.innerBg,
+                      color: tokens.headingText,
+                    }}
+                  >
+                    {club.name} · <span style={{ color: tokens.accentText }}>{person.clubRole}</span>
+                  </Link>
+                ) : null}
+                {community ? (
+                  <Link
+                    href={`/dashboard/efootball/community/${community.id}`}
+                    className="rounded-full border px-3 py-1 text-xs font-semibold backdrop-blur transition-all hover:scale-105"
+                    style={{
+                      borderColor: tokens.innerBorder,
+                      backgroundColor: tokens.innerBg,
+                      color: tokens.headingText,
+                    }}
+                  >
+                    {community.name} · <span style={{ color: tokens.accentText }}>{person.communityRole}</span>
+                  </Link>
+                ) : null}
+                <span
+                  className="rounded-full border px-2.5 py-1 font-mono text-[11px] font-bold backdrop-blur"
+                  style={{
+                    borderColor: tokens.highlightBorder,
+                    backgroundColor: tokens.highlightBg,
+                    color: tokens.highlightText,
+                  }}
+                >
+                  {person.points.toLocaleString()} {t.dashboard.players.rankLabel.toLowerCase()}
+                </span>
+                {/* Equipped Badge Pill */}
+                {equippedBadge ? <CosmeticBadgePill item={equippedBadge} /> : null}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {person.bio ? <p className="mt-6 max-w-xl text-sm leading-relaxed text-ink-soft">{person.bio}</p> : null}
+      {person.bio ? (
+        <p className="mt-6 max-w-xl text-sm leading-relaxed" style={{ color: tokens.bodyText }}>
+          {person.bio}
+        </p>
+      ) : null}
 
+      {/* Holographic eFootball Stat Overview with Goal Net Vectors */}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTileCard label={pf.statTotalMatches} value={String(insights.totalMatches)} icon={ChartIcon} tone="blue" />
-        <StatTileCard label={pf.statTotalWins} value={String(insights.totalWins)} icon={TrophyIcon} tone="success" />
-        <StatTileCard label={pf.statWinRate} value={`${insights.winRate}%`} icon={CrosshairIcon} tone="accent" />
-        <StatTileCard label={pf.statGoalsFor} value={String(insights.goalsFor)} icon={FlameIcon} tone="danger" />
+        <ThemedStatCard label={pf.statTotalMatches} value={String(insights.totalMatches)} icon={ChartIcon} tone="blue" theme={equippedTheme} />
+        <ThemedStatCard label={pf.statTotalWins} value={String(insights.totalWins)} icon={TrophyIcon} tone="success" theme={equippedTheme} />
+        <ThemedStatCard label={pf.statWinRate} value={`${insights.winRate}%`} icon={CrosshairIcon} tone="accent" theme={equippedTheme} />
+        <ThemedStatCard label={pf.statGoalsFor} value={String(insights.goalsFor)} icon={FlameIcon} tone="danger" theme={equippedTheme} />
       </div>
 
+      {/* Full Cosmetic Locker & Loadout Showcase Module */}
+      <PlayerCosmeticsShowcase
+        theme={equippedTheme}
+        frame={equippedFrame}
+        title={equippedTitle}
+        badge={equippedBadge}
+        ownedBadges={ownedBadges}
+      />
+
+      {/* Club and Community Affiliation Cards */}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-surface-line bg-surface/40 p-4">
-          <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+        <div
+          className="rounded-2xl border p-4 backdrop-blur transition-all"
+          style={{
+            borderColor: tokens.innerBorder,
+            backgroundColor: tokens.innerBg,
+          }}
+        >
+          <div
+            className="font-mono text-[10px] uppercase font-bold tracking-wide"
+            style={{ color: tokens.mutedText }}
+          >
             {t.dashboard.players.clubLabel}
           </div>
           {club ? (
-            <Link href={`/dashboard/efootball/clubs/${club.id}`} className="mt-2 flex items-center gap-2.5">
+            <Link href={`/dashboard/efootball/clubs/${club.id}`} className="mt-2.5 flex items-center gap-2.5">
               <Avatar dpUrl={club.dpUrl} name={club.name} size="sm" mode="static" />
-              <span className="text-sm font-medium text-ink">
-                {club.name} · {person.clubRole}
-              </span>
+              <div className="min-w-0">
+                <span className="font-bold text-sm block truncate" style={{ color: tokens.headingText }}>
+                  {club.name}
+                </span>
+                <span className="font-mono text-[10px] uppercase font-bold" style={{ color: tokens.accentText }}>
+                  {person.clubRole}
+                </span>
+              </div>
             </Link>
           ) : (
-            <p className="mt-2 text-sm text-ink-faint">{t.dashboard.players.noAffiliation}</p>
+            <p className="mt-2 text-sm" style={{ color: tokens.mutedText }}>{t.dashboard.players.noAffiliation}</p>
           )}
         </div>
 
-        <div className="rounded-xl border border-surface-line bg-surface/40 p-4">
-          <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+        <div
+          className="rounded-2xl border p-4 backdrop-blur transition-all"
+          style={{
+            borderColor: tokens.innerBorder,
+            backgroundColor: tokens.innerBg,
+          }}
+        >
+          <div
+            className="font-mono text-[10px] uppercase font-bold tracking-wide"
+            style={{ color: tokens.mutedText }}
+          >
             {t.dashboard.players.communityLabel}
           </div>
           {community ? (
-            <Link href={`/dashboard/efootball/community/${community.id}`} className="mt-2 flex items-center gap-2.5">
+            <Link href={`/dashboard/efootball/community/${community.id}`} className="mt-2.5 flex items-center gap-2.5">
               <Avatar dpUrl={community.dpUrl} name={community.name} size="sm" mode="static" />
-              <span className="text-sm font-medium text-ink">
-                {community.name} · {person.communityRole}
-              </span>
+              <div className="min-w-0">
+                <span className="font-bold text-sm block truncate" style={{ color: tokens.headingText }}>
+                  {community.name}
+                </span>
+                <span className="font-mono text-[10px] uppercase font-bold" style={{ color: tokens.accentText }}>
+                  {person.communityRole}
+                </span>
+              </div>
             </Link>
           ) : (
-            <p className="mt-2 text-sm text-ink-faint">{t.dashboard.players.noAffiliation}</p>
+            <p className="mt-2 text-sm" style={{ color: tokens.mutedText }}>{t.dashboard.players.noAffiliation}</p>
           )}
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <InfoPill label={pf.divisionLabel} value={[division, district].filter(Boolean).join(" · ") || "—"} />
-        <InfoPill label={pf.countryLabel} value={country} />
+        <InfoPill label={pf.divisionLabel} value={[division, district].filter(Boolean).join(" · ") || "—"} theme={equippedTheme} />
+        <InfoPill label={pf.countryLabel} value={country} theme={equippedTheme} />
       </div>
 
-      <div className="mt-6">
-        <SectionHeading tone="blue">{pf.educationLabel}</SectionHeading>
+      {/* Education & Academic Credentials */}
+      <SectionCard icon={SettingsIcon} tone="blue" title={pf.educationLabel} theme={equippedTheme}>
         <div className="grid gap-3 sm:grid-cols-2">
           {education.map((e, i) => (
-            <div key={i} className="rounded-lg border border-surface-line bg-surface/40 p-4 text-sm">
-              <p className="font-semibold text-ink">{e.instituteName || "—"}</p>
-              <p className="text-ink-soft">{e.fieldOfStudy || "—"}</p>
-              <p className="text-xs text-ink-faint">
+            <div
+              key={i}
+              className="group relative overflow-hidden rounded-xl border p-4 text-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+              style={{
+                borderColor: tokens.innerBorder,
+                backgroundColor: tokens.innerBg,
+              }}
+            >
+              {equippedTheme ? (
+                <div
+                  className="pointer-events-none absolute left-0 top-0 bottom-0 w-1 rounded-l opacity-90"
+                  style={{ backgroundColor: tokens.primary }}
+                />
+              ) : null}
+              <p className="font-bold text-base transition-colors" style={{ color: tokens.headingText }}>
+                {e.instituteName || "—"}
+              </p>
+              <p className="mt-0.5 text-sm" style={{ color: tokens.mutedText }}>{e.fieldOfStudy || "—"}</p>
+              <p className="text-xs mt-2 font-mono uppercase font-bold" style={{ color: tokens.accentText }}>
                 {t.dashboard.profileForm.workEducation[INSTITUTE_TYPE_LABEL_KEY[e.instituteType]]}
               </p>
             </div>
           ))}
         </div>
-      </div>
+      </SectionCard>
 
       {/* Player Snapshot */}
-      <SectionCard icon={FlameIcon} tone="accent" title={pf.snapshot.title} subtitle={pf.snapshot.subtitle}>
+      <SectionCard icon={FlameIcon} tone="accent" title={pf.snapshot.title} subtitle={pf.snapshot.subtitle} theme={equippedTheme}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <SnapshotRow label={pf.snapshot.debut} value={insights.snapshot.debut} tone="accent" />
-          <SnapshotRow label={pf.snapshot.lastPlayed} value={insights.snapshot.lastPlayed} tone="accent" />
-          <SnapshotRow label={pf.snapshot.avgGap} value={insights.snapshot.avgGapLabel} tone="accent" />
-          <SnapshotRow label={pf.snapshot.maxGap} value={insights.snapshot.maxGapLabel} tone="accent" />
+          <SnapshotRow label={pf.snapshot.debut} value={insights.snapshot.debut} tone="accent" theme={equippedTheme} />
+          <SnapshotRow label={pf.snapshot.lastPlayed} value={insights.snapshot.lastPlayed} tone="accent" theme={equippedTheme} />
+          <SnapshotRow label={pf.snapshot.avgGap} value={insights.snapshot.avgGapLabel} tone="accent" theme={equippedTheme} />
+          <SnapshotRow label={pf.snapshot.maxGap} value={insights.snapshot.maxGapLabel} tone="accent" theme={equippedTheme} />
           <SnapshotRow
             label={pf.snapshot.unbeatenStreak}
             value={`${insights.snapshot.unbeatenStreak.matches} ${pf.snapshot.matchesSuffix}: ${insights.snapshot.unbeatenStreak.from} — ${insights.snapshot.unbeatenStreak.to}`}
             tone="accent"
+            theme={equippedTheme}
           />
           <SnapshotRow
             label={pf.snapshot.highestGoals}
             value={`${insights.snapshot.highestGoals.goals} goals — ${insights.snapshot.highestGoals.date} vs ${insights.snapshot.highestGoals.opponent} (${insights.snapshot.highestGoals.goals}–${insights.snapshot.highestGoals.conceded})`}
             tone="accent"
+            theme={equippedTheme}
           />
         </div>
       </SectionCard>
 
       {/* Top opponents */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <SectionCard icon={UsersIcon} tone="danger" title={pf.topOpponents.playedTitle} className="mt-0">
-          <p className="text-sm font-medium text-ink">{insights.topOpponents.mostPlayed.name}</p>
-          <p className="text-xs text-ink-faint">
-            {insights.topOpponents.mostPlayed.matches} {pf.topOpponents.matchesSuffix}
-          </p>
+        <SectionCard icon={UsersIcon} tone="danger" title={pf.topOpponents.playedTitle} className="mt-0" theme={equippedTheme}>
+          <div
+            className="flex items-center justify-between rounded-xl border p-4 backdrop-blur"
+            style={{
+              borderColor: tokens.innerBorder,
+              backgroundColor: tokens.innerBg,
+            }}
+          >
+            <div>
+              <p className="text-base font-bold" style={{ color: tokens.headingText }}>{insights.topOpponents.mostPlayed.name}</p>
+              <p className="text-xs font-mono mt-0.5" style={{ color: tokens.mutedText }}>
+                {insights.topOpponents.mostPlayed.matches} {pf.topOpponents.matchesSuffix}
+              </p>
+            </div>
+            <span
+              className="rounded-full px-3 py-1 font-mono text-[10px] font-black uppercase border shadow-sm backdrop-blur"
+              style={{
+                borderColor: tokens.highlightBorder,
+                color: tokens.highlightText,
+                backgroundColor: tokens.highlightBg,
+              }}
+            >
+              Rival
+            </span>
+          </div>
         </SectionCard>
-        <SectionCard icon={TrophyIcon} tone="success" title={pf.topOpponents.winsTitle} className="mt-0">
-          <p className="text-sm font-medium text-ink">{insights.topOpponents.mostWins.name}</p>
-          <p className="text-xs text-ink-faint">
-            {insights.topOpponents.mostWins.wins} {pf.topOpponents.winsSuffix}
-          </p>
+        <SectionCard icon={TrophyIcon} tone="success" title={pf.topOpponents.winsTitle} className="mt-0" theme={equippedTheme}>
+          <div
+            className="flex items-center justify-between rounded-xl border p-4 backdrop-blur"
+            style={{
+              borderColor: tokens.innerBorder,
+              backgroundColor: tokens.innerBg,
+            }}
+          >
+            <div>
+              <p className="text-base font-bold" style={{ color: tokens.headingText }}>{insights.topOpponents.mostWins.name}</p>
+              <p className="text-xs font-mono mt-0.5" style={{ color: tokens.mutedText }}>
+                {insights.topOpponents.mostWins.wins} {pf.topOpponents.winsSuffix}
+              </p>
+            </div>
+            <span
+              className="rounded-full px-3 py-1 font-mono text-[10px] font-black uppercase border shadow-sm backdrop-blur"
+              style={{
+                borderColor: tokens.highlightBorder,
+                color: tokens.highlightText,
+                backgroundColor: tokens.highlightBg,
+              }}
+            >
+              Dominant
+            </span>
+          </div>
         </SectionCard>
       </div>
 
@@ -379,23 +709,34 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
         icon={ChartIcon}
         tone="blue"
         title={pf.trend.title}
+        theme={equippedTheme}
         action={
-          <div className="flex gap-1.5 rounded-full border border-surface-line-strong p-1">
+          <div
+            className="flex gap-1.5 rounded-full border p-1 backdrop-blur"
+            style={{
+              borderColor: tokens.innerBorder,
+              backgroundColor: tokens.innerBg,
+            }}
+          >
             <button
               type="button"
               onClick={() => setTrendView("monthly")}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                trendView === "monthly" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
-              }`}
+              className="rounded-full px-3 py-1 text-xs font-bold transition-colors"
+              style={{
+                backgroundColor: trendView === "monthly" ? tokens.primary : "transparent",
+                color: trendView === "monthly" ? "#000000" : tokens.mutedText,
+              }}
             >
               {pf.trend.monthlyTab}
             </button>
             <button
               type="button"
               onClick={() => setTrendView("weekly")}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                trendView === "weekly" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
-              }`}
+              className="rounded-full px-3 py-1 text-xs font-bold transition-colors"
+              style={{
+                backgroundColor: trendView === "weekly" ? tokens.primary : "transparent",
+                color: trendView === "weekly" ? "#000000" : tokens.mutedText,
+              }}
             >
               {pf.trend.weeklyTab}
             </button>
@@ -404,20 +745,20 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       >
         <RankTrendChart data={trendView === "monthly" ? insights.monthlyTrend : insights.weeklyTrend} />
 
-        <div className="mt-8 border-t border-surface-line pt-6">
-          <h4 className="font-display text-base font-bold text-ink">{pf.trend.matchLoadTitle}</h4>
-          <p className="mt-1 text-sm text-ink-soft">{pf.trend.matchLoadSubtitle}</p>
-          <div className="mt-3 flex flex-wrap gap-4 text-xs text-ink-soft">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full" style={{ background: "var(--blue)" }} />
+        <div className="mt-8 border-t pt-6" style={{ borderColor: tokens.innerBorder }}>
+          <h4 className="font-display text-base font-bold" style={{ color: tokens.headingText }}>{pf.trend.matchLoadTitle}</h4>
+          <p className="mt-1 text-sm font-medium" style={{ color: tokens.mutedText }}>{pf.trend.matchLoadSubtitle}</p>
+          <div className="mt-3 flex flex-wrap gap-4 text-xs font-semibold" style={{ color: tokens.mutedText }}>
+            <span className="flex items-center gap-1.5 font-mono">
+              <span className="h-2 w-2 rounded-full" style={{ background: tokens.primary }} />
               {pf.trend.legendMatches}
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full" style={{ background: "var(--success)" }} />
+            <span className="flex items-center gap-1.5 font-mono">
+              <span className="h-2 w-2 rounded-full" style={{ background: tokens.secondary }} />
               {pf.trend.legendWins}
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full" style={{ background: "var(--accent)" }} />
+            <span className="flex items-center gap-1.5 font-mono">
+              <span className="h-2 w-2 rounded-full" style={{ background: tokens.accentText }} />
               {pf.trend.legendGoals}
             </span>
           </div>
@@ -428,16 +769,26 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       </SectionCard>
 
       {/* Rankings Overview */}
-      <SectionCard icon={BracketIcon} tone="accent" title={pf.rankingsOverview.title} subtitle={pf.rankingsOverview.subtitle}>
+      <SectionCard icon={BracketIcon} tone="accent" title={pf.rankingsOverview.title} subtitle={pf.rankingsOverview.subtitle} theme={equippedTheme}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {insights.seasonRankings.map((row) => (
             <div
               key={row.label}
-              className="flex items-center justify-between rounded-lg border border-surface-line bg-surface px-4 py-3"
+              className="group relative flex items-center justify-between overflow-hidden rounded-xl border px-4 py-3.5 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+              style={{
+                borderColor: tokens.innerBorder,
+                backgroundColor: tokens.innerBg,
+              }}
             >
+              {equippedTheme ? (
+                <div
+                  className="pointer-events-none absolute left-0 top-0 bottom-0 w-1 rounded-l opacity-90"
+                  style={{ backgroundColor: tokens.primary }}
+                />
+              ) : null}
               <div>
-                <p className="text-sm font-medium text-ink">{row.label}</p>
-                <p className="text-xs text-ink-faint">
+                <p className="text-sm font-bold transition-colors" style={{ color: tokens.headingText }}>{row.label}</p>
+                <p className="text-xs font-mono mt-0.5" style={{ color: tokens.mutedText }}>
                   {row.wins.toLocaleString()} {pf.rankingsOverview.winsSuffix}
                 </p>
               </div>
@@ -448,51 +799,34 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       </SectionCard>
 
       {/* Statistics tables */}
-      <StatsTable title={pf.stats.allTimeTitle} row={insights.statsAllTime} pf={pf.stats} tone="success" icon={ShieldIcon} />
-      <StatsTable title={pf.stats.season2026Title} row={insights.statsSeason2026} pf={pf.stats} tone="warning" icon={CrosshairIcon} />
+      <StatsTable title={pf.stats.allTimeTitle} row={insights.statsAllTime} pf={pf.stats} tone="success" icon={ShieldIcon} theme={equippedTheme} />
+      <StatsTable title={pf.stats.season2026Title} row={insights.statsSeason2026} pf={pf.stats} tone="warning" icon={CrosshairIcon} theme={equippedTheme} />
 
       {/* Personal Info */}
-      <SectionCard icon={SettingsIcon} tone="blue" title={pf.personalInfo.title}>
+      <SectionCard icon={SettingsIcon} tone="blue" title={pf.personalInfo.title} theme={equippedTheme}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <SnapshotRow
             label={pf.personalInfo.device}
             value={deviceModel ? `${deviceName}, ${pf.personalInfo.modelPrefix}: ${deviceModel}` : deviceName}
             tone="blue"
+            theme={equippedTheme}
           />
-          <SnapshotRow label={pf.personalInfo.konamiUid} value={konamiUid} tone="blue" />
-          <SnapshotRow label={pf.personalInfo.birthday} value={birthday} tone="blue" />
-          <SnapshotRow label={pf.personalInfo.bloodGroup} value={bloodGroup} tone="blue" />
-          <SnapshotRow label={pf.districtLabel} value={district} tone="blue" />
-          <SnapshotRow label={pf.divisionLabel} value={division} tone="blue" />
+          <SnapshotRow label={pf.personalInfo.konamiUid} value={konamiUid} tone="blue" theme={equippedTheme} />
+          <SnapshotRow label={pf.personalInfo.birthday} value={birthday} tone="blue" theme={equippedTheme} />
+          <SnapshotRow label={pf.personalInfo.bloodGroup} value={bloodGroup} tone="blue" theme={equippedTheme} />
+          <SnapshotRow label={pf.districtLabel} value={district} tone="blue" theme={equippedTheme} />
+          <SnapshotRow label={pf.divisionLabel} value={division} tone="blue" theme={equippedTheme} />
         </div>
       </SectionCard>
 
       {/* Transfer History */}
-      <SectionCard icon={SwapIcon} tone="danger" title={pf.transferHistory.title}>
-        <TransferJourney entries={insights.transferHistory} />
+      <SectionCard icon={SwapIcon} tone="danger" title={pf.transferHistory.title} theme={equippedTheme}>
+        <TransferJourney entries={insights.transferHistory} theme={equippedTheme} />
       </SectionCard>
     </div>
   );
 }
 
-// A single continuous curvy route from the player's debut club (bottom
-// right) up to their current club (top left), each transfer plotted as a
-// waypoint along it. Coordinates live in an abstract 0-100-wide unit system
-// and the container's height is locked to that same ratio via `aspectRatio`,
-// so the SVG path and the HTML label cards stay in sync at any screen size
-// without measuring real pixel heights.
-// A compact zigzag route, one waypoint per transfer (never more, never
-// fewer) — the club name and date sit right on the point instead of in an
-// offset card. Coordinates live in an abstract 0-100-wide unit system and
-// the container's height is locked to that same ratio via `aspectRatio`, so
-// the road and the point labels stay in sync at any screen size without
-// measuring real pixel heights.
-// Smooth spline through every point (Catmull-Rom converted to cubic Bezier
-// segments) rather than independent per-segment S-curves — each control
-// point is derived from the point's actual neighbors, so the road passes
-// through every waypoint without overshooting past them and looping back on
-// itself the way a naive same-x S-curve does when the horizontal swing is
-// large relative to the vertical spacing.
 function smoothPath(points: { x: number; y: number }[]) {
   if (points.length === 0) return "";
   if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
@@ -511,7 +845,8 @@ function smoothPath(points: { x: number; y: number }[]) {
   return d;
 }
 
-function TransferJourney({ entries }: { entries: TransferEntry[] }) {
+function TransferJourney({ entries, theme }: { entries: TransferEntry[]; theme?: CosmeticItem | null }) {
+  const tokens = getThemeTokens(theme);
   const W = 100;
   const ROW = 20;
   const RAIL_LEFT = 35;
@@ -534,29 +869,53 @@ function TransferJourney({ entries }: { entries: TransferEntry[] }) {
     <div className="mx-auto w-full max-w-sm" style={{ aspectRatio: `${W} / ${H}` }}>
       <div className="relative h-full w-full">
         <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 h-full w-full" aria-hidden="true">
-          <path d={roadPath} stroke="var(--surface-line-strong)" strokeWidth="2.4" strokeLinecap="round" fill="none" />
           <path
             d={roadPath}
-            stroke="var(--accent)"
-            strokeWidth="0.5"
-            strokeDasharray="1.8 2.2"
-            opacity="0.65"
+            stroke={theme ? tokens.innerBorder : "var(--surface-line-strong)"}
+            strokeWidth="3"
+            strokeLinecap="round"
             fill="none"
+          />
+          <path
+            d={roadPath}
+            stroke={tokens.primary}
+            strokeWidth="1.2"
+            strokeDasharray="1.8 2.2"
+            opacity="0.95"
+            fill="none"
+            style={{ filter: theme ? `drop-shadow(0 0 6px ${tokens.primary})` : undefined }}
           />
         </svg>
 
         {points.map((p, i) => (
           <div
             key={i}
-            className="absolute flex items-center gap-1.5 rounded-full border border-accent/50 bg-surface py-1 pl-1 pr-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
-            style={{ left: `${p.x}%`, top: `${p.y}%`, transform: "translate(-50%, -50%)" }}
+            className="absolute flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 shadow-xl backdrop-blur transition-all hover:scale-110"
+            style={{
+              left: `${p.x}%`,
+              top: `${p.y}%`,
+              transform: "translate(-50%, -50%)",
+              borderColor: tokens.innerBorder,
+              backgroundColor: tokens.innerBg,
+              boxShadow: theme ? tokens.glowShadow : undefined,
+            }}
           >
-            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[8px] font-bold text-accent-ink">
+            <span
+              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[8px] font-black shadow-sm"
+              style={{
+                backgroundColor: tokens.primary,
+                color: "#000000",
+              }}
+            >
               {p.tr.jersey}
             </span>
             <div className="min-w-0 leading-tight">
-              <p className="max-w-[100px] truncate text-[10px] font-semibold text-ink">{p.tr.club}</p>
-              <p className="max-w-[100px] truncate text-[8px] text-ink-faint">{p.tr.date}</p>
+              <p className="max-w-[100px] truncate text-[10px] font-bold" style={{ color: tokens.headingText }}>
+                {p.tr.club}
+              </p>
+              <p className="max-w-[100px] truncate text-[8px] font-mono" style={{ color: tokens.mutedText }}>
+                {p.tr.date}
+              </p>
             </div>
           </div>
         ))}
@@ -564,3 +923,4 @@ function TransferJourney({ entries }: { entries: TransferEntry[] }) {
     </div>
   );
 }
+

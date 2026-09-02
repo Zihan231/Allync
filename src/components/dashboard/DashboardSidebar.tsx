@@ -10,10 +10,10 @@ import {
   HomeIcon,
   UsersIcon,
   TrophyIcon,
-  BracketIcon,
   CalendarIcon,
   SwapIcon,
   WalletIcon,
+  StoreIcon,
   ShieldIcon,
   PlusIcon,
   GavelIcon,
@@ -64,6 +64,7 @@ export function DashboardSidebar({
     { href: `${playerBase}/transfers`, label: t.dashboard.shell.navTransfers, icon: SwapIcon },
     { href: `${playerBase}/rankings`, label: t.dashboard.rankings.pageTitle, icon: TrophyIcon },
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
+    { href: `${playerBase}/store`, label: t.dashboard.shell.navStore, icon: StoreIcon },
     { href: `${playerBase}/profile`, label: t.dashboard.shell.navProfile, icon: ChartIcon },
   ];
 

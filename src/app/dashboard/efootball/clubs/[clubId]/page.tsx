@@ -6,7 +6,6 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockClubs, useMockPeople, useMockJoinRequests, joinClub, leaveClub } from "@/lib/mock/communityStore";
 import { mockCommunities } from "@/lib/mock";
-import { PageHeader } from "@/components/dashboard/PageHeader";
 import { BackButton } from "@/components/dashboard/BackButton";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";

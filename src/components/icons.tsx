@@ -258,3 +258,24 @@ export function FilterIcon({ className, style }: IconProps) {
     </svg>
   );
 }
+
+export function StoreIcon({ className, style }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={style} aria-hidden="true">
+      <path
+        d="M3.5 9.5 5.5 4h13l2 5.5v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-8Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M3.5 9.5h17" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M9 13.5a3 3 0 0 0 6 0"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+

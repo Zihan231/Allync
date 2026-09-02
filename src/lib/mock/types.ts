@@ -50,6 +50,12 @@ export type Person = {
   documentType?: DocumentType;
   documentDataUrl?: string;
   verificationLevel?: VerificationLevel;
+  ownedCosmeticIds?: string[];
+  equippedBadgeId?: string | null;
+  equippedTitleId?: string | null;
+  equippedFrameId?: string | null;
+  equippedThemeId?: string | null;
+  gamePosition?: string;
 };
 
 export type JoinRequest = {
