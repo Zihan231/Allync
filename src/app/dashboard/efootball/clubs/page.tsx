@@ -78,17 +78,17 @@ export default function ClubsPage() {
           />
         </div>
 
-        <div className="mt-3">
-          <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+        <div className="mt-4">
+          <div className="font-mono text-xs uppercase tracking-wide text-ink-faint">
             {t.dashboard.clubs.exploreByStage}
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             {stageOptions.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => setStageFilter(opt.key)}
-                className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                className={`rounded-full border px-4 py-1.5 text-xs font-medium transition-colors ${
                   stageFilter === opt.key
                     ? "border-blue bg-blue-soft text-blue-ink"
                     : "border-surface-line-strong text-ink-soft hover:text-ink"
