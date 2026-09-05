@@ -266,7 +266,9 @@ export const translations = {
       },
       clubRankings: {
         allTimeHeading: "All-Time",
-        currentSeasonHeading: "Season 2026",
+        rankingOverviewTitle: "Ranking Overview",
+        seasonSectionLabel: "Season",
+        teamsUnit: "teams",
         mainTeamLabel: "Main",
         academyTeamLabel: "Academy",
       },
@@ -1021,7 +1023,9 @@ export const translations = {
       },
       clubRankings: {
         allTimeHeading: "অল-টাইম",
-        currentSeasonHeading: "সিজন ২০২৬",
+        rankingOverviewTitle: "র‍্যাংকিং ওভারভিউ",
+        seasonSectionLabel: "সিজন",
+        teamsUnit: "টিম",
         mainTeamLabel: "মেইন",
         academyTeamLabel: "একাডেমি",
       },
