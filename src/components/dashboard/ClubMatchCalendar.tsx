@@ -1,8 +1,11 @@
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { ClubCalendarEvent } from "@/lib/mock/clubInsights";
+import { ClubCrest } from "../common/ClubCrest";
+import { getClubLogo } from "@/lib/clubLogos";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const REFERENCE_NOW = new Date("2026-09-01T00:00:00+06:00");
+const MAX_CRESTS_PER_DAY = 3;
 
 // Matches clubInsights.ts's toIso: local-timezone getters, not toISOString
 // (UTC-based) — so "today" lines up with the same fixture/calendar keys.
@@ -21,8 +24,14 @@ export function ClubMatchCalendar({ events }: { events: ClubCalendarEvent[] }) {
   const month = reference.getMonth();
   const monthLabel = reference.toLocaleString("en-US", { month: "long", year: "numeric" });
 
-  const eventsByDate = new Map<string, ClubCalendarEvent>();
-  events.forEach((e) => eventsByDate.set(e.dateIso, e));
+  // A day can have more than one fixture (Main and Academy playing the same
+  // day is normal), so each date maps to a list of events, not just one.
+  const eventsByDate = new Map<string, ClubCalendarEvent[]>();
+  events.forEach((e) => {
+    const list = eventsByDate.get(e.dateIso) ?? [];
+    list.push(e);
+    eventsByDate.set(e.dateIso, list);
+  });
 
   const firstOfMonth = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -52,21 +61,46 @@ export function ClubMatchCalendar({ events }: { events: ClubCalendarEvent[] }) {
       <div className="mt-1.5 grid grid-cols-7 gap-1">
         {cells.map((cell, i) => {
           if (cell.day === null) return <div key={i} className="aspect-square" />;
-          const event = cell.dateIso ? eventsByDate.get(cell.dateIso) : undefined;
+          const dayEvents = cell.dateIso ? eventsByDate.get(cell.dateIso) ?? [] : [];
+          const hasKnockout = dayEvents.some((e) => e.isKnockout);
           const isToday = cell.dateIso === todayIso;
+          const visibleEvents = dayEvents.slice(0, MAX_CRESTS_PER_DAY);
+          const overflowCount = dayEvents.length - visibleEvents.length;
+          // More room to grow the crest when a day has fewer of them — only
+          // at sm/md+ viewports so mobile's tight cells never overflow.
+          const crestSizeClass =
+            visibleEvents.length === 1 ? "sm:h-8 sm:w-8 md:h-9 md:w-9" : visibleEvents.length === 2 ? "sm:h-7 sm:w-7" : "";
+
           return (
             <div
               key={i}
-              className={`relative flex aspect-square items-center justify-center rounded-lg text-xs ${
-                event?.isKnockout
+              className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg p-0.5 ${
+                hasKnockout
                   ? "border border-accent bg-accent-soft text-accent-ink"
-                  : event
+                  : dayEvents.length > 0
                     ? "bg-blue-soft text-blue-ink"
                     : "bg-surface/40 text-ink-soft"
               } ${isToday ? "ring-1 ring-ink" : ""}`}
+              title={dayEvents.map((e) => `${e.team}: vs ${e.opponentClubName}`).join(" · ") || undefined}
             >
-              {event?.isKnockout ? <span className="glow-gold pointer-events-none absolute inset-0 -z-10 rounded-lg" /> : null}
-              {cell.day}
+              {hasKnockout ? <span className="glow-gold pointer-events-none absolute inset-0 -z-10 rounded-lg" /> : null}
+              <span className="text-xs">{cell.day}</span>
+              {visibleEvents.length > 0 ? (
+                <div className="flex items-center justify-center gap-0.5">
+                  {visibleEvents.map((e, idx) => (
+                    <ClubCrest
+                      key={idx}
+                      name={e.opponentClubName}
+                      imageUrl={getClubLogo(e.opponentClubName)}
+                      size="xs"
+                      className={crestSizeClass}
+                    />
+                  ))}
+                  {overflowCount > 0 ? (
+                    <span className="font-mono text-[7px] font-bold text-ink-faint">+{overflowCount}</span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           );
         })}

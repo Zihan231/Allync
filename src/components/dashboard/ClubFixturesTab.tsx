@@ -6,6 +6,7 @@ import { getClubFixturesFull } from "@/lib/mock/clubInsights";
 import type { Club } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
 import { ClubCrest } from "../common/ClubCrest";
+import { getClubLogo } from "@/lib/clubLogos";
 import { StatusPill } from "./StatusPill";
 import { EmptyState } from "./EmptyState";
 import { TrophyIcon } from "../icons";
@@ -120,6 +121,7 @@ export function ClubFixturesTab({ club, members }: { club: Club; members: Person
                             name={homeName}
                             color={f.isHome ? club.color : undefined}
                             initials={f.isHome ? club.initials : undefined}
+                            imageUrl={f.isHome ? club.dpUrl : getClubLogo(f.opponentClubName)}
                             size="md"
                           />
                           <span className="w-full truncate text-xs font-semibold text-ink">{homeName}</span>
@@ -135,6 +137,7 @@ export function ClubFixturesTab({ club, members }: { club: Club; members: Person
                             name={awayName}
                             color={!f.isHome ? club.color : undefined}
                             initials={!f.isHome ? club.initials : undefined}
+                            imageUrl={!f.isHome ? club.dpUrl : getClubLogo(f.opponentClubName)}
                             size="md"
                           />
                           <span className="w-full truncate text-xs font-semibold text-ink">{awayName}</span>

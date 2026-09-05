@@ -94,7 +94,12 @@ export type ClubFixture = {
   isKnockout: boolean;
 };
 
-export type ClubCalendarEvent = { dateIso: string; isKnockout: boolean };
+export type ClubCalendarEvent = {
+  dateIso: string;
+  isKnockout: boolean;
+  opponentClubName: string;
+  team: "Main" | "Academy";
+};
 
 export type ClubNewsItem = { id: string; headline: string; date: string };
 
@@ -108,30 +113,38 @@ export type ClubInsights = {
 // Full fixture list for the Fixtures tab (grouped by competition there).
 // Overview's teaser slider just takes the first few of this same list, so
 // the two views never disagree about what's coming up next.
+//
+// Main and Academy each get their own independently-seeded schedule (a club
+// genuinely fields both squads on their own fixture lists) rather than one
+// shared cursor — which also means their dates can legitimately land on the
+// same calendar day, same as a real club playing two matches in one day.
 export function getClubFixturesFull(club: Club, members: Person[]): ClubFixture[] {
-  const rand = mulberry32(seedFromId(club.id, 7001));
   const hasAcademy = members.some((p) => p.squadTeam === "Academy");
+  const teams: ("Main" | "Academy")[] = hasAcademy ? ["Main", "Academy"] : ["Main"];
 
-  const fixtureCount = 10 + Math.floor(rand() * 7); // 10-16
   const fixtures: ClubFixture[] = [];
-  let cursor = addDays(REFERENCE_NOW, 1 + Math.round(rand() * 2));
-  for (let i = 0; i < fixtureCount; i++) {
-    const isKnockout = rand() < 0.2;
-    fixtures.push({
-      id: `${club.id}-fixture-${i}`,
-      opponentClubName: pick(OPPONENT_CLUB_POOL, rand),
-      competition: pick(COMPETITION_POOL, rand),
-      round: `GRP${1 + Math.floor(rand() * 4)}-R${1 + Math.floor(rand() * 20)}`,
-      team: hasAcademy && rand() < 0.35 ? "Academy" : "Main",
-      isHome: rand() < 0.5,
-      dateIso: toIso(cursor),
-      dateLabel: fmtDate(cursor),
-      isKnockout,
-    });
-    cursor = addDays(cursor, 1 + Math.round(rand() * 4));
-  }
+  teams.forEach((team) => {
+    const rand = mulberry32(seedFromId(`${club.id}-${team}`, 7001));
+    const fixtureCount = 6 + Math.floor(rand() * 6); // 6-11 per team
+    let cursor = addDays(REFERENCE_NOW, 1 + Math.round(rand() * 3));
+    for (let i = 0; i < fixtureCount; i++) {
+      const isKnockout = rand() < 0.2;
+      fixtures.push({
+        id: `${club.id}-${team}-fixture-${i}`,
+        opponentClubName: pick(OPPONENT_CLUB_POOL, rand),
+        competition: pick(COMPETITION_POOL, rand),
+        round: `GRP${1 + Math.floor(rand() * 4)}-R${1 + Math.floor(rand() * 20)}`,
+        team,
+        isHome: rand() < 0.5,
+        dateIso: toIso(cursor),
+        dateLabel: fmtDate(cursor),
+        isKnockout,
+      });
+      cursor = addDays(cursor, 2 + Math.round(rand() * 5));
+    }
+  });
 
-  return fixtures;
+  return fixtures.sort((a, b) => a.dateIso.localeCompare(b.dateIso));
 }
 
 export function getClubInsights(club: Club, members: Person[]): ClubInsights {
@@ -142,6 +155,8 @@ export function getClubInsights(club: Club, members: Person[]): ClubInsights {
   const calendarEvents: ClubCalendarEvent[] = upcomingFixtures.map((f) => ({
     dateIso: f.dateIso,
     isKnockout: f.isKnockout,
+    opponentClubName: f.opponentClubName,
+    team: f.team,
   }));
 
   const newsCount = 3 + Math.floor(rand() * 3); // 3-5
