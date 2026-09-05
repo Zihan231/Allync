@@ -1,7 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { ClubCalendarEvent } from "@/lib/mock/clubInsights";
 import { ClubCrest } from "../common/ClubCrest";
 import { getClubLogo } from "@/lib/clubLogos";
+import { ChevronRightIcon } from "../icons";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const REFERENCE_NOW = new Date("2026-09-01T00:00:00+06:00");
@@ -18,8 +22,10 @@ function toIso(d: Date) {
 
 export function ClubMatchCalendar({ events }: { events: ClubCalendarEvent[] }) {
   const { t } = useLanguage();
+  const [monthOffset, setMonthOffset] = useState(0);
 
-  const reference = events.length ? new Date(`${events[0].dateIso}T00:00:00`) : REFERENCE_NOW;
+  const anchor = events.length ? new Date(`${events[0].dateIso}T00:00:00`) : REFERENCE_NOW;
+  const reference = new Date(anchor.getFullYear(), anchor.getMonth() + monthOffset, 1);
   const year = reference.getFullYear();
   const month = reference.getMonth();
   const monthLabel = reference.toLocaleString("en-US", { month: "long", year: "numeric" });
@@ -50,7 +56,25 @@ export function ClubMatchCalendar({ events }: { events: ClubCalendarEvent[] }) {
     <div className="h-full rounded-xl border border-surface-line bg-surface/30 p-5">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-sm font-bold text-ink">{t.dashboard.clubOverview.calendarTitle}</h3>
-        <span className="font-mono text-xs text-ink-faint">{monthLabel}</span>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label="Previous month"
+            onClick={() => setMonthOffset((o) => o - 1)}
+            className="flex h-6 w-6 items-center justify-center rounded-full border border-surface-line-strong text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
+          >
+            <ChevronRightIcon className="h-3 w-3 rotate-180" />
+          </button>
+          <span className="min-w-[6.5rem] text-center font-mono text-xs text-ink-faint">{monthLabel}</span>
+          <button
+            type="button"
+            aria-label="Next month"
+            onClick={() => setMonthOffset((o) => o + 1)}
+            className="flex h-6 w-6 items-center justify-center rounded-full border border-surface-line-strong text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
+          >
+            <ChevronRightIcon className="h-3 w-3" />
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 grid grid-cols-7 gap-1 text-center font-mono text-[10px] uppercase text-ink-faint">
