@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getClubRoundHistory } from "@/lib/mock/clubMatchHistory";
 import type { Club } from "@/lib/mock/types";
@@ -8,10 +8,13 @@ import type { useMockPeople } from "@/lib/mock/communityStore";
 import { StatusPill } from "./StatusPill";
 import { EmptyState } from "./EmptyState";
 import { Avatar } from "../common/Avatar";
+import { Pagination } from "./Pagination";
 import { CalendarIcon } from "../icons";
 
 type Person = ReturnType<typeof useMockPeople>[number];
 type TeamFilter = "all" | "Main" | "Academy";
+
+const PAGE_SIZE = 12;
 
 const RESULT_TONE = { W: "success", D: "neutral", L: "danger" } as const;
 const RESULT_ACCENT = {
@@ -25,6 +28,7 @@ export function ClubRoundsTab({ club, members }: { club: Club; members: Person[]
   const { t } = useLanguage();
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("all");
   const [competitionFilter, setCompetitionFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
 
   const entries = useMemo(() => getClubRoundHistory(club, members), [club, members]);
   const competitions = useMemo(() => Array.from(new Set(entries.map((e) => e.competition))), [entries]);
@@ -34,6 +38,13 @@ export function ClubRoundsTab({ club, members }: { club: Club; members: Person[]
     if (competitionFilter !== "all" && e.competition !== competitionFilter) return false;
     return true;
   });
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageEntries = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [teamFilter, competitionFilter]);
 
   return (
     <div>
@@ -78,7 +89,7 @@ export function ClubRoundsTab({ club, members }: { club: Club; members: Person[]
         </div>
       ) : (
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((entry) => (
+          {pageEntries.map((entry) => (
             <div
               key={entry.id}
               className={`min-w-0 rounded-xl border border-l-4 border-surface-line p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg ${RESULT_ACCENT[entry.result]}`}
@@ -109,6 +120,12 @@ export function ClubRoundsTab({ club, members }: { club: Club; members: Person[]
           ))}
         </div>
       )}
+
+      {filtered.length > 0 ? (
+        <div className="mt-5">
+          <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+        </div>
+      ) : null}
     </div>
   );
 }
