@@ -103,7 +103,7 @@ export default function ClubsPage() {
         {filteredClubs.length === 0 ? (
           <p className="mt-6 text-sm text-ink-soft">{t.dashboard.rankings.noResults}</p>
         ) : (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {filteredClubs.map((club) => (
               <ClubCard key={club.id} club={club} />
             ))}
@@ -114,47 +114,73 @@ export default function ClubsPage() {
   );
 }
 
+function ClubBadge({ club, t }: { club: ReturnType<typeof useMockClubs>[number]; t: ReturnType<typeof useLanguage>["t"] }) {
+  return (
+    <div
+      className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 backdrop-blur-sm"
+      style={{ boxShadow: `0 0 0 1px ${club.color}66` }}
+    >
+      <TrophyIcon className="h-3 w-3" style={{ color: club.color }} />
+      <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-white">
+        {t.dashboard.clubs.entityLabel}
+      </span>
+    </div>
+  );
+}
+
 function ClubCard({ club, isMine = false }: { club: ReturnType<typeof useMockClubs>[number]; isMine?: boolean }) {
   const { t } = useLanguage();
+
+  if (isMine) {
+    return (
+      <Link
+        href={`/dashboard/efootball/clubs/${club.id}`}
+        className="group block overflow-hidden rounded-xl border border-surface-line bg-surface/40 transition-colors hover:border-surface-line-strong"
+      >
+        <div className="h-1.5 w-full" style={{ backgroundColor: club.color }} />
+        <div className="relative">
+          <CoverPhoto coverUrl={club.coverUrl} name={club.name} color={club.color} className="h-48 sm:h-64" />
+          <ClubBadge club={club} t={t} />
+        </div>
+        <div className="flex items-start gap-3 p-4 pt-0">
+          <div className="-mt-8 rounded-full border-4 border-bg bg-surface">
+            <Avatar dpUrl={club.dpUrl} name={club.name} size="lg" mode="static" shape="circle" />
+          </div>
+          <div className="mt-1 min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="truncate text-sm font-semibold text-ink">{club.name}</span>
+              <StatusPill tone="success">{t.dashboard.clubs.myClubHeading}</StatusPill>
+            </div>
+            <p className="mt-1 line-clamp-2 text-xs text-ink-soft">{club.description}</p>
+            <div className="mt-2 flex items-center gap-1.5 font-mono text-[11px] text-ink-faint">
+              <TrophyIcon className="h-3.5 w-3.5" style={{ color: club.color }} />
+              {club.points.toLocaleString()} pts · {club.minRoster}-{club.maxRoster} squad
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <Link
       href={`/dashboard/efootball/clubs/${club.id}`}
-      className="group block overflow-hidden rounded-xl border border-surface-line bg-surface/40 transition-colors hover:border-surface-line-strong"
+      className="group block overflow-hidden rounded-xl border border-surface-line bg-surface/40 transition-all hover:-translate-y-0.5 hover:border-surface-line-strong hover:shadow-lg"
     >
-      <div className="h-1.5 w-full" style={{ backgroundColor: club.color }} />
-      <div className="relative">
-        <CoverPhoto
-          coverUrl={club.coverUrl}
-          name={club.name}
-          color={club.color}
-          className={isMine ? "h-48 sm:h-64" : "h-40 sm:h-48"}
-        />
-        <div
-          className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur-sm"
-          style={{ boxShadow: `0 0 0 1px ${club.color}66` }}
-        >
-          <TrophyIcon className="h-3.5 w-3.5" style={{ color: club.color }} />
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">
-            {t.dashboard.clubs.entityLabel}
-          </span>
-        </div>
+      <div className="h-1 w-full" style={{ backgroundColor: club.color }} />
+      <div className="relative h-20 sm:h-24">
+        <CoverPhoto coverUrl={club.coverUrl} name={club.name} color={club.color} className="h-full" />
+        <ClubBadge club={club} t={t} />
       </div>
-      <div className="flex items-start gap-3 p-4 pt-0">
-        <div className="-mt-8 rounded-full border-4 border-bg bg-surface">
-          <Avatar dpUrl={club.dpUrl} name={club.name} size="lg" mode="static" shape="circle" />
-        </div>
-        <div className="mt-1 min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <span className="truncate text-sm font-semibold text-ink">{club.name}</span>
-            {isMine ? <StatusPill tone="success">{t.dashboard.clubs.myClubHeading}</StatusPill> : null}
-          </div>
-          <p className="mt-1 line-clamp-2 text-xs text-ink-soft">{club.description}</p>
-          <div className="mt-2 flex items-center gap-1.5 font-mono text-[11px] text-ink-faint">
-            <TrophyIcon className="h-3.5 w-3.5" style={{ color: club.color }} />
-            {club.points.toLocaleString()} pts · {club.minRoster}-{club.maxRoster} squad
-          </div>
-        </div>
+      <div className="flex items-center gap-2 px-2.5 pb-2 pt-2">
+        <Avatar dpUrl={club.dpUrl} name={club.name} size="sm" mode="static" shape="circle" className="shrink-0" />
+        <span className="truncate text-sm font-bold leading-tight text-ink">{club.name}</span>
+      </div>
+      <div className="flex items-center gap-1.5 border-t border-surface-line/70 px-2.5 py-2 font-mono text-[10px] text-ink-faint">
+        <TrophyIcon className="h-3 w-3 shrink-0" style={{ color: club.color }} />
+        <span className="truncate">
+          {club.points.toLocaleString()} pts · {club.minRoster}-{club.maxRoster} squad
+        </span>
       </div>
     </Link>
   );
