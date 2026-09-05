@@ -1,4 +1,4 @@
-export type StatusTone = "neutral" | "success" | "warning" | "danger" | "info";
+export type StatusTone = "neutral" | "success" | "warning" | "danger" | "info" | "accent";
 
 const toneClasses: Record<StatusTone, string> = {
   neutral: "bg-surface-line/60 text-ink-faint",
@@ -6,6 +6,7 @@ const toneClasses: Record<StatusTone, string> = {
   warning: "bg-warning-soft text-warning-ink",
   danger: "bg-danger-soft text-danger-ink",
   info: "bg-blue-soft text-blue-ink",
+  accent: "bg-accent-soft text-accent-ink",
 };
 
 export function StatusPill({
