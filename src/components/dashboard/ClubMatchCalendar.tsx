@@ -38,7 +38,7 @@ export function ClubMatchCalendar({ events }: { events: ClubCalendarEvent[] }) {
   }
 
   return (
-    <div className="rounded-xl border border-surface-line bg-surface/30 p-5">
+    <div className="h-full rounded-xl border border-surface-line bg-surface/30 p-5">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-sm font-bold text-ink">{t.dashboard.clubOverview.calendarTitle}</h3>
         <span className="font-mono text-xs text-ink-faint">{monthLabel}</span>

@@ -137,7 +137,7 @@ export function getClubFixturesFull(club: Club, members: Person[]): ClubFixture[
 export function getClubInsights(club: Club, members: Person[]): ClubInsights {
   const rand = mulberry32(seedFromId(club.id, 7001));
 
-  const upcomingFixtures = getClubFixturesFull(club, members).slice(0, 5);
+  const upcomingFixtures = getClubFixturesFull(club, members);
 
   const calendarEvents: ClubCalendarEvent[] = upcomingFixtures.map((f) => ({
     dateIso: f.dateIso,
