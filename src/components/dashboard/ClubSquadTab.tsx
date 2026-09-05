@@ -1,18 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getPlayerRankings } from "@/lib/mock/rankingsData";
 import type { Club } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
 import { SquadPlayerCard } from "./SquadPlayerCard";
 import { EmptyState } from "./EmptyState";
+import { Pagination } from "./Pagination";
 import { UsersIcon } from "../icons";
 
 type Person = ReturnType<typeof useMockPeople>[number];
 type TeamFilter = "all" | "Main" | "Academy" | "Legend";
 type DataScope = "alltime" | "season";
 type SortBy = "rank" | "az" | "w" | "pl" | "gf";
+
+const PAGE_SIZE = 12;
 
 export function ClubSquadTab({
   club,
@@ -27,6 +30,7 @@ export function ClubSquadTab({
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("all");
   const [dataScope, setDataScope] = useState<DataScope>("alltime");
   const [sortBy, setSortBy] = useState<SortBy>("rank");
+  const [page, setPage] = useState(1);
 
   const clubNameById = useMemo(() => new Map([[club.id, club.name]]), [club.id, club.name]);
 
@@ -53,6 +57,13 @@ export function ClubSquadTab({
     else if (sortBy === "gf") list.sort((a, b) => b.GF - a.GF);
     return list;
   }, [rows, teamFilter, sortBy, personById]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [teamFilter, dataScope, sortBy]);
 
   const teamOptions: { key: TeamFilter; label: string }[] = [
     { key: "all", label: t.dashboard.clubSquad.teamFilterAll },
@@ -114,20 +125,25 @@ export function ClubSquadTab({
           <EmptyState icon={UsersIcon} title={t.dashboard.clubs.emptyState} body="" />
         </div>
       ) : (
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((row) => {
-            const person = personById.get(row.id);
-            if (!person) return null;
-            return (
-              <SquadPlayerCard
-                key={row.id}
-                person={person}
-                row={row}
-                contractDays={contractDaysById.get(person.id) ?? 30}
-              />
-            );
-          })}
-        </div>
+        <>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {pageRows.map((row) => {
+              const person = personById.get(row.id);
+              if (!person) return null;
+              return (
+                <SquadPlayerCard
+                  key={row.id}
+                  person={person}
+                  row={row}
+                  contractDays={contractDaysById.get(person.id) ?? 30}
+                />
+              );
+            })}
+          </div>
+          <div className="mt-5">
+            <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+          </div>
+        </>
       )}
     </div>
   );
