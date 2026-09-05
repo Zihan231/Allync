@@ -141,8 +141,6 @@ export const translations = {
     dashboard: {
       shell: {
         navOverview: "Overview",
-        navMyClub: "My Club",
-        navCommunity: "Community",
         navTournaments: "Tournaments",
         navMatches: "Matches",
         navTransfers: "Transfers",
@@ -386,6 +384,9 @@ export const translations = {
         createSubmit: "Create club",
         rosterSizeLabel: "Roster size",
         entityLabel: "Club",
+        searchPlaceholder: "Search clubs by name...",
+        exploreByStage: "Explore by Stage",
+        allStages: "All Stages",
       },
       community: {
         browseTitle: "Communities",
@@ -410,6 +411,10 @@ export const translations = {
         communityRankLabel: "Community",
         globalRankLabel: "Global",
         seeAllClubsCta: "See all clubs",
+        searchPlaceholder: "Search communities by name...",
+        quickFilterAll: "All",
+        quickFilterOpen: "Open to join",
+        quickFilterApproval: "Approval required",
       },
       players: {
         profileTitle: "Player profile",
@@ -790,8 +795,6 @@ export const translations = {
     dashboard: {
       shell: {
         navOverview: "ওভারভিউ",
-        navMyClub: "আমার ক্লাব",
-        navCommunity: "কমিউনিটি",
         navTournaments: "টুর্নামেন্ট",
         navMatches: "ম্যাচ",
         navTransfers: "ট্রান্সফার",
@@ -1035,6 +1038,9 @@ export const translations = {
         createSubmit: "ক্লাব তৈরি করুন",
         rosterSizeLabel: "রোস্টার সাইজ",
         entityLabel: "ক্লাব",
+        searchPlaceholder: "নাম দিয়ে ক্লাব খুঁজুন...",
+        exploreByStage: "স্টেজ অনুযায়ী দেখুন",
+        allStages: "সব স্টেজ",
       },
       community: {
         browseTitle: "কমিউনিটি",
@@ -1059,6 +1065,10 @@ export const translations = {
         communityRankLabel: "কমিউনিটি",
         globalRankLabel: "গ্লোবাল",
         seeAllClubsCta: "সব ক্লাব দেখুন",
+        searchPlaceholder: "নাম দিয়ে কমিউনিটি খুঁজুন...",
+        quickFilterAll: "সব",
+        quickFilterOpen: "যোগদানের জন্য উন্মুক্ত",
+        quickFilterApproval: "অনুমোদন লাগবে",
       },
       players: {
         profileTitle: "প্লেয়ার প্রোফাইল",

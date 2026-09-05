@@ -72,7 +72,12 @@ function CommunityCard({
     >
       <div className="h-1.5 w-full bg-blue" />
       <div className="relative">
-        <CoverPhoto coverUrl={community.coverUrl} name={community.name} color="#4c8dff" className="h-32" />
+        <CoverPhoto
+          coverUrl={community.coverUrl}
+          name={community.name}
+          color="#4c8dff"
+          className={isMine ? "h-48 sm:h-64" : "h-40 sm:h-48"}
+        />
         <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 shadow-[0_0_0_1px_rgba(76,141,255,0.4)] backdrop-blur-sm">
           <UsersIcon className="h-3.5 w-3.5 text-blue-ink" />
           <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">

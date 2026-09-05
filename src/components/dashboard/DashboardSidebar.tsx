@@ -51,12 +51,12 @@ export function DashboardSidebar({
     { href: playerBase, label: t.dashboard.shell.navOverview, icon: HomeIcon },
     {
       href: `${playerBase}/clubs`,
-      label: user.club ? t.dashboard.shell.navMyClub : t.dashboard.clubs.browseTitle,
+      label: t.dashboard.clubs.browseTitle,
       icon: UsersIcon,
     },
     {
       href: `${playerBase}/community`,
-      label: user.community ? t.dashboard.shell.navCommunity : t.dashboard.community.browseTitle,
+      label: t.dashboard.community.browseTitle,
       icon: ShieldIcon,
     },
     { href: `${playerBase}/tournaments`, label: t.dashboard.shell.navTournaments, icon: TrophyIcon },

@@ -35,7 +35,7 @@ export function ClubRankingsTable({ rows }: { rows: ClubRankingRow[] }) {
         <thead className="bg-surface-line/40 font-mono text-[10px] uppercase tracking-wide text-ink-faint sm:text-[11px]">
           <tr>
             <th className="whitespace-nowrap px-1.5 py-2 font-medium sm:px-2.5">#</th>
-            <th className="w-full px-1.5 py-2 font-medium sm:px-2.5">Club</th>
+            <th className="px-1.5 py-2 font-medium sm:px-2.5">Club</th>
             {COLS.map((c) => (
               <th
                 key={c.key}
@@ -62,7 +62,7 @@ export function ClubRankingsTable({ rows }: { rows: ClubRankingRow[] }) {
                 <td className="whitespace-nowrap px-1.5 py-2 sm:px-2.5">
                   <RankBadge rank={row.rank} />
                 </td>
-                <td className="w-full min-w-0 px-1.5 py-2 sm:px-2.5">
+                <td className="min-w-0 px-1.5 py-2 sm:px-2.5">
                   {row.isReal ? (
                     <Link href={`/dashboard/efootball/clubs/${row.id}`} className="block min-w-0">
                       {infoCell}

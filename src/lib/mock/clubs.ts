@@ -14,6 +14,7 @@ export const mockClubs: Club[] = [
     minRoster: 4,
     maxRoster: 8,
     communityIds: ["dhaka-elite"],
+    stage: "Apex",
   },
   {
     id: "blue-tigers",
@@ -28,6 +29,7 @@ export const mockClubs: Club[] = [
     minRoster: 4,
     maxRoster: 8,
     communityIds: ["dhaka-elite"],
+    stage: "Elite",
   },
   {
     id: "chittagong-kings",
@@ -42,5 +44,6 @@ export const mockClubs: Club[] = [
     minRoster: 4,
     maxRoster: 8,
     communityIds: ["dhaka-elite"],
+    stage: "Foundation",
   },
 ];

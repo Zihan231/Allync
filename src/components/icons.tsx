@@ -259,6 +259,15 @@ export function FilterIcon({ className, style }: IconProps) {
   );
 }
 
+export function SearchIcon({ className, style }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={style} aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M19.5 19.5 15.3 15.3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function StoreIcon({ className, style }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} style={style} aria-hidden="true">

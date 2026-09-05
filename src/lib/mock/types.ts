@@ -67,6 +67,39 @@ export type JoinRequest = {
   createdAt: string;
 };
 
+export type ClubStage =
+  | "Apex"
+  | "College"
+  | "District"
+  | "Division"
+  | "Elite"
+  | "Foundation"
+  | "Intra Bid S1"
+  | "Matchday Management Panel"
+  | "N/A"
+  | "Official Team"
+  | "Reality Bid S1"
+  | "Reality Bid S2"
+  | "Special"
+  | "University";
+
+export const CLUB_STAGES: ClubStage[] = [
+  "Apex",
+  "College",
+  "District",
+  "Division",
+  "Elite",
+  "Foundation",
+  "Intra Bid S1",
+  "Matchday Management Panel",
+  "N/A",
+  "Official Team",
+  "Reality Bid S1",
+  "Reality Bid S2",
+  "Special",
+  "University",
+];
+
 export type Club = {
   id: string;
   name: string;
@@ -80,6 +113,7 @@ export type Club = {
   minRoster: number;
   maxRoster: number;
   communityIds: string[];
+  stage: ClubStage;
 };
 
 export type Community = {

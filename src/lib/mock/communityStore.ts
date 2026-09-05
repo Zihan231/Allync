@@ -107,6 +107,7 @@ export function createClub(
     minRoster: 4,
     maxRoster: 8,
     communityIds: [],
+    stage: "N/A",
   };
   clubs = [...clubs, club];
   updatePerson(creatorPersonId, { clubId: id, clubRole: "President" });
