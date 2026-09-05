@@ -282,6 +282,36 @@ export function FacebookIcon({ className, style }: IconProps) {
   );
 }
 
+export function DiscordIcon({ className, style }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={style} aria-hidden="true">
+      <path
+        d="M8 7.5c2.7-1 5.3-1 8 0M7.2 16.3c-1.6-.5-2.5-1.1-2.5-1.1s.6-4.6 2.3-7.7c0 0 1.5-1 3-1l.5 1"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M16.8 16.3c1.6-.5 2.5-1.1 2.5-1.1s-.6-4.6-2.3-7.7c0 0-1.5-1-3-1l-.5 1"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7.2 16.3c2.9 1.3 6.7 1.3 9.6 0"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <ellipse cx="9.2" cy="13.2" rx="1.2" ry="1.4" fill="currentColor" />
+      <ellipse cx="14.8" cy="13.2" rx="1.2" ry="1.4" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function StoreIcon({ className, style }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} style={style} aria-hidden="true">

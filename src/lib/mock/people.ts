@@ -15,6 +15,8 @@ export const mockPeople: Person[] = [
     bio: "Box-to-box midfielder. Captaining Red Falcons since the club's first season.",
     squadTeam: "Main",
     shirtNumber: 10,
+    facebookUrl: "https://facebook.com/rakib.hasan",
+    discordUrl: "https://discord.com/users/rakibhasan",
   },
   {
     id: "person-imran-kabir",
@@ -50,6 +52,7 @@ export const mockPeople: Person[] = [
     points: 680,
     squadTeam: "Main",
     shirtNumber: 7,
+    facebookUrl: "https://facebook.com/shakib.al",
   },
   {
     id: "person-mehedi-rahman",
@@ -89,6 +92,7 @@ export const mockPeople: Person[] = [
     points: 500,
     squadTeam: "Academy",
     shirtNumber: 21,
+    discordUrl: "https://discord.com/users/fahimchowdhury",
   },
 
   // Blue Tigers
@@ -127,6 +131,8 @@ export const mockPeople: Person[] = [
     points: 700,
     squadTeam: "Main",
     shirtNumber: 8,
+    facebookUrl: "https://facebook.com/mahin.chowdhury",
+    discordUrl: "https://discord.com/users/mahinchowdhury",
   },
   {
     id: "person-rafi-anam",
@@ -193,6 +199,7 @@ export const mockPeople: Person[] = [
     points: 520,
     squadTeam: "Main",
     shirtNumber: 3,
+    discordUrl: "https://discord.com/users/riyaduddin",
   },
 
   // Dhaka Elite Community boardroom (not tied to a club)

@@ -58,6 +58,7 @@ export type Person = {
   gamePosition?: string;
   squadTeam?: "Main" | "Academy" | "Legend";
   shirtNumber?: number;
+  discordUrl?: string;
 };
 
 export type JoinRequest = {
