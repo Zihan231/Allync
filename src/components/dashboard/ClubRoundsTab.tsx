@@ -7,12 +7,19 @@ import type { Club } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
 import { StatusPill } from "./StatusPill";
 import { EmptyState } from "./EmptyState";
+import { Avatar } from "../common/Avatar";
 import { CalendarIcon } from "../icons";
 
 type Person = ReturnType<typeof useMockPeople>[number];
 type TeamFilter = "all" | "Main" | "Academy";
 
 const RESULT_TONE = { W: "success", D: "neutral", L: "danger" } as const;
+const RESULT_ACCENT = {
+  W: "border-l-success bg-gradient-to-br from-success/10 via-surface/40 to-surface/40",
+  D: "border-l-surface-line-strong bg-surface/40",
+  L: "border-l-danger bg-gradient-to-br from-danger/10 via-surface/40 to-surface/40",
+} as const;
+const RESULT_SCORE_TEXT = { W: "text-success-ink", D: "text-ink", L: "text-danger-ink" } as const;
 
 export function ClubRoundsTab({ club, members }: { club: Club; members: Person[] }) {
   const { t } = useLanguage();
@@ -72,22 +79,31 @@ export function ClubRoundsTab({ club, members }: { club: Club; members: Person[]
       ) : (
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((entry) => (
-            <div key={entry.id} className="min-w-0 rounded-xl border border-surface-line bg-surface/40 p-4">
+            <div
+              key={entry.id}
+              className={`min-w-0 rounded-xl border border-l-4 border-surface-line p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg ${RESULT_ACCENT[entry.result]}`}
+            >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">{entry.date}</span>
                 <StatusPill tone="neutral">{entry.team}</StatusPill>
               </div>
-              <p className="mt-2 truncate text-xs text-ink-faint">
-                {entry.competition} • {entry.round}
+
+              <p className="mt-2.5 truncate font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                {entry.competition} <span className="text-ink-faint/70">•</span> {entry.round}
               </p>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">vs {entry.opponentClubName}</span>
-                <span className="shrink-0 font-mono text-sm font-bold text-ink">
-                  {entry.scoreFor}–{entry.scoreAgainst}
-                </span>
+
+              <div className="mt-3 flex items-center gap-2.5">
+                <Avatar dpUrl={null} name={entry.opponentClubName} size="sm" mode="static" shape="circle" />
+                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{entry.opponentClubName}</span>
               </div>
-              <div className="mt-2">
-                <StatusPill tone={RESULT_TONE[entry.result]}>{entry.result}</StatusPill>
+
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-surface-line-strong/60 bg-bg/40 px-3 py-2">
+                <span className={`font-display text-xl font-bold tracking-tight ${RESULT_SCORE_TEXT[entry.result]}`}>
+                  {entry.scoreFor}<span className="text-ink-faint">–</span>{entry.scoreAgainst}
+                </span>
+                <StatusPill tone={RESULT_TONE[entry.result]} className="shrink-0">
+                  {entry.result}
+                </StatusPill>
               </div>
             </div>
           ))}
