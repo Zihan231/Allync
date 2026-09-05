@@ -15,7 +15,14 @@ export type Mode = "player" | "organizer";
 export type GameId = "efootball" | "pubg" | "freefire" | "valorant";
 export type KycStatus = "unverified" | "pending" | "verified";
 export type VerificationStatus = "unverified" | "pending" | "verified";
-export type ClubRole = "President" | "Manager" | "Captain" | "Player";
+export type ClubRole =
+  | "President"
+  | "General Secretary"
+  | "Captain"
+  | "Vice-Captain"
+  | "Academy Captain"
+  | "Manager"
+  | "Player";
 export type CommunityRole =
   | "President"
   | "Vice President"

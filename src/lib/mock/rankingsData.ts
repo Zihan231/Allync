@@ -1,4 +1,4 @@
-import type { Club, Person } from "./types";
+import type { Club, ClubStage, Person } from "./types";
 
 // Deterministic seeded RNG (mulberry32) so the generated leaderboard is stable
 // across renders/reloads instead of reshuffling on every hook call.
@@ -211,6 +211,28 @@ export const CLUB_METRIC_MAX = {
 
 export type ClubTier = "Apex" | "Elite" | "Foundation" | "Academy" | "Youth" | "University" | "College" | "Division" | "District";
 
+// `Club.stage` (ClubStage, 14 values) and `ClubTier` (9 values) are separate
+// unions that grew independently — this maps a real club's actual stage onto
+// the tier bucket its ranking row should report, so the Rankings tab's
+// StagePill and tier-derived rating never disagree for the same club.
+// ClubStage values with no equivalent tier bucket fall back to "Apex".
+const STAGE_TO_TIER: Record<ClubStage, ClubTier> = {
+  Apex: "Apex",
+  Elite: "Elite",
+  Foundation: "Foundation",
+  College: "College",
+  District: "District",
+  Division: "Division",
+  University: "University",
+  "N/A": "Apex",
+  Special: "Apex",
+  "Official Team": "Apex",
+  "Matchday Management Panel": "Apex",
+  "Intra Bid S1": "Apex",
+  "Reality Bid S1": "Apex",
+  "Reality Bid S2": "Apex",
+};
+
 export const CLUB_QUICK_FILTERS: { key: string; label: string; tiers: ClubTier[] | null }[] = [
   { key: "overall", label: "Overall", tiers: null },
   { key: "apex-elite", label: "Apex + Elite", tiers: ["Apex", "Elite"] },
@@ -314,7 +336,7 @@ function buildRealClub(club: Club): Omit<ClubRankingRow, "rank"> {
     color: club.color,
     dpUrl: club.dpUrl,
     isReal: true,
-    tier: "Apex",
+    tier: STAGE_TO_TIER[club.stage],
     M,
     W,
     D,

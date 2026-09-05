@@ -13,6 +13,8 @@ export const mockPeople: Person[] = [
     communityRole: "Member",
     points: 720,
     bio: "Box-to-box midfielder. Captaining Red Falcons since the club's first season.",
+    squadTeam: "Main",
+    shirtNumber: 10,
   },
   {
     id: "person-imran-kabir",
@@ -31,7 +33,7 @@ export const mockPeople: Person[] = [
     dpUrl: null,
     coverUrl: null,
     clubId: "red-falcons",
-    clubRole: "Manager",
+    clubRole: "General Secretary",
     communityId: "dhaka-elite",
     communityRole: "Team Manager",
     points: 250,
@@ -46,6 +48,8 @@ export const mockPeople: Person[] = [
     communityId: "dhaka-elite",
     communityRole: "Member",
     points: 680,
+    squadTeam: "Main",
+    shirtNumber: 7,
   },
   {
     id: "person-mehedi-rahman",
@@ -57,6 +61,8 @@ export const mockPeople: Person[] = [
     communityId: "dhaka-elite",
     communityRole: "Member",
     points: 610,
+    squadTeam: "Main",
+    shirtNumber: 9,
   },
   {
     id: "person-tanvir-ahmed",
@@ -64,10 +70,12 @@ export const mockPeople: Person[] = [
     dpUrl: null,
     coverUrl: null,
     clubId: "red-falcons",
-    clubRole: "Player",
+    clubRole: "Vice-Captain",
     communityId: "dhaka-elite",
     communityRole: "Member",
     points: 540,
+    squadTeam: "Main",
+    shirtNumber: 4,
   },
   {
     id: "person-fahim-chowdhury",
@@ -79,6 +87,8 @@ export const mockPeople: Person[] = [
     communityId: "dhaka-elite",
     communityRole: "Member",
     points: 500,
+    squadTeam: "Academy",
+    shirtNumber: 21,
   },
 
   // Blue Tigers
@@ -115,6 +125,8 @@ export const mockPeople: Person[] = [
     communityId: "dhaka-elite",
     communityRole: "Member",
     points: 700,
+    squadTeam: "Main",
+    shirtNumber: 8,
   },
   {
     id: "person-rafi-anam",
@@ -126,6 +138,8 @@ export const mockPeople: Person[] = [
     communityId: "dhaka-elite",
     communityRole: "Member",
     points: 590,
+    squadTeam: "Main",
+    shirtNumber: 11,
   },
   {
     id: "person-junayed-karim",
@@ -133,10 +147,12 @@ export const mockPeople: Person[] = [
     dpUrl: null,
     coverUrl: null,
     clubId: "blue-tigers",
-    clubRole: "Player",
+    clubRole: "Academy Captain",
     communityId: "dhaka-elite",
     communityRole: "Member",
     points: 480,
+    squadTeam: "Academy",
+    shirtNumber: 17,
   },
 
   // Chittagong Kings
@@ -162,6 +178,8 @@ export const mockPeople: Person[] = [
     communityId: "dhaka-elite",
     communityRole: "Member",
     points: 450,
+    squadTeam: "Academy",
+    shirtNumber: 6,
   },
   {
     id: "person-riyad-uddin",
@@ -169,10 +187,12 @@ export const mockPeople: Person[] = [
     dpUrl: null,
     coverUrl: null,
     clubId: "chittagong-kings",
-    clubRole: "Player",
+    clubRole: "Vice-Captain",
     communityId: "dhaka-elite",
     communityRole: "Member",
     points: 520,
+    squadTeam: "Main",
+    shirtNumber: 3,
   },
 
   // Dhaka Elite Community boardroom (not tied to a club)

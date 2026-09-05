@@ -15,6 +15,9 @@ export const mockClubs: Club[] = [
     maxRoster: 8,
     communityIds: ["dhaka-elite"],
     stage: "Apex",
+    location: "Dhaka",
+    motto: "Fly fast, strike first.",
+    facebookUrl: "https://facebook.com/redfalconsefootball",
   },
   {
     id: "blue-tigers",
@@ -30,6 +33,9 @@ export const mockClubs: Club[] = [
     maxRoster: 8,
     communityIds: ["dhaka-elite"],
     stage: "Elite",
+    location: "Dhaka",
+    motto: "Patience. Precision. Punishment.",
+    facebookUrl: "https://facebook.com/bluetigersefootball",
   },
   {
     id: "chittagong-kings",
@@ -45,5 +51,8 @@ export const mockClubs: Club[] = [
     maxRoster: 8,
     communityIds: ["dhaka-elite"],
     stage: "Foundation",
+    location: "Chittagong",
+    motto: "Rebuilding, one season at a time.",
+    facebookUrl: "https://facebook.com/chittagongkingsefootball",
   },
 ];

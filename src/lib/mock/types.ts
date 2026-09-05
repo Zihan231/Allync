@@ -56,6 +56,8 @@ export type Person = {
   equippedFrameId?: string | null;
   equippedThemeId?: string | null;
   gamePosition?: string;
+  squadTeam?: "Main" | "Academy" | "Legend";
+  shirtNumber?: number;
 };
 
 export type JoinRequest = {
@@ -114,6 +116,9 @@ export type Club = {
   maxRoster: number;
   communityIds: string[];
   stage: ClubStage;
+  location?: string;
+  motto?: string;
+  facebookUrl?: string;
 };
 
 export type Community = {
