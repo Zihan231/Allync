@@ -7,7 +7,7 @@ import type { Club } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
 import { StatusPill } from "./StatusPill";
 import { EmptyState } from "./EmptyState";
-import { Avatar } from "../common/Avatar";
+import { ClubCrest } from "../common/ClubCrest";
 import { Pagination } from "./Pagination";
 import { CalendarIcon } from "../icons";
 
@@ -104,7 +104,7 @@ export function ClubRoundsTab({ club, members }: { club: Club; members: Person[]
               </p>
 
               <div className="mt-3 flex items-center gap-2.5">
-                <Avatar dpUrl={null} name={entry.opponentClubName} size="sm" mode="static" shape="circle" />
+                <ClubCrest name={entry.opponentClubName} size="sm" />
                 <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{entry.opponentClubName}</span>
               </div>
 

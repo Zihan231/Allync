@@ -282,6 +282,11 @@ export const translations = {
         allCompetitions: "All competitions",
         noEntries: "No round history yet.",
       },
+      clubFixtures: {
+        vsLabel: "VS",
+        homeLabel: "Home",
+        awayLabel: "Away",
+      },
       clubRoundStats: {
         title: "All-Time Statistics",
         roundsUnit: "rounds",
@@ -1038,6 +1043,11 @@ export const translations = {
         competitionLabel: "প্রতিযোগিতা",
         allCompetitions: "সব প্রতিযোগিতা",
         noEntries: "এখনো কোনো রাউন্ড হিস্ট্রি নেই।",
+      },
+      clubFixtures: {
+        vsLabel: "বনাম",
+        homeLabel: "হোম",
+        awayLabel: "অ্যাওয়ে",
       },
       clubRoundStats: {
         title: "অল-টাইম স্ট্যাটিসটিক্স",

@@ -5,6 +5,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getClubFixturesFull } from "@/lib/mock/clubInsights";
 import type { Club } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
+import { ClubCrest } from "../common/ClubCrest";
 import { StatusPill } from "./StatusPill";
 import { EmptyState } from "./EmptyState";
 import { TrophyIcon } from "../icons";
@@ -78,28 +79,77 @@ export function ClubFixturesTab({ club, members }: { club: Club; members: Person
           <EmptyState icon={TrophyIcon} title={t.dashboard.clubOverview.noUpcomingFixtures} body="" />
         </div>
       ) : (
-        <div className="mt-5 space-y-5">
+        <div className="mt-5 space-y-7">
           {grouped.map(([competition, list]) => (
             <div key={competition}>
-              <h3 className="font-display text-sm font-bold text-ink">{competition}</h3>
-              <div className="mt-2 space-y-2">
-                {list.map((f) => (
-                  <div
-                    key={f.id}
-                    className={`flex flex-wrap items-center gap-3 rounded-xl border p-3 ${
-                      f.isKnockout ? "border-accent bg-accent-soft/30" : "border-surface-line bg-surface/40"
-                    }`}
-                  >
-                    <div className="w-20 shrink-0 font-mono text-[10px] uppercase tracking-wide text-ink-faint">
-                      {f.dateLabel}
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-ink">
+                  <TrophyIcon className="h-3.5 w-3.5" />
+                </span>
+                <h3 className="font-display text-sm font-bold text-ink">{competition}</h3>
+                <span className="h-px flex-1 bg-surface-line" />
+                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                  {list.length} {t.dashboard.clubRounds.competitionLabel}
+                </span>
+              </div>
+
+              <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {list.map((f) => {
+                  const homeName = f.isHome ? club.name : f.opponentClubName;
+                  const awayName = f.isHome ? f.opponentClubName : club.name;
+
+                  return (
+                    <div
+                      key={f.id}
+                      className={`overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg ${
+                        f.isKnockout ? "border-accent/50 bg-gradient-to-b from-accent/10 via-surface/50 to-surface/50" : "border-surface-line bg-surface/40"
+                      }`}
+                    >
+                      <div
+                        className={`flex items-center justify-between px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide ${
+                          f.isKnockout ? "bg-accent-soft text-accent-ink" : "bg-surface-line/40 text-ink-faint"
+                        }`}
+                      >
+                        <span className="truncate">{f.round}</span>
+                        <span className="shrink-0">{f.dateLabel}</span>
+                      </div>
+
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2 p-4">
+                        <div className="flex flex-col items-center gap-2 text-center">
+                          <ClubCrest
+                            name={homeName}
+                            color={f.isHome ? club.color : undefined}
+                            initials={f.isHome ? club.initials : undefined}
+                            size="md"
+                          />
+                          <span className="w-full truncate text-xs font-semibold text-ink">{homeName}</span>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-1 pt-2">
+                          <span className="font-display text-sm font-black text-ink-faint">{t.dashboard.clubFixtures.vsLabel}</span>
+                          {f.isKnockout ? <TrophyIcon className="h-3.5 w-3.5 text-accent-ink" /> : null}
+                        </div>
+
+                        <div className="flex flex-col items-center gap-2 text-center">
+                          <ClubCrest
+                            name={awayName}
+                            color={!f.isHome ? club.color : undefined}
+                            initials={!f.isHome ? club.initials : undefined}
+                            size="md"
+                          />
+                          <span className="w-full truncate text-xs font-semibold text-ink">{awayName}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-center gap-1.5 border-t border-surface-line/60 px-3 py-2">
+                        <StatusPill tone="neutral">{f.team}</StatusPill>
+                        <StatusPill tone={f.isHome ? "info" : "neutral"}>
+                          {f.isHome ? t.dashboard.clubFixtures.homeLabel : t.dashboard.clubFixtures.awayLabel}
+                        </StatusPill>
+                      </div>
                     </div>
-                    <StatusPill tone="neutral">{f.team}</StatusPill>
-                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-                      {f.isHome ? `${club.name} vs ${f.opponentClubName}` : `${f.opponentClubName} vs ${club.name}`}
-                    </span>
-                    <span className="shrink-0 font-mono text-[10px] text-ink-faint">{f.round}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
