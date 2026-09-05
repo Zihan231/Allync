@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
@@ -10,7 +10,7 @@ import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
-import { PlusIcon, TrophyIcon, SearchIcon, ChevronDownIcon } from "@/components/icons";
+import { PlusIcon, TrophyIcon, SearchIcon } from "@/components/icons";
 import { CLUB_STAGES, type ClubStage } from "@/lib/mock/types";
 
 type StageFilter = "all" | ClubStage;
@@ -33,6 +33,11 @@ export default function ClubsPage() {
       return true;
     });
   }, [otherClubs, search, stageFilter]);
+
+  const stageOptions: { key: StageFilter; label: string }[] = [
+    { key: "all", label: t.dashboard.clubs.allStages },
+    ...CLUB_STAGES.map((s) => ({ key: s, label: s })),
+  ];
 
   return (
     <div>
@@ -74,7 +79,25 @@ export default function ClubsPage() {
         </div>
 
         <div className="mt-3">
-          <StageFilterDropdown value={stageFilter} onChange={setStageFilter} />
+          <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+            {t.dashboard.clubs.exploreByStage}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {stageOptions.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setStageFilter(opt.key)}
+                className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                  stageFilter === opt.key
+                    ? "border-blue bg-blue-soft text-blue-ink"
+                    : "border-surface-line-strong text-ink-soft hover:text-ink"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {filteredClubs.length === 0 ? (
@@ -87,67 +110,6 @@ export default function ClubsPage() {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function StageFilterDropdown({
-  value,
-  onChange,
-}: {
-  value: StageFilter;
-  onChange: (stage: StageFilter) => void;
-}) {
-  const { t } = useLanguage();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handlePointerDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, []);
-
-  const options: { key: StageFilter; label: string }[] = [
-    { key: "all", label: t.dashboard.clubs.allStages },
-    ...CLUB_STAGES.map((s) => ({ key: s, label: s })),
-  ];
-
-  return (
-    <div className="relative inline-block" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 rounded-lg border border-surface-line-strong bg-surface-line-strong/70 px-3.5 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-line-strong"
-      >
-        {t.dashboard.clubs.exploreByStage}
-        <span className="text-ink-soft">·</span>
-        <span className="text-accent-ink">{value === "all" ? t.dashboard.clubs.allStages : value}</span>
-        <ChevronDownIcon className={`h-3.5 w-3.5 text-ink-faint transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open ? (
-        <div className="absolute left-0 top-full z-30 mt-2 max-h-72 w-64 overflow-y-auto rounded-xl border border-surface-line bg-surface p-1.5 shadow-2xl">
-          {options.map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => {
-                onChange(opt.key);
-                setOpen(false);
-              }}
-              className={`flex w-full items-center rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
-                value === opt.key
-                  ? "bg-accent-soft text-accent-ink"
-                  : "text-ink-soft hover:bg-bg-raised hover:text-ink"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
