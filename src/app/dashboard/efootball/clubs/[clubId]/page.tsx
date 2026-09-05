@@ -238,7 +238,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
         {tab === "rankings" ? <ClubRankingsTab club={club} members={members} /> : null}
         {tab === "table" ? <ClubTableTab club={club} /> : null}
         {tab === "rounds" ? <ClubRoundsTab club={club} members={members} /> : null}
-        {tab === "roundStats" ? <ClubRoundStatsTab club={club} /> : null}
+        {tab === "roundStats" ? <ClubRoundStatsTab club={club} members={members} /> : null}
         {tab === "matchStats" ? <ClubMatchStatsTab club={club} members={members} /> : null}
         {tab === "teamUp" ? <ClubTeamUpTab club={club} members={members} /> : null}
       </div>

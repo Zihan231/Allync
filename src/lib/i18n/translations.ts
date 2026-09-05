@@ -241,6 +241,7 @@ export const translations = {
         topDoubleHatTricks: "Top DHT",
       },
       clubSquad: {
+        teamFilterLabel: "Team",
         teamFilterAll: "All teams",
         squadTeamMain: "Main",
         squadTeamAcademy: "Academy",
@@ -283,6 +284,10 @@ export const translations = {
         title: "All-Time Statistics",
         roundsUnit: "rounds",
         seasonLabel: "Season",
+        opponentStatsTitle: "Opponent Wise Statistics",
+        opponentsUnit: "opponents",
+        opponentColumnLabel: "Opponent",
+        clearLabel: "Clear",
       },
       clubMatchStats: {
         title: "All-Time Statistics",
@@ -991,6 +996,7 @@ export const translations = {
         topDoubleHatTricks: "টপ DHT",
       },
       clubSquad: {
+        teamFilterLabel: "টিম",
         teamFilterAll: "সব টিম",
         squadTeamMain: "মেইন",
         squadTeamAcademy: "একাডেমি",
@@ -1033,6 +1039,10 @@ export const translations = {
         title: "অল-টাইম স্ট্যাটিসটিক্স",
         roundsUnit: "রাউন্ড",
         seasonLabel: "সিজন",
+        opponentStatsTitle: "প্রতিপক্ষ ভিত্তিক স্ট্যাটিসটিক্স",
+        opponentsUnit: "প্রতিপক্ষ",
+        opponentColumnLabel: "প্রতিপক্ষ",
+        clearLabel: "মুছুন",
       },
       clubMatchStats: {
         title: "অল-টাইম স্ট্যাটিসটিক্স",

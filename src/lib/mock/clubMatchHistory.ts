@@ -42,6 +42,15 @@ const OPPONENT_CLUB_POOL = [
   "Bangladesh Fighting Cardinals", "Raging Leopards BD", "Aether Athletic",
 ];
 
+const OPPONENT_ADJECTIVES = [
+  "Royal", "Northern", "Southern", "Crimson", "Golden", "Iron", "Silver", "Rapid", "Coastal",
+  "Prime", "Rising", "Eastern", "Western", "Urban", "Metro", "Central", "Allied", "Frontier", "Union", "Vigilant",
+];
+const OPPONENT_NOUNS = [
+  "Falcons", "Hawks", "Panthers", "Titans", "Warriors", "Strikers", "Rangers", "Knights", "Wolves",
+  "Eagles", "Comets", "Raiders", "Lions", "Sparks", "Bulls", "Storm", "Phoenix", "Legends", "Vipers", "Guardians",
+];
+
 const COMPETITION_POOL = [
   "Dhaka Elite Community League", "Weekend Cup", "Quarter-Final Clash", "Friendly Match", "Community Knockout",
 ];
@@ -221,4 +230,44 @@ export function getClubTeamUpHistory(club: Club, members: Person[]): ClubTeamUpE
   }
 
   return entries;
+}
+
+// ---- Opponent Wise Statistics (Round Stats tab) ----
+
+export type ClubOpponentStatsRow = {
+  opponentClubName: string;
+  team: (typeof SQUAD_TEAMS)[number];
+  PL: number;
+  W: number;
+  D: number;
+  L: number;
+  GF: number;
+  GA: number;
+  winPct: number;
+};
+
+export function getClubOpponentStats(club: Club, members: Person[]): ClubOpponentStatsRow[] {
+  const rand = mulberry32(seedFromId(club.id, 8601));
+  const hasAcademy = members.some((p) => p.squadTeam === "Academy");
+  const teams = hasAcademy ? SQUAD_TEAMS : (["Main"] as const);
+
+  const names = new Set<string>(OPPONENT_CLUB_POOL);
+  while (names.size < 42) {
+    names.add(`${pick(OPPONENT_ADJECTIVES, rand)} ${pick(OPPONENT_NOUNS, rand)}`);
+  }
+
+  const rows: ClubOpponentStatsRow[] = Array.from(names).map((opponentClubName) => {
+    const PL = 1 + Math.floor(rand() * 20);
+    const winRate = 0.2 + rand() * 0.6;
+    const W = Math.round(PL * winRate);
+    const remaining = Math.max(0, PL - W);
+    const D = Math.round(remaining * 0.3);
+    const L = Math.max(0, remaining - D);
+    const GF = Math.round(W * 3 + D + rand() * 10);
+    const GA = Math.round(L * 2.2 + D * 0.8 + rand() * 8);
+    const winPct = PL > 0 ? ((W + D / 2) / PL) * 100 : 0;
+    return { opponentClubName, team: pick(teams, rand), PL, W, D, L, GF, GA, winPct };
+  });
+
+  return rows.sort((a, b) => b.PL - a.PL);
 }
