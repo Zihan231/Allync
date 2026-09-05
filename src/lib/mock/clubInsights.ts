@@ -86,6 +86,9 @@ export type ClubFixture = {
   id: string;
   opponentClubName: string;
   competition: string;
+  round: string;
+  team: "Main" | "Academy";
+  isHome: boolean;
   dateIso: string;
   dateLabel: string;
   isKnockout: boolean;
@@ -102,24 +105,39 @@ export type ClubInsights = {
   contractDaysById: Map<string, number>;
 };
 
-export function getClubInsights(club: Club, members: Person[]): ClubInsights {
+// Full fixture list for the Fixtures tab (grouped by competition there).
+// Overview's teaser slider just takes the first few of this same list, so
+// the two views never disagree about what's coming up next.
+export function getClubFixturesFull(club: Club, members: Person[]): ClubFixture[] {
   const rand = mulberry32(seedFromId(club.id, 7001));
+  const hasAcademy = members.some((p) => p.squadTeam === "Academy");
 
-  const fixtureCount = 4 + Math.floor(rand() * 3); // 4-6
-  const upcomingFixtures: ClubFixture[] = [];
+  const fixtureCount = 10 + Math.floor(rand() * 7); // 10-16
+  const fixtures: ClubFixture[] = [];
   let cursor = addDays(REFERENCE_NOW, 1 + Math.round(rand() * 2));
   for (let i = 0; i < fixtureCount; i++) {
-    const isKnockout = rand() < 0.25;
-    upcomingFixtures.push({
+    const isKnockout = rand() < 0.2;
+    fixtures.push({
       id: `${club.id}-fixture-${i}`,
       opponentClubName: pick(OPPONENT_CLUB_POOL, rand),
       competition: pick(COMPETITION_POOL, rand),
+      round: `GRP${1 + Math.floor(rand() * 4)}-R${1 + Math.floor(rand() * 20)}`,
+      team: hasAcademy && rand() < 0.35 ? "Academy" : "Main",
+      isHome: rand() < 0.5,
       dateIso: toIso(cursor),
       dateLabel: fmtDate(cursor),
       isKnockout,
     });
-    cursor = addDays(cursor, 2 + Math.round(rand() * 5));
+    cursor = addDays(cursor, 1 + Math.round(rand() * 4));
   }
+
+  return fixtures;
+}
+
+export function getClubInsights(club: Club, members: Person[]): ClubInsights {
+  const rand = mulberry32(seedFromId(club.id, 7001));
+
+  const upcomingFixtures = getClubFixturesFull(club, members).slice(0, 5);
 
   const calendarEvents: ClubCalendarEvent[] = upcomingFixtures.map((f) => ({
     dateIso: f.dateIso,

@@ -15,14 +15,29 @@ import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { StagePill } from "@/components/dashboard/StagePill";
 import { ClubMetaGrid } from "@/components/dashboard/ClubMetaGrid";
 import { ClubOverviewTab } from "@/components/dashboard/ClubOverviewTab";
+import { ClubFixturesTab } from "@/components/dashboard/ClubFixturesTab";
 import { ClubSquadTab } from "@/components/dashboard/ClubSquadTab";
 import { ClubTransfersTab } from "@/components/dashboard/ClubTransfersTab";
 import { ClubRankingsTab } from "@/components/dashboard/ClubRankingsTab";
 import { ClubTableTab } from "@/components/dashboard/ClubTableTab";
+import { ClubRoundsTab } from "@/components/dashboard/ClubRoundsTab";
+import { ClubRoundStatsTab } from "@/components/dashboard/ClubRoundStatsTab";
+import { ClubMatchStatsTab } from "@/components/dashboard/ClubMatchStatsTab";
+import { ClubTeamUpTab } from "@/components/dashboard/ClubTeamUpTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { UsersIcon, TrophyIcon, FacebookIcon } from "@/components/icons";
 
-type Tab = "overview" | "squad" | "transfers" | "rankings" | "table";
+type Tab =
+  | "overview"
+  | "fixtures"
+  | "squad"
+  | "transfers"
+  | "rankings"
+  | "table"
+  | "rounds"
+  | "roundStats"
+  | "matchStats"
+  | "teamUp";
 
 export default function ClubDetailPage({ params }: { params: Promise<{ clubId: string }> }) {
   const { clubId } = use(params);
@@ -68,10 +83,15 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: t.dashboard.club.tabOverview },
+    { key: "fixtures", label: t.dashboard.club.tabFixtures },
     { key: "squad", label: t.dashboard.club.tabSquad },
     { key: "transfers", label: t.dashboard.club.tabTransfers },
     { key: "rankings", label: t.dashboard.club.tabRankings },
     { key: "table", label: t.dashboard.club.tabTable },
+    { key: "rounds", label: t.dashboard.club.tabRounds },
+    { key: "roundStats", label: t.dashboard.club.tabRoundStats },
+    { key: "matchStats", label: t.dashboard.club.tabMatchStats },
+    { key: "teamUp", label: t.dashboard.club.tabTeamUp },
   ];
 
   return (
@@ -210,12 +230,17 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
 
       <div className="mt-5">
         {tab === "overview" ? <ClubOverviewTab club={club} members={members} insights={insights} /> : null}
+        {tab === "fixtures" ? <ClubFixturesTab club={club} members={members} /> : null}
         {tab === "squad" ? (
           <ClubSquadTab club={club} members={members} contractDaysById={insights.contractDaysById} />
         ) : null}
         {tab === "transfers" ? <ClubTransfersTab club={club} allPeople={people} /> : null}
         {tab === "rankings" ? <ClubRankingsTab club={club} members={members} /> : null}
         {tab === "table" ? <ClubTableTab club={club} /> : null}
+        {tab === "rounds" ? <ClubRoundsTab club={club} members={members} /> : null}
+        {tab === "roundStats" ? <ClubRoundStatsTab club={club} /> : null}
+        {tab === "matchStats" ? <ClubMatchStatsTab club={club} members={members} /> : null}
+        {tab === "teamUp" ? <ClubTeamUpTab club={club} members={members} /> : null}
       </div>
     </div>
   );
