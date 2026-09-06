@@ -22,13 +22,20 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 const STORAGE_KEY = "ALLYNQ-locale";
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    if (typeof window !== "undefined") {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored === "en" || stored === "bn") return stored;
+  // Always start from the SSR-safe default. Reading localStorage directly in
+  // the useState initializer would make the client's very first render
+  // (before hydration reconciles) disagree with the server-rendered markup
+  // whenever a stored locale differs from "en" — a classic hydration
+  // mismatch. Syncing from storage in a mount-only effect instead means the
+  // first client render matches the server, then updates right after.
+  const [locale, setLocaleState] = useState<Locale>("en");
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === "en" || stored === "bn") {
+      setLocaleState(stored);
     }
-    return "en";
-  });
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale === "bn" ? "bn" : "en";
