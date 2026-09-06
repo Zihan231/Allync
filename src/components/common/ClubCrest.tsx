@@ -46,7 +46,7 @@ export function ClubCrest({
   if (imageUrl) {
     return (
       <div
-        className={`flex shrink-0 items-center justify-center overflow-hidden bg-white p-0.5 ${radius} ${sizeClasses[size]} ${className}`}
+        className={`relative flex shrink-0 items-center justify-center overflow-hidden bg-white p-0.5 ${radius} ${sizeClasses[size]} ${className}`}
         style={{ boxShadow: `0 0 0 1.5px ${resolvedColor}80` }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -57,7 +57,7 @@ export function ClubCrest({
 
   return (
     <div
-      className={`flex shrink-0 items-center justify-center font-display font-bold ${radius} ${sizeClasses[size]} ${initialsTextClasses[size]} ${className}`}
+      className={`relative flex shrink-0 items-center justify-center font-display font-bold ${radius} ${sizeClasses[size]} ${initialsTextClasses[size]} ${className}`}
       style={{ backgroundColor: `${resolvedColor}26`, color: resolvedColor, boxShadow: `0 0 0 1.5px ${resolvedColor}80` }}
     >
       {resolvedInitials}
