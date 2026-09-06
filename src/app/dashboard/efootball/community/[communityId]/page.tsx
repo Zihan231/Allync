@@ -20,6 +20,7 @@ import { ClubCrest } from "@/components/common/ClubCrest";
 import { CommunityTierPill } from "@/components/dashboard/CommunityTierPill";
 import { CommunityMetaGrid } from "@/components/dashboard/CommunityMetaGrid";
 import { CommunityOverviewTab } from "@/components/dashboard/CommunityOverviewTab";
+import { CommunityMembersTab } from "@/components/dashboard/CommunityMembersTab";
 import { CommunityClubsTab } from "@/components/dashboard/CommunityClubsTab";
 import { CommunityRankingsTab } from "@/components/dashboard/CommunityRankingsTab";
 import { CommunityTournamentsTab } from "@/components/dashboard/CommunityTournamentsTab";
@@ -28,7 +29,7 @@ import { CommunityTransfersTab } from "@/components/dashboard/CommunityTransfers
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { ShieldIcon, UsersIcon, FacebookIcon } from "@/components/icons";
 
-type Tab = "overview" | "clubs" | "rankings" | "tournaments" | "freeAgents" | "transfers";
+type Tab = "overview" | "members" | "clubs" | "rankings" | "tournaments" | "freeAgents" | "transfers";
 
 export default function CommunityDetailPage({ params }: { params: Promise<{ communityId: string }> }) {
   const { communityId } = use(params);
@@ -53,6 +54,10 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
     return map;
   }, [memberClubs, people]);
   const clubMembers = useMemo(() => memberClubs.flatMap((c) => peopleByClub.get(c.id) ?? []), [memberClubs, peopleByClub]);
+  const allMembers = useMemo(
+    () => people.filter((p) => p.communityId === community?.id),
+    [people, community]
+  );
   const freeAgents = useMemo(
     () => (community ? getCommunityFreeAgents(community, people) : []),
     [community, people]
@@ -94,6 +99,7 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: t.dashboard.community.tabOverview },
+    { key: "members", label: t.dashboard.community.tabMembers },
     { key: "clubs", label: t.dashboard.community.tabClubs },
     { key: "rankings", label: t.dashboard.community.tabRankings },
     { key: "tournaments", label: t.dashboard.community.tabTournaments },
@@ -240,6 +246,7 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
         {tab === "overview" ? (
           <CommunityOverviewTab community={community} memberClubs={memberClubs} peopleByClub={peopleByClub} clubMembers={clubMembers} />
         ) : null}
+        {tab === "members" ? <CommunityMembersTab members={allMembers} memberClubs={memberClubs} /> : null}
         {tab === "clubs" ? <CommunityClubsTab community={community} memberClubs={memberClubs} allPeople={people} /> : null}
         {tab === "rankings" ? <CommunityRankingsTab memberClubs={memberClubs} /> : null}
         {tab === "tournaments" ? <CommunityTournamentsTab tournaments={communityTournaments} /> : null}

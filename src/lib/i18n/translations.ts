@@ -524,6 +524,7 @@ export const translations = {
         quickFilterOpen: "Open to join",
         quickFilterApproval: "Approval required",
         tabOverview: "Overview",
+        tabMembers: "Members",
         tabClubs: "Clubs",
         tabRankings: "Rankings",
         tabTournaments: "Tournaments",
@@ -562,6 +563,15 @@ export const translations = {
       communityFreeAgents: {
         noEntries: "No free agents right now.",
         positionLabel: "Position",
+      },
+      communityMembers: {
+        searchPlaceholder: "Search members by name...",
+        filterAll: "All",
+        filterStaff: "Staff",
+        filterClub: "Club Members",
+        filterFreeAgent: "Free Agents",
+        freeAgentLabel: "Free Agent",
+        noEntries: "No members match your search.",
       },
       players: {
         profileTitle: "Player profile",
@@ -1325,6 +1335,7 @@ export const translations = {
         quickFilterOpen: "যোগদানের জন্য উন্মুক্ত",
         quickFilterApproval: "অনুমোদন লাগবে",
         tabOverview: "ওভারভিউ",
+        tabMembers: "সদস্য",
         tabClubs: "ক্লাব",
         tabRankings: "র‍্যাংকিং",
         tabTournaments: "টুর্নামেন্ট",
@@ -1363,6 +1374,15 @@ export const translations = {
       communityFreeAgents: {
         noEntries: "এখন কোনো ফ্রি এজেন্ট নেই।",
         positionLabel: "পজিশন",
+      },
+      communityMembers: {
+        searchPlaceholder: "নাম দিয়ে সদস্য খুঁজুন...",
+        filterAll: "সব",
+        filterStaff: "স্টাফ",
+        filterClub: "ক্লাব সদস্য",
+        filterFreeAgent: "ফ্রি এজেন্ট",
+        freeAgentLabel: "ফ্রি এজেন্ট",
+        noEntries: "আপনার খোঁজের সাথে মিলে এমন কোনো সদস্য নেই।",
       },
       players: {
         profileTitle: "প্লেয়ার প্রোফাইল",
