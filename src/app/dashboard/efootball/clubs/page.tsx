@@ -139,7 +139,7 @@ function ClubCard({ club, isMine = false }: { club: ReturnType<typeof useMockClu
       >
         <div className="h-1.5 w-full" style={{ backgroundColor: club.color }} />
         <div className="relative">
-          <CoverPhoto coverUrl={club.coverUrl} name={club.name} color={club.color} className="h-48 sm:h-64" />
+          <CoverPhoto coverUrl={club.coverUrl} name={club.name} color={club.color} className="h-48 sm:h-64" mode="static" />
           <ClubBadge club={club} t={t} />
         </div>
         <div className="flex items-start gap-3 p-4 pt-0">
@@ -169,7 +169,7 @@ function ClubCard({ club, isMine = false }: { club: ReturnType<typeof useMockClu
     >
       <div className="h-1 w-full" style={{ backgroundColor: club.color }} />
       <div className="relative h-20 sm:h-24">
-        <CoverPhoto coverUrl={club.coverUrl} name={club.name} color={club.color} className="h-full" />
+        <CoverPhoto coverUrl={club.coverUrl} name={club.name} color={club.color} className="h-full" mode="static" />
         <ClubBadge club={club} t={t} />
       </div>
       <div className="flex items-center gap-2 px-2.5 pb-2 pt-2">

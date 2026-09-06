@@ -10,11 +10,13 @@ export function CoverPhoto({
   name,
   color,
   className = "",
+  mode = "lightbox",
 }: {
   coverUrl: string | null | undefined;
   name: string;
   color?: string;
   className?: string;
+  mode?: "lightbox" | "static";
 }) {
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -39,6 +41,26 @@ export function CoverPhoto({
     );
   }
 
+  const image = (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={`${name} cover`}
+        className="h-full w-full object-cover"
+        onError={() => setFailed(true)}
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: `linear-gradient(to top, ${brand}40 0%, transparent 45%)` }}
+      />
+    </>
+  );
+
+  if (mode === "static") {
+    return <div className={`relative block w-full overflow-hidden ${className}`}>{image}</div>;
+  }
+
   return (
     <>
       <button
@@ -46,17 +68,7 @@ export function CoverPhoto({
         onClick={() => setOpen(true)}
         className={`relative block w-full cursor-zoom-in overflow-hidden ${className}`}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={src}
-          alt={`${name} cover`}
-          className="h-full w-full object-cover"
-          onError={() => setFailed(true)}
-        />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: `linear-gradient(to top, ${brand}40 0%, transparent 45%)` }}
-        />
+        {image}
       </button>
       <AvatarLightbox src={src} alt={`${name} cover`} open={open} onClose={() => setOpen(false)} />
     </>
