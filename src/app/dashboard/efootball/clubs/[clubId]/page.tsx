@@ -182,7 +182,19 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
         <p className="mt-3 font-mono text-xs text-warning-ink">{t.dashboard.clubs.pendingRequestNotice}</p>
       ) : null}
 
-      {club.motto ? <p className="mt-4 max-w-2xl text-sm italic leading-relaxed text-ink-soft">&ldquo;{club.motto}&rdquo;</p> : null}
+      {club.motto ? (
+        <div
+          className="mt-4 flex max-w-2xl items-start gap-3 rounded-xl border-l-4 bg-surface/40 px-4 py-3"
+          style={{ borderLeftColor: club.color, boxShadow: `0 0 0 1px ${club.color}26` }}
+        >
+          <span className="font-display text-3xl font-black leading-[0.6]" style={{ color: club.color }}>
+            &ldquo;
+          </span>
+          <p className="pt-1 font-display text-base font-semibold italic leading-snug tracking-tight text-ink">
+            {club.motto}
+          </p>
+        </div>
+      ) : null}
 
       <div className="mt-6">
         <ClubMetaGrid club={club} members={members} />
