@@ -6,7 +6,7 @@ import { useSession } from "@/lib/session/SessionContext";
 import { useMockCommunities } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
-import { Avatar } from "@/components/common/Avatar";
+import { ClubCrest } from "@/components/common/ClubCrest";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { PlusIcon, UsersIcon } from "@/components/icons";
@@ -70,17 +70,20 @@ function CommunityCard({
       href={`/dashboard/efootball/community/${community.id}`}
       className="group block overflow-hidden rounded-xl border border-surface-line bg-surface/40 transition-colors hover:border-surface-line-strong"
     >
-      <div className="h-1.5 w-full bg-blue" />
+      <div className="h-1.5 w-full" style={{ backgroundColor: community.color }} />
       <div className="relative">
         <CoverPhoto
           coverUrl={community.coverUrl}
           name={community.name}
-          color="#4c8dff"
+          color={community.color}
           className={isMine ? "h-48 sm:h-64" : "h-40 sm:h-48"}
           mode="static"
         />
-        <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 shadow-[0_0_0_1px_rgba(76,141,255,0.4)] backdrop-blur-sm">
-          <UsersIcon className="h-3.5 w-3.5 text-blue-ink" />
+        <div
+          className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur-sm"
+          style={{ boxShadow: `0 0 0 1px ${community.color}66` }}
+        >
+          <UsersIcon className="h-3.5 w-3.5" style={{ color: community.color }} />
           <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">
             {t.dashboard.community.entityLabel}
           </span>
@@ -88,7 +91,14 @@ function CommunityCard({
       </div>
       <div className="flex items-start gap-3 p-4 pt-0">
         <div className="-mt-8 rounded-xl border-4 border-bg bg-surface">
-          <Avatar dpUrl={community.dpUrl} name={community.name} size="lg" mode="static" shape="square" />
+          <ClubCrest
+            name={community.name}
+            color={community.color}
+            initials={community.initials}
+            imageUrl={community.dpUrl}
+            size="lg"
+            shape="square"
+          />
         </div>
         <div className="mt-1 min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
@@ -97,7 +107,7 @@ function CommunityCard({
           </div>
           <p className="mt-1 line-clamp-2 text-xs text-ink-soft">{community.rules}</p>
           <div className="mt-2 flex items-center gap-1.5 font-mono text-[11px] text-ink-faint">
-            <UsersIcon className="h-3.5 w-3.5 text-blue-ink" />
+            <UsersIcon className="h-3.5 w-3.5" style={{ color: community.color }} />
             {community.memberClubIds.length} clubs · {community.freeAgentCount} free agents
           </div>
         </div>

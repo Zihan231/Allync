@@ -18,21 +18,22 @@ const CATEGORIES: { key: string; labelKey: "topMatchWinners" | "topGoalScorer" |
   { key: "dht", labelKey: "topDoubleHatTricks", metric: (r) => r.DHT },
 ];
 
-export function ClubTopPerformers({ club, members }: { club: Club; members: Person[] }) {
+export function ClubTopPerformers({ clubs, members, title }: { clubs: Club[]; members: Person[]; title?: string }) {
   const { t } = useLanguage();
   const [range, setRange] = useState<RangeKey>("alltime");
 
-  const clubNameById = useMemo(() => new Map([[club.id, club.name]]), [club.id, club.name]);
+  const clubNameById = useMemo(() => new Map(clubs.map((c) => [c.id, c.name])), [clubs]);
+  const clubNames = useMemo(() => new Set(clubs.map((c) => c.name)), [clubs]);
   const rows = useMemo(() => {
     if (members.length === 0) return [];
     const all = getPlayerRankings(range === "alltime" ? "all-time" : "season-2026", members, clubNameById);
-    return all.filter((r) => r.isReal && r.clubName === club.name);
-  }, [members, clubNameById, club.name, range]);
+    return all.filter((r) => r.isReal && r.clubName && clubNames.has(r.clubName));
+  }, [members, clubNameById, clubNames, range]);
 
   return (
     <div className="rounded-xl border border-surface-line bg-surface/30 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-sm font-bold text-ink">{t.dashboard.clubOverview.topPerformersTitle}</h3>
+        <h3 className="font-display text-sm font-bold text-ink">{title ?? t.dashboard.clubOverview.topPerformersTitle}</h3>
         <div className="flex gap-1.5 rounded-full border border-surface-line-strong p-1">
           {(["alltime", "season"] as RangeKey[]).map((r) => (
             <button

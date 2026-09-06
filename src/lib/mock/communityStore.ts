@@ -166,6 +166,12 @@ export function createCommunity(
   creatorPersonId: string
 ): Community {
   const id = `community-${Date.now()}`;
+  const initials = input.name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   const community: Community = {
     id,
     name: input.name,
@@ -177,6 +183,9 @@ export function createCommunity(
     memberClubIds: [],
     freeAgentCount: 0,
     tournamentIds: [],
+    color: "#4c8dff",
+    initials,
+    tier: "New",
   };
   communities = [...communities, community];
   updatePerson(creatorPersonId, { communityId: id, communityRole: "President" });

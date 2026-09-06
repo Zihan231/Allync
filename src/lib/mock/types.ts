@@ -122,6 +122,10 @@ export type Club = {
   facebookUrl?: string;
 };
 
+export type CommunityTier = "Featured" | "Verified" | "Regional" | "Open" | "New";
+
+export const COMMUNITY_TIERS: CommunityTier[] = ["Featured", "Verified", "Regional", "Open", "New"];
+
 export type Community = {
   id: string;
   name: string;
@@ -133,6 +137,12 @@ export type Community = {
   memberClubIds: string[];
   freeAgentCount: number;
   tournamentIds: string[];
+  color: string;
+  initials: string;
+  tier: CommunityTier;
+  location?: string;
+  motto?: string;
+  facebookUrl?: string;
 };
 
 export type TournamentFormat = "default" | "custom" | "clubVsClub" | "open";

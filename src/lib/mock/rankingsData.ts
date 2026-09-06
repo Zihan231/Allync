@@ -1,4 +1,4 @@
-import type { Club, ClubStage, Person } from "./types";
+import type { Club, ClubStage, Community, Person } from "./types";
 
 // Deterministic seeded RNG (mulberry32) so the generated leaderboard is stable
 // across renders/reloads instead of reshuffling on every hook call.
@@ -380,4 +380,30 @@ export function getClubRankings(realClubs: Club[], season: ClubSeason = "all-tim
     row.rank = idx + 1;
   });
   return merged;
+}
+
+// ---- Communities ----
+
+export type CommunityClubRankingRow = ClubRankingRow & { communityRank: number };
+
+// Reuses getClubRankings' global (world-wide, synthetic-filled) ranking —
+// since it always tops the real rows up to TOTAL_CLUBS regardless of which
+// subset is passed in, filtering to isReal here still yields correct global
+// ranks for exactly this community's member clubs. Those filtered rows are
+// already in rating-descending order, so their position doubles as the
+// community-local rank without a second sort.
+export function getCommunityClubRankings(memberClubs: Club[]): CommunityClubRankingRow[] {
+  const globalRows = getClubRankings(memberClubs).filter((r) => r.isReal);
+  return globalRows.map((r, idx) => ({ ...r, communityRank: idx + 1 }));
+}
+
+export type CommunityRankingRow = { rank: number; id: string; name: string; points: number };
+
+// No synthetic filler pool here (unlike clubs/players, there's no
+// established "total communities in the world" figure) — this simply ranks
+// the real seeded communities against each other by points.
+export function rankCommunities(allCommunities: Community[]): CommunityRankingRow[] {
+  return [...allCommunities]
+    .sort((a, b) => b.points - a.points)
+    .map((c, idx) => ({ rank: idx + 1, id: c.id, name: c.name, points: c.points }));
 }

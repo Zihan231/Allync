@@ -98,7 +98,10 @@ export type ClubCalendarEvent = {
   dateIso: string;
   isKnockout: boolean;
   opponentClubName: string;
-  team: "Main" | "Academy";
+  // "Main" | "Academy" for a single club's own calendar, but widened to plain
+  // string so communityInsights.ts can repurpose it to hold a member club's
+  // name when aggregating fixtures across an entire community's calendar.
+  team: string;
 };
 
 export type ClubNewsItem = { id: string; headline: string; date: string };

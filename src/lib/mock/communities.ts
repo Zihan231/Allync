@@ -4,7 +4,7 @@ export const mockCommunities: Community[] = [
   {
     id: "dhaka-elite",
     name: "Dhaka Elite Community",
-    dpUrl: null,
+    dpUrl: "/Bangladesh/bangladesh-football-federation-seeklogo.png",
     coverUrl: "/community 1.jpg",
     rules: "1. Show up on time or forfeit. 2. Screenshot or clip evidence is mandatory on every result. 3. No smurfing — one account per player. 4. Respect the Head of Discipline's ruling; repeated disputes filed in bad faith get you removed.",
     points: 2400,
@@ -12,6 +12,12 @@ export const mockCommunities: Community[] = [
     memberClubIds: ["red-falcons", "blue-tigers", "chittagong-kings", "uttara-gunners", "gulshan-barons", "mirpur-titans"],
     freeAgentCount: 12,
     tournamentIds: ["quarter-final-clash", "weekend-cup"],
+    color: "#4c8dff",
+    initials: "DE",
+    tier: "Featured",
+    location: "Dhaka",
+    motto: "One community, every club held to the same standard.",
+    facebookUrl: "https://facebook.com/dhakaeliteefootball",
   },
   {
     id: "sylhet-strikers",
@@ -24,5 +30,11 @@ export const mockCommunities: Community[] = [
     memberClubIds: ["sylhet-strikers-fc", "sylhet-comets"],
     freeAgentCount: 4,
     tournamentIds: [],
+    color: "#34d399",
+    initials: "SS",
+    tier: "Regional",
+    location: "Sylhet",
+    motto: "Small community, big welcome.",
+    facebookUrl: "https://facebook.com/sylhetstrikerscommunity",
   },
 ];
