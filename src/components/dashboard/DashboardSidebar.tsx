@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { useSession, type Mode } from "@/lib/session/SessionContext";
-import { RoleToggle } from "../auth/RoleToggle";
+import { useSession } from "@/lib/session/SessionContext";
 import {
   HomeIcon,
   UsersIcon,
@@ -35,15 +33,8 @@ export function DashboardSidebar({
   onClose: () => void;
 }) {
   const { t } = useLanguage();
-  const { user, setMode } = useSession();
+  const { user } = useSession();
   const pathname = usePathname();
-  const router = useRouter();
-
-  const handleModeChange = (mode: Mode) => {
-    setMode(mode);
-    onClose();
-    router.push(mode === "organizer" ? "/dashboard/organizer" : "/dashboard");
-  };
 
   const playerBase = `/dashboard/${user.activeGame}`;
   const playerItems: NavItem[] = [
@@ -111,9 +102,6 @@ export function DashboardSidebar({
   return (
     <>
       <aside className="fixed top-14 min-[400px]:top-16 left-0 bottom-0 z-20 hidden w-60 shrink-0 overflow-y-auto border-r border-surface-line/70 bg-bg/95 backdrop-blur-md lg:block">
-        <div className="border-b border-surface-line/70 p-3">
-          <RoleToggle value={user.mode} onChange={handleModeChange} className="w-full" />
-        </div>
         {content}
       </aside>
 
@@ -128,9 +116,6 @@ export function DashboardSidebar({
               <Link href="/dashboard" onClick={onClose} className="font-display text-lg font-bold tracking-tight text-ink">
                 ALL<span className="text-accent">Y</span>NQ
               </Link>
-            </div>
-            <div className="border-b border-surface-line/70 p-3">
-              <RoleToggle value={user.mode} onChange={handleModeChange} className="w-full" />
             </div>
             {content}
           </div>
