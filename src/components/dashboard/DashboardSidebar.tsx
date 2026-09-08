@@ -11,7 +11,6 @@ import {
   CalendarIcon,
   SwapIcon,
   WalletIcon,
-  ShieldIcon,
   PlusIcon,
   GavelIcon,
   ChartIcon,
@@ -44,11 +43,6 @@ export function DashboardSidebar({
       label: t.dashboard.clubs.browseTitle,
       icon: UsersIcon,
     },
-    {
-      href: `${playerBase}/community`,
-      label: t.dashboard.community.browseTitle,
-      icon: ShieldIcon,
-    },
     { href: `${playerBase}/tournaments`, label: t.dashboard.shell.navTournaments, icon: TrophyIcon },
     { href: `${playerBase}/matches`, label: t.dashboard.shell.navMatches, icon: CalendarIcon },
     { href: `${playerBase}/transfers`, label: t.dashboard.shell.navTransfers, icon: SwapIcon },
@@ -63,9 +57,6 @@ export function DashboardSidebar({
     { href: "/dashboard/organizer/disputes", label: t.dashboard.shell.navDisputes, icon: GavelIcon },
     { href: "/dashboard/organizer/payouts", label: t.dashboard.shell.navPayouts, icon: WalletIcon },
     { href: "/dashboard/organizer/verification", label: t.dashboard.shell.navVerification, icon: LockIcon },
-    ...(user.community && user.community.role !== "Member"
-      ? [{ href: "/dashboard/organizer/community", label: t.dashboard.shell.navCommunityMgmt, icon: ShieldIcon }]
-      : []),
     { href: "/dashboard/organizer/settings", label: t.dashboard.shell.navSettings, icon: SettingsIcon },
   ];
 

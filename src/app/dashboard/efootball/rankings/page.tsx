@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { useMockPeople, useMockClubs, useMockCommunities } from "@/lib/mock/communityStore";
+import { useMockPeople, useMockClubs } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { LeaderboardTable } from "@/components/dashboard/LeaderboardTable";
 import { PlayerRankingsTable } from "@/components/dashboard/PlayerRankingsTable";
 import { ClubRankingsTable } from "@/components/dashboard/ClubRankingsTable";
 import { DualRangeSlider } from "@/components/dashboard/DualRangeSlider";
@@ -23,7 +22,7 @@ import {
   type ClubSeason,
 } from "@/lib/mock/rankingsData";
 
-type Tab = "players" | "clubs" | "communities";
+type Tab = "players" | "clubs";
 const PAGE_SIZE = 20;
 
 type Range2 = [number, number];
@@ -33,17 +32,11 @@ export default function RankingsPage() {
   const [tab, setTab] = useState<Tab>("players");
   const people = useMockPeople();
   const clubs = useMockClubs();
-  const communities = useMockCommunities();
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "players", label: t.dashboard.rankings.tabPlayers },
     { key: "clubs", label: t.dashboard.rankings.tabClubs },
-    { key: "communities", label: t.dashboard.rankings.tabCommunities },
   ];
-
-  const communityRows = [...communities]
-    .sort((a, b) => b.points - a.points)
-    .map((c) => ({ id: c.id, name: c.name, dpUrl: c.dpUrl, points: c.points }));
 
   return (
     <div>
@@ -68,13 +61,8 @@ export default function RankingsPage() {
       <div className="mt-6">
         {tab === "players" ? (
           <PlayersRankingsPanel people={people} clubs={clubs} />
-        ) : tab === "clubs" ? (
-          <ClubsRankingsPanel clubs={clubs} />
         ) : (
-          <LeaderboardTable
-            rows={communityRows}
-            hrefBuilder={(id) => `/dashboard/efootball/community/${id}`}
-          />
+          <ClubsRankingsPanel clubs={clubs} />
         )}
       </div>
     </div>

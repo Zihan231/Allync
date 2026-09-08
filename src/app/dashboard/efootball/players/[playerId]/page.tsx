@@ -4,7 +4,7 @@ import { use, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockPeople, useMockClubs, useMockCommunities } from "@/lib/mock/communityStore";
+import { useMockPeople, useMockClubs } from "@/lib/mock/communityStore";
 import { getPlayerInsights } from "@/lib/mock/playerInsights";
 import { BackButton } from "@/components/dashboard/BackButton";
 import { Avatar } from "@/components/common/Avatar";
@@ -352,7 +352,6 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
   const { user } = useSession();
   const people = useMockPeople();
   const clubs = useMockClubs();
-  const communities = useMockCommunities();
   const [trendView, setTrendView] = useState<"monthly" | "weekly">("monthly");
 
   const person = people.find((p) => p.id === playerId);
@@ -364,7 +363,6 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
   }
 
   const club = person.clubId ? clubs.find((c) => c.id === person.clubId) : null;
-  const community = person.communityId ? communities.find((c) => c.id === person.communityId) : null;
   const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === person.id) + 1;
 const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleId) : null;
   const equippedBadge = person.equippedBadgeId ? getCosmetic(person.equippedBadgeId) : null;
@@ -475,19 +473,6 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
                     {club.name} · <span style={{ color: tokens.accentText }}>{person.clubRole}</span>
                   </Link>
                 ) : null}
-                {community ? (
-                  <Link
-                    href={`/dashboard/efootball/community/${community.id}`}
-                    className="rounded-full border px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold backdrop-blur transition-all hover:scale-105"
-                    style={{
-                      borderColor: tokens.innerBorder,
-                      backgroundColor: tokens.innerBg,
-                      color: tokens.headingText,
-                    }}
-                  >
-                    {community.name} · <span style={{ color: tokens.accentText }}>{person.communityRole}</span>
-                  </Link>
-                ) : null}
                 <span
                   className="rounded-full border px-2.5 sm:px-3 py-0.5 sm:py-1 font-mono text-[10px] sm:text-[11px] font-bold backdrop-blur"
                   style={{
@@ -536,8 +521,8 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
         ownedBadges={ownedBadges}
       />
 
-      {/* Club and Community Affiliation Cards */}
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+      {/* Club Affiliation Card */}
+      <div className="mt-6">
         <div
           className="rounded-2xl border p-4 backdrop-blur transition-all"
           style={{
@@ -560,36 +545,6 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
                 </span>
                 <span className="font-mono text-[10px] uppercase font-bold" style={{ color: tokens.accentText }}>
                   {person.clubRole}
-                </span>
-              </div>
-            </Link>
-          ) : (
-            <p className="mt-2 text-sm" style={{ color: tokens.mutedText }}>{t.dashboard.players.noAffiliation}</p>
-          )}
-        </div>
-
-        <div
-          className="rounded-2xl border p-4 backdrop-blur transition-all"
-          style={{
-            borderColor: tokens.innerBorder,
-            backgroundColor: tokens.innerBg,
-          }}
-        >
-          <div
-            className="font-mono text-[10px] uppercase font-bold tracking-wide"
-            style={{ color: tokens.mutedText }}
-          >
-            {t.dashboard.players.communityLabel}
-          </div>
-          {community ? (
-            <Link href={`/dashboard/efootball/community/${community.id}`} className="mt-2.5 flex items-center gap-2.5">
-              <Avatar dpUrl={community.dpUrl} name={community.name} size="sm" mode="static" />
-              <div className="min-w-0">
-                <span className="font-bold text-sm block truncate" style={{ color: tokens.headingText }}>
-                  {community.name}
-                </span>
-                <span className="font-mono text-[10px] uppercase font-bold" style={{ color: tokens.accentText }}>
-                  {person.communityRole}
                 </span>
               </div>
             </Link>

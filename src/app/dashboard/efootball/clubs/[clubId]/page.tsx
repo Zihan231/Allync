@@ -5,13 +5,11 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockClubs, useMockPeople, useMockJoinRequests, joinClub, leaveClub } from "@/lib/mock/communityStore";
-import { mockCommunities } from "@/lib/mock";
 import { getClubInsights } from "@/lib/mock/clubInsights";
 import { BackButton } from "@/components/dashboard/BackButton";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
 import { StaffRow } from "@/components/dashboard/StaffRow";
-import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { StagePill } from "@/components/dashboard/StagePill";
 import { ClubMetaGrid } from "@/components/dashboard/ClubMetaGrid";
 import { ClubOverviewTab } from "@/components/dashboard/ClubOverviewTab";
@@ -59,7 +57,6 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
 
   const leftoverStaff = members.filter((p) => p.clubRole === "Manager");
   const squadTeams = Array.from(new Set(members.map((p) => p.squadTeam ?? "Main")));
-  const communities = mockCommunities.filter((c) => club.communityIds.includes(c.id));
 
   const isMine = user.club?.id === club.id;
   const canManage = isMine && (user.club?.role === "President" || user.club?.role === "Manager");
@@ -203,23 +200,6 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
       {leftoverStaff.length ? (
         <div className="mt-5">
           <StaffRow people={leftoverStaff} />
-        </div>
-      ) : null}
-
-      {communities.length ? (
-        <div className="mt-6">
-          <SectionHeading tone="success">{t.dashboard.club.communitiesTitle}</SectionHeading>
-          <div className="flex flex-wrap gap-2">
-            {communities.map((c) => (
-              <Link
-                key={c.id}
-                href={`/dashboard/efootball/community/${c.id}`}
-                className="rounded-full border border-surface-line-strong bg-bg-raised px-3 py-1.5 text-xs font-medium text-ink hover:border-accent"
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
         </div>
       ) : null}
 
