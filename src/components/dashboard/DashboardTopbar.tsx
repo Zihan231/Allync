@@ -5,37 +5,31 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { games, getGame } from "@/lib/games";
 import { DEMO_PERSONAS } from "@/lib/mock/personas";
 import { LanguageSwitch } from "../LanguageSwitch";
 import { Avatar } from "../common/Avatar";
-import { BellIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, UsersIcon } from "../icons";
+import { BellIcon, LogoutIcon, SettingsIcon, UsersIcon } from "../icons";
 
 export function DashboardTopbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { t } = useLanguage();
   const { user, logout, switchPersona } = useSession();
   const router = useRouter();
 
-  const [gameMenuOpen, setGameMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const gameMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handlePointerDown = (e: PointerEvent) => {
       const target = e.target as Node;
-      if (gameMenuRef.current && !gameMenuRef.current.contains(target)) setGameMenuOpen(false);
       if (notifRef.current && !notifRef.current.contains(target)) setNotifOpen(false);
       if (userMenuRef.current && !userMenuRef.current.contains(target)) setUserMenuOpen(false);
     };
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, []);
-
-  const activeGame = getGame(user.activeGame);
 
   const notifications = [
     t.dashboard.shell.notification1,
@@ -68,38 +62,6 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick: () => void }) {
       </div>
 
       <div className="flex items-center gap-1 min-[380px]:gap-2 shrink-0">
-        {user.mode === "player" ? (
-          <div className="relative shrink-0" ref={gameMenuRef}>
-            <button
-              type="button"
-              onClick={() => setGameMenuOpen((o) => !o)}
-              className="flex h-8 min-[400px]:h-auto items-center gap-1 min-[400px]:gap-2 rounded-full border border-surface-line-strong px-2 min-[400px]:px-3 py-1 min-[400px]:py-1.5 text-xs min-[400px]:text-sm text-ink shrink-0"
-            >
-              <activeGame.icon className="h-3.5 w-3.5 min-[400px]:h-4 min-[400px]:w-4 shrink-0" style={{ color: activeGame.color }} />
-              <span className="hidden sm:inline">{activeGame.name}</span>
-              <ChevronDownIcon className="h-3 w-3 min-[400px]:h-3.5 min-[400px]:w-3.5 text-ink-faint hidden min-[360px]:inline" />
-            </button>
-            {gameMenuOpen ? (
-              <div className="absolute right-0 top-full z-40 mt-2 w-48 rounded-xl border border-surface-line bg-surface p-1.5 shadow-2xl">
-                {games.map((g) => (
-                  <Link
-                    key={g.id}
-                    href={`/dashboard/${g.id}`}
-                    onClick={() => setGameMenuOpen(false)}
-                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-ink-soft hover:bg-bg-raised hover:text-ink"
-                  >
-                    <g.icon className="h-4 w-4" style={{ color: g.color }} />
-                    {g.name}
-                    {!g.live ? (
-                      <span className="ml-auto font-mono text-[9px] uppercase text-ink-faint">soon</span>
-                    ) : null}
-                  </Link>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
         <LanguageSwitch />
 
         <div className="relative shrink-0" ref={notifRef}>
