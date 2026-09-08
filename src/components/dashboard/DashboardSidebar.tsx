@@ -104,8 +104,12 @@ export function DashboardSidebar({
           />
           <div className="relative flex h-full w-64 flex-col border-r border-surface-line bg-bg-raised shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-center border-b border-surface-line/70 px-4 py-3.5">
-              <Link href="/dashboard" onClick={onClose} className="font-display text-lg font-bold tracking-tight text-ink">
-                ALL<span className="text-accent">Y</span>NQ
+              <Link
+                href={user.mode === "organizer" ? "/dashboard/organizer" : playerBase}
+                onClick={onClose}
+                className="font-display text-lg font-bold tracking-tight text-ink"
+              >
+                efootball <span className="text-accent">community</span>
               </Link>
             </div>
             {content}

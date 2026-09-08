@@ -39,7 +39,7 @@ export function SiteFooter() {
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <span className="font-display text-lg font-bold text-ink">
-              ALL<span className="text-accent">Y</span>NQ
+              efootball <span className="text-accent">community</span>
             </span>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-soft">
               {t.ctaFooter.brandBlurb}

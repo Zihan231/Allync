@@ -807,7 +807,7 @@ export function ThemedCoverArtwork({
     );
   }
 
-  // 2. LEGENDARY: ALLYNQ Sovereign Solar Gold (24K Gold)
+  // 2. LEGENDARY: efootball community Sovereign Solar Gold (24K Gold)
   if (theme.id === "theme-allynq-gold" || (theme.rarity === "legendary" && theme.id !== "theme-cyberpunk-night")) {
     return (
       <div

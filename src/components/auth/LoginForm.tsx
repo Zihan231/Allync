@@ -18,7 +18,7 @@ export function LoginForm() {
     const data = new FormData(e.currentTarget);
     const email = String(data.get("email") ?? "").trim() || "demo@example.com";
     login({ email });
-    router.push("/dashboard");
+    router.push("/dashboard/efootball");
   };
 
   return (

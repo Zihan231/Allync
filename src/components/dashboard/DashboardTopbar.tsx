@@ -11,13 +11,7 @@ import { LanguageSwitch } from "../LanguageSwitch";
 import { Avatar } from "../common/Avatar";
 import { BellIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, UsersIcon } from "../icons";
 
-export function DashboardTopbar({
-  onMenuClick,
-  showMenuButton = true,
-}: {
-  onMenuClick: () => void;
-  showMenuButton?: boolean;
-}) {
+export function DashboardTopbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { t } = useLanguage();
   const { user, logout, switchPersona } = useSession();
   const router = useRouter();
@@ -52,23 +46,24 @@ export function DashboardTopbar({
   return (
     <header className="sticky top-0 z-30 flex h-14 min-[400px]:h-16 items-center justify-between gap-1.5 min-[400px]:gap-3 border-b border-surface-line/70 bg-bg/90 px-2.5 min-[400px]:px-4 backdrop-blur lg:px-6 max-w-[100vw] overflow-x-clip">
       <div className="flex items-center gap-1.5 min-[400px]:gap-3 shrink-0">
-        {showMenuButton ? (
-          <button
-            type="button"
-            onClick={onMenuClick}
-            aria-label="Toggle menu"
-            className="flex h-8 w-8 min-[400px]:h-9 min-[400px]:w-9 items-center justify-center rounded-full border border-surface-line-strong text-ink shrink-0 lg:hidden"
-          >
-            <span className="relative block h-3 w-3.5 min-[400px]:h-3.5 min-[400px]:w-4">
-              <span className="absolute left-0 top-0 block h-[1.5px] w-full bg-current" />
-              <span className="absolute left-0 top-1/2 block h-[1.5px] w-full -translate-y-1/2 bg-current" />
-              <span className="absolute bottom-0 left-0 block h-[1.5px] w-full bg-current" />
-            </span>
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label="Toggle menu"
+          className="flex h-8 w-8 min-[400px]:h-9 min-[400px]:w-9 items-center justify-center rounded-full border border-surface-line-strong text-ink shrink-0 lg:hidden"
+        >
+          <span className="relative block h-3 w-3.5 min-[400px]:h-3.5 min-[400px]:w-4">
+            <span className="absolute left-0 top-0 block h-[1.5px] w-full bg-current" />
+            <span className="absolute left-0 top-1/2 block h-[1.5px] w-full -translate-y-1/2 bg-current" />
+            <span className="absolute bottom-0 left-0 block h-[1.5px] w-full bg-current" />
+          </span>
+        </button>
 
-        <Link href="/dashboard" className="font-display text-base min-[400px]:text-lg font-bold tracking-tight text-ink shrink-0">
-          ALL<span className="text-accent">Y</span>NQ
+        <Link
+          href={user.mode === "organizer" ? "/dashboard/organizer" : `/dashboard/${user.activeGame}`}
+          className="font-display text-sm min-[400px]:text-lg font-bold tracking-tight text-ink shrink-0"
+        >
+          efootball <span className="text-accent">community</span>
         </Link>
       </div>
 
@@ -184,7 +179,7 @@ export function DashboardTopbar({
                   onClick={() => {
                     switchPersona(persona.personId);
                     setUserMenuOpen(false);
-                    router.push("/dashboard");
+                    router.push("/dashboard/efootball");
                   }}
                   className="flex w-full items-center rounded-lg px-2.5 py-2 text-left text-sm text-ink-soft hover:bg-bg-raised hover:text-ink"
                 >

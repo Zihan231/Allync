@@ -5,7 +5,7 @@ import { SignupForm } from "@/components/auth/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Create your account — ALLYNQ",
+  title: "Create your account — efootball community",
 };
 
 export default function SignupPage() {

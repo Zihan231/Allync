@@ -9,7 +9,6 @@ import { NAV_DEPTH_KEY } from "@/components/dashboard/BackButton";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const isHub = pathname === "/dashboard";
 
   // Marks that at least one in-app route change has happened this tab
   // session, so BackButton knows a real "previous page" exists to pop back
@@ -27,14 +26,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-bg">
-      <DashboardTopbar onMenuClick={() => setMenuOpen(true)} showMenuButton={!isHub} />
+      <DashboardTopbar onMenuClick={() => setMenuOpen(true)} />
       <div className="flex">
-        {!isHub ? (
-          <>
-            <DashboardSidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-            <div className="hidden lg:block w-60 shrink-0" aria-hidden="true" />
-          </>
-        ) : null}
+        <DashboardSidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
+        <div className="hidden lg:block w-60 shrink-0" aria-hidden="true" />
         <main className="min-w-0 flex-1 px-4 py-8 lg:px-8">{children}</main>
       </div>
     </div>

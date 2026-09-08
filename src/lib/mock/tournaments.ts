@@ -56,7 +56,7 @@ export const mockTournaments: Tournament[] = [
   },
   {
     id: "ALLYNQ-open-championship",
-    name: "ALLYNQ Open Championship",
+    name: "efootball community Open Championship",
     game: "efootball",
     format: "open",
     status: "open",
