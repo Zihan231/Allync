@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { ProfileEditForm } from "@/components/dashboard/ProfileEditForm";
-import { ChartIcon, TrophyIcon, CalendarIcon, StoreIcon, FlameIcon } from "@/components/icons";
+import { ChartIcon, TrophyIcon, CalendarIcon, FlameIcon } from "@/components/icons";
 import {
   CosmeticBadgePill,
   CosmeticTitleText,
@@ -56,13 +56,6 @@ export default function ProfilePage() {
         description={t.dashboard.profile.crossGameNote}
         action={
           <div className="flex flex-wrap items-center gap-2.5">
-            <Link
-              href="/dashboard/efootball/store"
-              className="flex items-center gap-1.5 rounded-full border border-accent bg-accent/15 px-4 py-2 text-sm font-semibold text-accent-ink transition-all hover:bg-accent hover:text-bg shadow-sm"
-            >
-              <StoreIcon className="h-4 w-4" />
-              {t.dashboard.shell.navStore}
-            </Link>
             <Link
               href={`/dashboard/efootball/players/${user.personId}`}
               className="rounded-full border border-surface-line-strong bg-surface/40 px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
