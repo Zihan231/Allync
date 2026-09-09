@@ -1278,7 +1278,9 @@ export const translations = {
           formatClubVsClubTitle: "ক্লাব বনাম ক্লাব",
           formatClubVsClubBody: "জোড়া 1v1, মিলে হয় একটা ক্লাব স্কোর।",
           formatOpenTitle: "ওপেন",
-          formatOpenBody: "যেকোনো গেম, যেকোনো প্লেয়ার, কমিউনিটি লাগবে না।",
+          formatOpenBody: "যেকোনো প্লেয়ারের জন্য উন্মুক্ত — কমিউনিটি লাগবে না।",
+          formatPlayerVsPlayerTitle: "প্লেয়ার বনাম প্লেয়ার",
+          formatPlayerVsPlayerBody: "হেড-টু-হেড 1v1 — ক্লাব বা কমিউনিটি লাগবে না।",
         },
         disputes: {
           queueTitle: "বিতর্কিত ম্যাচ",
