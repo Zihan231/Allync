@@ -45,15 +45,13 @@ export default function ClubsPage() {
         eyebrow="eFootball"
         title={t.dashboard.clubs.browseTitle}
         action={
-          !user.club ? (
-            <Link
-              href="/dashboard/efootball/clubs/create"
-              className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg transition-transform hover:-translate-y-0.5"
-            >
-              <PlusIcon className="h-4 w-4" />
-              {t.dashboard.clubs.createCta}
-            </Link>
-          ) : undefined
+          <Link
+            href="/dashboard/efootball/clubs/create"
+            className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg transition-transform hover:-translate-y-0.5"
+          >
+            <PlusIcon className="h-4 w-4" />
+            {t.dashboard.clubs.createCta}
+          </Link>
         }
       />
 
