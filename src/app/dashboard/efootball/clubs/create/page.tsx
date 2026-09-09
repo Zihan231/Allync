@@ -31,6 +31,13 @@ export default function CreateClubPage() {
   return (
     <div>
       <PageHeader eyebrow="eFootball" title={t.dashboard.clubs.createCta} backHref="/dashboard/efootball/clubs" />
+
+      {user.club ? (
+        <p className="mt-6 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning-ink">
+          {t.dashboard.clubs.switchConfirm}
+        </p>
+      ) : null}
+
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-surface-line bg-surface/50 p-6">
           <EntityEditForm
@@ -38,6 +45,7 @@ export default function CreateClubPage() {
             descriptionLabel={t.dashboard.clubs.descriptionLabel}
             submitLabel={t.dashboard.clubs.createSubmit}
             onSubmit={({ name, description, joinPolicy }) => {
+              if (user.club && !window.confirm(t.dashboard.clubs.switchConfirm)) return;
               const club = createClub(
                 { name, description, color: colorFromString(name), joinPolicy },
                 user.personId
