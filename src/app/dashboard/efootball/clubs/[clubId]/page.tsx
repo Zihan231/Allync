@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockClubs, useMockPeople, useMockJoinRequests, joinClub, leaveClub } from "@/lib/mock/communityStore";
+import { useMockTournaments } from "@/lib/mock/store";
 import { mockCommunities } from "@/lib/mock";
 import { getClubInsights } from "@/lib/mock/clubInsights";
 import { BackButton } from "@/components/dashboard/BackButton";
@@ -24,6 +25,7 @@ import { ClubRoundsTab } from "@/components/dashboard/ClubRoundsTab";
 import { ClubRoundStatsTab } from "@/components/dashboard/ClubRoundStatsTab";
 import { ClubMatchStatsTab } from "@/components/dashboard/ClubMatchStatsTab";
 import { ClubTeamUpTab } from "@/components/dashboard/ClubTeamUpTab";
+import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { UsersIcon, TrophyIcon, FacebookIcon } from "@/components/icons";
 
@@ -37,7 +39,8 @@ type Tab =
   | "rounds"
   | "roundStats"
   | "matchStats"
-  | "teamUp";
+  | "teamUp"
+  | "tournaments";
 
 export default function ClubDetailPage({ params }: { params: Promise<{ clubId: string }> }) {
   const { clubId } = use(params);
@@ -46,12 +49,14 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const clubs = useMockClubs();
   const people = useMockPeople();
   const joinRequests = useMockJoinRequests();
+  const tournaments = useMockTournaments();
   const [tab, setTab] = useState<Tab>("overview");
 
   const club = clubs.find((c) => c.id === clubId);
 
   const members = useMemo(() => people.filter((p) => p.clubId === clubId), [people, clubId]);
   const insights = useMemo(() => (club ? getClubInsights(club, members) : null), [club, members]);
+  const clubTournaments = useMemo(() => tournaments.filter((tour) => tour.clubId === clubId), [tournaments, clubId]);
 
   if (!club || !insights) {
     return <EmptyState icon={UsersIcon} title={t.dashboard.clubs.emptyState} body="" />;
@@ -92,6 +97,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
     { key: "roundStats", label: t.dashboard.club.tabRoundStats },
     { key: "matchStats", label: t.dashboard.club.tabMatchStats },
     { key: "teamUp", label: t.dashboard.club.tabTeamUp },
+    { key: "tournaments", label: t.dashboard.club.tabTournaments },
   ];
 
   return (
@@ -253,6 +259,9 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
         {tab === "roundStats" ? <ClubRoundStatsTab club={club} members={members} /> : null}
         {tab === "matchStats" ? <ClubMatchStatsTab club={club} members={members} /> : null}
         {tab === "teamUp" ? <ClubTeamUpTab club={club} members={members} /> : null}
+        {tab === "tournaments" ? (
+          <ClubTournamentsTab tournaments={clubTournaments} clubId={club.id} canManage={canManage} />
+        ) : null}
       </div>
     </div>
   );

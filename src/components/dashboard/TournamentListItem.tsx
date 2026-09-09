@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Tournament } from "@/lib/mock/types";
 import { StatusPill, type StatusTone } from "./StatusPill";
-import { TrophyIcon, BracketIcon, UsersIcon, ArrowRightIcon } from "../icons";
+import { TrophyIcon, BracketIcon, UsersIcon, CrosshairIcon, ArrowRightIcon } from "../icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const toneByStatus: Record<Tournament["status"], StatusTone> = {
@@ -15,6 +15,7 @@ const iconByFormat: Record<Tournament["format"], typeof TrophyIcon> = {
   custom: BracketIcon,
   clubVsClub: UsersIcon,
   open: TrophyIcon,
+  playerVsPlayer: CrosshairIcon,
 };
 
 export function TournamentListItem({

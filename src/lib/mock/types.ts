@@ -145,7 +145,7 @@ export type Community = {
   facebookUrl?: string;
 };
 
-export type TournamentFormat = "default" | "custom" | "clubVsClub" | "open";
+export type TournamentFormat = "default" | "custom" | "clubVsClub" | "open" | "playerVsPlayer";
 export type TournamentStatus = "open" | "live" | "completed";
 
 export type Tournament = {
@@ -158,6 +158,7 @@ export type Tournament = {
   entryFeeBdt: number | null;
   prizePoolBdt: number | null;
   communityId: string | null;
+  clubId?: string | null;
   organizerName: string;
   startAt: string;
   endAt: string;
