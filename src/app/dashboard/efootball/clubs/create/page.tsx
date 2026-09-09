@@ -7,14 +7,29 @@ import { createClub } from "@/lib/mock/communityStore";
 import { colorFromString } from "@/lib/colorHash";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EntityEditForm } from "@/components/dashboard/EntityEditForm";
+import { EntityGuidelinesPanel } from "@/components/dashboard/EntityGuidelinesPanel";
+import { ShieldIcon, LockIcon, UsersIcon, TrophyIcon } from "@/components/icons";
 
 export default function CreateClubPage() {
   const { t } = useLanguage();
   const { user, setClub } = useSession();
   const router = useRouter();
+  const rules = t.dashboard.clubs.rules;
+  const tips = t.dashboard.clubs.tips;
+
+  const ruleItems = [
+    { icon: LockIcon, title: rules.item1Title, body: rules.item1Body },
+    { icon: ShieldIcon, title: rules.item2Title, body: rules.item2Body },
+    { icon: UsersIcon, title: rules.item3Title, body: rules.item3Body },
+  ];
+  const tipItems = [
+    { icon: LockIcon, title: tips.item1Title, body: tips.item1Body },
+    { icon: UsersIcon, title: tips.item2Title, body: tips.item2Body },
+    { icon: TrophyIcon, title: tips.item3Title, body: tips.item3Body },
+  ];
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div>
       <PageHeader eyebrow="eFootball" title={t.dashboard.clubs.createCta} backHref="/dashboard/efootball/clubs" />
 
       {user.club ? (
@@ -48,3 +63,4 @@ export default function CreateClubPage() {
     </div>
   );
 }
+
