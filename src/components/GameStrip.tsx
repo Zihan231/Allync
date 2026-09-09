@@ -11,27 +11,6 @@ const games = [
     color: "#3fbf7f",
     blurbKey: "efootballBlurb" as const,
   },
-  {
-    name: "PUBG",
-    live: false,
-    image: "/PUBG.webp",
-    color: "#e08a3c",
-    blurbKey: "pubgBlurb" as const,
-  },
-  {
-    name: "Free Fire",
-    live: false,
-    image: "/FreeFire.jpg",
-    color: "#ff6b4a",
-    blurbKey: "freefireBlurb" as const,
-  },
-  {
-    name: "Valorant",
-    live: false,
-    image: "/Valorant.jpg",
-    color: "#ff4d5e",
-    blurbKey: "valorantBlurb" as const,
-  },
 ];
 
 export function GameStrip() {
@@ -46,7 +25,7 @@ export function GameStrip() {
           description={t.games.description}
         />
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid max-w-md gap-4">
           {games.map((game) => (
             <div
               key={game.name}

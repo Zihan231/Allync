@@ -49,9 +49,6 @@ export function Hero() {
 
             <div className="mt-12 flex flex-wrap gap-x-8 gap-y-3 font-mono text-xs uppercase tracking-wide text-ink-faint">
               <span>{t.hero.tickerEfootball}</span>
-              <span>{t.hero.tickerPubg}</span>
-              <span>{t.hero.tickerFreefire}</span>
-              <span>{t.hero.tickerValorant}</span>
             </div>
           </div>
 

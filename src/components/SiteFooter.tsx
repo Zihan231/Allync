@@ -64,12 +64,7 @@ export function SiteFooter() {
           />
           <FooterColumn
             heading={t.ctaFooter.colGames}
-            links={[
-              { label: t.ctaFooter.linkEfootball, href: "/#games" },
-              { label: t.ctaFooter.linkPubg, href: "/#games" },
-              { label: t.ctaFooter.linkFreefire, href: "/#games" },
-              { label: t.ctaFooter.linkValorant, href: "/#games" },
-            ]}
+            links={[{ label: t.ctaFooter.linkEfootball, href: "/#games" }]}
           />
         </div>
 

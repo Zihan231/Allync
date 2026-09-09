@@ -6,13 +6,11 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { addTournament } from "@/lib/mock/store";
-import { games } from "@/lib/games";
-import type { GameId } from "@/lib/session/SessionContext";
 import type { Tournament, TournamentFormat } from "@/lib/mock/types";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { LockIcon } from "@/components/icons";
 
-const steps = ["stepGame", "stepFormat", "stepDetails", "stepFee", "stepReview"] as const;
+const steps = ["stepFormat", "stepDetails", "stepFee", "stepReview"] as const;
 
 const formats: { value: TournamentFormat; titleKey: "formatDefaultTitle" | "formatCustomTitle" | "formatClubVsClubTitle" | "formatOpenTitle"; bodyKey: "formatDefaultBody" | "formatCustomBody" | "formatClubVsClubBody" | "formatOpenBody" }[] = [
   { value: "default", titleKey: "formatDefaultTitle", bodyKey: "formatDefaultBody" },
@@ -28,7 +26,7 @@ export default function CreateTournamentPage() {
   const c = t.dashboard.organizer.create;
 
   const [step, setStep] = useState(0);
-  const [game, setGame] = useState<GameId>("efootball");
+  const game = "efootball" as const;
   const [format, setFormat] = useState<TournamentFormat>("default");
   const [name, setName] = useState("");
   const [startAt, setStartAt] = useState("");
@@ -92,23 +90,6 @@ export default function CreateTournamentPage() {
 
       <div className="mt-6 rounded-xl border border-surface-line bg-surface/50 p-6">
         {step === 0 ? (
-          <div className="grid grid-cols-2 gap-3">
-            {games.map((g) => (
-              <button
-                key={g.id}
-                onClick={() => setGame(g.id)}
-                className={`flex items-center gap-2.5 rounded-lg border p-3.5 text-left transition-colors ${
-                  game === g.id ? "border-accent bg-accent-soft" : "border-surface-line-strong hover:border-ink-faint"
-                }`}
-              >
-                <g.icon className="h-5 w-5" style={{ color: g.color }} />
-                <span className="text-sm font-medium text-ink">{g.name}</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        {step === 1 ? (
           <div className="grid gap-3 sm:grid-cols-2">
             {formats.map((f) => (
               <button
@@ -125,7 +106,7 @@ export default function CreateTournamentPage() {
           </div>
         ) : null}
 
-        {step === 2 ? (
+        {step === 1 ? (
           <div className="space-y-4">
             <label className="block">
               <span className="text-sm font-medium text-ink-soft">{c.nameLabel}</span>
@@ -158,7 +139,7 @@ export default function CreateTournamentPage() {
           </div>
         ) : null}
 
-        {step === 3 ? (
+        {step === 2 ? (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-2 rounded-lg border border-surface-line bg-surface p-1">
               <button
@@ -210,12 +191,8 @@ export default function CreateTournamentPage() {
           </div>
         ) : null}
 
-        {step === 4 ? (
+        {step === 3 ? (
           <div className="space-y-3 font-mono text-sm">
-            <div className="flex justify-between border-b border-surface-line pb-2.5">
-              <span className="text-ink-faint">{c.stepGame}</span>
-              <span className="text-ink">{games.find((g) => g.id === game)?.name}</span>
-            </div>
             <div className="flex justify-between border-b border-surface-line pb-2.5">
               <span className="text-ink-faint">{c.stepFormat}</span>
               <span className="text-ink">{formats.find((f) => f.value === format)?.value}</span>
@@ -243,7 +220,7 @@ export default function CreateTournamentPage() {
         {step < steps.length - 1 ? (
           <button
             onClick={next}
-            disabled={isPaid && kycBlocked && step === 3}
+            disabled={isPaid && kycBlocked && step === 2}
             className="rounded-full bg-accent px-6 py-2.5 font-display text-sm font-semibold text-bg transition-transform hover:-translate-y-0.5 disabled:opacity-40"
           >
             {c.next}

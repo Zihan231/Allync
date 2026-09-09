@@ -18,9 +18,6 @@ export const translations = {
       ctaPrimary: "Create your account",
       ctaSecondary: "Become an Organizer",
       tickerEfootball: "eFootball — live now",
-      tickerPubg: "PUBG — coming soon",
-      tickerFreefire: "Free Fire — coming soon",
-      tickerValorant: "Valorant — coming soon",
       cardLive: "Live · Quarter-final",
       cardCommunity: "Dhaka Elite Community",
       cardVerified: "Result verified · both sides confirmed",
@@ -33,9 +30,6 @@ export const translations = {
       live: "Live",
       comingSoon: "Coming soon",
       efootballBlurb: "Communities, clubs, and both tournament formats — fully live.",
-      pubgBlurb: "Squad play, on the same account, once it lands.",
-      freefireBlurb: "Same clubs, same wallet, a new arena.",
-      valorantBlurb: "Tactical 5v5, queued for the efootball community framework.",
     },
     howItWorks: {
       eyebrow: "How it works",
@@ -93,11 +87,8 @@ export const translations = {
       linkBecomeOrganizer: "Become an Organizer",
       linkCreateAccount: "Create an account",
       linkEfootball: "eFootball — live",
-      linkPubg: "PUBG — coming soon",
-      linkFreefire: "Free Fire — coming soon",
-      linkValorant: "Valorant — coming soon",
       copyright: "© 2026 efootball community. All rights reserved.",
-      tagline: "eFootball live · more games queued",
+      tagline: "eFootball live",
     },
     auth: {
       loginEyebrow: "Welcome back",
@@ -136,7 +127,7 @@ export const translations = {
       highlight2Body: "Default rooms, custom brackets, or Club vs Club leagues with real prize pools.",
       highlight3Title: "Verified, not just claimed",
       highlight3Body: "Every result is evidence-checked before it touches your stats or your wallet.",
-      tagline: "eFootball live · more games queued",
+      tagline: "eFootball live",
     },
     dashboard: {
       shell: {
@@ -383,11 +374,9 @@ export const translations = {
           recentActivityTitle: "Recent activity",
         },
         myTournaments: {
-          gameFilterAll: "All games",
           createButton: "Create tournament",
         },
         create: {
-          stepGame: "Game",
           stepFormat: "Format",
           stepDetails: "Details",
           stepFee: "Entry fee & prize pool",
@@ -828,9 +817,6 @@ export const translations = {
       ctaPrimary: "অ্যাকাউন্ট খুলুন",
       ctaSecondary: "অর্গানাইজার হোন",
       tickerEfootball: "ইফুটবল — এখন লাইভ",
-      tickerPubg: "PUBG — শীঘ্রই আসছে",
-      tickerFreefire: "ফ্রি ফায়ার — শীঘ্রই আসছে",
-      tickerValorant: "ভ্যালোর্যান্ট — শীঘ্রই আসছে",
       cardLive: "লাইভ · কোয়ার্টার-ফাইনাল",
       cardCommunity: "ঢাকা এলিট কমিউনিটি",
       cardVerified: "রেজাল্ট ভেরিফায়েড · দু'পক্ষই কনফার্ম করেছে",
@@ -843,9 +829,6 @@ export const translations = {
       live: "লাইভ",
       comingSoon: "শীঘ্রই আসছে",
       efootballBlurb: "কমিউনিটি, ক্লাব, আর দু'ধরনের টুর্নামেন্ট ফরম্যাট — পুরোপুরি লাইভ।",
-      pubgBlurb: "একই অ্যাকাউন্টে স্কোয়াড প্লে — চালু হলেই।",
-      freefireBlurb: "একই ক্লাব, একই ওয়ালেট — শুধু নতুন গেম।",
-      valorantBlurb: "ট্যাকটিক্যাল 5v5 — খুব শীঘ্রই আসছে efootball community-এ।",
     },
     howItWorks: {
       eyebrow: "কীভাবে কাজ করে",
@@ -903,11 +886,8 @@ export const translations = {
       linkBecomeOrganizer: "অর্গানাইজার হোন",
       linkCreateAccount: "অ্যাকাউন্ট খুলুন",
       linkEfootball: "ইফুটবল — লাইভ",
-      linkPubg: "PUBG — শীঘ্রই আসছে",
-      linkFreefire: "ফ্রি ফায়ার — শীঘ্রই আসছে",
-      linkValorant: "ভ্যালোর্যান্ট — শীঘ্রই আসছে",
       copyright: "© ২০২৬ efootball community. সর্বস্বত্ব সংরক্ষিত।",
-      tagline: "ইফুটবল লাইভ · আরও গেম আসছে",
+      tagline: "ইফুটবল লাইভ",
     },
     auth: {
       loginEyebrow: "আবার স্বাগতম",
@@ -946,7 +926,7 @@ export const translations = {
       highlight2Body: "ডিফল্ট রুম, কাস্টম ব্র্যাকেট, অথবা আসল প্রাইজ পুলসহ ক্লাব বনাম ক্লাব লিগ।",
       highlight3Title: "ভেরিফায়েড, শুধু দাবি নয়",
       highlight3Body: "স্ট্যাট বা ওয়ালেটে যাওয়ার আগে প্রতিটা রেজাল্ট প্রমাণ দিয়ে যাচাই করা হয়।",
-      tagline: "ইফুটবল লাইভ · আরও গেম আসছে",
+      tagline: "ইফুটবল লাইভ",
     },
     dashboard: {
       shell: {
@@ -1193,11 +1173,9 @@ export const translations = {
           recentActivityTitle: "সাম্প্রতিক কার্যক্রম",
         },
         myTournaments: {
-          gameFilterAll: "সব গেম",
           createButton: "টুর্নামেন্ট তৈরি করুন",
         },
         create: {
-          stepGame: "গেম",
           stepFormat: "ফরম্যাট",
           stepDetails: "বিস্তারিত",
           stepFee: "এন্ট্রি ফি ও প্রাইজ পুল",
