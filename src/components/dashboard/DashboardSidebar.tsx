@@ -75,7 +75,7 @@ export function DashboardSidebar({
     { href: "/dashboard/organizer/disputes", label: t.dashboard.shell.navDisputes, icon: GavelIcon },
     { href: "/dashboard/organizer/payouts", label: t.dashboard.shell.navPayouts, icon: WalletIcon },
     { href: "/dashboard/organizer/verification", label: t.dashboard.shell.navVerification, icon: LockIcon },
-    ...(user.community && user.community.role !== "Member"
+    ...(!user.community || user.community.role !== "Member"
       ? [{ href: "/dashboard/organizer/community", label: t.dashboard.shell.navCommunityMgmt, icon: ShieldIcon }]
       : []),
     { href: "/dashboard/organizer/settings", label: t.dashboard.shell.navSettings, icon: SettingsIcon },

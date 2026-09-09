@@ -30,7 +30,14 @@ export default function OrganizerCommunityPage() {
   const community = user.community ? communities.find((cm) => cm.id === user.community!.id) : null;
 
   if (!community) {
-    return <EmptyState icon={ShieldIcon} title={t.dashboard.club.noClub} body="" />;
+    return (
+      <EmptyState
+        icon={ShieldIcon}
+        title={c.noCommunityTitle}
+        body={c.noCommunityBody}
+        action={{ label: t.dashboard.community.createCta, href: "/dashboard/efootball/community/create" }}
+      />
+    );
   }
 
   const officials = people.filter((p) => p.communityId === community.id && p.communityRole !== "Member");
