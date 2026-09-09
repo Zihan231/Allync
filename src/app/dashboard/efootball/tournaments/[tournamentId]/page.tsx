@@ -35,7 +35,7 @@ export default function TournamentDetailPage({
   return (
     <div>
       <PageHeader
-        eyebrow={`eFootball · ${tournament.organizerName}`}
+        eyebrow="eFootball Tournament"
         title={tournament.name}
         action={<StatusPill tone={statusTone}>{statusLabel}</StatusPill>}
         backHref="/dashboard/efootball/tournaments"
