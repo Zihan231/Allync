@@ -141,18 +141,6 @@ export default function ProfilePage() {
                     {user.club.name} · <span style={{ color: tokens.accentText }}>{user.club.role}</span>
                   </span>
                 ) : null}
-                {user.community ? (
-                  <span
-                    className="rounded-full border px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-semibold backdrop-blur"
-                    style={{
-                      borderColor: tokens.innerBorder,
-                      backgroundColor: tokens.innerBg,
-                      color: tokens.headingText,
-                    }}
-                  >
-                    {user.community.name}
-                  </span>
-                ) : null}
               </div>
 
               {/* Official Team Theme Attachment (Crest, Stadium, Motto) */}

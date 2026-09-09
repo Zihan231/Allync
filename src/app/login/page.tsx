@@ -5,7 +5,7 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Log in — efootball community",
+  title: "Log in — eFootball Hub",
 };
 
 export default function LoginPage() {

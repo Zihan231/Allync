@@ -5,7 +5,7 @@ import { SignupForm } from "@/components/auth/SignupForm";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Create your account — efootball community",
+  title: "Create your account — eFootball Hub",
 };
 
 export default function SignupPage() {

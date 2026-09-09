@@ -17,7 +17,7 @@ export function GameStrip() {
   const { t } = useLanguage();
 
   return (
-    <section id="games" className="relative border-t border-surface-line/70 py-24">
+    <section id="efootball" className="relative border-t border-surface-line/70 py-24">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <SectionHeading
           eyebrow={t.games.eyebrow}

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { mockWalletTransactions } from "@/lib/mock";
@@ -24,10 +23,7 @@ export default function WalletPage() {
 
       {user.kycStatus !== "verified" ? (
         <div className="mt-6 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning-ink">
-          {t.dashboard.wallet.kycBanner}{" "}
-          <Link href="/dashboard/organizer/verification" className="font-semibold underline">
-            {t.dashboard.shell.navVerification}
-          </Link>
+          {t.dashboard.wallet.kycBanner}
         </div>
       ) : null}
 

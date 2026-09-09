@@ -15,7 +15,7 @@ export function TrustBand() {
 
   return (
     <section
-      id="organizers"
+      id="fair-play"
       className="relative overflow-hidden border-t border-surface-line/70 bg-bg-raised py-20"
     >
       <div className="bg-grid pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(ellipse_70%_60%_at_0%_50%,#000_0%,transparent_75%)]" />

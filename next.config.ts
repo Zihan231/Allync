@@ -8,6 +8,31 @@ const nextConfig: NextConfig = {
         destination: "/dashboard/efootball/profile",
         permanent: true,
       },
+      {
+        source: "/dashboard/:section(pubg|freefire|valorant)",
+        destination: "/dashboard/efootball",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/organizer/:path*",
+        destination: "/dashboard/efootball",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/organizer",
+        destination: "/dashboard/efootball",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/efootball/:section(community|store)/:path*",
+        destination: "/dashboard/efootball",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/efootball/:section(community|store)",
+        destination: "/dashboard/efootball",
+        permanent: true,
+      },
     ];
   },
 };

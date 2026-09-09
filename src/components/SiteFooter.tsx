@@ -36,10 +36,10 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-surface-line/70">
       <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10">
-        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
           <div>
             <span className="font-display text-lg font-bold text-ink">
-              efootball <span className="text-accent">community</span>
+              eFootball <span className="text-accent">Hub</span>
             </span>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-soft">
               {t.ctaFooter.brandBlurb}
@@ -49,7 +49,7 @@ export function SiteFooter() {
           <FooterColumn
             heading={t.ctaFooter.colPlatform}
             links={[
-              { label: t.ctaFooter.linkGames, href: "/#games" },
+              { label: t.ctaFooter.linkGames, href: "/#efootball" },
               { label: t.ctaFooter.linkHowItWorks, href: "/#how-it-works" },
               { label: t.ctaFooter.linkFeatures, href: "/#features" },
             ]}
@@ -57,14 +57,9 @@ export function SiteFooter() {
           <FooterColumn
             heading={t.ctaFooter.colCommunity}
             links={[
-              { label: t.ctaFooter.linkOrganizers, href: "/#organizers" },
-              { label: t.ctaFooter.linkBecomeOrganizer, href: "/signup" },
+              { label: t.ctaFooter.linkEfootball, href: "/#efootball" },
               { label: t.ctaFooter.linkCreateAccount, href: "/signup" },
             ]}
-          />
-          <FooterColumn
-            heading={t.ctaFooter.colGames}
-            links={[{ label: t.ctaFooter.linkEfootball, href: "/#games" }]}
           />
         </div>
 

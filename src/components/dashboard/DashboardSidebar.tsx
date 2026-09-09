@@ -3,19 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { useSession } from "@/lib/session/SessionContext";
 import {
   HomeIcon,
   UsersIcon,
   TrophyIcon,
   CalendarIcon,
   SwapIcon,
-  WalletIcon,
-  PlusIcon,
-  GavelIcon,
   ChartIcon,
-  LockIcon,
-  SettingsIcon,
 } from "../icons";
 
 type NavItem = {
@@ -32,10 +26,9 @@ export function DashboardSidebar({
   onClose: () => void;
 }) {
   const { t } = useLanguage();
-  const { user } = useSession();
   const pathname = usePathname();
 
-  const playerBase = `/dashboard/${user.activeGame}`;
+  const playerBase = "/dashboard/efootball";
   const playerItems: NavItem[] = [
     { href: playerBase, label: t.dashboard.shell.navOverview, icon: HomeIcon },
     {
@@ -50,20 +43,10 @@ export function DashboardSidebar({
     { href: `${playerBase}/profile`, label: t.dashboard.shell.navProfile, icon: ChartIcon },
   ];
 
-  const organizerItems: NavItem[] = [
-    { href: "/dashboard/organizer", label: t.dashboard.shell.navOrganizerOverview, icon: HomeIcon },
-    { href: "/dashboard/organizer/tournaments", label: t.dashboard.shell.navMyTournaments, icon: TrophyIcon },
-    { href: "/dashboard/organizer/tournaments/create", label: t.dashboard.shell.navCreateTournament, icon: PlusIcon },
-    { href: "/dashboard/organizer/disputes", label: t.dashboard.shell.navDisputes, icon: GavelIcon },
-    { href: "/dashboard/organizer/payouts", label: t.dashboard.shell.navPayouts, icon: WalletIcon },
-    { href: "/dashboard/organizer/verification", label: t.dashboard.shell.navVerification, icon: LockIcon },
-    { href: "/dashboard/organizer/settings", label: t.dashboard.shell.navSettings, icon: SettingsIcon },
-  ];
-
-  const items = user.mode === "player" ? playerItems : organizerItems;
+  const items = playerItems;
 
   const isActive = (href: string) =>
-    href === playerBase || href === "/dashboard/organizer"
+    href === playerBase
       ? pathname === href
       : pathname.startsWith(href);
 
@@ -105,11 +88,11 @@ export function DashboardSidebar({
           <div className="relative flex h-full w-64 flex-col border-r border-surface-line bg-bg-raised shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-center border-b border-surface-line/70 px-4 py-3.5">
               <Link
-                href={user.mode === "organizer" ? "/dashboard/organizer" : playerBase}
+                href={playerBase}
                 onClick={onClose}
                 className="font-display text-lg font-bold tracking-tight text-ink"
               >
-                efootball <span className="text-accent">community</span>
+                eFootball <span className="text-accent">Hub</span>
               </Link>
             </div>
             {content}

@@ -34,9 +34,9 @@ const hindSiliguri = Hind_Siliguri({
 });
 
 export const metadata: Metadata = {
-  title: "efootball community — One Platform. Every Arena.",
+  title: "eFootball Hub — Play. Compete. Rise.",
   description:
-    "efootball community is the infrastructure behind competitive gaming — communities, clubs, and tournaments for players, organizers, and brand sponsors alike. Starting with eFootball.",
+    "A dedicated competitive eFootball platform for players and clubs, with verified matches, rankings, tournaments, and transfers.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

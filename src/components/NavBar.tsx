@@ -10,10 +10,9 @@ export function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const links = [
-    { label: t.nav.games, href: "#games" },
+    { label: t.nav.games, href: "#efootball" },
     { label: t.nav.howItWorks, href: "#how-it-works" },
     { label: t.nav.features, href: "#features" },
-    { label: t.nav.organizers, href: "#organizers" },
   ];
 
   return (
@@ -21,7 +20,7 @@ export function NavBar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-10">
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <span className="font-display text-xl font-bold tracking-tight text-ink">
-            efootball <span className="text-accent">community</span>
+            eFootball <span className="text-accent">Hub</span>
           </span>
         </Link>
 

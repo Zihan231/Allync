@@ -42,8 +42,8 @@ export default function EfootballOverviewPage() {
         eyebrow="eFootball"
         title={`${t.dashboard.overview.welcomeBack}, ${user.name.split(" ")[0]}`}
         description={
-          user.club && user.community
-            ? `${user.club.name} · ${user.community.name}`
+          user.club
+            ? user.club.name
             : undefined
         }
       />

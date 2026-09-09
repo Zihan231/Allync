@@ -40,7 +40,7 @@ export function Hero() {
                 <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <a
-                href="#organizers"
+                href="#how-it-works"
                 className="inline-flex items-center gap-2 rounded-full border border-surface-line-strong px-6 py-3 font-display font-semibold text-ink transition-colors hover:border-blue hover:text-blue-ink"
               >
                 {t.hero.ctaSecondary}

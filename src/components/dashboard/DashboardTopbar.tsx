@@ -8,7 +8,7 @@ import { useSession } from "@/lib/session/SessionContext";
 import { DEMO_PERSONAS } from "@/lib/mock/personas";
 import { LanguageSwitch } from "../LanguageSwitch";
 import { Avatar } from "../common/Avatar";
-import { BellIcon, LogoutIcon, SettingsIcon, UsersIcon } from "../icons";
+import { BellIcon, LogoutIcon, UsersIcon } from "../icons";
 
 export function DashboardTopbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { t } = useLanguage();
@@ -54,10 +54,10 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick: () => void }) {
         </button>
 
         <Link
-          href={user.mode === "organizer" ? "/dashboard/organizer" : `/dashboard/${user.activeGame}`}
+          href="/dashboard/efootball"
           className="font-display text-sm min-[400px]:text-lg font-bold tracking-tight text-ink shrink-0"
         >
-          efootball <span className="text-accent">community</span>
+          eFootball <span className="text-accent">Hub</span>
         </Link>
       </div>
 
@@ -97,20 +97,12 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick: () => void }) {
             <div className="absolute right-0 top-full z-40 mt-2 w-52 rounded-xl border border-surface-line bg-surface p-1.5 shadow-2xl">
               <div className="px-2.5 py-2 text-sm font-medium text-ink">{user.name}</div>
               <Link
-                href={`/dashboard/${user.activeGame}/profile`}
+                href="/dashboard/efootball/profile"
                 onClick={() => setUserMenuOpen(false)}
                 className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-ink-soft hover:bg-bg-raised hover:text-ink"
               >
                 <UsersIcon className="h-4 w-4" />
                 {t.dashboard.shell.userMenuProfile}
-              </Link>
-              <Link
-                href="/dashboard/organizer/settings"
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-ink-soft hover:bg-bg-raised hover:text-ink"
-              >
-                <SettingsIcon className="h-4 w-4" />
-                {t.dashboard.shell.userMenuSettings}
               </Link>
               <button
                 type="button"

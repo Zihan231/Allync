@@ -21,7 +21,7 @@ export function CTAFooter() {
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
             <Link
-              href="/signup"
+              href="/#efootball"
               className="group inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 font-display font-semibold text-bg shadow-[0_0_24px_rgba(217,165,68,0.3)] transition-transform hover:-translate-y-0.5"
             >
               {t.ctaFooter.ctaPrimary}
