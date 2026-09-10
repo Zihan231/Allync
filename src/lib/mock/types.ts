@@ -181,6 +181,7 @@ export type Match = {
   round: string;
   opponent: string;
   scheduledAt: string;
+  submissionDeadline?: string;
   status: MatchStatus;
   myScore?: number;
   opponentScore?: number;
