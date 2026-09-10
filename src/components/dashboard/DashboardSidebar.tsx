@@ -62,7 +62,6 @@ export function DashboardSidebar({
     { href: `${playerBase}/matches`, label: t.dashboard.shell.navMatches, icon: CalendarIcon },
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
     { href: `${playerBase}/rankings`, label: t.dashboard.rankings.pageTitle, icon: TrophyIcon },
-    { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
     { href: `${playerBase}/store`, label: t.dashboard.shell.navStore, icon: StoreIcon },
     { href: `${playerBase}/profile`, label: t.dashboard.shell.navProfile, icon: ChartIcon },
   ];
