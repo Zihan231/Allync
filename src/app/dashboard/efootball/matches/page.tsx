@@ -1,31 +1,36 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useMockMatches } from "@/lib/mock/store";
 import type { Match } from "@/lib/mock/types";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { StatusPill, type StatusTone } from "@/components/dashboard/StatusPill";
+import { StatTile } from "@/components/dashboard/StatTile";
+import { MatchCard } from "@/components/dashboard/MatchCard";
 import { EmptyState } from "@/components/dashboard/EmptyState";
-import { CalendarIcon } from "@/components/icons";
+import { Pagination } from "@/components/dashboard/Pagination";
+import { CalendarIcon, BellIcon, ShieldIcon, GavelIcon } from "@/components/icons";
 
 type FilterKey = "all" | "pending_submission" | "awaiting_opponent" | "verified" | "disputed";
 
-const toneByStatus: Record<Match["status"], StatusTone> = {
-  unplayed: "neutral",
-  pending_submission: "warning",
-  awaiting_opponent: "info",
-  verified: "success",
-  disputed: "danger",
-};
+const filters: FilterKey[] = ["all", "pending_submission", "awaiting_opponent", "verified", "disputed"];
+const PAGE_SIZE = 9;
 
 export default function MatchesPage() {
   const { t } = useLanguage();
-  const matches = useMockMatches().filter((m) => m.game === "efootball");
+  const allMatches = useMockMatches();
+  const matches = useMemo(() => allMatches.filter((m) => m.game === "efootball"), [allMatches]);
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [page, setPage] = useState(1);
 
-  const filters: FilterKey[] = ["all", "pending_submission", "awaiting_opponent", "verified", "disputed"];
+  // Reset to page 1 whenever the filter changes, adjusted during render rather
+  // than in a useEffect (the project's lint config flags setState-in-effect).
+  const [prevFilter, setPrevFilter] = useState(filter);
+  if (filter !== prevFilter) {
+    setPrevFilter(filter);
+    setPage(1);
+  }
+
   const filterLabel: Record<FilterKey, string> = {
     all: t.dashboard.matches.filterAll,
     pending_submission: t.dashboard.matches.filterPending,
@@ -33,21 +38,31 @@ export default function MatchesPage() {
     verified: t.dashboard.matches.filterVerified,
     disputed: t.dashboard.matches.filterDisputed,
   };
-  const statusLabel: Record<Match["status"], string> = {
-    unplayed: filterLabel.all,
-    pending_submission: filterLabel.pending_submission,
-    awaiting_opponent: filterLabel.awaiting_opponent,
-    verified: filterLabel.verified,
-    disputed: filterLabel.disputed,
-  };
 
   const filtered = filter === "all" ? matches : matches.filter((m) => m.status === filter);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const stats = useMemo(() => {
+    const pendingCount = matches.filter((m) => m.status === "unplayed" || m.status === "pending_submission").length;
+    const verifiedCount = matches.filter((m) => m.status === "verified").length;
+    const disputedCount = matches.filter((m) => m.status === "disputed").length;
+    return { pendingCount, verifiedCount, disputedCount };
+  }, [matches]);
 
   return (
-    <div>
+    <div className="relative">
+      <div className="glow-blue pointer-events-none absolute left-1/2 top-0 -z-10 h-[420px] w-[600px] -translate-x-1/2 blur-[100px] opacity-30" />
+
       <PageHeader eyebrow="eFootball" title={t.dashboard.shell.navMatches} />
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <StatTile label={t.dashboard.matches.filterPending} value={String(stats.pendingCount)} icon={BellIcon} />
+        <StatTile label={t.dashboard.matches.filterVerified} value={String(stats.verifiedCount)} icon={ShieldIcon} />
+        <StatTile label={t.dashboard.matches.filterDisputed} value={String(stats.disputedCount)} icon={GavelIcon} />
+      </div>
+
+      <div className="mt-8 flex flex-wrap gap-2">
         {filters.map((f) => (
           <button
             key={f}
@@ -63,21 +78,18 @@ export default function MatchesPage() {
         ))}
       </div>
 
-      <div className="mt-6 space-y-2">
+      <div className="mt-6">
         {filtered.length > 0 ? (
-          filtered.map((m) => (
-            <Link
-              key={m.id}
-              href={`/dashboard/efootball/matches/${m.id}`}
-              className="flex items-center justify-between rounded-xl border border-surface-line bg-surface/40 p-4 transition-colors hover:border-surface-line-strong"
-            >
-              <div>
-                <div className="text-sm font-medium text-ink">vs {m.opponent}</div>
-                <div className="text-xs text-ink-faint">{m.tournamentName} · {m.round}</div>
-              </div>
-              <StatusPill tone={toneByStatus[m.status]}>{statusLabel[m.status]}</StatusPill>
-            </Link>
-          ))
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {pageItems.map((m: Match) => (
+                <MatchCard key={m.id} match={m} href={`/dashboard/efootball/matches/${m.id}`} />
+              ))}
+            </div>
+            <div className="mt-6">
+              <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+            </div>
+          </>
         ) : (
           <EmptyState icon={CalendarIcon} title={t.dashboard.matches.noMatches} body="" />
         )}
