@@ -8,7 +8,6 @@ import {
   UsersIcon,
   TrophyIcon,
   CalendarIcon,
-  SwapIcon,
   WalletIcon,
   ChartIcon,
 } from "../icons";
@@ -39,7 +38,6 @@ export function DashboardSidebar({
     },
     { href: `${playerBase}/tournaments`, label: t.dashboard.shell.navTournaments, icon: TrophyIcon },
     { href: `${playerBase}/matches`, label: t.dashboard.shell.navMatches, icon: CalendarIcon },
-    { href: `${playerBase}/transfers`, label: t.dashboard.shell.navTransfers, icon: SwapIcon },
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
     { href: `${playerBase}/rankings`, label: t.dashboard.rankings.pageTitle, icon: TrophyIcon },
     { href: `${playerBase}/profile`, label: t.dashboard.shell.navProfile, icon: ChartIcon },

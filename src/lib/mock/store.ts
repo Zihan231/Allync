@@ -1,10 +1,9 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import type { Match, Tournament, TransferOffer } from "./types";
+import type { Match, Tournament } from "./types";
 import { mockMatches } from "./matches";
 import { mockTournaments } from "./tournaments";
-import { mockTransferOffers } from "./transfers";
 
 // Tiny in-memory store (no external state library) so mock data can be
 // mutated and shared across dashboard pages within a session. This is
@@ -12,7 +11,6 @@ import { mockTransferOffers } from "./transfers";
 
 let matches: Match[] = [...mockMatches];
 let tournaments: Tournament[] = [...mockTournaments];
-let transferOffers: TransferOffer[] = [...mockTransferOffers];
 
 const listeners = new Set<() => void>();
 function emit() {
@@ -29,9 +27,6 @@ export function useMockMatches() {
 export function useMockTournaments() {
   return useSyncExternalStore(subscribe, () => tournaments, () => mockTournaments);
 }
-export function useMockTransferOffers() {
-  return useSyncExternalStore(subscribe, () => transferOffers, () => mockTransferOffers);
-}
 
 export function updateMatch(id: string, patch: Partial<Match>) {
   matches = matches.map((m) => (m.id === id ? { ...m, ...patch } : m));
@@ -45,10 +40,5 @@ export function addTournament(tournament: Tournament) {
 
 export function updateTournament(id: string, patch: Partial<Tournament>) {
   tournaments = tournaments.map((t) => (t.id === id ? { ...t, ...patch } : t));
-  emit();
-}
-
-export function updateTransferOffer(id: string, patch: Partial<TransferOffer>) {
-  transferOffers = transferOffers.map((o) => (o.id === id ? { ...o, ...patch } : o));
   emit();
 }

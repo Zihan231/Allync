@@ -197,12 +197,3 @@ export type WalletTransaction = {
   date: string;
 };
 
-export type TransferOffer = {
-  id: string;
-  playerName: string;
-  fromClub: string;
-  toClub: string;
-  feeBdt: number;
-  status: "pending" | "accepted" | "declined";
-  direction: "incoming" | "outgoing";
-};
