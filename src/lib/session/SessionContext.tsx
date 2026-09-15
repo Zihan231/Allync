@@ -8,7 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { addPerson, getPerson, getClub, getCommunity } from "@/lib/mock/communityStore";
+import { apiFetch } from "@/lib/api/client";
+import { addPerson, getPerson, getClub, getCommunity, syncFromBackend } from "@/lib/mock/communityStore";
 import type { VerificationLevel } from "@/lib/mock/types";
 
 export type Mode = "player" | "organizer";
@@ -59,29 +60,63 @@ function slugify(name: string) {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-function defaultUser(): MockUser {
+function emptyUser(): MockUser {
   return {
-    id: "demo-user",
-    personId: "person-rakib-hasan",
-    name: "Rakib Hasan",
-    email: "rakib@example.com",
-    initials: "RH",
+    id: "",
+    personId: "",
+    name: "Player",
+    email: "",
+    initials: "PL",
     dpUrl: null,
     mode: "player",
     activeGame: "efootball",
     kycStatus: "unverified",
-    verificationStatus: "verified",
-    verificationLevel: 3,
-    wallet: { balanceBdt: 4200 },
-    club: { id: "red-falcons", name: "Red Falcons", role: "Captain" },
-    community: { id: "dhaka-elite", name: "Dhaka Elite Community", role: "Member" },
-    // To demo the Organizer "Community Management" page, flip role above to "President",
-    // or use the Demo Persona switcher in the topbar user menu instead.
+    verificationStatus: "unverified",
+    verificationLevel: 0,
+    wallet: { balanceBdt: 0 },
+    club: null,
+    community: null,
+  };
+}
+
+function backendUserToMockUser(u: any): MockUser {
+  const ef = u.efootballProfile;
+  const name = u.name || "Player";
+  const initials = initialsFromName(name);
+  return {
+    id: u.id,
+    personId: "person-" + u.id,
+    name,
+    email: u.email || "",
+    initials,
+    dpUrl: u.dpUrl || null,
+    mode: "player",
+    activeGame: "efootball",
+    kycStatus: u.verificationLevel > 0 ? "verified" : "unverified",
+    verificationStatus: u.verificationLevel > 0 ? "verified" : "unverified",
+    verificationLevel: (u.verificationLevel ?? 0) as VerificationLevel,
+    wallet: { balanceBdt: ef?.points ? Math.round(ef.points * 3.5) : 3500 },
+    club: ef?.club
+      ? {
+          id: ef.club.id,
+          name: ef.club.name,
+          role: (ef.clubRole as ClubRole) || "Player",
+        }
+      : null,
+    community: ef?.community
+      ? {
+          id: ef.community.id,
+          name: ef.community.name,
+          role: (ef.communityRole as CommunityRole) || "Member",
+        }
+      : null,
   };
 }
 
 type SessionContextValue = {
   user: MockUser;
+  isAuthenticated: boolean;
+  isLoading: boolean;
   setMode: (mode: Mode) => void;
   setActiveGame: (game: GameId) => void;
   setKycStatus: (status: KycStatus) => void;
@@ -92,8 +127,8 @@ type SessionContextValue = {
   setClub: (club: MockUser["club"]) => void;
   setCommunity: (community: MockUser["community"]) => void;
   updateProfile: (input: { name?: string; email?: string }) => void;
-  login: (input: { email: string; name?: string }) => void;
-  signup: (input: { name: string; email: string }) => void;
+  login: (input: { email: string; name?: string; password?: string }) => Promise<void>;
+  signup: (input: { name: string; email: string; password?: string }) => Promise<void>;
   switchPersona: (personId: string) => void;
   logout: () => void;
 };
@@ -103,25 +138,37 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 const STORAGE_KEY = "ALLYNQ-session";
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<MockUser>(defaultUser);
+  const [user, setUser] = useState<MockUser>(emptyUser);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUser(JSON.parse(stored) as MockUser);
-      } catch {
-        // fall back to the seeded default
+    try {
+      const token = typeof window !== "undefined" ? window.localStorage.getItem("ALLYNQ_TOKEN") : null;
+      const stored = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
+      if (token && stored) {
+        const parsed = JSON.parse(stored) as MockUser;
+        if (parsed && parsed.id) {
+          setUser(parsed);
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } else {
+        setIsAuthenticated(false);
       }
-    } else {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultUser()));
+    } catch {
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   const persist = (next: MockUser) => {
     setUser(next);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    }
   };
 
   const setMode = (mode: Mode) => persist({ ...user, mode });
@@ -150,57 +197,64 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const login: SessionContextValue["login"] = ({ email, name }) => {
-    const base = defaultUser();
-    const nextName = name ?? base.name;
-    persist({
-      ...base,
-      email,
-      name: nextName,
-      initials: initialsFromName(nextName),
+  const login: SessionContextValue["login"] = async ({ email, password }) => {
+    if (!password) {
+      throw new Error("Please enter your password");
+    }
+
+    const res = await apiFetch<{ accessToken: string; user: any }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email: email.trim(), password }),
     });
+
+    if (!res || !res.accessToken) {
+      throw new Error("Failed to authenticate with server");
+    }
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("ALLYNQ_TOKEN", res.accessToken);
+    }
+
+    const mock = backendUserToMockUser(res.user);
+    persist(mock);
+    setIsAuthenticated(true);
+
+    syncFromBackend().catch(() => {});
   };
 
-  const signup: SessionContextValue["signup"] = ({ name, email }) => {
-    const id = `${slugify(name) || "player"}-${Date.now()}`;
-    const personId = `person-${id}`;
-    addPerson({
-      id: personId,
-      name,
-      dpUrl: null,
-      coverUrl: null,
-      clubId: null,
-      clubRole: null,
-      communityId: null,
-      communityRole: null,
-      points: 0,
+  const signup: SessionContextValue["signup"] = async ({ name, email, password }) => {
+    if (!password) {
+      throw new Error("Please enter a password");
+    }
+
+    const res = await apiFetch<{ accessToken: string; user: any }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
     });
-    persist({
-      id,
-      personId,
-      name,
-      email,
-      initials: initialsFromName(name),
-      dpUrl: null,
-      mode: "player",
-      activeGame: "efootball",
-      kycStatus: "unverified",
-      verificationStatus: "unverified",
-      verificationLevel: 0,
-      wallet: { balanceBdt: 0 },
-      club: null,
-      community: null,
-    });
+
+    if (!res || !res.accessToken) {
+      throw new Error("Failed to register account");
+    }
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("ALLYNQ_TOKEN", res.accessToken);
+    }
+
+    const mock = backendUserToMockUser(res.user);
+    persist(mock);
+    setIsAuthenticated(true);
+
+    syncFromBackend().catch(() => {});
   };
 
   const switchPersona = (personId: string) => {
     const person = getPerson(personId);
     if (!person) return;
-    persist({
+    const personaUser: MockUser = {
       id: personId,
       personId,
       name: person.name,
-      email: `${slugify(person.name)}@example.com`,
+      email: slugify(person.name) + "@example.com",
       initials: initialsFromName(person.name),
       dpUrl: person.dpUrl,
       mode: "player",
@@ -221,14 +275,28 @@ export function SessionProvider({ children }: { children: ReactNode }) {
               role: person.communityRole,
             }
           : null,
-    });
+    };
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("ALLYNQ_TOKEN", "demo-token-" + personId);
+    }
+    persist(personaUser);
+    setIsAuthenticated(true);
   };
 
-  const logout = () => persist(defaultUser());
+  const logout = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("ALLYNQ_TOKEN");
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+    setUser(emptyUser());
+    setIsAuthenticated(false);
+  };
 
   const value = useMemo(
     () => ({
       user,
+      isAuthenticated,
+      isLoading,
       setMode,
       setActiveGame,
       setKycStatus,
@@ -244,7 +312,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       switchPersona,
       logout,
     }),
-    [user]
+    [user, isAuthenticated, isLoading]
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

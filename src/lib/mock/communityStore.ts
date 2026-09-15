@@ -1,5 +1,7 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/client";
+
 import { useSyncExternalStore } from "react";
 import type { Club, Community, JoinRequest, Person } from "./types";
 import type { CosmeticCategory } from "./cosmetics";
@@ -41,6 +43,96 @@ export function useMockJoinRequests() {
 
 // Plain (non-hook) accessors — safe to call from event handlers, session
 // setup, etc. Always read the live mutable arrays.
+
+let isSyncing = false;
+export async function syncFromBackend() {
+  if (isSyncing || typeof window === "undefined") return;
+  isSyncing = true;
+  try {
+    const [backendClubs, backendUsers] = await Promise.all([
+      apiFetch<any[]>("/clubs").catch(() => null),
+      apiFetch<any[]>("/users").catch(() => null),
+    ]);
+
+    if (backendClubs && Array.isArray(backendClubs) && backendClubs.length > 0) {
+      const mappedClubs: Club[] = backendClubs.map((bc) => ({
+        id: bc.id,
+        name: bc.name,
+        color: bc.color || "#E63946",
+        initials: bc.initials || "FC",
+        dpUrl: bc.dpUrl ?? null,
+        coverUrl: bc.coverUrl ?? null,
+        description: bc.description || "",
+        points: bc.points ?? 0,
+        joinPolicy: bc.joinPolicy || "instant",
+        minRoster: bc.minRoster ?? 4,
+        maxRoster: bc.maxRoster ?? 8,
+        communityIds: bc.communityIds || [],
+        stage: bc.stage || "Foundation",
+        location: bc.location ?? undefined,
+        motto: bc.motto ?? undefined,
+        facebookUrl: bc.facebookUrl ?? undefined,
+      }));
+
+      const backendNames = new Set(mappedClubs.map((c) => c.name.toLowerCase()));
+      const remainingMocks = mockClubs.filter((c) => !backendNames.has(c.name.toLowerCase()));
+      clubs = [...mappedClubs, ...remainingMocks];
+    }
+
+    if (backendUsers && Array.isArray(backendUsers) && backendUsers.length > 0) {
+      const mappedPeople: Person[] = backendUsers.map((bu) => {
+        const ep = bu.efootballProfile;
+        return {
+          id: bu.id,
+          name: bu.name,
+          dpUrl: bu.dpUrl ?? null,
+          coverUrl: bu.coverUrl ?? null,
+          clubId: ep?.clubId ?? null,
+          clubRole: ep?.clubRole ?? null,
+          communityId: ep?.communityId ?? null,
+          communityRole: ep?.communityRole ?? null,
+          points: ep?.points ?? 0,
+          bio: bu.bio ?? undefined,
+          inGameId: bu.inGameId ?? undefined,
+          facebookUrl: bu.facebookUrl ?? undefined,
+          phoneNumber: bu.phoneNumber ?? undefined,
+          birthday: bu.birthday ?? undefined,
+          bloodGroup: bu.bloodGroup ?? undefined,
+          country: bu.country ?? undefined,
+          division: bu.division ?? undefined,
+          district: bu.district ?? undefined,
+          permanentAddress: bu.permanentAddress ?? undefined,
+          currentLocation: bu.currentLocation ?? null,
+          workExperience: bu.workExperience ?? undefined,
+          education: bu.education ?? undefined,
+          documentType: bu.documentType ?? undefined,
+          documentDataUrl: bu.documentDataUrl ?? undefined,
+          verificationLevel: bu.verificationLevel ?? 0,
+          ownedCosmeticIds: bu.ownedCosmeticIds ?? undefined,
+          equippedBadgeId: bu.equippedBadgeId ?? null,
+          equippedTitleId: bu.equippedTitleId ?? null,
+          equippedFrameId: bu.equippedFrameId ?? null,
+          equippedThemeId: bu.equippedThemeId ?? null,
+        };
+      });
+
+      const backendNames = new Set(mappedPeople.map((p) => p.name.toLowerCase()));
+      const remainingMockPeople = mockPeople.filter((p) => !backendNames.has(p.name.toLowerCase()));
+      people = [...mappedPeople, ...remainingMockPeople];
+    }
+
+    emit();
+  } catch (err) {
+    console.warn("Backend sync skipped:", err);
+  } finally {
+    isSyncing = false;
+  }
+}
+
+if (typeof window !== "undefined") {
+  syncFromBackend();
+}
+
 export function getPerson(id: string) {
   return people.find((p) => p.id === id);
 }

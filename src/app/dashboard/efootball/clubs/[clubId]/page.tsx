@@ -1,10 +1,10 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockClubs, useMockPeople, useMockJoinRequests, joinClub, leaveClub } from "@/lib/mock/communityStore";
+import { useMockClubs, useMockPeople, useMockJoinRequests, joinClub, leaveClub, syncFromBackend } from "@/lib/mock/communityStore";
 import { useMockTournaments } from "@/lib/mock/store";
 import { mockCommunities } from "@/lib/mock";
 import { getClubInsights } from "@/lib/mock/clubInsights";
@@ -52,9 +52,21 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const tournaments = useMockTournaments();
   const [tab, setTab] = useState<Tab>("overview");
 
-  const club = clubs.find((c) => c.id === clubId);
+  useEffect(() => {
+    syncFromBackend();
+  }, []);
 
-  const members = useMemo(() => people.filter((p) => p.clubId === clubId), [people, clubId]);
+  const club = clubs.find(
+    (c) =>
+      c.id === clubId ||
+      c.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") === clubId ||
+      c.name.toLowerCase() === clubId.toLowerCase()
+  );
+
+  const members = useMemo(
+    () => people.filter((p) => p.clubId === club?.id || p.clubId === clubId),
+    [people, club, clubId]
+  );
   const insights = useMemo(() => (club ? getClubInsights(club, members) : null), [club, members]);
   const clubTournaments = useMemo(() => tournaments.filter((tour) => tour.clubId === clubId), [tournaments, clubId]);
 

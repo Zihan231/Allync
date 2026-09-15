@@ -4,18 +4,25 @@ export function getApiBaseUrl(): string {
       ? process.env.NEXT_PUBLIC_API_URL_PROD
       : process.env.NEXT_PUBLIC_API_URL;
 
-  if (!url) {
-    throw new Error(
-      "Missing API base URL env var (NEXT_PUBLIC_API_URL / NEXT_PUBLIC_API_URL_PROD)",
-    );
-  }
-  return url;
+  return url || "http://localhost:3001";
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((init?.headers as Record<string, string>) || {}),
+  };
+
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("ALLYNQ_TOKEN");
+    if (token && !headers["Authorization"]) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
   const res = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers,
   });
 
   if (!res.ok) {

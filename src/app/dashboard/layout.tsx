@@ -1,22 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { DashboardTopbar } from "@/components/dashboard/DashboardTopbar";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { NAV_DEPTH_KEY } from "@/components/dashboard/BackButton";
+import { useSession } from "@/lib/session/SessionContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useSession();
   const isHub = pathname === "/dashboard";
 
-  // Marks that at least one in-app route change has happened this tab
-  // session, so BackButton knows a real "previous page" exists to pop back
-  // to (vs. this page having been opened directly via a shared link).
-  // Compares against the last-seen pathname (rather than a mount counter)
-  // because React Strict Mode double-invokes this effect in dev with an
-  // unchanged pathname, which would otherwise register as a false navigation.
   const prevPathname = useRef<string | null>(null);
   useEffect(() => {
     if (prevPathname.current !== null && prevPathname.current !== pathname) {
@@ -24,6 +21,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     prevPathname.current = pathname;
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-bg">

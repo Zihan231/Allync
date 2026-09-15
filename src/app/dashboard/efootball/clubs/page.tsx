@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockClubs } from "@/lib/mock/communityStore";
+import { useMockClubs, syncFromBackend } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
@@ -21,6 +21,10 @@ export default function ClubsPage() {
   const clubs = useMockClubs();
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
+
+  useEffect(() => {
+    syncFromBackend();
+  }, []);
 
   const myClub = user.club ? clubs.find((c) => c.id === user.club!.id) : null;
   const otherClubs = clubs.filter((c) => c.id !== user.club?.id);
