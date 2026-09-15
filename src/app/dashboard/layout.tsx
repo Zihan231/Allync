@@ -6,6 +6,7 @@ import { DashboardTopbar } from "@/components/dashboard/DashboardTopbar";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { NAV_DEPTH_KEY } from "@/components/dashboard/BackButton";
 import { useSession } from "@/lib/session/SessionContext";
+import { AppLoader } from "@/components/common/AppLoader";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,11 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [isLoading, isAuthenticated, router]);
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-bg">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-      </div>
-    );
+    return <AppLoader message="Loading ALLYNQ..." />;
   }
 
   if (!isAuthenticated) {

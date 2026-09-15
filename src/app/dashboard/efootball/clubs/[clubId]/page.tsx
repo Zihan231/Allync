@@ -4,7 +4,8 @@ import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockClubs, useMockPeople, useMockJoinRequests, joinClub, leaveClub, syncFromBackend } from "@/lib/mock/communityStore";
+import { useMockClubs, useMockPeople, useMockJoinRequests, joinClub, leaveClub, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
+import { AppLoader } from "@/components/common/AppLoader";
 import { useMockTournaments } from "@/lib/mock/store";
 import { mockCommunities } from "@/lib/mock";
 import { getClubInsights } from "@/lib/mock/clubInsights";
@@ -51,9 +52,16 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const joinRequests = useMockJoinRequests();
   const tournaments = useMockTournaments();
   const [tab, setTab] = useState<Tab>("overview");
+  const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
 
   useEffect(() => {
-    syncFromBackend();
+    let mounted = true;
+    syncFromBackend().finally(() => {
+      if (mounted) setLoading(false);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const club = clubs.find(
@@ -101,7 +109,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: t.dashboard.club.tabOverview },
     { key: "fixtures", label: t.dashboard.club.tabFixtures },
-    { key: "squad", label: t.dashboard.club.tabSquad },
+    { key: "squad", label: `${t.dashboard.club.tabSquad} (${members.length})` },
     { key: "transfers", label: t.dashboard.club.tabTransfers },
     { key: "rankings", label: t.dashboard.club.tabRankings },
     { key: "table", label: t.dashboard.club.tabTable },
@@ -146,6 +154,17 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
         </div>
 
         <div className="flex flex-wrap gap-2 pb-1">
+          {members.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setTab("squad")}
+              className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent/20"
+            >
+              <UsersIcon className="h-4 w-4" />
+              All Players ({members.length})
+            </button>
+          ) : null}
+
           {club.facebookUrl ? (
             <a
               href={club.facebookUrl}

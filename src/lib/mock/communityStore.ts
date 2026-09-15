@@ -44,11 +44,20 @@ export function useMockJoinRequests() {
 // Plain (non-hook) accessors — safe to call from event handlers, session
 // setup, etc. Always read the live mutable arrays.
 
-let isSyncing = false;
-export async function syncFromBackend() {
-  if (isSyncing || typeof window === "undefined") return;
-  isSyncing = true;
-  try {
+let hasSynced = false;
+let syncPromise: Promise<void> | null = null;
+
+export function hasSyncedFromBackend() {
+  return hasSynced;
+}
+
+export async function syncFromBackend(force = false): Promise<void> {
+  if (typeof window === "undefined") return;
+  if (hasSynced && !force) return;
+  if (syncPromise) return syncPromise;
+
+  syncPromise = (async () => {
+    try {
     const [backendClubs, backendUsers] = await Promise.all([
       apiFetch<any[]>("/clubs").catch(() => null),
       apiFetch<any[]>("/users").catch(() => null),
@@ -92,6 +101,10 @@ export async function syncFromBackend() {
           communityId: ep?.communityId ?? null,
           communityRole: ep?.communityRole ?? null,
           points: ep?.points ?? 0,
+          lineupStatus: ep?.lineupStatus ?? undefined,
+          gamePosition: ep?.gamePosition ?? undefined,
+          shirtNumber: ep?.shirtNumber ?? undefined,
+          squadTeam: (ep?.squadTeam as any) ?? undefined,
           bio: bu.bio ?? undefined,
           inGameId: bu.inGameId ?? undefined,
           facebookUrl: bu.facebookUrl ?? undefined,
@@ -121,12 +134,16 @@ export async function syncFromBackend() {
       people = [...mappedPeople, ...remainingMockPeople];
     }
 
+    hasSynced = true;
     emit();
   } catch (err) {
     console.warn("Backend sync skipped:", err);
   } finally {
-    isSyncing = false;
+    syncPromise = null;
   }
+  })();
+
+  return syncPromise;
 }
 
 if (typeof window !== "undefined") {

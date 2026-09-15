@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockClubs, syncFromBackend } from "@/lib/mock/communityStore";
+import { useMockClubs, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
+import { AppLoader } from "@/components/common/AppLoader";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
@@ -17,17 +18,30 @@ type StageFilter = "all" | ClubStage;
 
 export default function ClubsPage() {
   const { t } = useLanguage();
-  const { user } = useSession();
+  const { user, isLoading: sessionLoading } = useSession();
   const clubs = useMockClubs();
+  const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
 
   useEffect(() => {
-    syncFromBackend();
+    let mounted = true;
+    syncFromBackend().finally(() => {
+      if (mounted) setLoading(false);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const myClub = user.club ? clubs.find((c) => c.id === user.club!.id) : null;
-  const otherClubs = clubs.filter((c) => c.id !== user.club?.id);
+  const myClub = user.club
+    ? clubs.find(
+        (c) =>
+          c.id === user.club!.id ||
+          (user.club?.name && c.name.toLowerCase() === user.club.name.toLowerCase())
+      )
+    : null;
+  const otherClubs = clubs.filter((c) => c.id !== myClub?.id);
 
   const filteredClubs = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -37,6 +51,10 @@ export default function ClubsPage() {
       return true;
     });
   }, [otherClubs, search, stageFilter]);
+
+  if (loading || sessionLoading) {
+    return <AppLoader message="Loading ALLYNQ..." />;
+  }
 
   const stageOptions: { key: StageFilter; label: string }[] = [
     { key: "all", label: t.dashboard.clubs.allStages },

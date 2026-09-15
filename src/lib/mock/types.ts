@@ -56,6 +56,7 @@ export type Person = {
   equippedFrameId?: string | null;
   equippedThemeId?: string | null;
   gamePosition?: string;
+  lineupStatus?: "Starter" | "Sub" | "None" | string;
   squadTeam?: "Main" | "Academy" | "Legend";
   shirtNumber?: number;
   discordUrl?: string;
