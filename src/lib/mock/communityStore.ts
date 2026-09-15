@@ -192,34 +192,62 @@ export function equipCosmetic(personId: string, category: CosmeticCategory, cosm
 
 // ---- Clubs ----
 
-export function createClub(
+export async function createClub(
   input: { name: string; description: string; color: string; joinPolicy: Club["joinPolicy"] },
   creatorPersonId: string
-): Club {
-  const id = `club-${Date.now()}`;
+): Promise<Club> {
+  const person = getPerson(creatorPersonId);
+  if (person?.clubId) {
+    throw new Error("You are already a member of a club. You cannot create a new club while belonging to an existing one.");
+  }
+
   const initials = input.name
     .split(/\s+/)
     .map((w) => w[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  let backendClub: any = null;
+  try {
+    backendClub = await apiFetch<any>("/clubs", {
+      method: "POST",
+      body: JSON.stringify({
+        name: input.name,
+        description: input.description,
+        color: input.color,
+        initials,
+        joinPolicy: input.joinPolicy,
+      }),
+    });
+  } catch (err: any) {
+    let msg = err?.message ?? "Failed to create club";
+    try {
+      const parsed = JSON.parse(msg.replace(/^API \d+ [^:]+: /, ""));
+      msg = parsed.message || msg;
+    } catch {}
+    throw new Error(typeof msg === "string" ? msg.replace(/^API \d+ [^:]+: /, "") : "Failed to create club");
+  }
+
+  const id = backendClub?.id || `club-${Date.now()}`;
   const club: Club = {
     id,
     name: input.name,
     color: input.color,
     initials,
-    dpUrl: null,
-    coverUrl: null,
+    dpUrl: backendClub?.dpUrl ?? null,
+    coverUrl: backendClub?.coverUrl ?? null,
     description: input.description,
     points: 0,
     joinPolicy: input.joinPolicy,
     minRoster: 4,
     maxRoster: 8,
     communityIds: [],
-    stage: "N/A",
+    stage: "Foundation",
   };
-  clubs = [...clubs, club];
+  clubs = [club, ...clubs.filter((c) => c.id !== id)];
   updatePerson(creatorPersonId, { clubId: id, clubRole: "President" });
+  emit();
   return club;
 }
 

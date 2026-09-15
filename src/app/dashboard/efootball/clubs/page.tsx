@@ -11,7 +11,7 @@ import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
-import { PlusIcon, TrophyIcon, SearchIcon } from "@/components/icons";
+import { PlusIcon, TrophyIcon, SearchIcon, LockIcon } from "@/components/icons";
 import { CLUB_STAGES, type ClubStage } from "@/lib/mock/types";
 
 type StageFilter = "all" | ClubStage;
@@ -67,13 +67,30 @@ export default function ClubsPage() {
         eyebrow="eFootball"
         title={t.dashboard.clubs.browseTitle}
         action={
-          <Link
-            href="/dashboard/efootball/clubs/create"
-            className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg transition-transform hover:-translate-y-0.5"
-          >
-            <PlusIcon className="h-4 w-4" />
-            {t.dashboard.clubs.createCta}
-          </Link>
+          user.club ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-block font-mono text-xs text-ink-faint">
+                Member of {user.club.name}
+              </span>
+              <button
+                type="button"
+                disabled
+                title={`You are already in ${user.club.name}. Leave your club to create a new one.`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-surface-line-strong bg-surface/60 px-4 py-2 font-display text-sm font-semibold text-ink-faint opacity-60 cursor-not-allowed"
+              >
+                <LockIcon className="h-4 w-4" />
+                {t.dashboard.clubs.createCta}
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/dashboard/efootball/clubs/create"
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg transition-transform hover:-translate-y-0.5"
+            >
+              <PlusIcon className="h-4 w-4" />
+              {t.dashboard.clubs.createCta}
+            </Link>
+          )
         }
       />
 
