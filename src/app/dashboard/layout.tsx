@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [isLoading, isAuthenticated, router]);
 
   if (isLoading) {
-    return <AppLoader message="Loading ALLYNQ..." />;
+    return <AppLoader />;
   }
 
   if (!isAuthenticated) {

@@ -53,7 +53,7 @@ export default function ClubsPage() {
   }, [otherClubs, search, stageFilter]);
 
   if (loading || sessionLoading) {
-    return <AppLoader message="Loading ALLYNQ..." />;
+    return <AppLoader />;
   }
 
   const stageOptions: { key: StageFilter; label: string }[] = [

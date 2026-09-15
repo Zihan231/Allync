@@ -78,6 +78,10 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const insights = useMemo(() => (club ? getClubInsights(club, members) : null), [club, members]);
   const clubTournaments = useMemo(() => tournaments.filter((tour) => tour.clubId === clubId), [tournaments, clubId]);
 
+  if (loading) {
+    return <AppLoader />;
+  }
+
   if (!club || !insights) {
     return <EmptyState icon={UsersIcon} title={t.dashboard.clubs.emptyState} body="" />;
   }

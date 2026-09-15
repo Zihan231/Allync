@@ -1,12 +1,85 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
+function getContextualMessage(pathname: string | null): string {
+  if (!pathname) return "Loading ALLYNQ...";
+  if (pathname.includes("/efootball/clubs/") && pathname.split("/").filter(Boolean).length >= 4) {
+    return "Loading club details...";
+  }
+  if (pathname.includes("/efootball/clubs")) {
+    return "Loading clubs...";
+  }
+  if (pathname.includes("/efootball/community/") && pathname.split("/").filter(Boolean).length >= 4) {
+    return "Loading community details...";
+  }
+  if (pathname.includes("/efootball/community")) {
+    return "Loading communities...";
+  }
+  if (pathname.includes("/efootball/players")) {
+    return "Loading player profile...";
+  }
+  if (pathname.includes("/efootball/tournaments")) {
+    return "Loading tournaments...";
+  }
+  if (pathname.includes("/efootball/matches")) {
+    return "Loading matches...";
+  }
+  if (pathname.includes("/efootball/rankings")) {
+    return "Loading rankings...";
+  }
+  if (pathname.includes("/efootball/wallet")) {
+    return "Loading wallet...";
+  }
+  if (pathname.includes("/efootball/store")) {
+    return "Loading store...";
+  }
+  if (pathname.includes("/efootball/profile")) {
+    return "Loading profile...";
+  }
+  if (pathname.includes("/organizer/settings")) {
+    return "Loading settings...";
+  }
+  if (pathname.includes("/organizer/verification")) {
+    return "Loading verification...";
+  }
+  if (pathname.includes("/organizer/payouts")) {
+    return "Loading payouts...";
+  }
+  if (pathname.includes("/organizer/disputes")) {
+    return "Loading disputes...";
+  }
+  if (pathname.includes("/organizer/tournaments")) {
+    return "Loading tournaments...";
+  }
+  if (pathname.includes("/organizer/community")) {
+    return "Loading community...";
+  }
+  if (pathname.includes("/organizer")) {
+    return "Loading organizer dashboard...";
+  }
+  if (pathname === "/dashboard") {
+    return "Loading dashboard...";
+  }
+  if (pathname === "/login") {
+    return "Loading login...";
+  }
+  if (pathname === "/signup") {
+    return "Loading signup...";
+  }
+  return "Loading ALLYNQ...";
+}
+
 export function AppLoader({
-  message = "Loading ALLYNQ...",
+  message,
   inline = false,
 }: {
   message?: string;
   inline?: boolean;
 }) {
+  const pathname = usePathname();
+  const displayMessage = message || getContextualMessage(pathname);
+
   const content = (
     <div className="flex flex-col items-center justify-center gap-4 text-center select-none">
       <div className="relative flex h-16 w-16 items-center justify-center">
@@ -25,7 +98,7 @@ export function AppLoader({
 
       <div className="space-y-1">
         <p className="font-mono text-xs font-semibold uppercase tracking-widest text-ink-soft animate-pulse">
-          {message}
+          {displayMessage}
         </p>
         <div className="flex items-center justify-center gap-1">
           <span className="h-1 w-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: "0ms" }} />
