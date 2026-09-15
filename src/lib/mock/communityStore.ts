@@ -107,7 +107,12 @@ export async function syncFromBackend(force = false): Promise<void> {
           squadTeam: (ep?.squadTeam as any) ?? undefined,
           bio: bu.bio ?? undefined,
           inGameId: bu.inGameId ?? undefined,
+          konamiUid: ep?.konamiUid ?? bu.inGameId ?? undefined,
           facebookUrl: bu.facebookUrl ?? undefined,
+          facebookProfileName: bu.facebookProfileName ?? undefined,
+          instagramUrl: bu.instagramUrl ?? undefined,
+          deviceName: bu.deviceName ?? undefined,
+          deviceModel: bu.deviceModel ?? undefined,
           phoneNumber: bu.phoneNumber ?? undefined,
           birthday: bu.birthday ?? undefined,
           bloodGroup: bu.bloodGroup ?? undefined,
@@ -172,6 +177,16 @@ function updatePerson(id: string, patch: Partial<Person>) {
 
 export function updatePersonProfile(id: string, patch: Partial<Person>) {
   updatePerson(id, patch);
+}
+
+export function upsertPerson(person: Person) {
+  const idx = people.findIndex((p) => p.id === person.id);
+  if (idx >= 0) {
+    people = people.map((p) => (p.id === person.id ? { ...p, ...person } : p));
+  } else {
+    people = [person, ...people];
+  }
+  emit();
 }
 
 export function purchaseCosmetic(personId: string, cosmeticId: string) {

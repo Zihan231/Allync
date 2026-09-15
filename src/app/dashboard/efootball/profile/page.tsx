@@ -1,16 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockMatches } from "@/lib/mock/store";
-import { useMockPeople } from "@/lib/mock/communityStore";
+import { useMockPeople, upsertPerson } from "@/lib/mock/communityStore";
 import { getCosmetic, type CosmeticItem } from "@/lib/mock/cosmetics";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { ProfileEditForm } from "@/components/dashboard/ProfileEditForm";
 import { ChartIcon, TrophyIcon, CalendarIcon, StoreIcon, FlameIcon } from "@/components/icons";
+import { AppLoader } from "@/components/common/AppLoader";
+import { apiFetch } from "@/lib/api/client";
 import {
   CosmeticBadgePill,
   CosmeticTitleText,
@@ -28,13 +31,88 @@ import {
 
 export default function ProfilePage() {
   const { t } = useLanguage();
-  const { user } = useSession();
+  const { user, refreshSession, isLoading: sessionLoading } = useSession();
   const people = useMockPeople();
-  const person = people.find((p) => p.id === user.personId);
+  const person = people.find((p) => p.id === user.id || p.id === user.personId);
   const matches = useMockMatches().filter((m) => m.game === "efootball");
+  const [profileLoading, setProfileLoading] = useState<boolean>(true);
 
-  const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === user.personId) + 1;
-  const points = person?.points ?? 1250;
+  useEffect(() => {
+    let mounted = true;
+    async function loadBackendProfile() {
+      try {
+        const backendUser = await apiFetch<any>("/users/me");
+        if (mounted && backendUser && backendUser.id) {
+          const ep = backendUser.efootballProfile;
+          upsertPerson({
+            id: backendUser.id,
+            name: backendUser.name,
+            dpUrl: backendUser.dpUrl ?? null,
+            coverUrl: backendUser.coverUrl ?? null,
+            clubId: ep?.clubId ?? null,
+            clubRole: ep?.clubRole ?? null,
+            communityId: ep?.communityId ?? null,
+            communityRole: ep?.communityRole ?? null,
+            points: ep?.points ?? 1250,
+            lineupStatus: ep?.lineupStatus ?? undefined,
+            gamePosition: ep?.gamePosition ?? undefined,
+            shirtNumber: ep?.shirtNumber ?? undefined,
+            squadTeam: ep?.squadTeam ?? undefined,
+            bio: backendUser.bio ?? undefined,
+            inGameId: backendUser.inGameId ?? ep?.konamiUid ?? undefined,
+            konamiUid: ep?.konamiUid ?? backendUser.inGameId ?? undefined,
+            facebookUrl: backendUser.facebookUrl ?? undefined,
+            facebookProfileName: backendUser.facebookProfileName ?? undefined,
+            instagramUrl: backendUser.instagramUrl ?? undefined,
+            deviceName: backendUser.deviceName ?? undefined,
+            deviceModel: backendUser.deviceModel ?? undefined,
+            phoneNumber: backendUser.phoneNumber ?? undefined,
+            birthday: backendUser.birthday ?? undefined,
+            bloodGroup: backendUser.bloodGroup ?? undefined,
+            country: backendUser.country ?? undefined,
+            division: backendUser.division ?? undefined,
+            district: backendUser.district ?? undefined,
+            permanentAddress: backendUser.permanentAddress ?? undefined,
+            currentLocation: backendUser.currentLocation ?? null,
+            workExperience: backendUser.workExperience ?? undefined,
+            education: backendUser.education ?? undefined,
+            documentType: backendUser.documentType ?? undefined,
+            documentDataUrl: backendUser.documentDataUrl ?? undefined,
+            verificationLevel: backendUser.verificationLevel ?? 0,
+            ownedCosmeticIds: backendUser.ownedCosmeticIds ?? undefined,
+            equippedBadgeId: backendUser.equippedBadgeId ?? null,
+            equippedTitleId: backendUser.equippedTitleId ?? null,
+            equippedFrameId: backendUser.equippedFrameId ?? null,
+            equippedThemeId: backendUser.equippedThemeId ?? null,
+          });
+
+          if (refreshSession) {
+            await refreshSession();
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch user profile from backend:", err);
+      } finally {
+        if (mounted) {
+          setProfileLoading(false);
+        }
+      }
+    }
+
+    loadBackendProfile();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (sessionLoading || (profileLoading && !user.id && !person)) {
+    return <AppLoader />;
+  }
+
+  const effectiveId = user.id || user.personId;
+  const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === effectiveId) + 1;
+  const points = person?.points ?? user.raw?.efootballProfile?.points ?? 1250;
+  const rating = points ? Math.min(99, Math.max(65, 70 + Math.floor(points / 50))) : 94;
 
   const equippedTitle = person?.equippedTitleId ? getCosmetic(person.equippedTitleId) : null;
   const equippedBadge = person?.equippedBadgeId ? getCosmetic(person.equippedBadgeId) : null;
@@ -64,7 +142,7 @@ export default function ProfilePage() {
               {t.dashboard.shell.navStore}
             </Link>
             <Link
-              href={`/dashboard/efootball/players/${user.personId}`}
+              href={"/dashboard/efootball/players/" + effectiveId}
               className="rounded-full border border-surface-line-strong bg-surface/40 px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
             >
               {t.dashboard.playerProfile.viewPublicProfile}
@@ -78,7 +156,7 @@ export default function ProfilePage() {
         <ThemedProfileHeroBanner theme={equippedTheme}>
           <ThemedCoverArtwork
             theme={equippedTheme}
-            coverUrl={person?.coverUrl}
+            coverUrl={person?.coverUrl ?? user.coverUrl ?? user.raw?.coverUrl}
             name={user.name}
             className="h-56 min-[450px]:h-64 sm:h-80 lg:h-96"
           />
@@ -110,8 +188,8 @@ export default function ProfilePage() {
                 frame={equippedFrame}
                 dpUrl={person?.dpUrl ?? user.dpUrl}
                 name={user.name}
-                position={person?.gamePosition ?? "CF"}
-                rating={94}
+                position={person?.gamePosition ?? user.raw?.efootballProfile?.gamePosition ?? "CF"}
+                rating={rating}
                 theme={equippedTheme}
               />
             </div>
@@ -207,4 +285,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

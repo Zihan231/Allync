@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, useEffect, type FormEvent, type ReactNode } from "react";
+import { apiFetch } from "@/lib/api/client";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { addPerson, getPerson, updatePersonProfile } from "@/lib/mock/communityStore";
@@ -86,28 +87,28 @@ type FormErrors = Partial<Record<keyof FormState, string>>;
 
 function buildForm(person: Person | undefined, user: MockUser): FormState {
   return {
-    dpUrl: person?.dpUrl ?? null,
-    coverUrl: person?.coverUrl ?? null,
-    email: user.email,
+    dpUrl: person?.dpUrl ?? user.dpUrl ?? null,
+    coverUrl: person?.coverUrl ?? user.coverUrl ?? user.raw?.coverUrl ?? null,
+    email: user.email || "",
     password: "",
-    facebookProfileName: person?.facebookProfileName ?? "",
-    facebookUrl: person?.facebookUrl ?? "",
-    instagramUrl: person?.instagramUrl ?? "",
-    konamiUid: person?.konamiUid ?? "",
-    deviceName: person?.deviceName ?? "",
-    deviceModel: person?.deviceModel ?? "",
-    phoneNumber: person?.phoneNumber ?? "",
-    birthday: person?.birthday ?? "",
-    bloodGroup: person?.bloodGroup ?? "",
-    country: person?.country ?? "",
-    division: person?.division ?? "",
-    district: person?.district ?? "",
-    permanentAddress: person?.permanentAddress ?? "",
-    currentLocation: person?.currentLocation ?? null,
-    workExperience: person?.workExperience ?? [],
-    education: person?.education ?? [],
-    documentType: person?.documentType ?? "",
-    documentDataUrl: person?.documentDataUrl ?? null,
+    facebookProfileName: person?.facebookProfileName ?? user.raw?.facebookProfileName ?? "",
+    facebookUrl: person?.facebookUrl ?? user.raw?.facebookUrl ?? "",
+    instagramUrl: person?.instagramUrl ?? user.raw?.instagramUrl ?? "",
+    konamiUid: person?.konamiUid ?? person?.inGameId ?? user.raw?.efootballProfile?.konamiUid ?? user.raw?.inGameId ?? "",
+    deviceName: person?.deviceName ?? user.raw?.deviceName ?? "",
+    deviceModel: person?.deviceModel ?? user.raw?.deviceModel ?? "",
+    phoneNumber: person?.phoneNumber ?? user.phoneNumber ?? user.raw?.phoneNumber ?? "",
+    birthday: person?.birthday ?? user.raw?.birthday ?? "",
+    bloodGroup: (person?.bloodGroup ?? user.raw?.bloodGroup ?? "") as BloodGroup | "",
+    country: person?.country ?? user.raw?.country ?? "",
+    division: person?.division ?? user.raw?.division ?? "",
+    district: person?.district ?? user.raw?.district ?? "",
+    permanentAddress: person?.permanentAddress ?? user.permanentAddress ?? user.raw?.permanentAddress ?? "",
+    currentLocation: person?.currentLocation ?? user.raw?.currentLocation ?? null,
+    workExperience: person?.workExperience ?? user.raw?.workExperience ?? [],
+    education: person?.education ?? user.raw?.education ?? [],
+    documentType: (person?.documentType ?? user.raw?.documentType ?? "") as DocumentType | "",
+    documentDataUrl: person?.documentDataUrl ?? user.raw?.documentDataUrl ?? null,
   };
 }
 
@@ -190,13 +191,21 @@ export function ProfileEditForm() {
   const { t } = useLanguage();
   const pf = t.dashboard.profileForm;
   const dash = pf.notProvided;
-  const { user, setDpUrl, updateProfile, setVerificationStatus, setVerificationLevel } = useSession();
-  const person = getPerson(user.personId);
+  const { user, refreshSession, setDpUrl, updateProfile, setVerificationStatus, setVerificationLevel } = useSession();
+  const person = getPerson(user.id) || getPerson(user.personId);
 
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<FormState>(() => buildForm(person, user));
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!editing) {
+      setForm(buildForm(getPerson(user.id) || getPerson(user.personId), user));
+    }
+  }, [user, editing]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -204,12 +213,14 @@ export function ProfileEditForm() {
 
   function startEditing() {
     setSubmitted(false);
+    setSaveError(null);
     setEditing(true);
   }
 
   function cancelEditing() {
-    setForm(buildForm(getPerson(user.personId), user));
+    setForm(buildForm(getPerson(user.id) || getPerson(user.personId), user));
     setErrors({});
+    setSaveError(null);
     setEditing(false);
   }
 
@@ -227,63 +238,89 @@ export function ProfileEditForm() {
     return next;
   }
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const nextErrors = validate();
     setErrors(nextErrors);
     setSubmitted(false);
+    setSaveError(null);
     if (Object.keys(nextErrors).length > 0) return;
 
-    const patch = {
-      dpUrl: form.dpUrl,
-      coverUrl: form.coverUrl,
-      facebookProfileName: form.facebookProfileName || undefined,
-      facebookUrl: form.facebookUrl,
-      instagramUrl: form.instagramUrl || undefined,
-      konamiUid: form.konamiUid || undefined,
-      deviceName: form.deviceName || undefined,
-      deviceModel: form.deviceModel || undefined,
-      phoneNumber: form.phoneNumber,
-      birthday: form.birthday,
-      bloodGroup: form.bloodGroup || undefined,
-      country: form.country,
-      division: form.division || undefined,
-      district: form.district || undefined,
-      permanentAddress: form.permanentAddress,
-      currentLocation: form.currentLocation,
-      workExperience: form.workExperience,
-      education: form.education,
-      documentType: form.documentType || undefined,
-      documentDataUrl: form.documentDataUrl ?? undefined,
-      verificationLevel: form.documentType ? getVerificationLevelForDocument(form.documentType) : person?.verificationLevel,
-    };
+    setIsSaving(true);
+    try {
+      const payload: Record<string, any> = {
+        dpUrl: form.dpUrl,
+        coverUrl: form.coverUrl,
+        facebookProfileName: form.facebookProfileName || null,
+        facebookUrl: form.facebookUrl || null,
+        instagramUrl: form.instagramUrl || null,
+        inGameId: form.konamiUid || null,
+        deviceName: form.deviceName || null,
+        deviceModel: form.deviceModel || null,
+        phoneNumber: form.phoneNumber || null,
+        birthday: form.birthday || null,
+        bloodGroup: form.bloodGroup || null,
+        country: form.country || null,
+        division: form.division || null,
+        district: form.district || null,
+        permanentAddress: form.permanentAddress || null,
+        currentLocation: form.currentLocation || null,
+        workExperience: form.workExperience && form.workExperience.length > 0 ? form.workExperience : null,
+        education: form.education && form.education.length > 0 ? form.education : null,
+        documentType: form.documentType || null,
+        documentDataUrl: form.documentDataUrl || null,
+        verificationLevel: form.documentType
+          ? getVerificationLevelForDocument(form.documentType)
+          : (person?.verificationLevel ?? user.verificationLevel ?? 0),
+      };
 
-    // The in-memory Person store resets on a full page reload, so a
-    // signed-up demo user's record can go missing even though their
-    // session (localStorage) survives — recreate it instead of silently
-    // dropping the edit.
-    if (getPerson(user.personId)) {
-      updatePersonProfile(user.personId, patch);
-    } else {
-      addPerson({
-        id: user.personId,
-        name: user.name,
-        clubId: user.club?.id ?? null,
-        clubRole: user.club?.role ?? null,
-        communityId: user.community?.id ?? null,
-        communityRole: user.community?.role ?? null,
-        points: 0,
-        ...patch,
+      // 1. Send PATCH /users/me to backend
+      await apiFetch<any>("/users/me", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
       });
+
+      // 2. Also sync eFootball profile if konamiUid provided
+      if (form.konamiUid) {
+        await apiFetch<any>("/users/me/efootball-profile", {
+          method: "PUT",
+          body: JSON.stringify({
+            konamiUid: form.konamiUid,
+          }),
+        }).catch(() => {});
+      }
+
+      // 3. Update local in-memory store
+      const patch = {
+        ...payload,
+        konamiUid: form.konamiUid || undefined,
+        verificationLevel: payload.verificationLevel,
+      };
+
+      const targetId = user.id || user.personId;
+      if (targetId) {
+        updatePersonProfile(targetId, patch);
+      }
+
+      setDpUrl(form.dpUrl);
+      updateProfile({ email: form.email });
+      setVerificationStatus(form.documentType ? "pending" : "unverified");
+      if (form.documentType) {
+        setVerificationLevel(getVerificationLevelForDocument(form.documentType));
+      }
+
+      if (refreshSession) {
+        await refreshSession();
+      }
+
+      setSubmitted(true);
+      setEditing(false);
+    } catch (err: any) {
+      console.error("Profile save error:", err);
+      setSaveError(err.message || "Failed to save profile changes to server.");
+    } finally {
+      setIsSaving(false);
     }
-    setDpUrl(form.dpUrl);
-    updateProfile({ email: form.email });
-    setVerificationStatus("pending");
-    if (form.documentType) {
-      setVerificationLevel(getVerificationLevelForDocument(form.documentType));
-    }
-    setSubmitted(true);
-    setEditing(false);
   }
 
   const documentTypeLabel = form.documentType
@@ -325,6 +362,11 @@ export function ProfileEditForm() {
       </div>
 
       {submitted ? <p className="text-sm text-success-ink">{pf.submitSuccessNote}</p> : null}
+      {saveError ? (
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
+          {saveError}
+        </div>
+      ) : null}
 
       {/* Account Info */}
       <div className="rounded-2xl border border-surface-line bg-surface/60 p-6">
