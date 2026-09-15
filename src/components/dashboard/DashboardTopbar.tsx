@@ -19,7 +19,7 @@ export function DashboardTopbar({
   showMenuButton?: boolean;
 }) {
   const { t } = useLanguage();
-  const { user, logout, switchPersona } = useSession();
+  const { user, logout } = useSession();
   const router = useRouter();
 
   const [gameMenuOpen, setGameMenuOpen] = useState(false);
@@ -168,29 +168,7 @@ export function DashboardTopbar({
                 {t.dashboard.shell.userMenuLogout}
               </button>
 
-              <div className="my-1.5 border-t border-surface-line" />
-              <div className="flex items-center gap-1.5 px-2.5 py-1">
-                <span className="rounded bg-warning-soft px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wide text-warning-ink">
-                  Demo
-                </span>
-                <span className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
-                  {t.dashboard.topbar.demoPersonaLabel}
-                </span>
-              </div>
-              {DEMO_PERSONAS.map((persona) => (
-                <button
-                  key={persona.key}
-                  type="button"
-                  onClick={() => {
-                    switchPersona(persona.personId);
-                    setUserMenuOpen(false);
-                    router.push("/dashboard");
-                  }}
-                  className="flex w-full items-center rounded-lg px-2.5 py-2 text-left text-sm text-ink-soft hover:bg-bg-raised hover:text-ink"
-                >
-                  {t.dashboard.topbar[persona.labelKey]}
-                </button>
-              ))}
+              
             </div>
           ) : null}
         </div>
