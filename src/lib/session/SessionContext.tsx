@@ -205,13 +205,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
               persist(mock);
               setIsAuthenticated(true);
             }
-          } catch {
-            // Cookie expired or backend warming up — drop the stale session
-            if (mounted) {
+          } catch (err) {
+            // Only a real 401 means the cookie is actually gone/expired —
+            // clear the session then. Anything else (network hiccup, a
+            // free-tier backend still cold-starting, a 5xx) should leave the
+            // optimistically-restored cached user alone; otherwise every
+            // transient failure on refresh would look like a logout.
+            const isUnauthorized = err instanceof Error && /^API 401\b/.test(err.message);
+            if (mounted && isUnauthorized) {
               window.localStorage.removeItem(SESSION_FLAG);
               window.localStorage.removeItem(STORAGE_KEY);
               setUser(emptyUser());
               setIsAuthenticated(false);
+            } else {
+              console.warn("Failed to refresh session from backend:", err);
             }
           }
         }
