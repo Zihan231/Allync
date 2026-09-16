@@ -306,7 +306,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
         {tab === "squad" ? (
           <ClubSquadTab club={club} members={members} contractDaysById={insights.contractDaysById} />
         ) : null}
-        {tab === "teams" ? <ClubTeamsTab clubId={club.id} canManage={canManageTeams} /> : null}
+        {tab === "teams" ? <ClubTeamsTab clubId={club.id} canManage={canManageTeams} club={club} /> : null}
         {tab === "transfers" ? <ClubTransfersTab club={club} allPeople={people} /> : null}
         {tab === "rankings" ? <ClubRankingsTab club={club} members={members} /> : null}
         {tab === "table" ? <ClubTableTab club={club} /> : null}
