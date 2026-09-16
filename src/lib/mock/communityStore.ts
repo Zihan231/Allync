@@ -235,6 +235,26 @@ export function applyClubDeleted(clubId: string) {
   emit();
 }
 
+export function applyManagerChanged(
+  clubId: string,
+  newManagerPersonId: string,
+  previousManagerPersonId?: string | null,
+) {
+  people = people.map((p) => {
+    if (p.clubId === clubId && p.id === newManagerPersonId) {
+      return { ...p, clubRole: "Manager" };
+    }
+    if (
+      p.clubId === clubId &&
+      (p.id === previousManagerPersonId || (p.clubRole === "Manager" && p.id !== newManagerPersonId))
+    ) {
+      return { ...p, clubRole: "Player" };
+    }
+    return p;
+  });
+  emit();
+}
+
 export function joinClub(personId: string, clubId: string) {
   const person = getPerson(personId);
   const club = getClub(clubId);

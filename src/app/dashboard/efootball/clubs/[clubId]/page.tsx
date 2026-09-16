@@ -29,7 +29,8 @@ import { ClubTeamUpTab } from "@/components/dashboard/ClubTeamUpTab";
 import { ClubTeamsTab } from "@/components/dashboard/ClubTeamsTab";
 import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
-import { UsersIcon, TrophyIcon, FacebookIcon } from "@/components/icons";
+import { ChangeManagerModal } from "@/components/dashboard/ChangeManagerModal";
+import { UsersIcon, TrophyIcon, FacebookIcon, SwapIcon } from "@/components/icons";
 
 type Tab =
   | "overview"
@@ -54,6 +55,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const joinRequests = useMockJoinRequests();
   const tournaments = useMockTournaments();
   const [tab, setTab] = useState<Tab>("overview");
+  const [showChangeManagerModal, setShowChangeManagerModal] = useState(false);
   const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
 
   useEffect(() => {
@@ -97,6 +99,8 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   // General Secretary; team endpoints allow President or Manager.
   const canManageClub = isMine && (user.club?.role === "President" || user.club?.role === "General Secretary");
   const canManageTeams = isMine && (user.club?.role === "President" || user.club?.role === "Manager");
+  const isManager = isMine && user.club?.role === "Manager";
+  const canChangeManager = canManageClub || isManager;
   const hasOtherClub = !!user.club && !isMine;
   const hasPendingRequest = joinRequests.some(
     (r) => r.targetType === "club" && r.targetId === club.id && r.personId === user.personId && r.status === "pending"
@@ -204,6 +208,17 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
             </Link>
           ) : null}
 
+          {canChangeManager ? (
+            <button
+              type="button"
+              onClick={() => setShowChangeManagerModal(true)}
+              className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent-ink transition-colors hover:bg-accent/20"
+            >
+              <SwapIcon className="h-4 w-4" />
+              {isManager ? t.dashboard.clubs.handoverManagerButton : t.dashboard.clubs.changeManagerButton}
+            </button>
+          ) : null}
+
           {isMine ? (
             <button
               onClick={handleLeave}
@@ -303,6 +318,15 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
           <ClubTournamentsTab tournaments={clubTournaments} clubId={club.id} canManage={canManageTeams} />
         ) : null}
       </div>
+
+      <ChangeManagerModal
+        open={showChangeManagerModal}
+        onClose={() => setShowChangeManagerModal(false)}
+        clubId={club.id}
+        clubName={club.name}
+        members={members}
+        isManagerSelfTransfer={isManager}
+      />
     </div>
   );
 }

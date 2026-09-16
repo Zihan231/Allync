@@ -1,12 +1,31 @@
-import { useMutation } from "@tanstack/react-query";
-import { createClubRequest, updateClubRequest, deleteClubRequest } from "@/lib/api/clubs";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  createClubRequest,
+  updateClubRequest,
+  deleteClubRequest,
+  getClubManagerRequest,
+  changeClubManagerRequest,
+  transferClubManagerRequest,
+  type ChangeManagerPayload,
+  type ChangeManagerResponse,
+} from "@/lib/api/clubs";
 import {
   getPerson,
   applyClubCreated,
   applyClubUpdated,
   applyClubDeleted,
+  applyManagerChanged,
 } from "@/lib/mock/communityStore";
 import type { Club } from "@/lib/mock/types";
+import { meKey } from "./useUsers";
+import { teamKeys } from "./useTeams";
+
+export const clubKeys = {
+  all: ["clubs"] as const,
+  detail: (clubId: string) => ["clubs", clubId] as const,
+  manager: (clubId: string) => ["clubs", clubId, "manager"] as const,
+  members: (clubId: string) => ["clubs", clubId, "members"] as const,
+};
 
 const CLUB_PATCH_FIELDS = [
   "name",
@@ -95,6 +114,42 @@ export function useDeleteClub() {
     mutationFn: async (clubId: string) => {
       await deleteClubRequest(clubId);
       applyClubDeleted(clubId);
+    },
+  });
+}
+
+export function useClubManager(clubId: string) {
+  return useQuery({
+    queryKey: clubKeys.manager(clubId),
+    queryFn: () => getClubManagerRequest(clubId),
+    enabled: Boolean(clubId),
+  });
+}
+
+export function useChangeClubManager(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: ChangeManagerPayload) => changeClubManagerRequest(clubId, payload),
+    onSuccess: (data: ChangeManagerResponse) => {
+      queryClient.invalidateQueries({ queryKey: clubKeys.manager(clubId) });
+      queryClient.invalidateQueries({ queryKey: teamKeys.members(clubId) });
+      queryClient.invalidateQueries({ queryKey: meKey });
+      queryClient.invalidateQueries({ queryKey: clubKeys.all });
+      applyManagerChanged(clubId, data.newManager.userId, data.previousManager?.userId);
+    },
+  });
+}
+
+export function useTransferClubManager(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: ChangeManagerPayload) => transferClubManagerRequest(clubId, payload),
+    onSuccess: (data: ChangeManagerResponse) => {
+      queryClient.invalidateQueries({ queryKey: clubKeys.manager(clubId) });
+      queryClient.invalidateQueries({ queryKey: teamKeys.members(clubId) });
+      queryClient.invalidateQueries({ queryKey: meKey });
+      queryClient.invalidateQueries({ queryKey: clubKeys.all });
+      applyManagerChanged(clubId, data.newManager.userId, data.previousManager?.userId);
     },
   });
 }
