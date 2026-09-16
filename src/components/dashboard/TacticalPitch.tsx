@@ -1,44 +1,130 @@
 "use client";
 
 import { useMemo } from "react";
+import { PitchPlayerCard } from "./PitchPlayerCard";
 import type { ClubMemberProfile } from "@/lib/api/teams";
-import { PitchPlayerCard, getPositionColor } from "./PitchPlayerCard";
-
-export interface FormationSlot {
-  key: string;
-  defaultPosition: string;
-  label: string;
-  left: string;
-  top: string;
-}
-
-export const STANDARD_FORMATION: FormationSlot[] = [
-  // Forwards (Top)
-  { key: "lwf", defaultPosition: "LWF", label: "LWF", left: "20%", top: "15%" },
-  { key: "cf", defaultPosition: "CF", label: "CF", left: "50%", top: "12%" },
-  { key: "rwf", defaultPosition: "RWF", label: "RWF", left: "80%", top: "15%" },
-
-  // Midfielders (Center)
-  { key: "cmf1", defaultPosition: "CMF", label: "CMF", left: "28%", top: "38%" },
-  { key: "dmf", defaultPosition: "DMF", label: "DMF", left: "50%", top: "48%" },
-  { key: "cmf2", defaultPosition: "CMF", label: "CMF", left: "72%", top: "38%" },
-
-  // Defenders (Backline)
-  { key: "lb", defaultPosition: "LB", label: "LB", left: "16%", top: "71%" },
-  { key: "cb1", defaultPosition: "CB", label: "CB", left: "38%", top: "74%" },
-  { key: "cb2", defaultPosition: "CB", label: "CB", left: "62%", top: "74%" },
-  { key: "rb", defaultPosition: "RB", label: "RB", left: "84%", top: "71%" },
-
-  // Goalkeeper
-  { key: "gk", defaultPosition: "GK", label: "GK", left: "50%", top: "88%" },
-];
 
 export interface TacticalPitchProps {
   starters: ClubMemberProfile[];
   captainProfileId?: string | null;
   selectedPlayerId?: string | null;
   onSelectPlayer?: (player: ClubMemberProfile) => void;
+  onChangePosition?: (player: ClubMemberProfile) => void;
   canManage?: boolean;
+}
+
+/**
+ * Tactical pitch coordinates for all 13 official eFootball positions.
+ * Coordinates are percentage strings: { left: 'X%', top: 'Y%' } relative to the pitch.
+ * top 0% = opponent goal (top), top 100% = home goal (bottom).
+ */
+export function getPositionCoordinates(
+  pos: string,
+  indexInPosition: number = 0,
+  totalInPosition: number = 1,
+): { left: string; top: string } {
+  const p = (pos || "CMF").toUpperCase();
+
+  switch (p) {
+    case "GK":
+      return { left: "50%", top: "88%" };
+
+    case "CB":
+      if (totalInPosition === 1) return { left: "50%", top: "74%" };
+      if (totalInPosition === 2) {
+        return indexInPosition === 0
+          ? { left: "38%", top: "74%" }
+          : { left: "62%", top: "74%" };
+      }
+      // 3 CBs
+      if (indexInPosition === 0) return { left: "28%", top: "74%" };
+      if (indexInPosition === 1) return { left: "50%", top: "75%" };
+      return { left: "72%", top: "74%" };
+
+    case "LB":
+      return { left: "14%", top: "70%" };
+
+    case "RB":
+      return { left: "86%", top: "70%" };
+
+    case "DMF":
+    case "CDM":
+    case "DM":
+      if (totalInPosition === 1) return { left: "50%", top: "58%" };
+      if (totalInPosition === 2) {
+        return indexInPosition === 0
+          ? { left: "37%", top: "58%" }
+          : { left: "63%", top: "58%" };
+      }
+      // 3 DMFs
+      if (indexInPosition === 0) return { left: "26%", top: "58%" };
+      if (indexInPosition === 1) return { left: "50%", top: "59%" };
+      return { left: "74%", top: "58%" };
+
+    case "CMF":
+    case "CM":
+      if (totalInPosition === 1) return { left: "50%", top: "45%" };
+      if (totalInPosition === 2) {
+        return indexInPosition === 0
+          ? { left: "35%", top: "45%" }
+          : { left: "65%", top: "45%" };
+      }
+      // 3 CMFs
+      if (indexInPosition === 0) return { left: "26%", top: "45%" };
+      if (indexInPosition === 1) return { left: "50%", top: "46%" };
+      return { left: "74%", top: "45%" };
+
+    case "LMF":
+    case "LM":
+      return { left: "15%", top: "42%" };
+
+    case "RMF":
+    case "RM":
+      return { left: "85%", top: "42%" };
+
+    case "AMF":
+    case "CAM":
+      if (totalInPosition === 1) return { left: "50%", top: "31%" };
+      if (totalInPosition === 2) {
+        return indexInPosition === 0
+          ? { left: "36%", top: "31%" }
+          : { left: "64%", top: "31%" };
+      }
+      // 3 AMFs
+      if (indexInPosition === 0) return { left: "26%", top: "31%" };
+      if (indexInPosition === 1) return { left: "50%", top: "32%" };
+      return { left: "74%", top: "31%" };
+
+    case "LWF":
+    case "LW":
+      return { left: "16%", top: "15%" };
+
+    case "RWF":
+    case "RW":
+      return { left: "84%", top: "15%" };
+
+    case "SS":
+      if (totalInPosition === 1) return { left: "50%", top: "20%" };
+      return indexInPosition === 0
+        ? { left: "37%", top: "20%" }
+        : { left: "63%", top: "20%" };
+
+    case "CF":
+    case "ST":
+      if (totalInPosition === 1) return { left: "50%", top: "10%" };
+      if (totalInPosition === 2) {
+        return indexInPosition === 0
+          ? { left: "37%", top: "10%" }
+          : { left: "63%", top: "10%" };
+      }
+      // 3 CFs
+      if (indexInPosition === 0) return { left: "26%", top: "10%" };
+      if (indexInPosition === 1) return { left: "50%", top: "9%" };
+      return { left: "74%", top: "10%" };
+
+    default:
+      return { left: "50%", top: "50%" };
+  }
 }
 
 export function TacticalPitch({
@@ -46,56 +132,26 @@ export function TacticalPitch({
   captainProfileId,
   selectedPlayerId,
   onSelectPlayer,
+  onChangePosition,
   canManage = false,
 }: TacticalPitchProps) {
-  // Map starters into formation slots intelligently
-  const slotAssignments = useMemo(() => {
-    const assigned: Record<string, { player: ClubMemberProfile; slot: FormationSlot } | null> = {};
-    const unplacedStarters = [...starters];
-
-    // Priority matcher for exact positions
-    const matchSlot = (
-      slotKey: string,
-      acceptedPositions: string[],
-    ) => {
-      const idx = unplacedStarters.findIndex((p) =>
-        acceptedPositions.includes((p.gamePosition || "").toUpperCase())
-      );
-      if (idx !== -1) {
-        const [player] = unplacedStarters.splice(idx, 1);
-        const slot = STANDARD_FORMATION.find((s) => s.key === slotKey)!;
-        assigned[slotKey] = { player, slot };
-      }
-    };
-
-    // 1. Goalkeeper
-    matchSlot("gk", ["GK", "GOALKEEPER"]);
-
-    // 2. Center Forwards & Wings
-    matchSlot("cf", ["CF", "ST", "SS"]);
-    matchSlot("lwf", ["LWF", "LW", "LM"]);
-    matchSlot("rwf", ["RWF", "RW", "RM"]);
-
-    // 3. Defenders
-    matchSlot("lb", ["LB", "LWB"]);
-    matchSlot("rb", ["RB", "RWB"]);
-    matchSlot("cb1", ["CB"]);
-    matchSlot("cb2", ["CB"]);
-
-    // 4. Midfielders
-    matchSlot("dmf", ["DMF", "CDM", "DM"]);
-    matchSlot("cmf1", ["CMF", "CM", "AMF", "CAM"]);
-    matchSlot("cmf2", ["CMF", "CM", "AMF", "CAM"]);
-
-    // 5. Fill any vacant slots with remaining starters
-    STANDARD_FORMATION.forEach((slot) => {
-      if (!assigned[slot.key] && unplacedStarters.length > 0) {
-        const player = unplacedStarters.shift()!;
-        assigned[slot.key] = { player, slot };
-      }
+  // Group players by position to calculate coordinates for multiple players in same pos (e.g. 2 CBs, 2 CMFs)
+  const placedPlayers = useMemo(() => {
+    const positionCounts: Record<string, number> = {};
+    starters.forEach((p) => {
+      const pos = (p.gamePosition || "CMF").toUpperCase();
+      positionCounts[pos] = (positionCounts[pos] || 0) + 1;
     });
 
-    return assigned;
+    const positionIndices: Record<string, number> = {};
+    return starters.map((player) => {
+      const pos = (player.gamePosition || "CMF").toUpperCase();
+      const index = positionIndices[pos] || 0;
+      positionIndices[pos] = index + 1;
+      const total = positionCounts[pos] || 1;
+      const coords = getPositionCoordinates(pos, index, total);
+      return { player, pos, coords };
+    });
   }, [starters]);
 
   return (
@@ -215,44 +271,29 @@ export function TacticalPitch({
           <path d="M 648 830 A 22 22 0 0 0 670 808" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" />
         </svg>
 
-        {/* Tactical Pitch Players Overlay */}
+        {/* Tactical Pitch Players Overlay - Smooth gliding transitions */}
         <div className="absolute inset-0">
-          {STANDARD_FORMATION.map((slot) => {
-            const assignment = slotAssignments[slot.key];
-            const player = assignment?.player;
-            const isSelected = player ? selectedPlayerId === player.id : false;
-            const isCaptain = player ? captainProfileId === player.id : false;
-            const colors = getPositionColor(slot.defaultPosition);
+          {placedPlayers.map(({ player, pos, coords }) => {
+            const isSelected = selectedPlayerId === player.id;
+            const isSwapTarget = Boolean(selectedPlayerId && selectedPlayerId !== player.id);
+            const isCaptain = captainProfileId === player.id;
 
             return (
               <div
-                key={slot.key}
-                className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
-                style={{ left: slot.left, top: slot.top }}
+                key={player.id}
+                className="absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-500 ease-out z-10"
+                style={{ left: coords.left, top: coords.top }}
               >
-                {player ? (
-                  <PitchPlayerCard
-                    player={player}
-                    displayPosition={slot.defaultPosition}
-                    isSelected={isSelected}
-                    onClick={() => onSelectPlayer?.(player)}
-                    isCaptain={isCaptain}
-                  />
-                ) : (
-                  /* Empty Position Placeholder */
-                  <div
-                    className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/25 bg-black/30 p-2 w-[68px] sm:w-[76px] md:w-[84px] h-[80px] sm:h-[90px] backdrop-blur-xs transition-colors ${
-                      canManage ? "hover:border-accent hover:bg-accent/10 cursor-pointer" : ""
-                    }`}
-                  >
-                    <span
-                      className={`rounded px-1.5 py-0.5 font-display text-[9px] font-black uppercase ${colors.bg} ${colors.text}`}
-                    >
-                      {slot.defaultPosition}
-                    </span>
-                    <span className="mt-1 font-display text-[10px] text-white/50">Vacant</span>
-                  </div>
-                )}
+                <PitchPlayerCard
+                  player={player}
+                  displayPosition={pos}
+                  isSelected={isSelected}
+                  isSwapTarget={isSwapTarget}
+                  onClick={() => onSelectPlayer?.(player)}
+                  onChangePosition={() => onChangePosition?.(player)}
+                  isCaptain={isCaptain}
+                  canManage={canManage}
+                />
               </div>
             );
           })}
