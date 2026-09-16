@@ -1,4 +1,14 @@
 export function getApiBaseUrl(): string {
+  // In the browser, go through this app's own /api/* rewrite proxy (see
+  // next.config.ts) instead of calling the backend's cross-site origin
+  // directly — some browsers (Safari ITP, Chrome's third-party-cookie
+  // phase-out) block or partition the auth cookie between two different
+  // sites even with SameSite=None; Secure set correctly. Routing through
+  // our own origin makes the cookie first-party.
+  if (typeof window !== "undefined") {
+    return "/api";
+  }
+
   const url =
     process.env.NODE_ENV === "production"
       ? process.env.NEXT_PUBLIC_API_URL_PROD
