@@ -1,6 +1,6 @@
 "use client";
 
-import { apiFetch } from "@/lib/api/client";
+import { apiFetch, parseApiErrorMessage } from "@/lib/api/client";
 
 import { useSyncExternalStore } from "react";
 import type { Club, Community, JoinRequest, Person } from "./types";
@@ -207,6 +207,10 @@ export function equipCosmetic(personId: string, category: CosmeticCategory, cosm
 
 // ---- Clubs ----
 
+function unwrapApiError(err: any, fallback: string): Error {
+  return new Error(parseApiErrorMessage(err, fallback));
+}
+
 export async function createClub(
   input: { name: string; description: string; color: string; joinPolicy: Club["joinPolicy"] },
   creatorPersonId: string
@@ -236,12 +240,7 @@ export async function createClub(
       }),
     });
   } catch (err: any) {
-    let msg = err?.message ?? "Failed to create club";
-    try {
-      const parsed = JSON.parse(msg.replace(/^API \d+ [^:]+: /, ""));
-      msg = parsed.message || msg;
-    } catch {}
-    throw new Error(typeof msg === "string" ? msg.replace(/^API \d+ [^:]+: /, "") : "Failed to create club");
+    throw unwrapApiError(err, "Failed to create club");
   }
 
   const id = backendClub?.id || `club-${Date.now()}`;
@@ -266,8 +265,50 @@ export async function createClub(
   return club;
 }
 
-export function updateClub(clubId: string, patch: Partial<Club>) {
+const CLUB_PATCH_FIELDS = [
+  "name",
+  "description",
+  "dpUrl",
+  "coverUrl",
+  "joinPolicy",
+  "color",
+  "motto",
+  "location",
+  "facebookUrl",
+  "minRoster",
+  "maxRoster",
+  "communityIds",
+  "stage",
+] as const;
+
+export async function updateClub(clubId: string, patch: Partial<Club>): Promise<void> {
+  const backendPatch: Record<string, unknown> = {};
+  for (const field of CLUB_PATCH_FIELDS) {
+    if (patch[field] !== undefined) backendPatch[field] = patch[field];
+  }
+
+  try {
+    await apiFetch<any>(`/clubs/${clubId}`, {
+      method: "PATCH",
+      body: JSON.stringify(backendPatch),
+    });
+  } catch (err: any) {
+    throw unwrapApiError(err, "Failed to update club");
+  }
+
   clubs = clubs.map((c) => (c.id === clubId ? { ...c, ...patch } : c));
+  emit();
+}
+
+export async function deleteClub(clubId: string): Promise<void> {
+  try {
+    await apiFetch<void>(`/clubs/${clubId}`, { method: "DELETE" });
+  } catch (err: any) {
+    throw unwrapApiError(err, "Failed to delete club");
+  }
+
+  clubs = clubs.filter((c) => c.id !== clubId);
+  people = people.map((p) => (p.clubId === clubId ? { ...p, clubId: null, clubRole: null } : p));
   emit();
 }
 

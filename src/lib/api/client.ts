@@ -29,3 +29,14 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
+
+// apiFetch throws "API 400 Bad Request: {...nest error json...}"; this pulls
+// the human-readable `message` out of that JSON when present.
+export function parseApiErrorMessage(err: unknown, fallback: string): string {
+  let msg = err instanceof Error ? err.message : fallback;
+  try {
+    const parsed = JSON.parse(msg.replace(/^API \d+ [^:]+: /, ""));
+    msg = parsed.message || msg;
+  } catch {}
+  return typeof msg === "string" ? msg.replace(/^API \d+ [^:]+: /, "") : fallback;
+}

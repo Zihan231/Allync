@@ -26,6 +26,7 @@ import { ClubRoundsTab } from "@/components/dashboard/ClubRoundsTab";
 import { ClubRoundStatsTab } from "@/components/dashboard/ClubRoundStatsTab";
 import { ClubMatchStatsTab } from "@/components/dashboard/ClubMatchStatsTab";
 import { ClubTeamUpTab } from "@/components/dashboard/ClubTeamUpTab";
+import { ClubTeamsTab } from "@/components/dashboard/ClubTeamsTab";
 import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { UsersIcon, TrophyIcon, FacebookIcon } from "@/components/icons";
@@ -34,6 +35,7 @@ type Tab =
   | "overview"
   | "fixtures"
   | "squad"
+  | "teams"
   | "transfers"
   | "rankings"
   | "table"
@@ -91,7 +93,10 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const communities = mockCommunities.filter((c) => club.communityIds.includes(c.id));
 
   const isMine = user.club?.id === club.id;
-  const canManage = isMine && (user.club?.role === "President" || user.club?.role === "Manager");
+  // Matches the backend guards exactly: club PATCH/DELETE allows President or
+  // General Secretary; team endpoints allow President or Manager.
+  const canManageClub = isMine && (user.club?.role === "President" || user.club?.role === "General Secretary");
+  const canManageTeams = isMine && (user.club?.role === "President" || user.club?.role === "Manager");
   const hasOtherClub = !!user.club && !isMine;
   const hasPendingRequest = joinRequests.some(
     (r) => r.targetType === "club" && r.targetId === club.id && r.personId === user.personId && r.status === "pending"
@@ -114,6 +119,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
     { key: "overview", label: t.dashboard.club.tabOverview },
     { key: "fixtures", label: t.dashboard.club.tabFixtures },
     { key: "squad", label: `${t.dashboard.club.tabSquad} (${members.length})` },
+    { key: "teams", label: "Teams" },
     { key: "transfers", label: t.dashboard.club.tabTransfers },
     { key: "rankings", label: t.dashboard.club.tabRankings },
     { key: "table", label: t.dashboard.club.tabTable },
@@ -181,23 +187,21 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
             </a>
           ) : null}
 
-          {canManage ? (
-            <>
-              <Link
-                href={`/dashboard/efootball/clubs/${club.id}/edit`}
-                className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink"
-              >
-                {t.dashboard.clubs.editButton}
-              </Link>
-              {club.joinPolicy === "approval" ? (
-                <Link
-                  href={`/dashboard/efootball/clubs/${club.id}/requests`}
-                  className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink"
-                >
-                  {t.dashboard.clubs.requestsQueueTitle}
-                </Link>
-              ) : null}
-            </>
+          {canManageClub ? (
+            <Link
+              href={`/dashboard/efootball/clubs/${club.id}/edit`}
+              className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink"
+            >
+              {t.dashboard.clubs.editButton}
+            </Link>
+          ) : null}
+          {canManageTeams && club.joinPolicy === "approval" ? (
+            <Link
+              href={`/dashboard/efootball/clubs/${club.id}/requests`}
+              className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink"
+            >
+              {t.dashboard.clubs.requestsQueueTitle}
+            </Link>
           ) : null}
 
           {isMine ? (
@@ -287,6 +291,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
         {tab === "squad" ? (
           <ClubSquadTab club={club} members={members} contractDaysById={insights.contractDaysById} />
         ) : null}
+        {tab === "teams" ? <ClubTeamsTab clubId={club.id} canManage={canManageTeams} /> : null}
         {tab === "transfers" ? <ClubTransfersTab club={club} allPeople={people} /> : null}
         {tab === "rankings" ? <ClubRankingsTab club={club} members={members} /> : null}
         {tab === "table" ? <ClubTableTab club={club} /> : null}
@@ -295,7 +300,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
         {tab === "matchStats" ? <ClubMatchStatsTab club={club} members={members} /> : null}
         {tab === "teamUp" ? <ClubTeamUpTab club={club} members={members} /> : null}
         {tab === "tournaments" ? (
-          <ClubTournamentsTab tournaments={clubTournaments} clubId={club.id} canManage={canManage} />
+          <ClubTournamentsTab tournaments={clubTournaments} clubId={club.id} canManage={canManageTeams} />
         ) : null}
       </div>
     </div>

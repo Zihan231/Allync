@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, type FormEvent, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api/client";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
@@ -191,8 +192,9 @@ export function ProfileEditForm() {
   const { t } = useLanguage();
   const pf = t.dashboard.profileForm;
   const dash = pf.notProvided;
-  const { user, refreshSession, setDpUrl, updateProfile, setVerificationStatus, setVerificationLevel } = useSession();
+  const { user, refreshSession, setDpUrl, updateProfile, setVerificationStatus, setVerificationLevel, logout } = useSession();
   const person = getPerson(user.id) || getPerson(user.personId);
+  const router = useRouter();
 
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<FormState>(() => buildForm(person, user));
@@ -200,6 +202,26 @@ export function ProfileEditForm() {
   const [submitted, setSubmitted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Demo personas (switchPersona) never had a real backend account to delete.
+  const hasRealAccount = Boolean(user.raw);
+
+  async function handleDeleteAccount() {
+    if (!user.id) return;
+    if (!window.confirm("Delete your account permanently? This cannot be undone.")) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await apiFetch<void>(`/users/${user.id}`, { method: "DELETE" });
+      logout();
+      router.push("/login");
+    } catch (err: any) {
+      setDeleteError(err?.message || "Failed to delete account. Please try again.");
+      setDeleting(false);
+    }
+  }
 
   useEffect(() => {
     if (!editing) {
@@ -874,6 +896,28 @@ export function ProfileEditForm() {
             className="flex-1 rounded-full bg-accent px-6 py-3 font-display font-semibold text-bg transition-transform hover:-translate-y-0.5"
           >
             {pf.submitCta}
+          </button>
+        </div>
+      ) : null}
+
+      {hasRealAccount && !editing ? (
+        <div className="rounded-2xl border border-danger-ink/30 bg-surface/60 p-6">
+          <h3 className="font-display text-lg font-bold text-ink">Danger zone</h3>
+          <p className="mt-1 text-xs text-ink-soft">
+            Deleting your account permanently removes your profile and data. This cannot be undone.
+          </p>
+          {deleteError ? (
+            <div className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">
+              {deleteError}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={handleDeleteAccount}
+            disabled={deleting}
+            className="mt-3 rounded-full bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink disabled:opacity-50"
+          >
+            {deleting ? "Deleting..." : "Delete account"}
           </button>
         </div>
       ) : null}
