@@ -13,16 +13,13 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     ...((init?.headers as Record<string, string>) || {}),
   };
 
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("ALLYNQ_TOKEN");
-    if (token && !headers["Authorization"]) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-  }
-
+  // Auth is carried by the httpOnly "allync_token" cookie the backend sets on
+  // login/register; the browser attaches it automatically when credentials
+  // are included, and JS never has access to read or forward it manually.
   const res = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
     headers,
+    credentials: "include",
   });
 
   if (!res.ok) {

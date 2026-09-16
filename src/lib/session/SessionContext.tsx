@@ -151,6 +151,10 @@ type SessionContextValue = {
 const SessionContext = createContext<SessionContextValue | null>(null);
 
 const STORAGE_KEY = "ALLYNQ-session";
+// Auth itself lives in the httpOnly "allync_token" cookie the backend sets,
+// which JS can't read. This flag is just a non-sensitive UX hint so we know
+// whether to bother calling /users/me on load instead of always trying.
+const SESSION_FLAG = "ALLYNQ_HAS_SESSION";
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<MockUser>(emptyUser);
@@ -184,16 +188,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     let mounted = true;
     const init = async () => {
       try {
-        const token = typeof window !== "undefined" ? window.localStorage.getItem("ALLYNQ_TOKEN") : null;
+        const hasSession = typeof window !== "undefined" ? window.localStorage.getItem(SESSION_FLAG) : null;
         const stored = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
-        if (token && stored) {
+        if (stored) {
           const parsed = JSON.parse(stored) as MockUser;
           if (parsed && parsed.id) {
             setUser(parsed);
             setIsAuthenticated(true);
           }
         }
-        if (token) {
+        if (hasSession) {
           try {
             const freshUser = await apiFetch<any>("/users/me");
             if (mounted && freshUser && freshUser.id) {
@@ -202,7 +206,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
               setIsAuthenticated(true);
             }
           } catch {
-            // Token might be expired or backend warming up
+            // Cookie expired or backend warming up — drop the stale session
+            if (mounted) {
+              window.localStorage.removeItem(SESSION_FLAG);
+              window.localStorage.removeItem(STORAGE_KEY);
+              setUser(emptyUser());
+              setIsAuthenticated(false);
+            }
           }
         }
       } catch {
@@ -253,12 +263,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ email: email.trim(), password }),
     });
 
-    if (!res || !res.accessToken) {
+    if (!res || !res.user) {
       throw new Error("Failed to authenticate with server");
     }
 
+    // The backend also sets the httpOnly auth cookie on this response; we
+    // just remember locally that a real session exists so init() knows to
+    // check it on reload.
     if (typeof window !== "undefined") {
-      window.localStorage.setItem("ALLYNQ_TOKEN", res.accessToken);
+      window.localStorage.setItem(SESSION_FLAG, "1");
     }
 
     const mock = backendUserToMockUser(res.user);
@@ -278,12 +291,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
     });
 
-    if (!res || !res.accessToken) {
+    if (!res || !res.user) {
       throw new Error("Failed to register account");
     }
 
     if (typeof window !== "undefined") {
-      window.localStorage.setItem("ALLYNQ_TOKEN", res.accessToken);
+      window.localStorage.setItem(SESSION_FLAG, "1");
     }
 
     const mock = backendUserToMockUser(res.user);
@@ -326,16 +339,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
             }
           : null,
     };
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("ALLYNQ_TOKEN", "demo-token-" + personId);
-    }
+    // Demo personas are local-only and never touch the backend, so we
+    // deliberately don't set SESSION_FLAG here — that would make init()
+    // call /users/me on reload, get a 401, and wipe the persona.
     persist(personaUser);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
+    // Fire-and-forget: clears the httpOnly cookie server-side. Local state
+    // is cleared immediately regardless of whether this call succeeds.
+    apiFetch("/auth/logout", { method: "POST" }).catch(() => {});
     if (typeof window !== "undefined") {
-      window.localStorage.removeItem("ALLYNQ_TOKEN");
+      window.localStorage.removeItem(SESSION_FLAG);
       window.localStorage.removeItem(STORAGE_KEY);
     }
     setUser(emptyUser());
