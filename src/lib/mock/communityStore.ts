@@ -1,6 +1,7 @@
 "use client";
 
-import { apiFetch, parseApiErrorMessage } from "@/lib/api/client";
+import { getClubs } from "@/lib/api/clubs";
+import { getUsers } from "@/lib/api/users";
 
 import { useSyncExternalStore } from "react";
 import type { Club, Community, JoinRequest, Person } from "./types";
@@ -59,11 +60,15 @@ export async function syncFromBackend(force = false): Promise<void> {
   syncPromise = (async () => {
     try {
     const [backendClubs, backendUsers] = await Promise.all([
-      apiFetch<any[]>("/clubs").catch(() => null),
-      apiFetch<any[]>("/users").catch(() => null),
+      getClubs().catch(() => null),
+      getUsers().catch(() => null),
     ]);
 
     if (backendClubs && Array.isArray(backendClubs) && backendClubs.length > 0) {
+      // The backend serializes joinPolicy/stage as plain strings; the mock
+      // layer models them as literal unions. Trusting the backend's enum
+      // values here (rather than re-validating them) matches how this sync
+      // has always treated backend data.
       const mappedClubs: Club[] = backendClubs.map((bc) => ({
         id: bc.id,
         name: bc.name,
@@ -73,11 +78,11 @@ export async function syncFromBackend(force = false): Promise<void> {
         coverUrl: bc.coverUrl ?? null,
         description: bc.description || "",
         points: bc.points ?? 0,
-        joinPolicy: bc.joinPolicy || "instant",
+        joinPolicy: (bc.joinPolicy || "instant") as Club["joinPolicy"],
         minRoster: bc.minRoster ?? 4,
         maxRoster: bc.maxRoster ?? 8,
         communityIds: bc.communityIds || [],
-        stage: bc.stage || "Foundation",
+        stage: (bc.stage || "Foundation") as Club["stage"],
         location: bc.location ?? undefined,
         motto: bc.motto ?? undefined,
         facebookUrl: bc.facebookUrl ?? undefined,
@@ -104,7 +109,7 @@ export async function syncFromBackend(force = false): Promise<void> {
           lineupStatus: ep?.lineupStatus ?? undefined,
           gamePosition: ep?.gamePosition ?? undefined,
           shirtNumber: ep?.shirtNumber ?? undefined,
-          squadTeam: (ep?.squadTeam as any) ?? undefined,
+          squadTeam: ep?.squadTeam ?? undefined,
           bio: bu.bio ?? undefined,
           inGameId: bu.inGameId ?? undefined,
           konamiUid: ep?.konamiUid ?? bu.inGameId ?? undefined,
@@ -131,7 +136,7 @@ export async function syncFromBackend(force = false): Promise<void> {
           equippedTitleId: bu.equippedTitleId ?? null,
           equippedFrameId: bu.equippedFrameId ?? null,
           equippedThemeId: bu.equippedThemeId ?? null,
-        };
+        } as Person; // backend roles/enums are plain strings; Person narrows them to literal unions
       });
 
       const backendNames = new Set(mappedPeople.map((p) => p.name.toLowerCase()));
@@ -206,107 +211,25 @@ export function equipCosmetic(personId: string, category: CosmeticCategory, cosm
 }
 
 // ---- Clubs ----
+//
+// The backend calls themselves live in lib/api/clubs.ts + the useCreateClub/
+// useUpdateClub/useDeleteClub mutation hooks (lib/api/hooks/useClubs.ts).
+// These "apply" functions only patch the local mock/demo store once a
+// mutation has actually succeeded — kept here since this module owns the
+// mutable clubs/people arrays.
 
-function unwrapApiError(err: any, fallback: string): Error {
-  return new Error(parseApiErrorMessage(err, fallback));
-}
-
-export async function createClub(
-  input: { name: string; description: string; color: string; joinPolicy: Club["joinPolicy"] },
-  creatorPersonId: string
-): Promise<Club> {
-  const person = getPerson(creatorPersonId);
-  if (person?.clubId) {
-    throw new Error("You are already a member of a club. You cannot create a new club while belonging to an existing one.");
-  }
-
-  const initials = input.name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  let backendClub: any = null;
-  try {
-    backendClub = await apiFetch<any>("/clubs", {
-      method: "POST",
-      body: JSON.stringify({
-        name: input.name,
-        description: input.description,
-        color: input.color,
-        initials,
-        joinPolicy: input.joinPolicy,
-      }),
-    });
-  } catch (err: any) {
-    throw unwrapApiError(err, "Failed to create club");
-  }
-
-  const id = backendClub?.id || `club-${Date.now()}`;
-  const club: Club = {
-    id,
-    name: input.name,
-    color: input.color,
-    initials,
-    dpUrl: backendClub?.dpUrl ?? null,
-    coverUrl: backendClub?.coverUrl ?? null,
-    description: input.description,
-    points: 0,
-    joinPolicy: input.joinPolicy,
-    minRoster: 4,
-    maxRoster: 8,
-    communityIds: [],
-    stage: "Foundation",
-  };
-  clubs = [club, ...clubs.filter((c) => c.id !== id)];
-  updatePerson(creatorPersonId, { clubId: id, clubRole: "President" });
+export function applyClubCreated(club: Club, creatorPersonId: string) {
+  clubs = [club, ...clubs.filter((c) => c.id !== club.id)];
+  updatePerson(creatorPersonId, { clubId: club.id, clubRole: "President" });
   emit();
-  return club;
 }
 
-const CLUB_PATCH_FIELDS = [
-  "name",
-  "description",
-  "dpUrl",
-  "coverUrl",
-  "joinPolicy",
-  "color",
-  "motto",
-  "location",
-  "facebookUrl",
-  "minRoster",
-  "maxRoster",
-  "communityIds",
-  "stage",
-] as const;
-
-export async function updateClub(clubId: string, patch: Partial<Club>): Promise<void> {
-  const backendPatch: Record<string, unknown> = {};
-  for (const field of CLUB_PATCH_FIELDS) {
-    if (patch[field] !== undefined) backendPatch[field] = patch[field];
-  }
-
-  try {
-    await apiFetch<any>(`/clubs/${clubId}`, {
-      method: "PATCH",
-      body: JSON.stringify(backendPatch),
-    });
-  } catch (err: any) {
-    throw unwrapApiError(err, "Failed to update club");
-  }
-
+export function applyClubUpdated(clubId: string, patch: Partial<Club>) {
   clubs = clubs.map((c) => (c.id === clubId ? { ...c, ...patch } : c));
   emit();
 }
 
-export async function deleteClub(clubId: string): Promise<void> {
-  try {
-    await apiFetch<void>(`/clubs/${clubId}`, { method: "DELETE" });
-  } catch (err: any) {
-    throw unwrapApiError(err, "Failed to delete club");
-  }
-
+export function applyClubDeleted(clubId: string) {
   clubs = clubs.filter((c) => c.id !== clubId);
   people = people.map((p) => (p.clubId === clubId ? { ...p, clubId: null, clubRole: null } : p));
   emit();

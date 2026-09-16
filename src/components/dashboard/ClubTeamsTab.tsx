@@ -1,85 +1,60 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { getTeams, createTeam, deleteTeam, type Team } from "@/lib/api/teams";
-import { parseApiErrorMessage } from "@/lib/api/client";
+import { useTeams, useCreateTeam, useDeleteTeam } from "@/lib/api/hooks/useTeams";
+import { isApiError } from "@/lib/api/axios";
 import { EmptyState } from "./EmptyState";
 import { UsersIcon } from "../icons";
 
 export function ClubTeamsTab({ clubId, canManage }: { clubId: string; canManage: boolean }) {
-  const [teams, setTeams] = useState<Team[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data: teams, isLoading, isError, error } = useTeams(clubId);
+  const createTeam = useCreateTeam(clubId);
+  const deleteTeam = useDeleteTeam(clubId);
   const [name, setName] = useState("");
-  const [creating, setCreating] = useState(false);
 
-  const load = async () => {
-    try {
-      const data = await getTeams(clubId);
-      setTeams(data);
-    } catch (err) {
-      setError(parseApiErrorMessage(err, "Failed to load teams"));
-    }
-  };
-
-  useEffect(() => {
-    async function run() {
-      await load();
-    }
-    run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clubId]);
-
-  const handleCreate = async (e: FormEvent) => {
+  const handleCreate = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    setCreating(true);
-    setError(null);
-    try {
-      await createTeam(clubId, name.trim());
-      setName("");
-      await load();
-    } catch (err) {
-      setError(parseApiErrorMessage(err, "Failed to create team"));
-    } finally {
-      setCreating(false);
-    }
+    createTeam.mutate(name.trim(), {
+      onSuccess: () => setName(""),
+    });
   };
 
-  const handleDelete = async (teamId: string, teamName: string) => {
+  const handleDelete = (teamId: string, teamName: string) => {
     if (!window.confirm(`Delete ${teamName}? This cannot be undone.`)) return;
-    setError(null);
-    try {
-      await deleteTeam(clubId, teamId);
-      await load();
-    } catch (err) {
-      setError(parseApiErrorMessage(err, "Failed to delete team"));
-    }
+    deleteTeam.mutate(teamId);
   };
 
-  if (teams === null) {
+  const errorMessage = (err: unknown, fallback: string) =>
+    isApiError(err) ? err.message : fallback;
+
+  if (isLoading) {
+    return <p className="text-sm text-ink-soft">Loading teams…</p>;
+  }
+
+  if (isError) {
     return (
-      <div>
-        {error ? (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-            {error}
-          </div>
-        ) : (
-          <p className="text-sm text-ink-soft">Loading teams…</p>
-        )}
+      <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        {errorMessage(error, "Failed to load teams")}
       </div>
     );
   }
 
   return (
     <div>
-      {error ? (
+      {createTeam.isError ? (
         <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          {error}
+          {errorMessage(createTeam.error, "Failed to create team")}
+        </div>
+      ) : null}
+      {deleteTeam.isError ? (
+        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {errorMessage(deleteTeam.error, "Failed to delete team")}
         </div>
       ) : null}
 
-      {teams.length === 0 ? (
+      {!teams || teams.length === 0 ? (
         <EmptyState
           icon={UsersIcon}
           title="No teams yet"
@@ -98,7 +73,8 @@ export function ClubTeamsTab({ clubId, canManage }: { clubId: string; canManage:
                     <button
                       type="button"
                       onClick={() => handleDelete(team.id, team.name)}
-                      className="shrink-0 text-xs font-semibold text-danger-ink"
+                      disabled={deleteTeam.isPending}
+                      className="shrink-0 text-xs font-semibold text-danger-ink disabled:opacity-50"
                     >
                       Delete
                     </button>
@@ -122,7 +98,7 @@ export function ClubTeamsTab({ clubId, canManage }: { clubId: string; canManage:
         </div>
       )}
 
-      {canManage && teams.length < 3 ? (
+      {canManage && teams && teams.length < 3 ? (
         <form onSubmit={handleCreate} className="mt-6 flex flex-wrap items-end gap-3">
           <label className="min-w-[220px] flex-1">
             <span className="text-sm font-medium text-ink-soft">New team name</span>
@@ -135,10 +111,10 @@ export function ClubTeamsTab({ clubId, canManage }: { clubId: string; canManage:
           </label>
           <button
             type="submit"
-            disabled={creating}
+            disabled={createTeam.isPending}
             className="rounded-full bg-accent px-5 py-3 font-display text-sm font-semibold text-bg disabled:opacity-50"
           >
-            {creating ? "Creating..." : "Create team"}
+            {createTeam.isPending ? "Creating..." : "Create team"}
           </button>
         </form>
       ) : null}

@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { SessionProvider } from "@/lib/session/SessionContext";
 import { NavigationProgress } from "@/components/common/NavigationProgress";
+import { Providers } from "./providers";
 import { Suspense } from "react";
 
 const spaceGrotesk = Space_Grotesk({
@@ -51,9 +52,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>
-        <LanguageProvider>
-          <SessionProvider>{children}</SessionProvider>
-        </LanguageProvider>
+        <Providers>
+          <LanguageProvider>
+            <SessionProvider>{children}</SessionProvider>
+          </LanguageProvider>
+        </Providers>
       </body>
     </html>
   );

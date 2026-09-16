@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { createClub } from "@/lib/mock/communityStore";
+import { useCreateClub } from "@/lib/api/hooks/useClubs";
+import { isApiError } from "@/lib/api/axios";
 import { colorFromString } from "@/lib/colorHash";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EntityEditForm } from "@/components/dashboard/EntityEditForm";
@@ -17,7 +18,7 @@ export default function CreateClubPage() {
   const { user, setClub } = useSession();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const createClub = useCreateClub();
 
   const rules = t.dashboard.clubs.rules;
   const tips = t.dashboard.clubs.tips;
@@ -47,19 +48,16 @@ export default function CreateClubPage() {
       return;
     }
 
-    setSubmitting(true);
     setError(null);
     try {
-      const club = await createClub(
-        { name, description, color: colorFromString(name), joinPolicy },
-        user.personId
-      );
+      const club = await createClub.mutateAsync({
+        input: { name, description, color: colorFromString(name), joinPolicy },
+        creatorPersonId: user.personId,
+      });
       setClub({ id: club.id, name: club.name, role: "President" });
       router.push(`/dashboard/efootball/clubs/${club.id}`);
-    } catch (err: any) {
-      setError(err?.message || "Failed to create club. Please try again.");
-    } finally {
-      setSubmitting(false);
+    } catch (err) {
+      setError(isApiError(err) ? err.message : (err as Error)?.message || "Failed to create club. Please try again.");
     }
   };
 
@@ -112,7 +110,7 @@ export default function CreateClubPage() {
             <EntityEditForm
               nameLabel={t.dashboard.clubs.createNameLabel}
               descriptionLabel={t.dashboard.clubs.descriptionLabel}
-              submitLabel={submitting ? "Creating club..." : t.dashboard.clubs.createSubmit}
+              submitLabel={createClub.isPending ? "Creating club..." : t.dashboard.clubs.createSubmit}
               onSubmit={handleSubmit}
             />
           </div>

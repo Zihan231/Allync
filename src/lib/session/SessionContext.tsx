@@ -4,11 +4,12 @@ import {
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useState,
   type ReactNode,
 } from "react";
-import { apiFetch } from "@/lib/api/client";
+import { isApiError } from "@/lib/api/axios";
+import { useMe } from "@/lib/api/hooks/useUsers";
+import { useLoginMutation, useRegisterMutation, useLogoutMutation } from "@/lib/api/hooks/useAuth";
 import { getPerson, getClub, getCommunity, syncFromBackend } from "@/lib/mock/communityStore";
 import type { VerificationLevel } from "@/lib/mock/types";
 
@@ -160,6 +161,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<MockUser>(emptyUser);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [mounted, setMounted] = useState(false);
+  const [hasSessionFlag, setHasSessionFlag] = useState(false);
 
   const persist = (next: MockUser) => {
     setUser(next);
@@ -168,71 +171,89 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const refreshSession = async (): Promise<MockUser | null> => {
-    try {
-      const freshUser = await apiFetch<any>("/users/me");
-      if (freshUser && freshUser.id) {
-        const mock = backendUserToMockUser(freshUser);
-        persist(mock);
-        setIsAuthenticated(true);
-        syncFromBackend(true).catch(() => {});
-        return mock;
-      }
-    } catch (err) {
-      console.warn("Failed to refresh session from backend:", err);
-    }
-    return null;
-  };
+  const loginMutation = useLoginMutation();
+  const registerMutation = useRegisterMutation();
+  const logoutMutation = useLogoutMutation();
+  // Only enabled once we know (from localStorage) that a real backend session
+  // might exist — avoids a wasted /users/me round trip for anonymous
+  // visitors and demo personas (which never touch the backend at all).
+  const meQuery = useMe(mounted && hasSessionFlag);
 
+  // Hydrate from localStorage on mount and decide whether to enable the
+  // /users/me query. Runs once, client-side only (avoids SSR/hydration
+  // mismatches from touching localStorage during render).
   useEffect(() => {
-    let mounted = true;
-    const init = async () => {
-      try {
-        const hasSession = typeof window !== "undefined" ? window.localStorage.getItem(SESSION_FLAG) : null;
-        const stored = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
-        if (stored) {
+    function hydrate() {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
           const parsed = JSON.parse(stored) as MockUser;
           if (parsed && parsed.id) {
             setUser(parsed);
             setIsAuthenticated(true);
           }
+        } catch {
+          // ignore malformed cache
         }
-        if (hasSession) {
-          try {
-            const freshUser = await apiFetch<any>("/users/me");
-            if (mounted && freshUser && freshUser.id) {
-              const mock = backendUserToMockUser(freshUser);
-              persist(mock);
-              setIsAuthenticated(true);
-            }
-          } catch (err) {
-            // Only a real 401 means the cookie is actually gone/expired —
-            // clear the session then. Anything else (network hiccup, a
-            // free-tier backend still cold-starting, a 5xx) should leave the
-            // optimistically-restored cached user alone; otherwise every
-            // transient failure on refresh would look like a logout.
-            const isUnauthorized = err instanceof Error && /^API 401\b/.test(err.message);
-            if (mounted && isUnauthorized) {
-              window.localStorage.removeItem(SESSION_FLAG);
-              window.localStorage.removeItem(STORAGE_KEY);
-              setUser(emptyUser());
-              setIsAuthenticated(false);
-            } else {
-              console.warn("Failed to refresh session from backend:", err);
-            }
-          }
-        }
-      } catch {
-        if (mounted) setIsAuthenticated(false);
-      } finally {
-        if (mounted) setIsLoading(false);
       }
-    };
-    init();
-    return () => {
-      mounted = false;
-    };
+      const flag = window.localStorage.getItem(SESSION_FLAG) === "1";
+      setHasSessionFlag(flag);
+      setMounted(true);
+      if (!flag) {
+        setIsLoading(false);
+      }
+    }
+    hydrate();
   }, []);
+
+  // React to the /users/me query settling (initial load, or a background
+  // refetch on window focus).
+  useEffect(() => {
+    function syncFromQuery() {
+      if (!mounted || !hasSessionFlag) return;
+
+      if (meQuery.isSuccess) {
+        if (meQuery.data && meQuery.data.id) {
+          persist(backendUserToMockUser(meQuery.data));
+          setIsAuthenticated(true);
+        }
+        setIsLoading(false);
+      } else if (meQuery.isError) {
+        // Only a real 401 means the cookie is actually gone/expired — clear
+        // the session then. Anything else (network hiccup, a free-tier
+        // backend still cold-starting, a 5xx) should leave the
+        // optimistically-restored cached user alone; otherwise every
+        // transient failure on refresh would look like a logout.
+        const isUnauthorized = isApiError(meQuery.error) && meQuery.error.status === 401;
+        if (isUnauthorized) {
+          window.localStorage.removeItem(SESSION_FLAG);
+          window.localStorage.removeItem(STORAGE_KEY);
+          setUser(emptyUser());
+          setIsAuthenticated(false);
+          setHasSessionFlag(false);
+        } else {
+          console.warn("Failed to refresh session from backend:", meQuery.error);
+        }
+        setIsLoading(false);
+      }
+    }
+    syncFromQuery();
+  }, [mounted, hasSessionFlag, meQuery.isSuccess, meQuery.isError, meQuery.data, meQuery.error]);
+
+  const refreshSession = async (): Promise<MockUser | null> => {
+    const result = await meQuery.refetch();
+    if (result.data && result.data.id) {
+      const mock = backendUserToMockUser(result.data);
+      persist(mock);
+      setIsAuthenticated(true);
+      syncFromBackend(true).catch(() => {});
+      return mock;
+    }
+    if (result.error) {
+      console.warn("Failed to refresh session from backend:", result.error);
+    }
+    return null;
+  };
 
   const setMode = (mode: Mode) => persist({ ...user, mode });
   const setActiveGame = (activeGame: GameId) => persist({ ...user, activeGame });
@@ -265,10 +286,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       throw new Error("Please enter your password");
     }
 
-    const res = await apiFetch<{ accessToken: string; user: any }>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: email.trim(), password }),
-    });
+    const res = await loginMutation.mutateAsync({ email: email.trim(), password });
 
     if (!res || !res.user) {
       throw new Error("Failed to authenticate with server");
@@ -280,6 +298,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(SESSION_FLAG, "1");
     }
+    setHasSessionFlag(true);
 
     const mock = backendUserToMockUser(res.user);
     persist(mock);
@@ -293,10 +312,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       throw new Error("Please enter a password");
     }
 
-    const res = await apiFetch<{ accessToken: string; user: any }>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
-    });
+    const res = await registerMutation.mutateAsync({ name: name.trim(), email: email.trim(), password });
 
     if (!res || !res.user) {
       throw new Error("Failed to register account");
@@ -305,6 +321,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(SESSION_FLAG, "1");
     }
+    setHasSessionFlag(true);
 
     const mock = backendUserToMockUser(res.user);
     persist(mock);
@@ -347,47 +364,46 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           : null,
     };
     // Demo personas are local-only and never touch the backend, so we
-    // deliberately don't set SESSION_FLAG here — that would make init()
-    // call /users/me on reload, get a 401, and wipe the persona.
+    // deliberately don't set SESSION_FLAG here — that would make the
+    // /users/me query run on reload, get a 401, and wipe the persona.
     persist(personaUser);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
-    // Fire-and-forget: clears the httpOnly cookie server-side. Local state
-    // is cleared immediately regardless of whether this call succeeds.
-    apiFetch("/auth/logout", { method: "POST" }).catch(() => {});
+    // Fire-and-forget: clears the httpOnly cookie server-side and the
+    // cached /users/me query. Local state is cleared immediately regardless
+    // of whether this call succeeds.
+    logoutMutation.mutate();
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(SESSION_FLAG);
       window.localStorage.removeItem(STORAGE_KEY);
     }
+    setHasSessionFlag(false);
     setUser(emptyUser());
     setIsAuthenticated(false);
   };
 
-  const value = useMemo(
-    () => ({
-      user,
-      isAuthenticated,
-      isLoading,
-      setMode,
-      setActiveGame,
-      setKycStatus,
-      setVerificationStatus,
-      setVerificationLevel,
-      setDpUrl,
-      spendBdt,
-      setClub,
-      setCommunity,
-      updateProfile,
-      login,
-      signup,
-      switchPersona,
-      logout,
-      refreshSession,
-    }),
-    [user, isAuthenticated, isLoading]
-  );
+  const value: SessionContextValue = {
+    user,
+    isAuthenticated,
+    isLoading,
+    setMode,
+    setActiveGame,
+    setKycStatus,
+    setVerificationStatus,
+    setVerificationLevel,
+    setDpUrl,
+    spendBdt,
+    setClub,
+    setCommunity,
+    updateProfile,
+    login,
+    signup,
+    switchPersona,
+    logout,
+    refreshSession,
+  };
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

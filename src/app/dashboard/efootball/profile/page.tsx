@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockMatches } from "@/lib/mock/store";
 import { useMockPeople, upsertPerson } from "@/lib/mock/communityStore";
+import type { Person } from "@/lib/mock/types";
+import { useMe } from "@/lib/api/hooks/useUsers";
 import { getCosmetic, type CosmeticItem } from "@/lib/mock/cosmetics";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
@@ -13,7 +15,6 @@ import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { ProfileEditForm } from "@/components/dashboard/ProfileEditForm";
 import { ChartIcon, TrophyIcon, CalendarIcon, StoreIcon, FlameIcon } from "@/components/icons";
 import { AppLoader } from "@/components/common/AppLoader";
-import { apiFetch } from "@/lib/api/client";
 import {
   CosmeticBadgePill,
   CosmeticTitleText,
@@ -31,81 +32,62 @@ import {
 
 export default function ProfilePage() {
   const { t } = useLanguage();
-  const { user, refreshSession, isLoading: sessionLoading } = useSession();
+  const { user, isLoading: sessionLoading } = useSession();
   const people = useMockPeople();
   const person = people.find((p) => p.id === user.id || p.id === user.personId);
   const matches = useMockMatches().filter((m) => m.game === "efootball");
-  const [profileLoading, setProfileLoading] = useState<boolean>(true);
+  // Shares the same "users","me" cache entry SessionContext uses — if that's
+  // already fetched this, it comes back instantly with no extra round trip.
+  const meQuery = useMe(true);
 
   useEffect(() => {
-    let mounted = true;
-    async function loadBackendProfile() {
-      try {
-        const backendUser = await apiFetch<any>("/users/me");
-        if (mounted && backendUser && backendUser.id) {
-          const ep = backendUser.efootballProfile;
-          upsertPerson({
-            id: backendUser.id,
-            name: backendUser.name,
-            dpUrl: backendUser.dpUrl ?? null,
-            coverUrl: backendUser.coverUrl ?? null,
-            clubId: ep?.clubId ?? null,
-            clubRole: ep?.clubRole ?? null,
-            communityId: ep?.communityId ?? null,
-            communityRole: ep?.communityRole ?? null,
-            points: ep?.points ?? 1250,
-            lineupStatus: ep?.lineupStatus ?? undefined,
-            gamePosition: ep?.gamePosition ?? undefined,
-            shirtNumber: ep?.shirtNumber ?? undefined,
-            squadTeam: ep?.squadTeam ?? undefined,
-            bio: backendUser.bio ?? undefined,
-            inGameId: backendUser.inGameId ?? ep?.konamiUid ?? undefined,
-            konamiUid: ep?.konamiUid ?? backendUser.inGameId ?? undefined,
-            facebookUrl: backendUser.facebookUrl ?? undefined,
-            facebookProfileName: backendUser.facebookProfileName ?? undefined,
-            instagramUrl: backendUser.instagramUrl ?? undefined,
-            deviceName: backendUser.deviceName ?? undefined,
-            deviceModel: backendUser.deviceModel ?? undefined,
-            phoneNumber: backendUser.phoneNumber ?? undefined,
-            birthday: backendUser.birthday ?? undefined,
-            bloodGroup: backendUser.bloodGroup ?? undefined,
-            country: backendUser.country ?? undefined,
-            division: backendUser.division ?? undefined,
-            district: backendUser.district ?? undefined,
-            permanentAddress: backendUser.permanentAddress ?? undefined,
-            currentLocation: backendUser.currentLocation ?? null,
-            workExperience: backendUser.workExperience ?? undefined,
-            education: backendUser.education ?? undefined,
-            documentType: backendUser.documentType ?? undefined,
-            documentDataUrl: backendUser.documentDataUrl ?? undefined,
-            verificationLevel: backendUser.verificationLevel ?? 0,
-            ownedCosmeticIds: backendUser.ownedCosmeticIds ?? undefined,
-            equippedBadgeId: backendUser.equippedBadgeId ?? null,
-            equippedTitleId: backendUser.equippedTitleId ?? null,
-            equippedFrameId: backendUser.equippedFrameId ?? null,
-            equippedThemeId: backendUser.equippedThemeId ?? null,
-          });
+    const backendUser = meQuery.data;
+    if (!backendUser || !backendUser.id) return;
+    const ep = backendUser.efootballProfile;
+    upsertPerson({
+      id: backendUser.id,
+      name: backendUser.name,
+      dpUrl: backendUser.dpUrl ?? null,
+      coverUrl: backendUser.coverUrl ?? null,
+      clubId: ep?.clubId ?? null,
+      clubRole: ep?.clubRole ?? null,
+      communityId: ep?.communityId ?? null,
+      communityRole: ep?.communityRole ?? null,
+      points: ep?.points ?? 1250,
+      lineupStatus: ep?.lineupStatus ?? undefined,
+      gamePosition: ep?.gamePosition ?? undefined,
+      shirtNumber: ep?.shirtNumber ?? undefined,
+      squadTeam: ep?.squadTeam ?? undefined,
+      bio: backendUser.bio ?? undefined,
+      inGameId: backendUser.inGameId ?? ep?.konamiUid ?? undefined,
+      konamiUid: ep?.konamiUid ?? backendUser.inGameId ?? undefined,
+      facebookUrl: backendUser.facebookUrl ?? undefined,
+      facebookProfileName: backendUser.facebookProfileName ?? undefined,
+      instagramUrl: backendUser.instagramUrl ?? undefined,
+      deviceName: backendUser.deviceName ?? undefined,
+      deviceModel: backendUser.deviceModel ?? undefined,
+      phoneNumber: backendUser.phoneNumber ?? undefined,
+      birthday: backendUser.birthday ?? undefined,
+      bloodGroup: backendUser.bloodGroup ?? undefined,
+      country: backendUser.country ?? undefined,
+      division: backendUser.division ?? undefined,
+      district: backendUser.district ?? undefined,
+      permanentAddress: backendUser.permanentAddress ?? undefined,
+      currentLocation: backendUser.currentLocation ?? null,
+      workExperience: backendUser.workExperience ?? undefined,
+      education: backendUser.education ?? undefined,
+      documentType: backendUser.documentType ?? undefined,
+      documentDataUrl: backendUser.documentDataUrl ?? undefined,
+      verificationLevel: backendUser.verificationLevel ?? 0,
+      ownedCosmeticIds: backendUser.ownedCosmeticIds ?? undefined,
+      equippedBadgeId: backendUser.equippedBadgeId ?? null,
+      equippedTitleId: backendUser.equippedTitleId ?? null,
+      equippedFrameId: backendUser.equippedFrameId ?? null,
+      equippedThemeId: backendUser.equippedThemeId ?? null,
+    } as Person); // backend roles/enums are plain strings; Person narrows them to literal unions
+  }, [meQuery.data]);
 
-          if (refreshSession) {
-            await refreshSession();
-          }
-        }
-      } catch (err) {
-        console.warn("Could not fetch user profile from backend:", err);
-      } finally {
-        if (mounted) {
-          setProfileLoading(false);
-        }
-      }
-    }
-
-    loadBackendProfile();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  if (sessionLoading || (profileLoading && !user.id && !person)) {
+  if (sessionLoading || (meQuery.isLoading && !user.id && !person)) {
     return <AppLoader />;
   }
 

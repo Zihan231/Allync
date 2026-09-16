@@ -1,27 +1,28 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/session/SessionContext";
-import { parseApiErrorMessage } from "@/lib/api/client";
+import { isApiError } from "@/lib/api/axios";
 import {
-  getTeam,
-  getClubMembers,
-  updateTeam,
-  deleteTeam,
-  setLineup,
-  substitutePlayer,
-  type Team,
-  type ClubMemberProfile,
-  type BackendLineupStatus,
-  type LineupPlayerInput,
-} from "@/lib/api/teams";
+  useTeam,
+  useClubMembers,
+  useUpdateTeam,
+  useDeleteTeam,
+  useSetLineup,
+  useSubstitutePlayer,
+} from "@/lib/api/hooks/useTeams";
+import type { BackendLineupStatus, LineupPlayerInput, ClubMemberProfile, Team } from "@/lib/api/teams";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { AppLoader } from "@/components/common/AppLoader";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { LockIcon } from "@/components/icons";
 
 type PendingEntry = { lineupStatus: BackendLineupStatus; gamePosition: string };
+
+function errorMessage(err: unknown, fallback: string) {
+  return isApiError(err) ? err.message : fallback;
+}
 
 export default function TeamManagePage({
   params,
@@ -34,58 +35,42 @@ export default function TeamManagePage({
 
   const canManage = user.club?.id === clubId && (user.club?.role === "President" || user.club?.role === "Manager");
 
-  const [team, setTeam] = useState<Team | null>(null);
-  const [roster, setRoster] = useState<ClubMemberProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const teamQuery = useTeam(clubId, teamId);
+  const membersQuery = useClubMembers(clubId);
+  const updateTeam = useUpdateTeam(clubId, teamId);
+  const deleteTeam = useDeleteTeam(clubId);
+  const setLineup = useSetLineup(clubId, teamId);
+  const substitutePlayer = useSubstitutePlayer(clubId, teamId);
+
+  const team = teamQuery.data;
+  const roster = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
 
   const [name, setName] = useState("");
-  const [savingName, setSavingName] = useState(false);
   const [captainId, setCaptainId] = useState<string>("");
-  const [savingCaptain, setSavingCaptain] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
   const [pending, setPending] = useState<Record<string, PendingEntry>>({});
   const [addProfileId, setAddProfileId] = useState("");
-  const [savingLineup, setSavingLineup] = useState(false);
-
   const [subOutId, setSubOutId] = useState("");
   const [subInId, setSubInId] = useState("");
-  const [substituting, setSubstituting] = useState(false);
 
-  const load = async () => {
-    setError(null);
-    try {
-      const [teamData, members] = await Promise.all([
-        getTeam(clubId, teamId),
-        getClubMembers(clubId),
-      ]);
-      setTeam(teamData);
-      setRoster(members);
-      setName(teamData.name);
-      setCaptainId(teamData.captainProfileId ?? "");
-      const nextPending: Record<string, PendingEntry> = {};
-      for (const m of teamData.members) {
-        nextPending[m.id] = {
-          lineupStatus: m.lineupStatus,
-          gamePosition: m.gamePosition ?? "",
-        };
-      }
-      setPending(nextPending);
-    } catch (err) {
-      setError(parseApiErrorMessage(err, "Failed to load team"));
-    } finally {
-      setLoading(false);
+  // Re-sync local editing drafts whenever fresh server data arrives (initial
+  // load, or after a mutation invalidates and refetches this team). Done
+  // during render (comparing against the last-synced object) rather than in
+  // an effect, per React's own guidance for resetting state from a changed
+  // prop — it avoids an extra render pass.
+  const [syncedTeam, setSyncedTeam] = useState<Team | null>(null);
+  if (team && team !== syncedTeam) {
+    setSyncedTeam(team);
+    setName(team.name);
+    setCaptainId(team.captainProfileId ?? "");
+    const nextPending: Record<string, PendingEntry> = {};
+    for (const m of team.members) {
+      nextPending[m.id] = {
+        lineupStatus: m.lineupStatus,
+        gamePosition: m.gamePosition ?? "",
+      };
     }
-  };
-
-  useEffect(() => {
-    async function run() {
-      await load();
-    }
-    run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clubId, teamId]);
+    setPending(nextPending);
+  }
 
   const rosterById = useMemo(() => {
     const map = new Map<string, ClubMemberProfile>();
@@ -105,16 +90,16 @@ export default function TeamManagePage({
     return <EmptyState icon={LockIcon} title="You can't manage this team" body="" />;
   }
 
-  if (loading) {
+  if (teamQuery.isLoading || membersQuery.isLoading) {
     return <AppLoader />;
   }
 
   if (!team) {
     return (
       <div>
-        {error ? (
+        {teamQuery.isError ? (
           <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-            {error}
+            {errorMessage(teamQuery.error, "Failed to load team")}
           </div>
         ) : null}
         <EmptyState icon={LockIcon} title="Team not found" body="" />
@@ -122,45 +107,21 @@ export default function TeamManagePage({
     );
   }
 
-  const handleSaveName = async () => {
+  const handleSaveName = () => {
     if (!name.trim() || name.trim() === team.name) return;
-    setSavingName(true);
-    setError(null);
-    try {
-      await updateTeam(clubId, teamId, { name: name.trim() });
-      await load();
-    } catch (err) {
-      setError(parseApiErrorMessage(err, "Failed to rename team"));
-    } finally {
-      setSavingName(false);
-    }
+    updateTeam.mutate({ name: name.trim() });
   };
 
-  const handleSaveCaptain = async (nextId: string) => {
+  const handleSaveCaptain = (nextId: string) => {
     setCaptainId(nextId);
-    setSavingCaptain(true);
-    setError(null);
-    try {
-      await updateTeam(clubId, teamId, { captainProfileId: nextId || null });
-      await load();
-    } catch (err) {
-      setError(parseApiErrorMessage(err, "Failed to set captain"));
-    } finally {
-      setSavingCaptain(false);
-    }
+    updateTeam.mutate({ captainProfileId: nextId || null });
   };
 
-  const handleDeleteTeam = async () => {
+  const handleDeleteTeam = () => {
     if (!window.confirm(`Delete ${team.name}? This cannot be undone.`)) return;
-    setDeleting(true);
-    setError(null);
-    try {
-      await deleteTeam(clubId, teamId);
-      router.push(`/dashboard/efootball/clubs/${clubId}`);
-    } catch (err) {
-      setError(parseApiErrorMessage(err, "Failed to delete team"));
-      setDeleting(false);
-    }
+    deleteTeam.mutate(teamId, {
+      onSuccess: () => router.push(`/dashboard/efootball/clubs/${clubId}`),
+    });
   };
 
   const updatePendingEntry = (profileId: string, patch: Partial<PendingEntry>) => {
@@ -183,42 +144,36 @@ export default function TeamManagePage({
     setAddProfileId("");
   };
 
-  const handleSaveLineup = async () => {
-    setSavingLineup(true);
-    setError(null);
-    try {
-      const players: LineupPlayerInput[] = Object.entries(pending).map(([profileId, entry]) => ({
-        profileId,
-        lineupStatus: entry.lineupStatus,
-        gamePosition: entry.gamePosition || undefined,
-      }));
-      await setLineup(clubId, teamId, players);
-      await load();
-    } catch (err) {
-      setError(parseApiErrorMessage(err, "Failed to save lineup"));
-    } finally {
-      setSavingLineup(false);
-    }
+  const handleSaveLineup = () => {
+    const players: LineupPlayerInput[] = Object.entries(pending).map(([profileId, entry]) => ({
+      profileId,
+      lineupStatus: entry.lineupStatus,
+      gamePosition: entry.gamePosition || undefined,
+    }));
+    setLineup.mutate(players);
   };
 
-  const handleSubstitute = async () => {
+  const handleSubstitute = () => {
     if (!subOutId || !subInId) return;
-    setSubstituting(true);
-    setError(null);
-    try {
-      await substitutePlayer(clubId, teamId, subOutId, subInId);
-      setSubOutId("");
-      setSubInId("");
-      await load();
-    } catch (err) {
-      setError(parseApiErrorMessage(err, "Failed to substitute player"));
-    } finally {
-      setSubstituting(false);
-    }
+    substitutePlayer.mutate(
+      { outProfileId: subOutId, inProfileId: subInId },
+      {
+        onSuccess: () => {
+          setSubOutId("");
+          setSubInId("");
+        },
+      },
+    );
   };
 
   const currentStarters = team.members.filter((m) => m.lineupStatus === "Starter");
   const currentSubs = team.members.filter((m) => m.lineupStatus === "Sub");
+
+  const pageError =
+    (updateTeam.isError && errorMessage(updateTeam.error, "Failed to save team")) ||
+    (deleteTeam.isError && errorMessage(deleteTeam.error, "Failed to delete team")) ||
+    (setLineup.isError && errorMessage(setLineup.error, "Failed to save lineup")) ||
+    (substitutePlayer.isError && errorMessage(substitutePlayer.error, "Failed to substitute player"));
 
   return (
     <div>
@@ -228,9 +183,9 @@ export default function TeamManagePage({
         backHref={`/dashboard/efootball/clubs/${clubId}`}
       />
 
-      {error ? (
+      {pageError ? (
         <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          {error}
+          {pageError}
         </div>
       ) : null}
 
@@ -249,10 +204,10 @@ export default function TeamManagePage({
               <button
                 type="button"
                 onClick={handleSaveName}
-                disabled={savingName || !name.trim() || name.trim() === team.name}
+                disabled={updateTeam.isPending || !name.trim() || name.trim() === team.name}
                 className="shrink-0 rounded-lg border border-surface-line-strong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-40"
               >
-                {savingName ? "Saving..." : "Save"}
+                {updateTeam.isPending ? "Saving..." : "Save"}
               </button>
             </div>
           </label>
@@ -262,7 +217,7 @@ export default function TeamManagePage({
             <select
               value={captainId}
               onChange={(e) => handleSaveCaptain(e.target.value)}
-              disabled={savingCaptain}
+              disabled={updateTeam.isPending}
               className="mt-1.5 w-full rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
             >
               <option value="">Unassigned</option>
@@ -281,10 +236,10 @@ export default function TeamManagePage({
           <button
             type="button"
             onClick={handleDeleteTeam}
-            disabled={deleting}
+            disabled={deleteTeam.isPending}
             className="mt-3 rounded-full bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink disabled:opacity-50"
           >
-            {deleting ? "Deleting..." : "Delete team"}
+            {deleteTeam.isPending ? "Deleting..." : "Delete team"}
           </button>
         </div>
       </div>
@@ -375,10 +330,10 @@ export default function TeamManagePage({
         <button
           type="button"
           onClick={handleSaveLineup}
-          disabled={savingLineup}
+          disabled={setLineup.isPending}
           className="mt-6 rounded-full bg-accent px-6 py-3 font-display text-sm font-semibold text-bg disabled:opacity-50"
         >
-          {savingLineup ? "Saving..." : "Save lineup"}
+          {setLineup.isPending ? "Saving..." : "Save lineup"}
         </button>
       </div>
 
@@ -423,10 +378,10 @@ export default function TeamManagePage({
         <button
           type="button"
           onClick={handleSubstitute}
-          disabled={substituting || !subOutId || !subInId}
+          disabled={substitutePlayer.isPending || !subOutId || !subInId}
           className="mt-4 rounded-full border border-surface-line-strong px-5 py-3 text-sm font-semibold text-ink disabled:opacity-40"
         >
-          {substituting ? "Substituting..." : "Substitute"}
+          {substitutePlayer.isPending ? "Substituting..." : "Substitute"}
         </button>
       </div>
     </div>

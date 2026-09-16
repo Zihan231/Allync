@@ -2,7 +2,8 @@
 
 import { useState, useEffect, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api/client";
+import { isApiError } from "@/lib/api/axios";
+import { useUpdateMe, useUpsertEfootballProfile, useDeleteAccount } from "@/lib/api/hooks/useUsers";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { addPerson, getPerson, updatePersonProfile } from "@/lib/mock/communityStore";
@@ -202,8 +203,11 @@ export function ProfileEditForm() {
   const [submitted, setSubmitted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const updateMe = useUpdateMe();
+  const upsertEfootballProfile = useUpsertEfootballProfile();
+  const deleteAccount = useDeleteAccount();
 
   // Demo personas (switchPersona) never had a real backend account to delete.
   const hasRealAccount = Boolean(user.raw);
@@ -211,15 +215,13 @@ export function ProfileEditForm() {
   async function handleDeleteAccount() {
     if (!user.id) return;
     if (!window.confirm("Delete your account permanently? This cannot be undone.")) return;
-    setDeleting(true);
     setDeleteError(null);
     try {
-      await apiFetch<void>(`/users/${user.id}`, { method: "DELETE" });
+      await deleteAccount.mutateAsync(user.id);
       logout();
       router.push("/login");
-    } catch (err: any) {
-      setDeleteError(err?.message || "Failed to delete account. Please try again.");
-      setDeleting(false);
+    } catch (err) {
+      setDeleteError(isApiError(err) ? err.message : "Failed to delete account. Please try again.");
     }
   }
 
@@ -297,19 +299,11 @@ export function ProfileEditForm() {
       };
 
       // 1. Send PATCH /users/me to backend
-      await apiFetch<any>("/users/me", {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
+      await updateMe.mutateAsync(payload);
 
       // 2. Also sync eFootball profile if konamiUid provided
       if (form.konamiUid) {
-        await apiFetch<any>("/users/me/efootball-profile", {
-          method: "PUT",
-          body: JSON.stringify({
-            konamiUid: form.konamiUid,
-          }),
-        }).catch(() => {});
+        await upsertEfootballProfile.mutateAsync({ konamiUid: form.konamiUid }).catch(() => {});
       }
 
       // 3. Update local in-memory store
@@ -914,10 +908,10 @@ export function ProfileEditForm() {
           <button
             type="button"
             onClick={handleDeleteAccount}
-            disabled={deleting}
+            disabled={deleteAccount.isPending}
             className="mt-3 rounded-full bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink disabled:opacity-50"
           >
-            {deleting ? "Deleting..." : "Delete account"}
+            {deleteAccount.isPending ? "Deleting..." : "Delete account"}
           </button>
         </div>
       ) : null}

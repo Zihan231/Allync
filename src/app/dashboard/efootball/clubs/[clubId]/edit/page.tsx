@@ -4,7 +4,9 @@ import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockClubs, updateClub, deleteClub } from "@/lib/mock/communityStore";
+import { useMockClubs } from "@/lib/mock/communityStore";
+import { useUpdateClub, useDeleteClub } from "@/lib/api/hooks/useClubs";
+import { isApiError } from "@/lib/api/axios";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EntityEditForm } from "@/components/dashboard/EntityEditForm";
 import { EntityGuidelinesPanel } from "@/components/dashboard/EntityGuidelinesPanel";
@@ -20,12 +22,13 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
   const rules = t.dashboard.clubs.rules;
   const tips = t.dashboard.clubs.tips;
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const club = clubs.find((c) => c.id === clubId);
   // Matches the backend guard on PATCH/DELETE /clubs/:id exactly.
   const canManage = user.club?.id === clubId && (user.club?.role === "President" || user.club?.role === "General Secretary");
+
+  const updateClub = useUpdateClub(clubId);
+  const deleteClub = useDeleteClub();
 
   if (!club || !canManage) {
     return <EmptyState icon={LockIcon} title={t.dashboard.clubs.emptyState} body="" />;
@@ -44,15 +47,13 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
 
   const handleDelete = async () => {
     if (!window.confirm(`Delete ${club.name}? This cannot be undone.`)) return;
-    setDeleting(true);
     setError(null);
     try {
-      await deleteClub(club.id);
+      await deleteClub.mutateAsync(club.id);
       setClub(null);
       router.push("/dashboard/efootball/clubs");
-    } catch (err: any) {
-      setError(err?.message || "Failed to delete club. Please try again.");
-      setDeleting(false);
+    } catch (err) {
+      setError(isApiError(err) ? err.message : "Failed to delete club. Please try again.");
     }
   };
 
@@ -75,17 +76,16 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
           <EntityEditForm
             nameLabel={t.dashboard.clubs.createNameLabel}
             descriptionLabel={t.dashboard.clubs.descriptionLabel}
-            submitLabel={submitting ? "Saving..." : t.dashboard.organizer.settings.saveButton}
+            submitLabel={updateClub.isPending ? "Saving..." : t.dashboard.organizer.settings.saveButton}
             initialName={club.name}
             initialDescription={club.description}
             initialDpUrl={club.dpUrl}
             initialCoverUrl={club.coverUrl}
             initialJoinPolicy={club.joinPolicy}
             onSubmit={async (values) => {
-              setSubmitting(true);
               setError(null);
               try {
-                await updateClub(club.id, {
+                await updateClub.mutateAsync({
                   name: values.name,
                   description: values.description,
                   dpUrl: values.dpUrl,
@@ -93,9 +93,8 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
                   joinPolicy: values.joinPolicy,
                 });
                 router.push(`/dashboard/efootball/clubs/${club.id}`);
-              } catch (err: any) {
-                setError(err?.message || "Failed to save club changes. Please try again.");
-                setSubmitting(false);
+              } catch (err) {
+                setError(isApiError(err) ? err.message : "Failed to save club changes. Please try again.");
               }
             }}
           />
@@ -109,10 +108,10 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
               <button
                 type="button"
                 onClick={handleDelete}
-                disabled={deleting}
+                disabled={deleteClub.isPending}
                 className="mt-3 rounded-full bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink disabled:opacity-50"
               >
-                {deleting ? "Deleting..." : "Delete club"}
+                {deleteClub.isPending ? "Deleting..." : "Delete club"}
               </button>
             </div>
           ) : null}
