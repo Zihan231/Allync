@@ -11,6 +11,7 @@ import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
+import { Pagination } from "@/components/dashboard/Pagination";
 import { PlusIcon, TrophyIcon, SearchIcon, LockIcon } from "@/components/icons";
 import { CLUB_STAGES, type ClubStage } from "@/lib/mock/types";
 
@@ -23,6 +24,12 @@ export default function ClubsPage() {
   const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 15;
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, stageFilter]);
 
   useEffect(() => {
     let mounted = true;
@@ -51,6 +58,12 @@ export default function ClubsPage() {
       return true;
     });
   }, [otherClubs, search, stageFilter]);
+
+  const totalPages = Math.ceil(filteredClubs.length / PAGE_SIZE) || 1;
+  const paginatedClubs = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredClubs.slice(start, start + PAGE_SIZE);
+  }, [filteredClubs, page]);
 
   if (loading || sessionLoading) {
     return <AppLoader />;
@@ -140,11 +153,22 @@ export default function ClubsPage() {
         {filteredClubs.length === 0 ? (
           <p className="mt-6 text-sm text-ink-soft">{t.dashboard.rankings.noResults}</p>
         ) : (
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {filteredClubs.map((club) => (
-              <ClubCard key={club.id} club={club} />
-            ))}
-          </div>
+          <>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {paginatedClubs.map((club) => (
+                <ClubCard key={club.id} club={club} />
+              ))}
+            </div>
+
+            {totalPages > 1 ? (
+              <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-surface-line pt-6 sm:flex-row">
+                <span className="font-mono text-xs text-ink-faint">
+                  Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filteredClubs.length)} of {filteredClubs.length} clubs
+                </span>
+                <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </div>

@@ -9,12 +9,15 @@ import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { ClubCrest } from "@/components/common/ClubCrest";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
+import { Pagination } from "@/components/dashboard/Pagination";
 import { PlusIcon, UsersIcon } from "@/components/icons";
 
 export default function CommunityBrowsePage() {
   const { t } = useLanguage();
   const { user } = useSession();
   const communities = useMockCommunities();
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 9;
 
   const myCommunity = user.community ? communities.find((c) => c.id === user.community!.id) : null;
   const otherCommunities = communities.filter((c) => c.id !== user.community?.id);
