@@ -1,28 +1,64 @@
 "use client";
 
-import { useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockCommunities } from "@/lib/mock/communityStore";
+import { useMockCommunities, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
+import { AppLoader } from "@/components/common/AppLoader";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { ClubCrest } from "@/components/common/ClubCrest";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { Pagination } from "@/components/dashboard/Pagination";
-import { PlusIcon, UsersIcon } from "@/components/icons";
+import { PlusIcon, SearchIcon, UsersIcon } from "@/components/icons";
 
 export default function CommunityBrowsePage() {
   const { t } = useLanguage();
-  const { user } = useSession();
+  const { user, isLoading: sessionLoading } = useSession();
   const communities = useMockCommunities();
+  const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 9;
 
+  useEffect(() => {
+    let mounted = true;
+    syncFromBackend().finally(() => {
+      if (mounted) setLoading(false);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   const myCommunity = user.community ? communities.find((c) => c.id === user.community!.id) : null;
   const otherCommunities = communities.filter((c) => c.id !== user.community?.id);
+
+  const filteredCommunities = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return otherCommunities.filter((c) => {
+      if (q && !c.name.toLowerCase().includes(q) && !(c.rules || "").toLowerCase().includes(q)) {
+        return false;
+      }
+      return true;
+    });
+  }, [otherCommunities, search]);
+
+  const totalPages = Math.ceil(filteredCommunities.length / PAGE_SIZE) || 1;
+  const paginatedCommunities = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredCommunities.slice(start, start + PAGE_SIZE);
+  }, [filteredCommunities, page]);
+
+  if (loading || sessionLoading) {
+    return <AppLoader />;
+  }
 
   return (
     <div>
@@ -49,11 +85,38 @@ export default function CommunityBrowsePage() {
 
       <div className="mt-8">
         <SectionHeading tone="blue">{t.dashboard.community.allClubsHeading}</SectionHeading>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {otherCommunities.map((c) => (
-            <CommunityCard key={c.id} community={c} />
-          ))}
+
+        <div className="mt-3 relative w-full sm:max-w-xs">
+          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search communities..."
+            className="w-full rounded-lg border border-surface-line-strong bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-faint"
+          />
         </div>
+
+        {filteredCommunities.length === 0 ? (
+          <p className="mt-6 text-sm text-ink-soft">No communities found.</p>
+        ) : (
+          <>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {paginatedCommunities.map((c) => (
+                <CommunityCard key={c.id} community={c} />
+              ))}
+            </div>
+
+            {totalPages > 1 ? (
+              <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-surface-line pt-6 sm:flex-row">
+                <span className="font-mono text-xs text-ink-faint">
+                  Showing {(page - 1) * PAGE_SIZE + 1} - {Math.min(page * PAGE_SIZE, filteredCommunities.length)} of {filteredCommunities.length} communities
+                </span>
+                <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
     </div>
   );
@@ -111,7 +174,7 @@ function CommunityCard({
           <p className="mt-1 line-clamp-2 text-xs text-ink-soft">{community.rules}</p>
           <div className="mt-2 flex items-center gap-1.5 font-mono text-[11px] text-ink-faint">
             <UsersIcon className="h-3.5 w-3.5" style={{ color: community.color }} />
-            {community.memberClubIds.length} clubs · {community.freeAgentCount} free agents
+            {community.memberClubIds.length} clubs - {community.freeAgentCount} free agents
           </div>
         </div>
       </div>
