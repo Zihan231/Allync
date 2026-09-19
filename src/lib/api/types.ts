@@ -86,3 +86,43 @@ export interface BackendUser {
   updatedAt: string;
   efootballProfile?: BackendEfootballProfile;
 }
+
+
+export interface BackendCommunity {
+  id: string;
+  name: string;
+  rules: string;
+  dpUrl: string | null;
+  coverUrl: string | null;
+  color: string;
+  initials: string;
+  points: number;
+  tier: string;
+  joinPolicy: string;
+  location: string | null;
+  motto: string | null;
+  facebookUrl: string | null;
+  memberClubIds: string[];
+  freeAgentCount: number;
+  memberCount: number;
+  clubCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackendCommunityMember {
+  id: string;
+  profileId: string;
+  name: string;
+  dpUrl: string | null;
+  coverUrl: string | null;
+  clubId: string | null;
+  clubName: string | null;
+  clubRole: string | null;
+  communityId: string;
+  communityRole: string;
+  isDirectMember: boolean;
+  sourceClubIds: string[];
+  joinedAt: string;
+  points: number;
+}

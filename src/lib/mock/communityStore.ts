@@ -1,6 +1,7 @@
 "use client";
 
 import { getClubs } from "@/lib/api/clubs";
+import { getCommunities, createCommunityRequest, updateCommunityRequest, deleteCommunityRequest, joinCommunityRequest, leaveCommunityRequest } from "@/lib/api/communities";
 import { getUsers } from "@/lib/api/users";
 
 import { useSyncExternalStore } from "react";
@@ -59,9 +60,10 @@ export async function syncFromBackend(force = false): Promise<void> {
 
   syncPromise = (async () => {
     try {
-    const [backendClubs, backendUsers] = await Promise.all([
+    const [backendClubs, backendUsers, backendCommunities] = await Promise.all([
       getClubs().catch(() => null),
       getUsers().catch(() => null),
+      getCommunities().catch(() => null),
     ]);
 
     if (backendClubs && Array.isArray(backendClubs) && backendClubs.length > 0) {
@@ -142,6 +144,58 @@ export async function syncFromBackend(force = false): Promise<void> {
       const backendNames = new Set(mappedPeople.map((p) => p.name.toLowerCase()));
       const remainingMockPeople = mockPeople.filter((p) => !backendNames.has(p.name.toLowerCase()));
       people = [...mappedPeople, ...remainingMockPeople];
+    }
+
+    
+    if (backendCommunities && Array.isArray(backendCommunities) && backendCommunities.length > 0) {
+      const mappedCommunities: Community[] = backendCommunities.map((bc) => ({
+        id: bc.id,
+        name: bc.name,
+        dpUrl: bc.dpUrl ?? null,
+        coverUrl: bc.coverUrl ?? null,
+        rules: bc.rules || "",
+        points: bc.points ?? 0,
+        joinPolicy: (bc.joinPolicy || "instant") as Community["joinPolicy"],
+        memberClubIds: bc.memberClubIds || [],
+        freeAgentCount: bc.freeAgentCount ?? 0,
+        tournamentIds: [],
+        color: bc.color || "#4c8dff",
+        initials: bc.initials || "CM",
+        tier: (bc.tier || "New") as Community["tier"],
+        location: bc.location ?? undefined,
+        motto: bc.motto ?? undefined,
+        facebookUrl: bc.facebookUrl ?? undefined,
+      }));
+
+      const backendNames = new Set(mappedCommunities.map((c) => c.name.toLowerCase()));
+      const remainingMocks = mockCommunities.filter((c) => !backendNames.has(c.name.toLowerCase()));
+      communities = [...mappedCommunities, ...remainingMocks];
+    }
+
+    
+    if (backendCommunities && Array.isArray(backendCommunities) && backendCommunities.length > 0) {
+      const mappedCommunities: Community[] = backendCommunities.map((bc) => ({
+        id: bc.id,
+        name: bc.name,
+        dpUrl: bc.dpUrl ?? null,
+        coverUrl: bc.coverUrl ?? null,
+        rules: bc.rules || "",
+        points: bc.points ?? 0,
+        joinPolicy: (bc.joinPolicy || "instant") as Community["joinPolicy"],
+        memberClubIds: bc.memberClubIds || [],
+        freeAgentCount: bc.freeAgentCount ?? 0,
+        tournamentIds: [],
+        color: bc.color || "#4c8dff",
+        initials: bc.initials || "CM",
+        tier: (bc.tier || "New") as Community["tier"],
+        location: bc.location ?? undefined,
+        motto: bc.motto ?? undefined,
+        facebookUrl: bc.facebookUrl ?? undefined,
+      }));
+
+      const backendNames = new Set(mappedCommunities.map((c) => c.name.toLowerCase()));
+      const remainingMocks = mockCommunities.filter((c) => !backendNames.has(c.name.toLowerCase()));
+      communities = [...mappedCommunities, ...remainingMocks];
     }
 
     hasSynced = true;
