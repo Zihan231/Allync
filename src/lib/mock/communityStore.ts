@@ -272,6 +272,23 @@ export function equipCosmetic(personId: string, category: CosmeticCategory, cosm
 // mutation has actually succeeded — kept here since this module owns the
 // mutable clubs/people arrays.
 
+export function applyCommunityCreated(community: Community, creatorPersonId: string) {
+  communities = [community, ...communities.filter((c) => c.id !== community.id)];
+  updatePerson(creatorPersonId, { communityId: community.id, communityRole: "President" });
+  emit();
+}
+
+export function applyCommunityUpdated(communityId: string, patch: Partial<Community>) {
+  communities = communities.map((c) => (c.id === communityId ? { ...c, ...patch } : c));
+  emit();
+}
+
+export function applyCommunityDeleted(communityId: string) {
+  communities = communities.filter((c) => c.id !== communityId);
+  people = people.map((p) => (p.communityId === communityId ? { ...p, communityId: null, communityRole: null } : p));
+  emit();
+}
+
 export function applyClubCreated(club: Club, creatorPersonId: string) {
   clubs = [club, ...clubs.filter((c) => c.id !== club.id)];
   updatePerson(creatorPersonId, { clubId: club.id, clubRole: "President" });

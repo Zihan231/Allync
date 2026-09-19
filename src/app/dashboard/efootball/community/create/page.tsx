@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { createCommunity } from "@/lib/mock/communityStore";
+import { useCreateCommunity } from "@/lib/api/hooks/useCommunities";
+import { isApiError } from "@/lib/api/axios";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EntityEditForm } from "@/components/dashboard/EntityEditForm";
 import { EntityGuidelinesPanel } from "@/components/dashboard/EntityGuidelinesPanel";
@@ -13,6 +15,9 @@ export default function CreateCommunityPage() {
   const { t } = useLanguage();
   const { user, setCommunity } = useSession();
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const createCommunity = useCreateCommunity();
+
   const rules = t.dashboard.community.rules;
   const tips = t.dashboard.community.tips;
 
@@ -27,9 +32,44 @@ export default function CreateCommunityPage() {
     { icon: SwapIcon, title: tips.item3Title, body: tips.item3Body },
   ];
 
+  const handleSubmit = async ({
+    name,
+    description,
+    joinPolicy,
+  }: {
+    name: string;
+    description: string;
+    joinPolicy: "instant" | "approval";
+  }) => {
+    if (user.community && !window.confirm(t.dashboard.community.switchConfirm)) return;
+    setError(null);
+
+    try {
+      const community = await createCommunity.mutateAsync({
+        input: { name, rules: description, joinPolicy },
+        creatorPersonId: user.personId,
+      });
+
+      setCommunity({ id: community.id, name: community.name, role: "President" });
+      router.push(`/dashboard/efootball/community/${community.id}`);
+    } catch (err) {
+      setError(
+        isApiError(err)
+          ? err.message
+          : (err as Error)?.message || "Failed to create community. Please try again."
+      );
+    }
+  };
+
   return (
     <div>
       <PageHeader eyebrow="eFootball" title={t.dashboard.community.createCta} backHref="/dashboard/efootball/community" />
+
+      {error ? (
+        <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      ) : null}
 
       {user.community ? (
         <p className="mt-6 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning-ink">
@@ -42,13 +82,8 @@ export default function CreateCommunityPage() {
           <EntityEditForm
             nameLabel={t.dashboard.community.createNameLabel}
             descriptionLabel={t.dashboard.community.rulesLabel}
-            submitLabel={t.dashboard.community.createSubmit}
-            onSubmit={({ name, description, joinPolicy }) => {
-              if (user.community && !window.confirm(t.dashboard.community.switchConfirm)) return;
-              const community = createCommunity({ name, rules: description, joinPolicy }, user.personId);
-              setCommunity({ id: community.id, name: community.name, role: "President" });
-              router.push(`/dashboard/efootball/community/${community.id}`);
-            }}
+            submitLabel={createCommunity.isPending ? "Creating community..." : t.dashboard.community.createSubmit}
+            onSubmit={handleSubmit}
           />
         </div>
         <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
