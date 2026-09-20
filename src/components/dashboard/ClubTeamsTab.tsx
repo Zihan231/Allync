@@ -1,6 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { ToastContainer } from "@/components/common/Toast";
+import { useToast } from "@/lib/useToast";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useConfirm } from "@/lib/useConfirm";
 import { Avatar } from "@/components/common/Avatar";
 import { ClubCrest } from "@/components/common/ClubCrest";
 import { PlusIcon, SwapIcon, CloseIcon } from "@/components/icons";
@@ -52,6 +56,8 @@ export interface ClubTeamsTabProps {
 }
 
 export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabProps) {
+  const { toasts, toast, dismiss } = useToast();
+  const { confirm, confirmProps } = useConfirm();
   const { data: teams = [], isLoading: isTeamsLoading } = useTeams(clubId);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 
@@ -144,7 +150,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
       setSelectedTeamId(created.id);
       setStatusNotice(`Squad ${created.name} created! Add members from the free players pool.`);
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to create squad");
+      toast(err.response?.data?.message || "Failed to create squad", "error");
     }
   };
 
@@ -292,7 +298,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
   // Handle Adding Free Player to Squad
   const handleAddPlayer = async (player: ClubMemberProfile) => {
     if (isSquadFull) {
-      alert("Squad is full (16/16). Remove a substitute before adding another player.");
+      toast("Squad is full (16/16). Remove a substitute before adding another player.", "warning");
       return;
     }
 
@@ -323,14 +329,11 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
   const handleRemovePlayer = async (player: ClubMemberProfile) => {
     if (!canManage) return;
     if (totalSquadCount <= 11) {
-      alert("A team must have at least 11 players. Cannot remove starters.");
+      toast("A team must have at least 11 players. Cannot remove starters.", "warning");
       return;
     }
 
-    const confirmRemove = confirm(
-      `Remove ${player.user?.name || "this player"} from the squad? They will become a free club member.`
-    );
-    if (!confirmRemove) return;
+    if (!await confirm(`Remove ${player.user?.name || "this player"} from the squad? They will become a free club member.`, { title: "Remove Player", variant: "warning", confirmLabel: "Remove" })) return;
 
     // Optimistic removal
     setOptimisticMembers((prev) => prev.filter((m) => m.id !== player.id));
@@ -663,6 +666,10 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
         isPending={addPlayerMutation.isPending}
         currentCount={totalSquadCount}
       />
+
+      {/* Toast Notifications */}
+      <ConfirmDialog {...confirmProps} />
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
@@ -28,6 +28,8 @@ import { CommunityFreeAgentsTab } from "@/components/dashboard/CommunityFreeAgen
 import { CommunityTransfersTab } from "@/components/dashboard/CommunityTransfersTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { ShieldIcon, UsersIcon, FacebookIcon } from "@/components/icons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useConfirm } from "@/lib/useConfirm";
 
 type Tab = "overview" | "members" | "clubs" | "rankings" | "tournaments" | "freeAgents" | "transfers";
 
@@ -43,6 +45,7 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   const [tab, setTab] = useState<Tab>("overview");
 
   const community = communities.find((c) => c.id === communityId);
+  const { confirm, confirmProps } = useConfirm();
 
   const memberClubs = useMemo(
     () => clubs.filter((c) => community?.memberClubIds.includes(c.id)),
@@ -91,8 +94,8 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
     }
   };
 
-  const handleLeave = () => {
-    if (!window.confirm(t.dashboard.community.leaveConfirm)) return;
+  const handleLeave = async () => {
+    if (!await confirm(t.dashboard.community.leaveConfirm, { title: t.dashboard.community.leaveButton ?? "Leave Community", variant: "danger", confirmLabel: "Leave" })) return;
     leaveCommunity(user.personId);
     setCommunity(null);
   };
@@ -253,6 +256,8 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
         {tab === "freeAgents" ? <CommunityFreeAgentsTab freeAgents={freeAgents} /> : null}
         {tab === "transfers" ? <CommunityTransfersTab entries={transferEntries} realIds={realIds} /> : null}
       </div>
+      <ConfirmDialog {...confirmProps} />
+
     </div>
   );
 }

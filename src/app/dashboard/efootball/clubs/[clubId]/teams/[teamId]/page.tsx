@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,6 +17,8 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { AppLoader } from "@/components/common/AppLoader";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { LockIcon } from "@/components/icons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useConfirm } from "@/lib/useConfirm";
 
 type PendingEntry = { lineupStatus: BackendLineupStatus; gamePosition: string };
 
@@ -51,6 +53,7 @@ export default function TeamManagePage({
   const [addProfileId, setAddProfileId] = useState("");
   const [subOutId, setSubOutId] = useState("");
   const [subInId, setSubInId] = useState("");
+  const { confirm, confirmProps } = useConfirm();
 
   // Re-sync local editing drafts whenever fresh server data arrives (initial
   // load, or after a mutation invalidates and refetches this team). Done
@@ -118,7 +121,7 @@ export default function TeamManagePage({
   };
 
   const handleDeleteTeam = () => {
-    if (!window.confirm(`Delete ${team.name}? This cannot be undone.`)) return;
+    if (!await confirm(`Delete ${team.name}? This cannot be undone.`, { title: "Delete Squad", variant: "danger", confirmLabel: "Delete Forever" })) return;
     deleteTeam.mutate(teamId, {
       onSuccess: () => router.push(`/dashboard/efootball/clubs/${clubId}`),
     });
@@ -384,6 +387,8 @@ export default function TeamManagePage({
           {substitutePlayer.isPending ? "Substituting..." : "Substitute"}
         </button>
       </div>
+      <ConfirmDialog {...confirmProps} />
+
     </div>
   );
 }

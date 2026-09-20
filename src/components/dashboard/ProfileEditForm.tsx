@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
@@ -32,6 +32,8 @@ import type {
 } from "@/lib/mock/types";
 import type { MockUser } from "@/lib/session/SessionContext";
 import { CloseIcon } from "@/components/icons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useConfirm } from "@/lib/useConfirm";
 
 const BLOOD_GROUPS: BloodGroup[] = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const INSTITUTE_TYPES: EducationEntry["instituteType"][] = ["University", "College", "School", "Other"];
@@ -206,6 +208,7 @@ export function ProfileEditForm() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const updateMe = useUpdateMe();
+  const { confirm, confirmProps } = useConfirm();
   const upsertEfootballProfile = useUpsertEfootballProfile();
   const deleteAccount = useDeleteAccount();
 
@@ -214,7 +217,7 @@ export function ProfileEditForm() {
 
   async function handleDeleteAccount() {
     if (!user.id) return;
-    if (!window.confirm("Delete your account permanently? This cannot be undone.")) return;
+    if (!await confirm("Delete your account permanently? This cannot be undone.", { title: "Delete Account", variant: "danger", confirmLabel: "Delete Account" })) return;
     setDeleteError(null);
     try {
       await deleteAccount.mutateAsync(user.id);
@@ -913,6 +916,8 @@ export function ProfileEditForm() {
           >
             {deleteAccount.isPending ? "Deleting..." : "Delete account"}
           </button>
+      <ConfirmDialog {...confirmProps} />
+
         </div>
       ) : null}
     </form>

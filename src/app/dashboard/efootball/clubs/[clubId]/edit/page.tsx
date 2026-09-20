@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,8 @@ import { EntityEditForm } from "@/components/dashboard/EntityEditForm";
 import { EntityGuidelinesPanel } from "@/components/dashboard/EntityGuidelinesPanel";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { ShieldIcon, LockIcon, UsersIcon, TrophyIcon } from "@/components/icons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useConfirm } from "@/lib/useConfirm";
 
 export default function EditClubPage({ params }: { params: Promise<{ clubId: string }> }) {
   const { clubId } = use(params);
@@ -22,6 +24,7 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
   const rules = t.dashboard.clubs.rules;
   const tips = t.dashboard.clubs.tips;
   const [error, setError] = useState<string | null>(null);
+  const { confirm, confirmProps } = useConfirm();
 
   const club = clubs.find((c) => c.id === clubId);
   // Matches the backend guard on PATCH/DELETE /clubs/:id exactly.
@@ -46,7 +49,7 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
   ];
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete ${club.name}? This cannot be undone.`)) return;
+    if (!await confirm(`Delete ${club.name}? This cannot be undone.`, { title: "Delete Club", variant: "danger", confirmLabel: "Delete Forever" })) return;
     setError(null);
     try {
       await deleteClub.mutateAsync(club.id);
@@ -121,6 +124,8 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
           <EntityGuidelinesPanel title={tips.title} items={tipItems} tone="tips" />
         </div>
       </div>
+      <ConfirmDialog {...confirmProps} />
+
     </div>
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,8 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EntityEditForm } from "@/components/dashboard/EntityEditForm";
 import { EntityGuidelinesPanel } from "@/components/dashboard/EntityGuidelinesPanel";
 import { ShieldIcon, LockIcon, UsersIcon, SwapIcon } from "@/components/icons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useConfirm } from "@/lib/useConfirm";
 
 export default function CreateCommunityPage() {
   const { t } = useLanguage();
@@ -18,6 +20,7 @@ export default function CreateCommunityPage() {
   const [error, setError] = useState<string | null>(null);
   const createCommunity = useCreateCommunity();
 
+  const { confirm, confirmProps } = useConfirm();
   const rules = t.dashboard.community.rules;
   const tips = t.dashboard.community.tips;
 
@@ -41,7 +44,7 @@ export default function CreateCommunityPage() {
     description: string;
     joinPolicy: "instant" | "approval";
   }) => {
-    if (user.community && !window.confirm(t.dashboard.community.switchConfirm)) return;
+    if (user.community && !await confirm(t.dashboard.community.switchConfirm, { title: "Switch Community", variant: "warning", confirmLabel: "Switch" })) return;
     setError(null);
 
     try {
@@ -91,6 +94,8 @@ export default function CreateCommunityPage() {
           <EntityGuidelinesPanel title={tips.title} items={tipItems} tone="tips" />
         </div>
       </div>
+      <ConfirmDialog {...confirmProps} />
+
     </div>
   );
 }

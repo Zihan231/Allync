@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -31,6 +31,8 @@ import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { ChangeManagerModal } from "@/components/dashboard/ChangeManagerModal";
 import { UsersIcon, TrophyIcon, FacebookIcon, SwapIcon } from "@/components/icons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useConfirm } from "@/lib/useConfirm";
 
 type Tab =
   | "overview"
@@ -56,6 +58,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const tournaments = useMockTournaments();
   const [tab, setTab] = useState<Tab>("overview");
   const [showChangeManagerModal, setShowChangeManagerModal] = useState(false);
+  const { confirm, confirmProps } = useConfirm();
   const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
 
   useEffect(() => {
@@ -113,8 +116,8 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
     }
   };
 
-  const handleLeave = () => {
-    if (!window.confirm(t.dashboard.clubs.leaveConfirm)) return;
+  const handleLeave = async () => {
+    if (!await confirm(t.dashboard.clubs.leaveConfirm, { title: t.dashboard.clubs.leaveButton, variant: "danger", confirmLabel: t.dashboard.clubs.leaveButton, cancelLabel: "Cancel" })) return;
     leaveClub(user.personId);
     setClub(null);
   };
@@ -327,6 +330,8 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
         members={members}
         isManagerSelfTransfer={isManager}
       />
+
+      <ConfirmDialog {...confirmProps} />
     </div>
   );
 }
