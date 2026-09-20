@@ -30,7 +30,13 @@ export function useCreateCommunity() {
       input,
       creatorPersonId,
     }: {
-      input: { name: string; rules: string; joinPolicy: Community["joinPolicy"] };
+      input: {
+        name: string;
+        rules: string;
+        joinPolicy: Community["joinPolicy"];
+        dpUrl?: string | null;
+        coverUrl?: string | null;
+      };
       creatorPersonId: string;
     }) => {
       const initials = input.name
@@ -47,6 +53,8 @@ export function useCreateCommunity() {
         joinPolicy: input.joinPolicy,
         color,
         initials,
+        dpUrl: input.dpUrl,
+        coverUrl: input.coverUrl,
       });
 
       const community: Community = {
@@ -54,8 +62,8 @@ export function useCreateCommunity() {
         name: backendComm.name,
         color: backendComm.color || color,
         initials: backendComm.initials || initials,
-        dpUrl: backendComm.dpUrl ?? null,
-        coverUrl: backendComm.coverUrl ?? null,
+        dpUrl: backendComm.dpUrl ?? input.dpUrl ?? null,
+        coverUrl: backendComm.coverUrl ?? input.coverUrl ?? null,
         rules: backendComm.rules || input.rules,
         points: backendComm.points ?? 0,
         joinPolicy: input.joinPolicy,
@@ -69,6 +77,33 @@ export function useCreateCommunity() {
       return community;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.all });
+    },
+  });
+}
+
+export function useUpdateCommunity(communityId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      name?: string;
+      rules?: string;
+      dpUrl?: string | null;
+      coverUrl?: string | null;
+      joinPolicy?: Community["joinPolicy"];
+    }) => {
+      const updated = await updateCommunityRequest(communityId, payload);
+      applyCommunityUpdated(communityId, {
+        name: updated.name,
+        rules: updated.rules,
+        dpUrl: updated.dpUrl ?? payload.dpUrl ?? null,
+        coverUrl: updated.coverUrl ?? payload.coverUrl ?? null,
+        joinPolicy: (updated.joinPolicy || "instant") as Community["joinPolicy"],
+      });
+      return updated;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.detail(communityId) });
       queryClient.invalidateQueries({ queryKey: communityKeys.all });
     },
   });

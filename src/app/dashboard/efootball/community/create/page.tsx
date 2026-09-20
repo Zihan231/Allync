@@ -38,10 +38,14 @@ export default function CreateCommunityPage() {
   const handleSubmit = async ({
     name,
     description,
+    dpUrl,
+    coverUrl,
     joinPolicy,
   }: {
     name: string;
     description: string;
+    dpUrl: string | null;
+    coverUrl: string | null;
     joinPolicy: "instant" | "approval";
   }) => {
     if (user.community && !await confirm(t.dashboard.community.switchConfirm, { title: "Switch Community", variant: "warning", confirmLabel: "Switch" })) return;
@@ -49,7 +53,7 @@ export default function CreateCommunityPage() {
 
     try {
       const community = await createCommunity.mutateAsync({
-        input: { name, rules: description, joinPolicy },
+        input: { name, rules: description, joinPolicy, dpUrl, coverUrl },
         creatorPersonId: user.personId,
       });
 
