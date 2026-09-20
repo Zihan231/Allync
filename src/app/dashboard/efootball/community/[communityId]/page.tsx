@@ -1,16 +1,16 @@
 ﻿"use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import {
+  hasSyncedFromBackend,
+  syncFromBackend,
   useMockCommunities,
   useMockPeople,
   useMockClubs,
   useMockJoinRequests,
-  joinCommunity,
-  leaveCommunity,
 } from "@/lib/mock/communityStore";
 import { useMockTournaments } from "@/lib/mock/store";
 import { getCommunityFreeAgents, getCommunityTransferLog } from "@/lib/mock/communityInsights";
@@ -27,16 +27,33 @@ import { CommunityTournamentsTab } from "@/components/dashboard/CommunityTournam
 import { CommunityFreeAgentsTab } from "@/components/dashboard/CommunityFreeAgentsTab";
 import { CommunityTransfersTab } from "@/components/dashboard/CommunityTransfersTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { AppLoader } from "@/components/common/AppLoader";
 import { ShieldIcon, UsersIcon, FacebookIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { ToastContainer } from "@/components/common/Toast";
+import { useToast } from "@/lib/useToast";
 import { useConfirm } from "@/lib/useConfirm";
+import { useCommunity, useJoinCommunity, useLeaveCommunity } from "@/lib/api/hooks/useCommunities";
 
 type Tab = "overview" | "members" | "clubs" | "rankings" | "tournaments" | "freeAgents" | "transfers";
 
 export default function CommunityDetailPage({ params }: { params: Promise<{ communityId: string }> }) {
   const { communityId } = use(params);
   const { t } = useLanguage();
-  const { user, setCommunity } = useSession();
+  const { user, setCommunity, refreshSession } = useSession();
+  const [synced, setSynced] = useState(() => hasSyncedFromBackend());
+
+  useEffect(() => {
+    let mounted = true;
+    syncFromBackend().finally(() => {
+      if (mounted) setSynced(true);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const { data: remoteCommunity, isLoading: isRemoteLoading } = useCommunity(communityId);
   const communities = useMockCommunities();
   const people = useMockPeople();
   const clubs = useMockClubs();
@@ -44,8 +61,13 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   const joinRequests = useMockJoinRequests();
   const [tab, setTab] = useState<Tab>("overview");
 
-  const community = communities.find((c) => c.id === communityId);
+  const community = useMemo(() => {
+    return remoteCommunity || communities.find((c) => c.id === communityId);
+  }, [remoteCommunity, communities, communityId]);
   const { confirm, confirmProps } = useConfirm();
+  const joinMutation = useJoinCommunity(communityId);
+  const leaveMutation = useLeaveCommunity(communityId);
+  const { toasts, toast, dismiss } = useToast();
 
   const memberClubs = useMemo(
     () => clubs.filter((c) => community?.memberClubIds.includes(c.id)),
@@ -72,6 +94,12 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
     [tournaments, community]
   );
 
+  const isLoading = (isRemoteLoading && !community) || (!community && !synced);
+
+  if (isLoading) {
+    return <AppLoader />;
+  }
+
   if (!community) {
     return <EmptyState icon={ShieldIcon} title={t.dashboard.community.emptyState} body="" />;
   }
@@ -87,19 +115,33 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
       r.status === "pending"
   );
 
-  const handleJoin = () => {
-    joinCommunity(user.personId, community.id);
-    if (community.joinPolicy === "instant") {
+
+  const handleJoin = async () => {
+    if (community.joinPolicy === "approval") {
+      toast("Join request sent! Awaiting approval.", "info");
+      return;
+    }
+    try {
+      await joinMutation.mutateAsync();
       setCommunity({ id: community.id, name: community.name, role: "Member" });
+      toast(`You joined ${community.name}!`, "success");
+      void refreshSession();
+    } catch (err: any) {
+      toast(err?.response?.data?.message || "Failed to join community.", "error");
     }
   };
 
   const handleLeave = async () => {
-    if (!await confirm(t.dashboard.community.leaveConfirm, { title: t.dashboard.community.leaveButton ?? "Leave Community", variant: "danger", confirmLabel: "Leave" })) return;
-    leaveCommunity(user.personId);
-    setCommunity(null);
+    if (!await confirm(t.dashboard.community.leaveConfirm, { title: "Leave Community", variant: "danger", confirmLabel: "Leave" })) return;
+    try {
+      await leaveMutation.mutateAsync();
+      setCommunity(null);
+      toast(`You left ${community.name}.`, "info");
+      void refreshSession();
+    } catch (err: any) {
+      toast(err?.response?.data?.message || "Failed to leave community.", "error");
+    }
   };
-
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: t.dashboard.community.tabOverview },
     { key: "members", label: t.dashboard.community.tabMembers },
@@ -190,19 +232,40 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
           {isMine ? (
             <button
               onClick={handleLeave}
-              className="rounded-full bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink"
+              disabled={leaveMutation.isPending}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-danger-soft px-5 py-2 text-sm font-semibold text-danger-ink transition-all hover:bg-danger-soft/80 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {t.dashboard.community.leaveButton}
+              {leaveMutation.isPending ? (
+                <>
+                  <svg className="h-4 w-4 animate-spin text-danger-ink" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  <span>Leaving...</span>
+                </>
+              ) : (
+                t.dashboard.community.leaveButton
+              )}
             </button>
           ) : (
             <button
               onClick={handleJoin}
-              disabled={hasOtherCommunity || hasPendingRequest}
-              className="rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg disabled:opacity-40"
+              disabled={hasOtherCommunity || hasPendingRequest || joinMutation.isPending}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2 font-display text-sm font-semibold text-bg transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {community.joinPolicy === "instant"
-                ? t.dashboard.community.joinButton
-                : t.dashboard.community.requestToJoinButton}
+              {joinMutation.isPending ? (
+                <>
+                  <svg className="h-4 w-4 animate-spin text-bg" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  <span>Joining...</span>
+                </>
+              ) : (
+                community.joinPolicy === "instant"
+                  ? t.dashboard.community.joinButton
+                  : t.dashboard.community.requestToJoinButton
+              )}
             </button>
           )}
         </div>
@@ -257,6 +320,7 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
         {tab === "transfers" ? <CommunityTransfersTab entries={transferEntries} realIds={realIds} /> : null}
       </div>
       <ConfirmDialog {...confirmProps} />
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
 
     </div>
   );

@@ -120,7 +120,7 @@ export default function TeamManagePage({
     updateTeam.mutate({ captainProfileId: nextId || null });
   };
 
-  const handleDeleteTeam = () => {
+  const handleDeleteTeam = async () => {
     if (!await confirm(`Delete ${team.name}? This cannot be undone.`, { title: "Delete Squad", variant: "danger", confirmLabel: "Delete Forever" })) return;
     deleteTeam.mutate(teamId, {
       onSuccess: () => router.push(`/dashboard/efootball/clubs/${clubId}`),

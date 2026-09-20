@@ -123,7 +123,13 @@ export function backendUserToMockUser(u: any): MockUser {
           name: ef.community.name,
           role: (ef.communityRole as CommunityRole) || "Member",
         }
-      : null,
+      : (ef?.communityId
+        ? {
+            id: ef.communityId,
+            name: getCommunity(ef.communityId)?.name || "Community",
+            role: (ef.communityRole as CommunityRole) || "Member",
+          }
+        : null),
     raw: u,
   };
 }

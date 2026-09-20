@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+﻿import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createCommunityRequest,
   updateCommunityRequest,
@@ -71,5 +71,56 @@ export function useCreateCommunity() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityKeys.all });
     },
+  });
+}
+
+export function useJoinCommunity(communityId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => joinCommunityRequest(communityId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.detail(communityId) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.members(communityId) });
+    },
+  });
+}
+
+export function useLeaveCommunity(communityId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => leaveCommunityRequest(communityId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.detail(communityId) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.members(communityId) });
+    },
+  });
+}
+export function useCommunity(communityId: string) {
+  return useQuery({
+    queryKey: communityKeys.detail(communityId),
+    queryFn: async () => {
+      const bc = await getCommunity(communityId);
+      const mapped: Community = {
+        id: bc.id,
+        name: bc.name,
+        dpUrl: bc.dpUrl ?? null,
+        coverUrl: bc.coverUrl ?? null,
+        rules: bc.rules || "",
+        points: bc.points ?? 0,
+        joinPolicy: (bc.joinPolicy || "instant") as Community["joinPolicy"],
+        memberClubIds: bc.memberClubIds || [],
+        freeAgentCount: bc.freeAgentCount ?? 0,
+        tournamentIds: [],
+        color: bc.color || "#4c8dff",
+        initials: bc.initials || "CM",
+        tier: (bc.tier || "New") as Community["tier"],
+        location: bc.location ?? undefined,
+        motto: bc.motto ?? undefined,
+        facebookUrl: bc.facebookUrl ?? undefined,
+      };
+      return mapped;
+    },
+    enabled: Boolean(communityId),
+    staleTime: 1000 * 60 * 2,
   });
 }
