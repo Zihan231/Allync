@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  getClub,
+  leaveClubRequest,
   createClubRequest,
   updateClubRequest,
   deleteClubRequest,
@@ -165,6 +167,26 @@ export function useTransferClubPresident(clubId: string) {
       queryClient.invalidateQueries({ queryKey: teamKeys.members(clubId) });
       queryClient.invalidateQueries({ queryKey: meKey });
       queryClient.invalidateQueries({ queryKey: clubKeys.all });
+    },
+  });
+}
+
+export function useClub(clubId: string) {
+  return useQuery({
+    queryKey: clubKeys.detail(clubId),
+    queryFn: () => getClub(clubId),
+    enabled: !!clubId,
+  });
+}
+
+export function useLeaveClub(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => leaveClubRequest(clubId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: clubKeys.detail(clubId) });
+      queryClient.invalidateQueries({ queryKey: ["club-my-request", clubId] });
+      queryClient.invalidateQueries({ queryKey: ["me"] });
     },
   });
 }

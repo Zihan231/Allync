@@ -87,3 +87,8 @@ export async function transferCommunityPresidentRequest(
   const res = await api.post(`/communities/${communityId}/president/transfer`, payload);
   return res.data;
 }
+
+export async function getMyCommunityRequest(communityId: string): Promise<{ hasPendingRequest: boolean; request: any }> {
+  const res = await api.get(`/communities/${communityId}/my-request`);
+  return res.data;
+}

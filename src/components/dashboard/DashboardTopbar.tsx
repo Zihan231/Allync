@@ -8,8 +8,10 @@ import { useSession } from "@/lib/session/SessionContext";
 import { games, getGame } from "@/lib/games";
 import { DEMO_PERSONAS } from "@/lib/mock/personas";
 import { LanguageSwitch } from "../LanguageSwitch";
+import { ToastContainer } from "../common/Toast";
 import { Avatar } from "../common/Avatar";
 import { BellIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, UsersIcon } from "../icons";
+import { useRealtimeNotifications } from "@/lib/hooks/useRealtimeNotifications";
 
 export function DashboardTopbar({
   onMenuClick,
@@ -43,11 +45,7 @@ export function DashboardTopbar({
 
   const activeGame = getGame(user.activeGame);
 
-  const notifications = [
-    t.dashboard.shell.notification1,
-    t.dashboard.shell.notification2,
-    t.dashboard.shell.notification3,
-  ];
+  const { notifications, unreadCount, markAsRead, markAllRead, toasts, dismiss } = useRealtimeNotifications();
 
   return (
     <header className="sticky top-0 z-30 flex h-14 min-[400px]:h-16 items-center justify-between gap-1.5 min-[400px]:gap-3 border-b border-surface-line/70 bg-bg/90 px-2.5 min-[400px]:px-4 backdrop-blur lg:px-6 max-w-[100vw] overflow-x-clip">
@@ -112,21 +110,63 @@ export function DashboardTopbar({
             type="button"
             onClick={() => setNotifOpen((o) => !o)}
             aria-label={t.dashboard.shell.notificationsLabel}
-            className="flex h-8 w-8 min-[400px]:h-9 min-[400px]:w-9 items-center justify-center rounded-full border border-surface-line-strong text-ink-soft hover:text-ink shrink-0"
+            className="relative flex h-8 w-8 min-[400px]:h-9 min-[400px]:w-9 items-center justify-center rounded-full border border-surface-line-strong text-ink-soft hover:text-ink shrink-0"
           >
             <BellIcon className="h-4 w-4 min-[400px]:h-4.5 min-[400px]:w-4.5" />
+            {unreadCount > 0 ? (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-bg animate-pulse">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            ) : null}
           </button>
           {notifOpen ? (
-            <div className="absolute right-0 top-full z-40 mt-2 w-64 rounded-xl border border-surface-line bg-surface p-3 shadow-2xl">
-              <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
-                {t.dashboard.shell.notificationsLabel}
+            <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-surface-line bg-surface p-3 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-surface-line/70 pb-2">
+                <span className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
+                  {t.dashboard.shell.notificationsLabel} ({unreadCount})
+                </span>
+                {unreadCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => markAllRead()}
+                    className="font-mono text-[10px] text-accent hover:underline"
+                  >
+                    Mark all as read
+                  </button>
+                ) : null}
               </div>
-              <ul className="mt-2 space-y-2">
-                {notifications.map((n, i) => (
-                  <li key={i} className="text-xs leading-relaxed text-ink-soft">
-                    {n}
+              <ul className="mt-2 max-h-72 overflow-y-auto space-y-2 pr-1 divide-y divide-surface-line/40">
+                {notifications.length === 0 ? (
+                  <li className="py-4 text-center text-xs text-ink-faint">
+                    {t.dashboard.shell.notificationsEmpty || "You're all caught up."}
                   </li>
-                ))}
+                ) : (
+                  notifications.map((n) => (
+                    <li
+                      key={n.id}
+                      onClick={() => {
+                        if (!n.read) markAsRead(n.id);
+                        if (n.link) {
+                          setNotifOpen(false);
+                          router.push(n.link);
+                        }
+                      }}
+                      className={`pt-2 pb-1 text-xs cursor-pointer transition-colors rounded-lg px-2 hover:bg-bg-raised ${
+                        !n.read ? "bg-accent/5 font-medium" : "opacity-80"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={`font-semibold ${!n.read ? "text-accent" : "text-ink"}`}>
+                          {n.title}
+                        </span>
+                        {!n.read ? (
+                          <span className="h-1.5 w-1.5 rounded-full bg-accent shrink-0" />
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 leading-relaxed text-ink-soft line-clamp-2">{n.message}</p>
+                    </li>
+                  ))
+                )}
               </ul>
             </div>
           ) : null}
@@ -173,6 +213,7 @@ export function DashboardTopbar({
           ) : null}
         </div>
       </div>
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </header>
   );
 }

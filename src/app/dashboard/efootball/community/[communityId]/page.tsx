@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
+import { getMyCommunityRequest } from "@/lib/api/communities";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   hasSyncedFromBackend,
   syncFromBackend,
@@ -12,6 +14,9 @@ import {
   useMockPeople,
   useMockClubs,
   useMockJoinRequests,
+  addPendingJoinRequest,
+  leaveCommunity,
+  removePendingJoinRequest,
 } from "@/lib/mock/communityStore";
 import { useMockTournaments } from "@/lib/mock/store";
 import { getCommunityFreeAgents, getCommunityTransferLog } from "@/lib/mock/communityInsights";
@@ -30,7 +35,7 @@ import { CommunityTransfersTab } from "@/components/dashboard/CommunityTransfers
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
 import { AppLoader } from "@/components/common/AppLoader";
-import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon, TrashIcon } from "@/components/icons";
+import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon, TrashIcon, ClockIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ToastContainer } from "@/components/common/Toast";
 import { useToast } from "@/lib/useToast";
@@ -49,13 +54,13 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
 
   useEffect(() => {
     let mounted = true;
-    syncFromBackend().finally(() => {
+    syncFromBackend(true).finally(() => {
       if (mounted) setSynced(true);
     });
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [communityId]);
 
   const { data: remoteCommunity, isLoading: isRemoteLoading } = useCommunity(communityId);
   const communities = useMockCommunities();
@@ -73,6 +78,16 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   const joinMutation = useJoinCommunity(communityId);
   const leaveMutation = useLeaveCommunity(communityId);
   const { toasts, toast, dismiss } = useToast();
+  const [isPendingLocal, setIsPendingLocal] = useState(false);
+  const [justLeft, setJustLeft] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: myRequestData, refetch: refetchMyRequest } = useQuery({
+    queryKey: ["community-my-request", communityId],
+    queryFn: () => getMyCommunityRequest(communityId),
+    enabled: !!communityId,
+    refetchInterval: 3000,
+  });
 
   const memberClubs = useMemo(
     () => clubs.filter((c) => community?.memberClubIds.includes(c.id)),
@@ -84,10 +99,12 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
     return map;
   }, [memberClubs, people]);
   const clubMembers = useMemo(() => memberClubs.flatMap((c) => peopleByClub.get(c.id) ?? []), [memberClubs, peopleByClub]);
-  const allMembers = useMemo(
-    () => people.filter((p) => p.communityId === community?.id),
-    [people, community]
-  );
+  const allMembers = useMemo(() => {
+    const direct = people.filter((p) => p.communityId === community?.id);
+    const seen = new Set(direct.map((p) => p.id));
+    const fromClubs = clubMembers.filter((p) => !seen.has(p.id));
+    return [...direct, ...fromClubs];
+  }, [people, community, clubMembers]);
   const freeAgents = useMemo(
     () => (community ? getCommunityFreeAgents(community, people) : []),
     [community, people]
@@ -99,39 +116,79 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
     [tournaments, community]
   );
 
-  const isLoading = (isRemoteLoading && !community) || (!community && !synced);
+  const currentUserPerson = useMemo(
+    () => people.find((p) => p.id === user.id || p.id === user.personId),
+    [people, user.id, user.personId]
+  );
 
-  if (isLoading) {
-    return <AppLoader />;
-  }
+  const isMemberOfCommunity =
+    !justLeft &&
+    (user.community?.id === community?.id || currentUserPerson?.communityId === community?.id);
 
-  if (!community) {
-    return <EmptyState icon={ShieldIcon} title={t.dashboard.community.emptyState} body="" />;
-  }
+  const isMine = isMemberOfCommunity;
 
-  const isMine = user.community?.id === community.id;
+  // Reactively auto-clear pending status and sync session as soon as request is accepted
+  useEffect(() => {
+    if (justLeft) return;
+    if (
+      (currentUserPerson?.communityId === community?.id || (myRequestData && !myRequestData.hasPendingRequest && (myRequestData.request as any)?.status === "approved")) &&
+      user.community?.id !== community?.id
+    ) {
+      if (isPendingLocal) {
+        setIsPendingLocal(false);
+      }
+      if (community) {
+        setCommunity({
+          id: community.id,
+          name: community.name,
+          role: currentUserPerson?.communityRole || "Member",
+        });
+        void refreshSession();
+      }
+    }
+  }, [currentUserPerson?.communityId, currentUserPerson?.communityRole, myRequestData, community, isPendingLocal, user.community?.id, setCommunity, refreshSession]);
+
   const canHandoverAuthority = isMine && (
     user.community?.role === "President" ||
     user.community?.role === "General Secretary" ||
-    user.community?.role === "Vice President"
+    user.community?.role === "Vice President" ||
+    currentUserPerson?.communityRole === "President" ||
+    currentUserPerson?.communityRole === "General Secretary" ||
+    currentUserPerson?.communityRole === "Vice President"
   );
-  const isPresident = isMine && user.community?.role === "President";
+  const isPresident = isMine && (user.community?.role === "President" || currentUserPerson?.communityRole === "President");
   const canManage = isPresident;
   const hasOtherCommunity = !!user.community && !isMine;
-  const hasPendingRequest = joinRequests.some(
-    (r) =>
-      r.targetType === "community" &&
-      r.targetId === community.id &&
-      r.personId === user.personId &&
-      r.status === "pending"
-  );
 
+  const hasPendingRequest =
+    !isMine &&
+    !isMemberOfCommunity &&
+    (isPendingLocal ||
+      Boolean(myRequestData?.hasPendingRequest) ||
+      joinRequests.some(
+        (r) =>
+          r.targetType === "community" &&
+          r.targetId === community?.id &&
+          (r.personId === user.personId || r.personId === user.id) &&
+          r.status === "pending"
+      ));
 
   const handleJoin = async () => {
+    if (!community || hasOtherCommunity || hasPendingRequest || joinMutation.isPending) return;
+    setJustLeft(false);
+
     if (community.joinPolicy === "approval") {
-      toast("Join request sent! Awaiting approval.", "info");
+      setIsPendingLocal(true);
+      addPendingJoinRequest("community", community.id, user.personId || user.id);
+      try {
+        await joinMutation.mutateAsync();
+        toast("Join request sent! Awaiting approval by community leadership.", "info");
+      } catch (err: any) {
+        toast("Join request sent! Awaiting approval by community leadership.", "info");
+      }
       return;
     }
+
     try {
       await joinMutation.mutateAsync();
       setCommunity({ id: community.id, name: community.name, role: "Member" });
@@ -142,9 +199,8 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
     }
   };
 
-  
   const handleDeleteCommunity = async () => {
-    if (!isPresident) return;
+    if (!community || !isPresident) return;
     if (!await confirm(`Delete ${community.name}? This cannot be undone. All community data will be permanently removed.`, {
       title: "Delete Community",
       variant: "danger",
@@ -161,16 +217,31 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   };
 
   const handleLeave = async () => {
+    if (!community) return;
     if (!await confirm(t.dashboard.community.leaveConfirm, { title: "Leave Community", variant: "danger", confirmLabel: "Leave" })) return;
+
+    // Instant optimistic UI switch (0ms delay)
+    setJustLeft(true);
+    setIsPendingLocal(false);
+    leaveCommunity(user.personId || user.id);
+    if (user.id) leaveCommunity(user.id);
+    removePendingJoinRequest("community", community.id, user.personId || user.id);
+    if (user.id) removePendingJoinRequest("community", community.id, user.id);
+    setCommunity(null);
+    queryClient.setQueryData(["community-my-request", community.id], { hasPendingRequest: false, request: null });
+    toast(`You left ${community.name}.`, "info");
+
     try {
       await leaveMutation.mutateAsync();
-      setCommunity(null);
-      toast(`You left ${community.name}.`, "info");
+      void queryClient.invalidateQueries({ queryKey: ["community-my-request", community.id] });
+      void queryClient.invalidateQueries({ queryKey: ["me"] });
       void refreshSession();
     } catch (err: any) {
-      toast(err?.response?.data?.message || "Failed to leave community.", "error");
+      setJustLeft(false);
+      toast(err?.response?.data?.message || "Failed to leave community on server.", "error");
     }
   };
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: t.dashboard.community.tabOverview },
     { key: "members", label: t.dashboard.community.tabMembers },
@@ -180,6 +251,16 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
     { key: "freeAgents", label: t.dashboard.community.tabFreeAgents },
     { key: "transfers", label: t.dashboard.community.tabTransfers },
   ];
+
+  const isLoading = (isRemoteLoading && !community) || (!community && !synced);
+
+  if (isLoading) {
+    return <AppLoader />;
+  }
+
+  if (!community) {
+    return <EmptyState icon={ShieldIcon} title={t.dashboard.community.emptyState} body="" />;
+  }
 
   return (
     <div>
@@ -299,10 +380,19 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
                 )}
               </button>
             )
+          ) : hasPendingRequest ? (
+            <button
+              type="button"
+              disabled
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500/15 border border-amber-500/40 px-5 py-2 font-display text-sm font-semibold text-amber-400 cursor-default"
+            >
+              <ClockIcon className="h-4 w-4 text-amber-400 animate-pulse" />
+              <span>Requested</span>
+            </button>
           ) : (
             <button
               onClick={handleJoin}
-              disabled={hasOtherCommunity || hasPendingRequest || joinMutation.isPending}
+              disabled={hasOtherCommunity || joinMutation.isPending}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2 font-display text-sm font-semibold text-bg transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {joinMutation.isPending ? (

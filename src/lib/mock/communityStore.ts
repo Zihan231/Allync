@@ -56,7 +56,14 @@ export function hasSyncedFromBackend() {
 export async function syncFromBackend(force = false): Promise<void> {
   if (typeof window === "undefined") return;
   if (hasSynced && !force) return;
-  if (syncPromise) return syncPromise;
+  if (syncPromise) {
+    if (!force) return syncPromise;
+    try {
+      await syncPromise;
+    } catch {
+      // ignore
+    }
+  }
 
   syncPromise = (async () => {
     try {
@@ -353,10 +360,36 @@ export function leaveClub(personId: string) {
   updatePerson(personId, { clubId: null, clubRole: null });
 }
 
-export function approveClubRequest(requestId: string) {
+export function approveClubRequest(
+  requestId: string,
+  targetClubId?: string,
+  requesterPersonId?: string,
+  requesterUser?: any
+) {
   const request = joinRequests.find((r) => r.id === requestId);
-  if (!request) return;
-  updatePerson(request.personId, { clubId: request.targetId, clubRole: "Player" });
+  const clubId = targetClubId || request?.targetId;
+  const personId = requesterPersonId || request?.personId;
+
+  if (personId && clubId) {
+    const existing = getPerson(personId);
+    if (existing) {
+      updatePerson(personId, { clubId, clubRole: "Player" });
+    } else {
+      upsertPerson({
+        id: personId,
+        name: requesterUser?.name || "Player",
+        dpUrl: requesterUser?.dpUrl ?? null,
+        coverUrl: requesterUser?.coverUrl ?? null,
+        clubId,
+        clubRole: "Player",
+        points: requesterUser?.efootballProfile?.points ?? 0,
+        inGameId: requesterUser?.inGameId ?? undefined,
+        lineupStatus: "Sub",
+        squadTeam: "Main",
+      } as Person);
+    }
+  }
+
   joinRequests = joinRequests.map((r) => (r.id === requestId ? { ...r, status: "approved" } : r));
   emit();
 }
@@ -431,15 +464,61 @@ export function leaveCommunity(personId: string) {
   updatePerson(personId, { communityId: null, communityRole: null });
 }
 
-export function approveCommunityRequest(requestId: string) {
+export function approveCommunityRequest(
+  requestId: string,
+  targetCommunityId?: string,
+  requesterPersonId?: string,
+  requesterUser?: any
+) {
   const request = joinRequests.find((r) => r.id === requestId);
-  if (!request) return;
-  updatePerson(request.personId, { communityId: request.targetId, communityRole: "Member" });
+  const communityId = targetCommunityId || request?.targetId;
+  const personId = requesterPersonId || request?.personId;
+
+  if (personId && communityId) {
+    const existing = getPerson(personId);
+    if (existing) {
+      updatePerson(personId, { communityId, communityRole: "Member" });
+    } else {
+      upsertPerson({
+        id: personId,
+        name: requesterUser?.name || "Member",
+        dpUrl: requesterUser?.dpUrl ?? null,
+        coverUrl: requesterUser?.coverUrl ?? null,
+        communityId,
+        communityRole: "Member",
+        points: requesterUser?.efootballProfile?.points ?? 0,
+        inGameId: requesterUser?.inGameId ?? undefined,
+      } as Person);
+    }
+  }
+
   joinRequests = joinRequests.map((r) => (r.id === requestId ? { ...r, status: "approved" } : r));
   emit();
 }
 
 export function rejectCommunityRequest(requestId: string) {
   joinRequests = joinRequests.map((r) => (r.id === requestId ? { ...r, status: "rejected" } : r));
+  emit();
+}
+
+export function addPendingJoinRequest(targetType: 'club' | 'community', targetId: string, personId: string) {
+  joinRequests = [
+    ...joinRequests.filter((r) => !(r.targetType === targetType && r.targetId === targetId && r.personId === personId)),
+    {
+      id: `request-${Date.now()}`,
+      targetType,
+      targetId,
+      personId,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    },
+  ];
+  emit();
+}
+
+export function removePendingJoinRequest(targetType: 'club' | 'community', targetId: string, personId: string) {
+  joinRequests = joinRequests.filter(
+    (r) => !(r.targetType === targetType && r.targetId === targetId && r.personId === personId)
+  );
   emit();
 }
