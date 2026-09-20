@@ -28,6 +28,7 @@ export type ClubRole =
 export type CommunityRole =
   | "President"
   | "Vice President"
+  | "General Secretary"
   | "Team Manager"
   | "Head of Discipline"
   | "Scout"

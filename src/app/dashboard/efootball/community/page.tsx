@@ -66,13 +66,15 @@ export default function CommunityBrowsePage() {
         eyebrow="eFootball"
         title={t.dashboard.community.browseTitle}
         action={
-          <Link
-            href="/dashboard/efootball/community/create"
-            className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg transition-transform hover:-translate-y-0.5"
-          >
-            <PlusIcon className="h-4 w-4" />
-            {t.dashboard.community.createCta}
-          </Link>
+          !user.community ? (
+            <Link
+              href="/dashboard/efootball/community/create"
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg transition-transform hover:-translate-y-0.5"
+            >
+              <PlusIcon className="h-4 w-4" />
+              {t.dashboard.community.createCta}
+            </Link>
+          ) : null
         }
       />
 

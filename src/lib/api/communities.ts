@@ -79,3 +79,11 @@ export async function reviewCommunityRequestRequest(
   const res = await api.post(`/communities/${communityId}/requests/${requestId}/review`, { status });
   return res.data;
 }
+
+export async function transferCommunityPresidentRequest(
+  communityId: string,
+  payload: { targetUserId?: string; targetProfileId?: string },
+): Promise<any> {
+  const res = await api.post(`/communities/${communityId}/president/transfer`, payload);
+  return res.data;
+}

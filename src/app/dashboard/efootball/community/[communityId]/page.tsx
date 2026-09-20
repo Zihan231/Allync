@@ -27,8 +27,9 @@ import { CommunityTournamentsTab } from "@/components/dashboard/CommunityTournam
 import { CommunityFreeAgentsTab } from "@/components/dashboard/CommunityFreeAgentsTab";
 import { CommunityTransfersTab } from "@/components/dashboard/CommunityTransfersTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
 import { AppLoader } from "@/components/common/AppLoader";
-import { ShieldIcon, UsersIcon, FacebookIcon } from "@/components/icons";
+import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ToastContainer } from "@/components/common/Toast";
 import { useToast } from "@/lib/useToast";
@@ -60,6 +61,7 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   const tournaments = useMockTournaments();
   const joinRequests = useMockJoinRequests();
   const [tab, setTab] = useState<Tab>("overview");
+  const [showTransferAuthorityModal, setShowTransferAuthorityModal] = useState(false);
 
   const community = useMemo(() => {
     return remoteCommunity || communities.find((c) => c.id === communityId);
@@ -105,6 +107,11 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   }
 
   const isMine = user.community?.id === community.id;
+  const canHandoverAuthority = isMine && (
+    user.community?.role === "President" ||
+    user.community?.role === "General Secretary" ||
+    user.community?.role === "Vice President"
+  );
   const canManage = isMine && user.community?.role === "President";
   const hasOtherCommunity = !!user.community && !isMine;
   const hasPendingRequest = joinRequests.some(
@@ -230,23 +237,34 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
           ) : null}
 
           {isMine ? (
-            <button
-              onClick={handleLeave}
-              disabled={leaveMutation.isPending}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-danger-soft px-5 py-2 text-sm font-semibold text-danger-ink transition-all hover:bg-danger-soft/80 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {leaveMutation.isPending ? (
-                <>
-                  <svg className="h-4 w-4 animate-spin text-danger-ink" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                  </svg>
-                  <span>Leaving...</span>
-                </>
-              ) : (
-                t.dashboard.community.leaveButton
-              )}
-            </button>
+            canHandoverAuthority ? (
+              <button
+                type="button"
+                onClick={() => setShowTransferAuthorityModal(true)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-5 py-2 text-sm font-semibold text-warning-ink transition-colors hover:bg-warning/20 shadow-sm"
+              >
+                <SwapIcon className="h-4 w-4" />
+                Transfer Authority
+              </button>
+            ) : (
+              <button
+                onClick={handleLeave}
+                disabled={leaveMutation.isPending}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-danger-soft px-5 py-2 text-sm font-semibold text-danger-ink transition-all hover:bg-danger-soft/80 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {leaveMutation.isPending ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin text-danger-ink" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    <span>Leaving...</span>
+                  </>
+                ) : (
+                  t.dashboard.community.leaveButton
+                )}
+              </button>
+            )
           ) : (
             <button
               onClick={handleJoin}
@@ -319,6 +337,16 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
         {tab === "freeAgents" ? <CommunityFreeAgentsTab freeAgents={freeAgents} /> : null}
         {tab === "transfers" ? <CommunityTransfersTab entries={transferEntries} realIds={realIds} /> : null}
       </div>
+      <TransferAuthorityModal
+        open={showTransferAuthorityModal}
+        onClose={() => setShowTransferAuthorityModal(false)}
+        entityType="community"
+        entityId={community?.id ?? ""}
+        entityName={community?.name ?? ""}
+        members={allMembers}
+        onSuccess={() => toast("Authority transferred successfully. You are now a regular member.", "success")}
+      />
+
       <ConfirmDialog {...confirmProps} />
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
 

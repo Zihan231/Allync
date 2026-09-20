@@ -65,3 +65,24 @@ export async function transferClubManagerRequest(
   const res = await api.post<ChangeManagerResponse>(`/clubs/${clubId}/manager/transfer`, payload);
   return res.data;
 }
+
+export interface TransferPresidentPayload {
+  targetUserId?: string;
+  targetProfileId?: string;
+}
+
+export interface TransferPresidentResponse {
+  success: boolean;
+  message: string;
+  clubId?: string;
+  newPresidentId?: string;
+  newPresidentUserId?: string;
+}
+
+export async function transferClubPresidentRequest(
+  clubId: string,
+  payload: TransferPresidentPayload,
+): Promise<TransferPresidentResponse> {
+  const res = await api.post<TransferPresidentResponse>(`/clubs/${clubId}/president/transfer`, payload);
+  return res.data;
+}

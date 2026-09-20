@@ -30,6 +30,7 @@ import { ClubTeamsTab } from "@/components/dashboard/ClubTeamsTab";
 import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { ChangeManagerModal } from "@/components/dashboard/ChangeManagerModal";
+import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
 import { UsersIcon, TrophyIcon, FacebookIcon, SwapIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useConfirm } from "@/lib/useConfirm";
@@ -58,6 +59,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const tournaments = useMockTournaments();
   const [tab, setTab] = useState<Tab>("overview");
   const [showChangeManagerModal, setShowChangeManagerModal] = useState(false);
+  const [showTransferAuthorityModal, setShowTransferAuthorityModal] = useState(false);
   const { confirm, confirmProps } = useConfirm();
   const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
 
@@ -98,12 +100,13 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const communities = mockCommunities.filter((c) => club.communityIds.includes(c.id));
 
   const isMine = user.club?.id === club.id;
+  const canHandoverAuthority = isMine && (user.club?.role === "President" || user.club?.role === "General Secretary");
   // Matches the backend guards exactly: club PATCH/DELETE allows President or
   // General Secretary; team endpoints allow President or Manager.
   const canManageClub = isMine && (user.club?.role === "President" || user.club?.role === "General Secretary");
   const canManageTeams = isMine && (user.club?.role === "President" || user.club?.role === "Manager");
   const isManager = isMine && user.club?.role === "Manager";
-  const canChangeManager = canManageClub || isManager;
+  const canChangeManager = canManageClub;
   const hasOtherClub = !!user.club && !isMine;
   const hasPendingRequest = joinRequests.some(
     (r) => r.targetType === "club" && r.targetId === club.id && r.personId === user.personId && r.status === "pending"
@@ -218,17 +221,28 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
               className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent-ink transition-colors hover:bg-accent/20"
             >
               <SwapIcon className="h-4 w-4" />
-              {isManager ? t.dashboard.clubs.handoverManagerButton : t.dashboard.clubs.changeManagerButton}
+              {t.dashboard.clubs.changeManagerButton}
             </button>
           ) : null}
 
           {isMine ? (
-            <button
-              onClick={handleLeave}
-              className="rounded-full bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink"
-            >
-              {t.dashboard.clubs.leaveButton}
-            </button>
+            canHandoverAuthority ? (
+              <button
+                type="button"
+                onClick={() => setShowTransferAuthorityModal(true)}
+                className="flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-4 py-2 text-sm font-semibold text-warning-ink transition-colors hover:bg-warning/20 shadow-sm"
+              >
+                <SwapIcon className="h-4 w-4" />
+                Transfer Authority
+              </button>
+            ) : (
+              <button
+                onClick={handleLeave}
+                className="rounded-full bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink"
+              >
+                {t.dashboard.clubs.leaveButton}
+              </button>
+            )
           ) : (
             <button
               onClick={handleJoin}
@@ -322,13 +336,22 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
         ) : null}
       </div>
 
+      <TransferAuthorityModal
+        open={showTransferAuthorityModal}
+        onClose={() => setShowTransferAuthorityModal(false)}
+        entityType="club"
+        entityId={club.id}
+        entityName={club.name}
+        members={members}
+      />
+
       <ChangeManagerModal
         open={showChangeManagerModal}
         onClose={() => setShowChangeManagerModal(false)}
         clubId={club.id}
         clubName={club.name}
         members={members}
-        isManagerSelfTransfer={isManager}
+        isManagerSelfTransfer={false}
       />
 
       <ConfirmDialog {...confirmProps} />

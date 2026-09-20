@@ -6,6 +6,7 @@ import {
   getClubManagerRequest,
   changeClubManagerRequest,
   transferClubManagerRequest,
+  transferClubPresidentRequest,
   type ChangeManagerPayload,
   type ChangeManagerResponse,
 } from "@/lib/api/clubs";
@@ -150,6 +151,20 @@ export function useTransferClubManager(clubId: string) {
       queryClient.invalidateQueries({ queryKey: meKey });
       queryClient.invalidateQueries({ queryKey: clubKeys.all });
       applyManagerChanged(clubId, data.newManager.userId, data.previousManager?.userId);
+    },
+  });
+}
+
+export function useTransferClubPresident(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { targetUserId?: string; targetProfileId?: string }) =>
+      transferClubPresidentRequest(clubId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: clubKeys.detail(clubId) });
+      queryClient.invalidateQueries({ queryKey: teamKeys.members(clubId) });
+      queryClient.invalidateQueries({ queryKey: meKey });
+      queryClient.invalidateQueries({ queryKey: clubKeys.all });
     },
   });
 }

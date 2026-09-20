@@ -8,6 +8,7 @@ import {
   getCommunityMembersRequest,
   joinCommunityRequest,
   leaveCommunityRequest,
+  transferCommunityPresidentRequest,
 } from "@/lib/api/communities";
 import {
   applyCommunityCreated,
@@ -157,5 +158,18 @@ export function useCommunity(communityId: string) {
     },
     enabled: Boolean(communityId),
     staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function useTransferCommunityPresident(communityId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { targetUserId?: string; targetProfileId?: string }) =>
+      transferCommunityPresidentRequest(communityId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.detail(communityId) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.members(communityId) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.all });
+    },
   });
 }

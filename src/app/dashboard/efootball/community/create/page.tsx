@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
@@ -9,9 +10,7 @@ import { isApiError } from "@/lib/api/axios";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EntityEditForm } from "@/components/dashboard/EntityEditForm";
 import { EntityGuidelinesPanel } from "@/components/dashboard/EntityGuidelinesPanel";
-import { ShieldIcon, LockIcon, UsersIcon, SwapIcon } from "@/components/icons";
-import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { useConfirm } from "@/lib/useConfirm";
+import { ShieldIcon, LockIcon, UsersIcon, SwapIcon, ArrowRightIcon } from "@/components/icons";
 
 export default function CreateCommunityPage() {
   const { t } = useLanguage();
@@ -20,7 +19,6 @@ export default function CreateCommunityPage() {
   const [error, setError] = useState<string | null>(null);
   const createCommunity = useCreateCommunity();
 
-  const { confirm, confirmProps } = useConfirm();
   const rules = t.dashboard.community.rules;
   const tips = t.dashboard.community.tips;
 
@@ -48,7 +46,10 @@ export default function CreateCommunityPage() {
     coverUrl: string | null;
     joinPolicy: "instant" | "approval";
   }) => {
-    if (user.community && !await confirm(t.dashboard.community.switchConfirm, { title: "Switch Community", variant: "warning", confirmLabel: "Switch" })) return;
+    if (user.community) {
+      setError(`You are already a member of ${user.community.name}. You cannot create a new community.`);
+      return;
+    }
     setError(null);
 
     try {
@@ -78,28 +79,55 @@ export default function CreateCommunityPage() {
         </div>
       ) : null}
 
+      {/* If user is ALREADY in a community, strictly block creating a new one */}
       {user.community ? (
-        <p className="mt-6 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning-ink">
-          {t.dashboard.community.switchConfirm}
-        </p>
-      ) : null}
+        <div className="mt-8 rounded-2xl border border-warning/40 bg-surface/60 p-8 text-center backdrop-blur">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-warning-soft text-warning-ink">
+            <LockIcon className="h-7 w-7" />
+          </div>
+          <h2 className="mt-4 font-display text-xl font-bold text-ink">
+            You are already in a community
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">
+            You currently belong to <span className="font-semibold text-accent-ink">{user.community.name}</span> as{" "}
+            <span className="font-semibold text-ink">{user.community.role}</span>. Members and officials cannot create another community while already affiliated with an existing one.
+          </p>
+          <p className="mt-1 text-xs text-ink-faint">
+            If you wish to create a new community, you must leave or resign from your current community first.
+          </p>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-surface-line bg-surface/50 p-6">
-          <EntityEditForm
-            nameLabel={t.dashboard.community.createNameLabel}
-            descriptionLabel={t.dashboard.community.rulesLabel}
-            submitLabel={createCommunity.isPending ? "Creating community..." : t.dashboard.community.createSubmit}
-            onSubmit={handleSubmit}
-          />
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href={`/dashboard/efootball/community/${user.community.id}`}
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-display text-sm font-semibold text-bg shadow-md transition-transform hover:-translate-y-0.5"
+            >
+              Go to My Community ({user.community.name})
+              <ArrowRightIcon className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/dashboard/efootball/community"
+              className="inline-flex items-center gap-2 rounded-full border border-surface-line-strong px-5 py-2.5 font-display text-sm font-medium text-ink transition-colors hover:bg-surface"
+            >
+              Browse All Communities
+            </Link>
+          </div>
         </div>
-        <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-          <EntityGuidelinesPanel title={rules.title} items={ruleItems} tone="rules" />
-          <EntityGuidelinesPanel title={tips.title} items={tipItems} tone="tips" />
+      ) : (
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div className="rounded-xl border border-surface-line bg-surface/50 p-6">
+            <EntityEditForm
+              nameLabel={t.dashboard.community.createNameLabel}
+              descriptionLabel={t.dashboard.community.rulesLabel}
+              submitLabel={createCommunity.isPending ? "Creating community..." : t.dashboard.community.createSubmit}
+              onSubmit={handleSubmit}
+            />
+          </div>
+          <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+            <EntityGuidelinesPanel title={rules.title} items={ruleItems} tone="rules" />
+            <EntityGuidelinesPanel title={tips.title} items={tipItems} tone="tips" />
+          </div>
         </div>
-      </div>
-      <ConfirmDialog {...confirmProps} />
-
+      )}
     </div>
   );
 }
