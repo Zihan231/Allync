@@ -52,10 +52,8 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
   useEffect(() => {
     const el = progressRef.current;
     if (!el) return;
-    // Animate from 100% to 0% over 4 seconds
     el.style.transition = "none";
     el.style.width = "100%";
-    // Force reflow before starting animation
     void el.offsetWidth;
     el.style.transition = "width 4s linear";
     el.style.width = "0%";
@@ -78,6 +76,7 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
         backdropFilter: "blur(12px)",
         minWidth: "280px",
         maxWidth: "360px",
+        pointerEvents: "auto",
       }}
       role="alert"
     >
@@ -125,14 +124,24 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
     <>
       <style>{`
         @keyframes toastSlideIn {
-          from { opacity: 0; transform: translateY(16px) scale(0.95); }
-          to   { opacity: 1; transform: translateY(0)   scale(1);    }
+          from { opacity: 0; transform: scale(0.94); }
+          to   { opacity: 1; transform: scale(1);    }
         }
       `}</style>
       <div
         role="region"
         aria-label="Notifications"
-        className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2.5"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "10px",
+          pointerEvents: "none",
+        }}
       >
         {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} onDismiss={onDismiss} />
