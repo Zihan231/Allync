@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockCommunities } from "@/lib/mock/communityStore";
-import { useCommunity, useUpdateCommunity } from "@/lib/api/hooks/useCommunities";
+import { useCommunity, useUpdateCommunity, useDeleteCommunity } from "@/lib/api/hooks/useCommunities";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EntityEditForm } from "@/components/dashboard/EntityEditForm";
 import { EntityGuidelinesPanel } from "@/components/dashboard/EntityGuidelinesPanel";
@@ -14,6 +14,9 @@ import { AppLoader } from "@/components/common/AppLoader";
 import { ToastContainer } from "@/components/common/Toast";
 import { useToast } from "@/lib/useToast";
 import { ShieldIcon, LockIcon, UsersIcon, SwapIcon } from "@/components/icons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useConfirm } from "@/lib/useConfirm";
+import { isApiError } from "@/lib/api/axios";
 
 export default function EditCommunityPage({ params }: { params: Promise<{ communityId: string }> }) {
   const { communityId } = use(params);
@@ -22,6 +25,9 @@ export default function EditCommunityPage({ params }: { params: Promise<{ commun
   const { data: remoteCommunity, isLoading } = useCommunity(communityId);
   const communities = useMockCommunities();
   const updateMutation = useUpdateCommunity(communityId);
+  const deleteMutation = useDeleteCommunity();
+  const { confirm, confirmProps } = useConfirm();
+  const { setCommunity } = useSession();
   const { toasts, toast, dismiss } = useToast();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -36,7 +42,28 @@ export default function EditCommunityPage({ params }: { params: Promise<{ commun
     return <AppLoader />;
   }
 
-  const canManage = user.community?.id === communityId && user.community?.role === "President";
+  const isPresident = user.community?.id === communityId && user.community?.role === "President";
+  const canManage = isPresident;
+  const handleDelete = async () => {
+    if (!community || !isPresident) return;
+    if (!await confirm(`Delete ${community.name}? This cannot be undone. All community data will be permanently removed.`, {
+      title: "Delete Community",
+      variant: "danger",
+      confirmLabel: "Delete Forever",
+    })) return;
+
+    setError(null);
+    try {
+      await deleteMutation.mutateAsync(community.id);
+      setCommunity(null);
+      router.push("/dashboard/efootball/community");
+    } catch (err: any) {
+      const msg = isApiError(err) ? err.message : (err as Error)?.message || "Failed to delete community.";
+      setError(msg);
+      toast(msg, "error");
+    }
+  };
+
 
   if (!community || !canManage) {
     return <EmptyState icon={LockIcon} title={t.dashboard.community.emptyState} body="" />;
@@ -98,12 +125,29 @@ export default function EditCommunityPage({ params }: { params: Promise<{ commun
               }
             }}
           />
+          {isPresident ? (
+            <div className="mt-8 border-t border-surface-line pt-6">
+              <h3 className="text-sm font-semibold text-ink">Danger zone</h3>
+              <p className="mt-1 text-xs text-ink-soft">
+                Deleting this community is permanent and removes it for all members. Only the Community President can delete the community.
+              </p>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+                className="mt-3 rounded-full bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink disabled:opacity-50 transition-colors hover:bg-danger-soft/80"
+              >
+                {deleteMutation.isPending ? "Deleting..." : "Delete community"}
+              </button>
+            </div>
+          ) : null}
         </div>
         <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
           <EntityGuidelinesPanel title={rules.title} items={ruleItems} tone="rules" />
           <EntityGuidelinesPanel title={tips.title} items={tipItems} tone="tips" />
         </div>
       </div>
+      <ConfirmDialog {...confirmProps} />
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );

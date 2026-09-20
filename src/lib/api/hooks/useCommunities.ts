@@ -173,3 +173,16 @@ export function useTransferCommunityPresident(communityId: string) {
     },
   });
 }
+
+export function useDeleteCommunity() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (communityId: string) => {
+      await deleteCommunityRequest(communityId);
+      applyCommunityDeleted(communityId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.all });
+    },
+  });
+}

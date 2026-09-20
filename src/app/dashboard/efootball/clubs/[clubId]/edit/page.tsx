@@ -28,6 +28,7 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
 
   const club = clubs.find((c) => c.id === clubId);
   // Matches the backend guard on PATCH/DELETE /clubs/:id exactly.
+  const isPresident = user.club?.id === clubId && user.club?.role === "President";
   const canManage = user.club?.id === clubId && (user.club?.role === "President" || user.club?.role === "General Secretary");
 
   const updateClub = useUpdateClub(clubId);

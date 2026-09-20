@@ -2,9 +2,11 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockClubs, useMockPeople, useMockJoinRequests, joinClub, leaveClub, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
+import { useMockClubs, useMockPeople, useMockJoinRequests,
+   joinClub, leaveClub, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
 import { AppLoader } from "@/components/common/AppLoader";
 import { useMockTournaments } from "@/lib/mock/store";
 import { mockCommunities } from "@/lib/mock";
@@ -31,7 +33,8 @@ import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { ChangeManagerModal } from "@/components/dashboard/ChangeManagerModal";
 import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
-import { UsersIcon, TrophyIcon, FacebookIcon, SwapIcon } from "@/components/icons";
+import { useDeleteClub } from "@/lib/api/hooks/useClubs";
+import { UsersIcon, TrophyIcon, FacebookIcon, SwapIcon, TrashIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useConfirm } from "@/lib/useConfirm";
 
@@ -53,6 +56,8 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const { clubId } = use(params);
   const { t } = useLanguage();
   const { user, setClub } = useSession();
+  const router = useRouter();
+  const deleteClub = useDeleteClub();
   const clubs = useMockClubs();
   const people = useMockPeople();
   const joinRequests = useMockJoinRequests();
@@ -100,6 +105,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const communities = mockCommunities.filter((c) => club.communityIds.includes(c.id));
 
   const isMine = user.club?.id === club.id;
+  const isPresident = isMine && user.club?.role === "President";
   const canHandoverAuthority = isMine && (user.club?.role === "President" || user.club?.role === "General Secretary");
   // Matches the backend guards exactly: club PATCH/DELETE allows President or
   // General Secretary; team endpoints allow President or Manager.
@@ -116,6 +122,24 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
     joinClub(user.personId, club.id);
     if (club.joinPolicy === "instant") {
       setClub({ id: club.id, name: club.name, role: "Player" });
+    }
+  };
+
+  
+  const handleDeleteClub = async () => {
+    if (!isPresident) return;
+    if (!await confirm(`Delete ${club.name}? This cannot be undone. All club data will be permanently removed.`, {
+      title: "Delete Club",
+      variant: "danger",
+      confirmLabel: "Delete Forever",
+    })) return;
+
+    try {
+      await deleteClub.mutateAsync(club.id);
+      setClub(null);
+      router.push("/dashboard/efootball/clubs");
+    } catch (err: any) {
+      console.error("Failed to delete club:", err);
     }
   };
 
@@ -225,6 +249,18 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
             </button>
           ) : null}
 
+          
+          {isPresident ? (
+            <button
+              type="button"
+              onClick={handleDeleteClub}
+              disabled={deleteClub.isPending}
+              className="flex items-center gap-1.5 rounded-full border border-danger/40 bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink transition-colors hover:bg-danger-soft/80 shadow-sm disabled:opacity-50"
+            >
+              <TrashIcon className="h-4 w-4" />
+              {deleteClub.isPending ? "Deleting..." : "Delete Club"}
+            </button>
+          ) : null}
           {isMine ? (
             canHandoverAuthority ? (
               <button

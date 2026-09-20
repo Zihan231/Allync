@@ -2,6 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import {
@@ -29,12 +30,12 @@ import { CommunityTransfersTab } from "@/components/dashboard/CommunityTransfers
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
 import { AppLoader } from "@/components/common/AppLoader";
-import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon } from "@/components/icons";
+import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon, TrashIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ToastContainer } from "@/components/common/Toast";
 import { useToast } from "@/lib/useToast";
 import { useConfirm } from "@/lib/useConfirm";
-import { useCommunity, useJoinCommunity, useLeaveCommunity } from "@/lib/api/hooks/useCommunities";
+import { useCommunity, useJoinCommunity, useLeaveCommunity, useDeleteCommunity } from "@/lib/api/hooks/useCommunities";
 
 type Tab = "overview" | "members" | "clubs" | "rankings" | "tournaments" | "freeAgents" | "transfers";
 
@@ -42,6 +43,8 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   const { communityId } = use(params);
   const { t } = useLanguage();
   const { user, setCommunity, refreshSession } = useSession();
+  const router = useRouter();
+  const deleteMutation = useDeleteCommunity();
   const [synced, setSynced] = useState(() => hasSyncedFromBackend());
 
   useEffect(() => {
@@ -112,7 +115,8 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
     user.community?.role === "General Secretary" ||
     user.community?.role === "Vice President"
   );
-  const canManage = isMine && user.community?.role === "President";
+  const isPresident = isMine && user.community?.role === "President";
+  const canManage = isPresident;
   const hasOtherCommunity = !!user.community && !isMine;
   const hasPendingRequest = joinRequests.some(
     (r) =>
@@ -135,6 +139,24 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
       void refreshSession();
     } catch (err: any) {
       toast(err?.response?.data?.message || "Failed to join community.", "error");
+    }
+  };
+
+  
+  const handleDeleteCommunity = async () => {
+    if (!isPresident) return;
+    if (!await confirm(`Delete ${community.name}? This cannot be undone. All community data will be permanently removed.`, {
+      title: "Delete Community",
+      variant: "danger",
+      confirmLabel: "Delete Forever",
+    })) return;
+
+    try {
+      await deleteMutation.mutateAsync(community.id);
+      setCommunity(null);
+      router.push("/dashboard/efootball/community");
+    } catch (err: any) {
+      toast(err?.response?.data?.message || err?.message || "Failed to delete community.", "error");
     }
   };
 
@@ -236,6 +258,18 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
             </>
           ) : null}
 
+          
+          {isPresident ? (
+            <button
+              type="button"
+              onClick={handleDeleteCommunity}
+              disabled={deleteMutation.isPending}
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-danger/40 bg-danger-soft px-5 py-2 text-sm font-semibold text-danger-ink transition-colors hover:bg-danger-soft/80 shadow-sm disabled:opacity-50"
+            >
+              <TrashIcon className="h-4 w-4" />
+              {deleteMutation.isPending ? "Deleting..." : "Delete Community"}
+            </button>
+          ) : null}
           {isMine ? (
             canHandoverAuthority ? (
               <button
