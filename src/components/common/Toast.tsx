@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef } from "react";
 
@@ -26,22 +26,22 @@ const VARIANT_STYLES: Record<ToastVariant, { border: string; icon: string; glow:
   error: {
     border: "border-[var(--danger)]/40",
     icon: "bg-[var(--danger-soft)] text-[var(--danger-ink)]",
-    glow: "shadow-[0_0_18px_rgba(255,84,112,0.18)]",
+    glow: "shadow-[0_4px_20px_rgba(255,84,112,0.22)]",
   },
   warning: {
     border: "border-[var(--warning)]/40",
     icon: "bg-[var(--warning-soft)] text-[var(--warning-ink)]",
-    glow: "shadow-[0_0_18px_rgba(224,168,60,0.18)]",
+    glow: "shadow-[0_4px_20px_rgba(224,168,60,0.22)]",
   },
   success: {
     border: "border-[var(--success)]/40",
     icon: "bg-[var(--success-soft)] text-[var(--success-ink)]",
-    glow: "shadow-[0_0_18px_rgba(63,191,127,0.18)]",
+    glow: "shadow-[0_4px_20px_rgba(63,191,127,0.22)]",
   },
   info: {
     border: "border-[var(--accent)]/40",
     icon: "bg-[var(--accent-soft)] text-[var(--accent-ink)]",
-    glow: "shadow-[0_0_18px_rgba(217,165,68,0.18)]",
+    glow: "shadow-[0_4px_20px_rgba(217,165,68,0.22)]",
   },
 };
 
@@ -70,12 +70,12 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
 
   return (
     <div
-      className={`relative flex items-start gap-3 rounded-xl border bg-[var(--surface)] px-4 py-3 pr-10 ${styles.border} ${styles.glow} overflow-hidden`}
+      className={`relative flex items-start gap-3 rounded-xl border bg-[var(--surface)] px-4 py-3.5 pr-10 ${styles.border} ${styles.glow} overflow-hidden`}
       style={{
-        animation: "toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both",
+        animation: "toastSlideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) both",
         backdropFilter: "blur(12px)",
         minWidth: "280px",
-        maxWidth: "360px",
+        maxWidth: "380px",
         pointerEvents: "auto",
       }}
       role="alert"
@@ -88,7 +88,7 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
       </span>
 
       {/* Message */}
-      <p className="flex-1 text-sm leading-relaxed text-[var(--ink)]">{toast.message}</p>
+      <p className="flex-1 text-sm font-medium leading-snug text-[var(--ink)]">{toast.message}</p>
 
       {/* Dismiss button */}
       <button
@@ -123,9 +123,15 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   return (
     <>
       <style>{`
-        @keyframes toastSlideIn {
-          from { opacity: 0; transform: scale(0.94); }
-          to   { opacity: 1; transform: scale(1);    }
+        @keyframes toastSlideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(40px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
         }
       `}</style>
       <div
@@ -133,14 +139,15 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
         aria-label="Notifications"
         style={{
           position: "fixed",
-          inset: 0,
+          top: "20px",
+          right: "20px",
           zIndex: 9999,
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: "flex-end",
           gap: "10px",
           pointerEvents: "none",
+          maxWidth: "calc(100vw - 32px)",
         }}
       >
         {toasts.map((t) => (
