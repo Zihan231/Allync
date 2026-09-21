@@ -18,7 +18,6 @@ import {
   removePendingJoinRequest,
 } from "@/lib/mock/communityStore";
 import { useMockTournaments } from "@/lib/mock/store";
-import { getCommunityFreeAgents, getCommunityTransferLog } from "@/lib/mock/communityInsights";
 import { BackButton } from "@/components/dashboard/BackButton";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { ClubCrest } from "@/components/common/ClubCrest";
@@ -29,8 +28,6 @@ import { CommunityMembersTab } from "@/components/dashboard/CommunityMembersTab"
 import { CommunityClubsTab } from "@/components/dashboard/CommunityClubsTab";
 import { CommunityRankingsTab } from "@/components/dashboard/CommunityRankingsTab";
 import { CommunityTournamentsTab } from "@/components/dashboard/CommunityTournamentsTab";
-import { CommunityFreeAgentsTab } from "@/components/dashboard/CommunityFreeAgentsTab";
-import { CommunityTransfersTab } from "@/components/dashboard/CommunityTransfersTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
 import { AppLoader } from "@/components/common/AppLoader";
@@ -42,7 +39,7 @@ import { useToast } from "@/lib/useToast";
 import { useConfirm } from "@/lib/useConfirm";
 import { useCommunity, useJoinCommunity, useLeaveCommunity } from "@/lib/api/hooks/useCommunities";
 
-type Tab = "overview" | "members" | "clubs" | "rankings" | "tournaments" | "freeAgents" | "transfers";
+type Tab = "overview" | "members" | "clubs" | "rankings" | "tournaments";
 
 export default function CommunityDetailPage({ params }: { params: Promise<{ communityId: string }> }) {
   const { communityId } = use(params);
@@ -103,12 +100,6 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
     const fromClubs = clubMembers.filter((p) => !seen.has(p.id));
     return [...direct, ...fromClubs];
   }, [people, community, clubMembers]);
-  const freeAgents = useMemo(
-    () => (community ? getCommunityFreeAgents(community, people) : []),
-    [community, people]
-  );
-  const transferEntries = useMemo(() => getCommunityTransferLog(memberClubs, people), [memberClubs, people]);
-  const realIds = useMemo(() => new Set(people.map((p) => p.id)), [people]);
   const communityTournaments = useMemo(
     () => tournaments.filter((tour) => tour.communityId === community?.id),
     [tournaments, community]
@@ -228,8 +219,6 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
     { key: "clubs", label: t.dashboard.community.tabClubs },
     { key: "rankings", label: t.dashboard.community.tabRankings },
     { key: "tournaments", label: t.dashboard.community.tabTournaments },
-    { key: "freeAgents", label: t.dashboard.community.tabFreeAgents },
-    { key: "transfers", label: t.dashboard.community.tabTransfers },
   ];
 
   const isLoading = (isRemoteLoading && !community) || (!community && !synced);
@@ -504,8 +493,6 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
         {tab === "clubs" ? <CommunityClubsTab community={community} memberClubs={memberClubs} allPeople={people} /> : null}
         {tab === "rankings" ? <CommunityRankingsTab memberClubs={memberClubs} /> : null}
         {tab === "tournaments" ? <CommunityTournamentsTab tournaments={communityTournaments} /> : null}
-        {tab === "freeAgents" ? <CommunityFreeAgentsTab freeAgents={freeAgents} /> : null}
-        {tab === "transfers" ? <CommunityTransfersTab entries={transferEntries} realIds={realIds} /> : null}
       </div>
       <TransferAuthorityModal
         open={showTransferAuthorityModal}
