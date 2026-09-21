@@ -30,6 +30,8 @@ import { CommunityRankingsTab } from "@/components/dashboard/CommunityRankingsTa
 import { CommunityTournamentsTab } from "@/components/dashboard/CommunityTournamentsTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
+import { JoinAsClubModal } from "@/components/dashboard/JoinAsClubModal";
+import { WithdrawClubModal } from "@/components/dashboard/WithdrawClubModal";
 import { AppLoader } from "@/components/common/AppLoader";
 import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon, ClockIcon, PlusIcon, TrophyIcon } from "@/components/icons";
 import { TournamentCard } from "@/components/dashboard/TournamentCard";
@@ -37,7 +39,8 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ToastContainer } from "@/components/common/Toast";
 import { useToast } from "@/lib/useToast";
 import { useConfirm } from "@/lib/useConfirm";
-import { useCommunity, useJoinCommunity, useLeaveCommunity } from "@/lib/api/hooks/useCommunities";
+import { useCommunity, useJoinCommunity, useLeaveCommunity, useRemoveClubFromCommunity } from "@/lib/api/hooks/useCommunities";
+import { isApiError } from "@/lib/api/axios";
 
 type Tab = "overview" | "members" | "clubs" | "rankings" | "tournaments";
 
@@ -65,6 +68,9 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   const joinRequests = useMockJoinRequests();
   const [tab, setTab] = useState<Tab>("overview");
   const [showTransferAuthorityModal, setShowTransferAuthorityModal] = useState(false);
+  const [showJoinAsClubModal, setShowJoinAsClubModal] = useState(false);
+  const [showWithdrawClubModal, setShowWithdrawClubModal] = useState(false);
+  const removeClubMutation = useRemoveClubFromCommunity(communityId);
 
   const community = useMemo(() => {
     return remoteCommunity || communities.find((c) => c.id === communityId);
@@ -187,6 +193,49 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
       toast(err?.response?.data?.message || "Failed to join community.", "error");
     }
   };
+  const userClubId = user.club?.id || currentUserPerson?.clubId || null;
+  const userClubRole = user.club?.role || currentUserPerson?.clubRole || null;
+  const isClubLeader = userClubRole === "President" || userClubRole === "General Secretary";
+  const userClubDetails = clubs.find((c) => c.id === userClubId);
+  const isClubInCommunity = Boolean(userClubId && community?.memberClubIds?.includes(userClubId));
+  const isClubPending =
+    !isClubInCommunity &&
+    Boolean(
+      ((myRequestData as any)?.isClubRequest && myRequestData?.hasPendingRequest) ||
+      (userClubId &&
+        joinRequests.some(
+          (r) =>
+            (r.targetType === "club" || (r as any).clubId === userClubId) &&
+            r.targetId === community?.id &&
+            r.status === "pending"
+        ))
+    );
+
+  const handleWithdrawClub = async () => {
+    if (!community || !userClubId || !isClubLeader) return;
+    try {
+      await removeClubMutation.mutateAsync(userClubId);
+      toast(`Withdrew ${userClubDetails?.name || "club"} from ${community.name}.`, "info");
+      setShowWithdrawClubModal(false);
+      void syncFromBackend(true);
+      void refreshSession();
+    } catch (err: any) {
+      const msg = isApiError(err) ? err.message : (err as Error)?.message || "Failed to withdraw club.";
+      toast(msg, "error");
+    }
+  };
+
+  const handleClubJoinSuccess = (status: "joined" | "pending") => {
+    if (status === "pending") {
+      toast("Club join request submitted! Awaiting approval by community leadership.", "info");
+    } else {
+      toast(`Your club joined ${community?.name}!`, "success");
+      void refreshSession();
+    }
+    void syncFromBackend(true);
+    void refetchMyRequest();
+  };
+
   const handleLeave = async () => {
     if (!community) return;
     if (!await confirm(t.dashboard.community.leaveConfirm, { title: "Leave Community", variant: "danger", confirmLabel: "Leave" })) return;
@@ -307,6 +356,49 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
               ) : null}
             </>
           ) : null}
+          {/* Club Actions */}
+          {isClubInCommunity && isClubLeader ? (
+            <button
+              type="button"
+              onClick={() => setShowWithdrawClubModal(true)}
+              disabled={removeClubMutation.isPending}
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-danger/40 bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink transition-colors hover:bg-danger-soft/80 shadow-sm disabled:opacity-50"
+            >
+              <ShieldIcon className="h-4 w-4" />
+              Withdraw Club
+            </button>
+          ) : !isClubInCommunity && isClubLeader ? (
+            isClubPending ? (
+              <button
+                type="button"
+                disabled
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500/15 border border-amber-500/40 px-4 py-2 font-display text-sm font-semibold text-amber-400 cursor-default"
+              >
+                <ClockIcon className="h-4 w-4 text-amber-400 animate-pulse" />
+                <span>Club Request Pending</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowJoinAsClubModal(true)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-accent/40 bg-accent-soft px-4 py-2 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-soft/80 shadow-sm"
+              >
+                <ShieldIcon className="h-4 w-4" />
+                Join as Club
+              </button>
+            )
+          ) : isClubPending ? (
+            <button
+              type="button"
+              disabled
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500/15 border border-amber-500/40 px-4 py-2 font-display text-sm font-semibold text-amber-400 cursor-default"
+            >
+              <ClockIcon className="h-4 w-4 text-amber-400 animate-pulse" />
+              <span>Club Request Pending</span>
+            </button>
+          ) : null}
+
+          {/* Individual Member Actions */}
           {isMine ? (
             canHandoverAuthority ? (
               <button
@@ -317,6 +409,9 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
                 <SwapIcon className="h-4 w-4" />
                 Transfer Authority
               </button>
+            ) : isClubInCommunity ? (
+              /* Club members cannot leave the community individually unless the club leaves */
+              null
             ) : (
               <button
                 onClick={handleLeave}
@@ -503,6 +598,39 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
         members={allMembers}
         onSuccess={() => toast("Authority transferred successfully. You are now a regular member.", "success")}
       />
+
+      {community && userClubDetails && isClubLeader && (
+        <JoinAsClubModal
+          open={showJoinAsClubModal}
+          onClose={() => setShowJoinAsClubModal(false)}
+          community={{
+            id: community.id,
+            name: community.name,
+            joinPolicy: community.joinPolicy,
+          }}
+          club={{
+            id: userClubDetails.id,
+            name: userClubDetails.name,
+            dpUrl: userClubDetails.dpUrl,
+            color: userClubDetails.color,
+            initials: userClubDetails.initials,
+            memberCount: (userClubDetails as any).memberCount ?? (userClubDetails as any).members?.length,
+          }}
+          userRole={userClubRole || "President"}
+          onSuccess={handleClubJoinSuccess}
+        />
+      )}
+
+      {community && userClubDetails && isClubLeader && (
+        <WithdrawClubModal
+          open={showWithdrawClubModal}
+          onClose={() => setShowWithdrawClubModal(false)}
+          communityName={community.name}
+          clubName={userClubDetails.name}
+          onConfirm={handleWithdrawClub}
+          isPending={removeClubMutation.isPending}
+        />
+      )}
 
       <ConfirmDialog {...confirmProps} />
       <ToastContainer toasts={toasts} onDismiss={dismiss} />

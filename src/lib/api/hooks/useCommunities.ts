@@ -9,6 +9,8 @@ import {
   joinCommunityRequest,
   leaveCommunityRequest,
   transferCommunityPresidentRequest,
+  addClubToCommunityRequest,
+  removeClubFromCommunityRequest,
 } from "@/lib/api/communities";
 import {
   applyCommunityCreated,
@@ -183,6 +185,33 @@ export function useDeleteCommunity() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityKeys.all });
+    },
+  });
+}
+
+export function useAddClubToCommunity(communityId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (clubId: string) => addClubToCommunityRequest(communityId, clubId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.detail(communityId) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["community-requests", communityId] });
+      queryClient.invalidateQueries({ queryKey: ["community-clubs", communityId] });
+      queryClient.invalidateQueries({ queryKey: ["clubs"] });
+    },
+  });
+}
+
+export function useRemoveClubFromCommunity(communityId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (clubId: string) => removeClubFromCommunityRequest(communityId, clubId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.detail(communityId) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["community-clubs", communityId] });
+      queryClient.invalidateQueries({ queryKey: ["clubs"] });
     },
   });
 }

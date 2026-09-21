@@ -67,17 +67,19 @@ export default function CommunityRequestsPage({ params }: { params: Promise<{ co
   const combinedRequests = useMemo(() => {
     const fromBackend = (backendRequests || []).map((br: any) => ({
       id: br.id,
-      targetType: "community" as const,
+      targetType: (br.targetType || "player") as string,
       targetId: br.communityId,
       personId: br.requesterUserId,
       requesterUserId: br.requesterUserId,
+      clubId: br.clubId,
+      club: br.club,
       status: br.status,
       createdAt: br.createdAt,
       requesterUser: br.requesterUser,
     }));
 
     const fromMock = mockRequests.filter(
-      (r) => r.targetType === "community" && r.targetId === communityId
+      (r) => (r.targetType === "community" || r.targetType === "club") && r.targetId === communityId
     );
 
     const bIds = new Set(fromBackend.map((r: any) => r.id));
