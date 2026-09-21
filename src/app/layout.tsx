@@ -46,9 +46,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${spaceGrotesk.variable} ${manrope.variable} ${jetbrains.variable} ${balooDa2.variable} ${hindSiliguri.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-bg text-ink">
+      <body className="min-h-full flex flex-col bg-bg text-ink" suppressHydrationWarning>
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>

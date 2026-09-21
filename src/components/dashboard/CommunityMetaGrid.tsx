@@ -42,11 +42,13 @@ export function CommunityMetaGrid({
   memberClubs,
   allPeople,
   allCommunities,
+  tournamentsCount,
 }: {
   community: Community;
   memberClubs: Club[];
   allPeople: Person[];
   allCommunities: Community[];
+  tournamentsCount?: number;
 }) {
   const { t } = useLanguage();
 
@@ -65,7 +67,7 @@ export function CommunityMetaGrid({
   const globalRank = rankCommunities(allCommunities).find((r) => r.id === community.id)?.rank ?? "—";
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
       <PersonCell label={t.dashboard.community.presidentLabel} person={byRole("President")} />
       <PersonCell label={t.dashboard.community.vicePresidentLabel} person={byRole("Vice President")} />
       <PersonCell label={t.dashboard.community.teamManagerLabel} person={byRole("Team Manager")} />
@@ -75,6 +77,9 @@ export function CommunityMetaGrid({
       <StatCell label={t.dashboard.community.totalPlayersLabel} value={`${totalPlayers}`} />
       <StatCell label={t.dashboard.community.communityRatingLabel} value={communityRating.toLocaleString()} />
       <StatCell label={t.dashboard.community.communityGlobalRankLabel} value={`#${globalRank}`} />
+      {tournamentsCount !== undefined ? (
+        <StatCell label={t.dashboard.shell.navTournaments} value={`${tournamentsCount}`} />
+      ) : null}
     </div>
   );
 }

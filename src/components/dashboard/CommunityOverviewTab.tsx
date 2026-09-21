@@ -6,6 +6,7 @@ import {
   getCommunityNewsFeed,
   getCommunityUpcomingFixtures,
 } from "@/lib/mock/communityInsights";
+import { CommunityMetaGrid } from "./CommunityMetaGrid";
 import { ClubUpcomingFixturesSlider } from "./ClubUpcomingFixturesSlider";
 import { ClubMatchCalendar } from "./ClubMatchCalendar";
 import { ClubNewsFeed } from "./ClubNewsFeed";
@@ -20,11 +21,17 @@ export function CommunityOverviewTab({
   memberClubs,
   peopleByClub,
   clubMembers,
+  allPeople,
+  allCommunities,
+  tournamentsCount,
 }: {
   community: Community;
   memberClubs: Club[];
   peopleByClub: Map<string, Person[]>;
   clubMembers: Person[];
+  allPeople: Person[];
+  allCommunities: Community[];
+  tournamentsCount?: number;
 }) {
   const { t } = useLanguage();
 
@@ -38,7 +45,16 @@ export function CommunityOverviewTab({
     .filter(Boolean);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* Relocated Community Leadership & Meta Overview Grid */}
+      <CommunityMetaGrid
+        community={community}
+        memberClubs={memberClubs}
+        allPeople={allPeople}
+        allCommunities={allCommunities}
+        tournamentsCount={tournamentsCount}
+      />
+
       <div className="overflow-hidden rounded-xl border border-warning/30 bg-gradient-to-b from-warning/10 via-surface/40 to-surface/40 shadow-sm">
         <div className="flex items-center gap-2 border-b border-warning/20 bg-warning-soft/40 px-4 py-3">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-warning-soft text-warning-ink">
