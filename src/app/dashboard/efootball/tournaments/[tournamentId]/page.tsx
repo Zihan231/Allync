@@ -2,6 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import {
@@ -78,6 +79,15 @@ export default function TournamentDetailPage({
   const { tournamentId } = use(params);
   const { t } = useLanguage();
   const { user } = useSession();
+  const router = useRouter();
+
+  function handleBack() {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/dashboard/efootball/tournaments");
+    }
+  }
 
   const { data: tournament, isLoading, refetch } = useTournament(tournamentId);
   const joinMutation = useJoinTournament(tournamentId);
@@ -183,6 +193,13 @@ export default function TournamentDetailPage({
   const clubBelongsToCommunity =
     userClubDetails?.communityIds?.includes(tournament.communityId) ||
     user?.community?.id === tournament.communityId;
+
+  // Player community membership for PvP
+  const playerBelongsToCommunity =
+    user?.community?.id === tournament.communityId ||
+    tournament.createdById === user?.id ||
+    tournament.community?.presidentId === user?.id ||
+    tournament.community?.vicePresidentId === user?.id;
 
   // Authority to submit lineup: President, General Secretary, or Manager
   const canSubmitLineup =
@@ -356,13 +373,14 @@ export default function TournamentDetailPage({
 
         {/* Back breadcrumb */}
         <div className="flex items-center justify-between gap-4">
-          <Link
-            href="/dashboard/efootball/tournaments"
-            className="group inline-flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface/80 px-3.5 py-1.5 text-xs font-semibold text-ink-soft transition-all hover:border-accent hover:text-accent-ink hover:shadow-[0_0_12px_rgba(217,165,68,0.2)]"
+          <button
+            type="button"
+            onClick={handleBack}
+            className="group inline-flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface/80 px-4 py-1.5 text-xs font-semibold text-ink-soft transition-all hover:border-accent hover:text-accent-ink hover:shadow-[0_0_12px_rgba(217,165,68,0.2)] cursor-pointer"
           >
             <span className="transition-transform group-hover:-translate-x-1">&larr;</span>
-            <span>All Tournaments</span>
-          </Link>
+            <span>Back</span>
+          </button>
 
           {/* Status Indicator */}
           <div className="flex items-center gap-2">
@@ -463,14 +481,26 @@ export default function TournamentDetailPage({
                 )}
 
                 {!isCvC && (
-                  <button
-                    onClick={handleJoinTournament}
-                    disabled={joinMutation.isPending}
-                    className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40"
-                  >
-                    <FlameIcon className="h-4 w-4" />
-                    {joinMutation.isPending ? "Joining..." : "Join Tournament"}
-                  </button>
+                  !playerBelongsToCommunity ? (
+                    <div className="flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-300">
+                      <span>Must be a community member</span>
+                      <Link
+                        href={`/dashboard/efootball/community/${tournament.communityId}`}
+                        className="underline text-accent-ink hover:text-white"
+                      >
+                        Join Community
+                      </Link>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleJoinTournament}
+                      disabled={joinMutation.isPending}
+                      className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40"
+                    >
+                      <FlameIcon className="h-4 w-4" />
+                      {joinMutation.isPending ? "Joining..." : "Join Tournament"}
+                    </button>
+                  )
                 )}
               </>
             )}
@@ -687,7 +717,9 @@ export default function TournamentDetailPage({
                   : "You are enrolled in this tournament."
                 : isCvC
                   ? "Only the President or General Secretary can register their club for this community tournament."
-                  : "Register now to secure your spot in the 1v1 bracket matches."}
+                  : !playerBelongsToCommunity
+                    ? "You must be a member of this community to join this PvP tournament."
+                    : "Register now to secure your spot in the 1v1 bracket matches."}
             </p>
           </div>
 
@@ -718,13 +750,25 @@ export default function TournamentDetailPage({
                     </button>
                   )
                 ) : (
-                  <button
-                    onClick={handleJoinTournament}
-                    disabled={joinMutation.isPending}
-                    className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
-                  >
-                    {joinMutation.isPending ? "Joining..." : "Join Tournament"}
-                  </button>
+                  !playerBelongsToCommunity ? (
+                    <div className="flex items-center gap-2.5 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-300">
+                      <span>You must belong to this community to register for PvP.</span>
+                      <Link
+                        href={`/dashboard/efootball/community/${tournament.communityId}`}
+                        className="rounded-full bg-rose-500/20 px-3 py-1 font-bold text-rose-200 hover:bg-rose-500/30 transition-colors"
+                      >
+                        Join Community
+                      </Link>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleJoinTournament}
+                      disabled={joinMutation.isPending}
+                      className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
+                    >
+                      {joinMutation.isPending ? "Joining..." : "Join Tournament"}
+                    </button>
+                  )
                 )}
               </>
             )}

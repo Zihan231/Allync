@@ -53,9 +53,13 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
 
   useEffect(() => {
     let mounted = true;
-    syncFromBackend(true).finally(() => {
-      if (mounted) setSynced(true);
-    });
+    if (!hasSyncedFromBackend()) {
+      syncFromBackend(false).finally(() => {
+        if (mounted) setSynced(true);
+      });
+    } else {
+      setSynced(true);
+    }
     return () => {
       mounted = false;
     };
@@ -66,7 +70,7 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   const people = useMockPeople();
   const clubs = useMockClubs();
   const tournaments = useMockTournaments();
-  const { data: realTournaments = [] } = useTournaments({ communityId });
+  const { data: realTournaments = [], isLoading: isLoadingTournaments } = useTournaments({ communityId });
   const joinRequests = useMockJoinRequests();
   const [tab, setTab] = useState<Tab>("overview");
   const [showTransferAuthorityModal, setShowTransferAuthorityModal] = useState(false);
@@ -527,7 +531,16 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
           </div>
         </div>
 
-        {communityTournaments.length > 0 ? (
+        {isLoadingTournaments && communityTournaments.length === 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-44 rounded-2xl border border-surface-line bg-surface/30 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : communityTournaments.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {communityTournaments.slice(0, 3).map((tour) => (
               <TournamentCard

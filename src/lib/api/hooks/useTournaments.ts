@@ -23,6 +23,8 @@ export function useTournaments(params?: TournamentQueryParams) {
   return useQuery<BackendTournament[]>({
     queryKey: tournamentKeys.list(params),
     queryFn: () => getTournaments(params),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -31,6 +33,8 @@ export function useTournament(id: string) {
     queryKey: tournamentKeys.detail(id),
     queryFn: () => getTournament(id),
     enabled: Boolean(id),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -38,8 +42,16 @@ export function useCreateTournament() {
   const queryClient = useQueryClient();
   return useMutation<BackendTournament, Error, CreateTournamentPayload>({
     mutationFn: (payload: CreateTournamentPayload) => createTournament(payload),
-    onSuccess: () => {
+    onSuccess: (newTour) => {
       queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
+      queryClient.setQueriesData<BackendTournament[]>(
+        { queryKey: ["tournaments", "list"] },
+        (old) => {
+          if (!old) return [newTour];
+          const exists = old.some((t) => t.id === newTour.id);
+          return exists ? old : [newTour, ...old];
+        },
+      );
     },
   });
 }

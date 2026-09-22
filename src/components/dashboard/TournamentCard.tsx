@@ -2,27 +2,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Tournament } from "@/lib/mock/types";
 import type { BackendTournament } from "@/lib/api/tournaments";
-import { StatusPill, type StatusTone } from "./StatusPill";
-import { TrophyIcon, BracketIcon, UsersIcon, CrosshairIcon, ClockIcon } from "../icons";
-
-const toneByStatus: Record<string, StatusTone> = {
-  open: "info",
-  registration_closed: "neutral",
-  ongoing: "danger",
-  live: "danger",
-  completed: "neutral",
-  cancelled: "neutral",
-};
-
-export const FORMAT_META: Record<string, { icon: typeof TrophyIcon; color: string; label: string }> = {
-  default: { icon: TrophyIcon, color: "var(--blue)", label: "Tournament" },
-  custom: { icon: BracketIcon, color: "var(--accent)", label: "Custom" },
-  clubVsClub: { icon: UsersIcon, color: "var(--accent)", label: "Club vs Club" },
-  cvc: { icon: UsersIcon, color: "var(--accent)", label: "Club vs Club" },
-  open: { icon: TrophyIcon, color: "var(--success)", label: "Open" },
-  playerVsPlayer: { icon: CrosshairIcon, color: "var(--blue)", label: "Player vs Player" },
-  pvp: { icon: CrosshairIcon, color: "var(--blue)", label: "Player vs Player" },
-};
+import { TrophyIcon, UsersIcon, CrosshairIcon, CalendarIcon } from "../icons";
 
 export function TournamentCard({
   tournament,
@@ -32,170 +12,191 @@ export function TournamentCard({
   href: string;
 }) {
   const { t } = useLanguage();
-  
+
   // Normalize format
-  const rawFormat = (tournament.type || tournament.format || "pvp") as string;
-  const meta = FORMAT_META[rawFormat] || FORMAT_META.pvp;
-  const Icon = meta.icon;
+  const rawFormat = (tournament.type || tournament.format || "pvp").toLowerCase();
+  const isCvC = rawFormat === "cvc" || rawFormat === "clubvsclub";
 
-  // Status
-  const rawStatus = tournament.status || "open";
+  // Status mapping
+  const rawStatus = (tournament.status || "open").toLowerCase();
   const isLive = rawStatus === "live" || rawStatus === "ongoing";
-  const statusLabel = {
-    open: t.dashboard.tournaments.statusOpen || "Open",
-    registration_closed: "Registration Closed",
-    ongoing: "Live Now",
-    live: t.dashboard.tournaments.statusLive || "Live Now",
-    completed: t.dashboard.tournaments.statusCompleted || "Completed",
-    cancelled: "Cancelled",
-  }[rawStatus as string] || rawStatus;
+  const isOpen = rawStatus === "open" || rawStatus === "registration_open";
+  const isCompleted = rawStatus === "completed";
 
-  // Roster format text
-  let formatBadgeText = meta.label;
-  if (rawFormat === "cvc" || rawFormat === "clubVsClub") {
-    if (tournament.preset === "preset_11v11" || tournament.startersCount === 11) {
+  // Format label
+  let formatBadgeText = "PvP · 1 v 1";
+  let startersLabel = "1 v 1 Knockout";
+  if (isCvC) {
+    const starters = tournament.startersCount || 11;
+    const subs = tournament.subsCount || 5;
+    if (tournament.preset === "preset_11v11" || starters === 11) {
       formatBadgeText = "CvC · 11 v 11";
-    } else if (tournament.preset === "preset_8v8" || tournament.startersCount === 8) {
+      startersLabel = "11 Starters · 5 Subs";
+    } else if (tournament.preset === "preset_8v8" || starters === 8) {
       formatBadgeText = "CvC · 8 v 8";
-    } else if (tournament.preset === "custom" || (tournament.startersCount && tournament.startersCount > 0)) {
-      formatBadgeText = `CvC · ${tournament.startersCount}v${tournament.startersCount}`;
+      startersLabel = "8 Starters · 4 Subs";
+    } else {
+      formatBadgeText = `CvC · ${starters}v${starters}`;
+      startersLabel = `${starters} Starters · ${subs} Subs`;
     }
-  } else if (rawFormat === "pvp" || rawFormat === "playerVsPlayer") {
-    formatBadgeText = "PvP · 1 v 1";
   }
 
-  // Organizer / Community
-  const organizerName =
+  // Host Name
+  const hostName =
     tournament.community?.name || tournament.organizerName || "eFootball Community";
 
-  // Counts
-  const entrantsCount =
-    tournament.participants?.length ?? tournament.entrants ?? 0;
-  const maxParticipants = tournament.maxParticipants;
+  // Entrants and capacity
+  const entrantsCount = tournament.participants?.length ?? tournament.entrants ?? 0;
+  const maxCapacity = tournament.maxParticipants || 16;
+  const fillPercent = Math.min(100, Math.round((entrantsCount / maxCapacity) * 100));
 
-  // Start date
+  // Dates
   const startAt = tournament.startAt ? new Date(tournament.startAt) : new Date();
-  const startLabel = startAt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  const startTime = startAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const startDateStr = startAt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const startTimeStr = startAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
-  // Entry fee & prize badges
+  // Financials
   const isPaid = Boolean(tournament.isPaid || (tournament.entryFeeBdt && tournament.entryFeeBdt > 0));
-  const entryFeeBdt = tournament.entryFeeBdt ?? 0;
-  const prizePoolBdt = tournament.prizePoolBdt ?? 0;
-
-  // 2h Lineup Cutoff
-  const submissionDeadline = tournament.teamSubmissionDeadline
-    ? new Date(tournament.teamSubmissionDeadline)
-    : new Date(startAt.getTime() - 2 * 60 * 60 * 1000);
-  const isSubmissionOpen = new Date() < submissionDeadline;
+  const entryFee = tournament.entryFeeBdt ?? 0;
+  const prizePool = tournament.prizePoolBdt ?? 0;
 
   return (
     <Link
       href={href}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-surface-line bg-surface/40 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-surface-line-strong hover:shadow-[0_20px_50px_-24px_rgba(0,0,0,0.6)]"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-surface-line bg-surface/90 shadow-md backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-accent/60 hover:shadow-[0_20px_45px_-12px_rgba(0,0,0,0.85)]"
     >
-      {/* Ambient glow */}
-      <div
-        className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-25"
-        style={{ backgroundColor: meta.color }}
-      />
-      {/* Top accent line */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-70"
-        style={{ background: `linear-gradient(90deg, transparent, ${meta.color}, transparent)` }}
-      />
+      {/* 1. VISUAL COVER BANNER AT TOP */}
+      <div className="relative h-28 w-full overflow-hidden bg-gradient-to-br from-[#0e1626] via-[#161f33] to-[#0c1017]">
+        {/* Esports stadium lighting & geometric grid backdrop */}
+        {isCvC ? (
+          // Gold / Championship Stadium Aura for CvC
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/25 via-yellow-600/10 to-transparent" />
+        ) : (
+          // Neon Cyan / Electric Blue Arena Aura for PvP
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-500/30 via-cyan-600/10 to-transparent" />
+        )}
 
-      <div className="relative flex items-start justify-between gap-3">
-        <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
-          style={{ backgroundColor: `${meta.color}22`, color: meta.color }}
-        >
-          <Icon className="h-5 w-5" />
+        {/* Diagonal high-tech accent stripes */}
+        <div className="absolute inset-0 opacity-15 bg-[linear-gradient(45deg,rgba(255,255,255,0.08)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.08)_50%,rgba(255,255,255,0.08)_75%,transparent_75%,transparent)] bg-[length:24px_24px]" />
+
+        {/* Top edge subtle glow */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent opacity-80" />
+
+        {/* Top Overlay Elements: Format Pill on Left, Status Pill on Right */}
+        <div className="relative z-10 flex items-center justify-between p-3">
+          {/* Format Badge */}
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[11px] font-extrabold uppercase tracking-wider backdrop-blur-md shadow-sm ${
+              isCvC
+                ? "border border-amber-400/50 bg-black/60 text-amber-200"
+                : "border border-blue-400/50 bg-black/60 text-blue-200"
+            }`}
+          >
+            {isCvC ? <UsersIcon className="h-3.5 w-3.5 text-amber-300" /> : <CrosshairIcon className="h-3.5 w-3.5 text-blue-300" />}
+            <span>{formatBadgeText}</span>
+          </span>
+
+          {/* High-Contrast Crisp Status Badge */}
+          {isLive ? (
+            <span className="flex items-center gap-1.5 rounded-full border border-rose-400/60 bg-rose-950/85 px-3 py-1 text-[11px] font-bold text-rose-100 backdrop-blur-md shadow-[0_0_14px_rgba(244,63,94,0.35)]">
+              <span className="h-2 w-2 rounded-full bg-rose-400 animate-pulse shadow-[0_0_8px_#f43f5e]" />
+              <span className="tracking-wide">Live Now</span>
+            </span>
+          ) : isOpen ? (
+            <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/60 bg-emerald-950/85 px-3 py-1 text-[11px] font-bold text-emerald-200 backdrop-blur-md shadow-[0_0_14px_rgba(52,211,153,0.35)]">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+              <span className="tracking-wide">Registration Open</span>
+            </span>
+          ) : isCompleted ? (
+            <span className="rounded-full border border-surface-line bg-black/60 px-3 py-1 font-mono text-[11px] text-ink-soft backdrop-blur-md font-semibold">
+              Completed
+            </span>
+          ) : (
+            <span className="rounded-full border border-surface-line bg-black/60 px-3 py-1 font-mono text-[11px] text-ink-soft backdrop-blur-md font-semibold">
+              Registration Closed
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-1.5">
-          <StatusPill tone={toneByStatus[rawStatus] || "neutral"} className="shrink-0 gap-1.5">
-            {isLive ? <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" /> : null}
-            {statusLabel}
-          </StatusPill>
+
+        {/* Bottom of Banner: Prominent Floating Prize Badge on Right */}
+        <div className="absolute bottom-2.5 right-3 z-10">
+          {prizePool > 0 ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 px-3.5 py-1 font-display text-xs font-black text-black shadow-[0_0_20px_rgba(217,165,68,0.6)]">
+              <TrophyIcon className="h-3.5 w-3.5 text-black" />
+              <span>৳{prizePool.toLocaleString()} Prize</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full border border-surface-line-strong bg-black/70 px-3 py-0.5 font-mono text-[10px] font-bold text-ink-soft backdrop-blur-md">
+              Friendly Cup
+            </span>
+          )}
         </div>
       </div>
 
-      <h3 className="font-display relative mt-4 line-clamp-2 text-base font-bold leading-snug text-ink group-hover:text-accent-ink transition-colors">
-        {tournament.name}
-      </h3>
-      <p className="relative mt-1 truncate text-xs text-ink-faint flex items-center gap-1.5">
-        <span className="h-1.5 w-1.5 rounded-full bg-accent/60" />
-        {organizerName}
-      </p>
-
-      {/* Badges Bar: Format, Entry Fee, Prize */}
-      <div className="relative mt-3.5 flex flex-wrap items-center gap-1.5">
-        <span
-          className="inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider"
-          style={{ backgroundColor: `${meta.color}1a`, color: meta.color }}
-        >
-          {formatBadgeText}
-        </span>
-
-        {isPaid ? (
-          <span className="inline-flex items-center rounded-full bg-warning/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-warning-ink">
-            ৳{entryFeeBdt.toLocaleString()} Entry
-          </span>
-        ) : (
-          <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-400">
-            Free Entry
-          </span>
-        )}
-
-        {prizePoolBdt > 0 ? (
-          <span className="inline-flex items-center rounded-full bg-accent/20 px-2.5 py-0.5 font-mono text-[10px] font-bold text-accent-ink">
-            ৳{prizePoolBdt.toLocaleString()} Prize
-          </span>
-        ) : (
-          <span className="inline-flex items-center rounded-full bg-surface-line px-2.5 py-0.5 font-mono text-[10px] text-ink-faint">
-            Friendly / No Prize
-          </span>
-        )}
-      </div>
-
-      {/* 2h Lineup Cutoff alert (if upcoming) */}
-      {(rawFormat === "cvc" || rawFormat === "clubVsClub") && rawStatus === "open" && (
-        <div className="relative mt-3 flex items-center gap-1.5 rounded-lg border border-surface-line/80 bg-surface/30 px-2.5 py-1.5 text-[11px] text-ink-soft">
-          <ClockIcon className="h-3.5 w-3.5 text-accent shrink-0" />
-          <span className="truncate">
-            {isSubmissionOpen ? (
-              <>
-                Lineups lock at:{" "}
-                <span className="font-semibold text-ink">
-                  {submissionDeadline.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </span>
-              </>
-            ) : (
-              <span className="text-warning-ink font-semibold">Lineups Locked (2h before start)</span>
-            )}
-          </span>
-        </div>
-      )}
-
-      {/* Card Footer: Entrants & Schedule */}
-      <div className="relative mt-auto pt-4 border-t border-surface-line/70 grid grid-cols-2 gap-3">
+      {/* 2. CARD CONTENT BODY - Cleanly aligned without floating "C" */}
+      <div className="relative p-5 pt-4">
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
-            {t.dashboard.tournaments.entrantsLabel || "Participants"}
-          </div>
-          <div className="mt-0.5 font-display text-sm font-bold text-ink">
-            {entrantsCount}
-            {maxParticipants ? (
-              <span className="text-xs font-normal text-ink-faint"> / {maxParticipants}</span>
-            ) : null}
-          </div>
+          <h3 className="font-display text-base font-bold text-white group-hover:text-accent-ink transition-colors line-clamp-1 drop-shadow-sm">
+            {tournament.name}
+          </h3>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-soft truncate font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            <span>{hostName}</span>
+          </p>
         </div>
-        <div className="text-right">
-          <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
-            Starts
-          </div>
-          <div className="mt-0.5 font-display text-sm font-bold text-ink">
-            {startLabel} <span className="text-xs font-normal text-ink-faint">{startTime}</span>
+
+        {/* Feature Pills */}
+        <div className="mt-3.5 flex flex-wrap items-center gap-2">
+          {/* Entry Fee Badge */}
+          {isPaid ? (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/80 bg-amber-950/70 px-3 py-1 font-mono text-xs font-bold text-amber-100 shadow-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+              <span>৳{entryFee.toLocaleString()} Entry Fee</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/80 bg-emerald-950/70 px-3 py-1 font-mono text-xs font-bold text-emerald-100 shadow-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+              <span>Free Entry</span>
+            </span>
+          )}
+
+          {/* Roster Size Tag */}
+          <span className="inline-flex items-center rounded-lg border border-surface-line-strong bg-surface-raised px-3 py-1 font-mono text-xs font-semibold text-white">
+            {startersLabel}
+          </span>
+        </div>
+
+        {/* 3. CARD FOOTER: CAPACITY PROGRESS & START SCHEDULE */}
+        <div className="mt-5 border-t border-surface-line/80 pt-3.5">
+          <div className="flex items-center justify-between gap-3">
+            {/* Left: Entrants Capacity */}
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-1 font-mono text-xs">
+                <span className="font-bold text-white">{entrantsCount}</span>
+                <span className="text-ink-soft">/ {maxCapacity} Registered</span>
+              </div>
+              {/* Sleek Mini Progress Bar */}
+              <div className="h-1.5 w-24 overflow-hidden rounded-full bg-surface-line">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-accent to-amber-300 transition-all duration-300"
+                  style={{ width: `${fillPercent}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Right: Kickoff Schedule */}
+            <div className="text-right">
+              <div className="flex items-center justify-end gap-1 font-mono text-[10px] text-ink-faint font-semibold uppercase tracking-wider">
+                <CalendarIcon className="h-3 w-3 text-accent" />
+                <span>Starts</span>
+              </div>
+              <div className="font-display text-xs font-bold text-white">
+                {startDateStr}{" "}
+                <span className="font-mono text-[11px] text-accent-ink font-semibold">
+                  {startTimeStr}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
