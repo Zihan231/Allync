@@ -82,12 +82,13 @@ function CreateTournamentForm() {
   // Filter communities where user is President or Vice President
   const eligibleCommunities = useMemo(() => {
     return communities.filter((c: any) => {
+      const isCreator = c.creatorId === user?.id || c.creator?.id === user?.id;
       const isPres = c.presidentId === user?.id || c.president?.id === user?.id;
       const isVP = c.vicePresidentId === user?.id || c.vicePresident?.id === user?.id;
       const sessionRole =
         user?.community?.id === c.id &&
         (user?.community?.role === "President" || user?.community?.role === "Vice President");
-      return isPres || isVP || sessionRole;
+      return isCreator || isPres || isVP || sessionRole;
     });
   }, [communities, user]);
 
@@ -130,7 +131,7 @@ function CreateTournamentForm() {
     e.preventDefault();
     setErrorMessage("");
 
-    const effectiveCommunityId = communityId || eligibleCommunities[0]?.id || user?.community?.id;
+    const effectiveCommunityId = communityId || queryCommunityId || eligibleCommunities[0]?.id || user?.community?.id;
     if (!effectiveCommunityId) {
       setErrorMessage("No approved hosting community found for your account.");
       return;
@@ -150,10 +151,14 @@ function CreateTournamentForm() {
     }
 
     try {
+      const normalizedPreset = type === "cvc"
+        ? (preset === "preset_11v11" ? "11v11" : preset === "preset_8v8" ? "8v8" : "custom")
+        : "custom";
+
       const tournament = await createMutation.mutateAsync({
         name: name.trim(),
         type,
-        preset: type === "cvc" ? preset : undefined,
+        preset: normalizedPreset as any,
         startersCount: type === "cvc" ? startersCount : 1,
         subsCount: type === "cvc" ? subsCount : 0,
         maxParticipants,
@@ -167,16 +172,22 @@ function CreateTournamentForm() {
 
       router.push(`/dashboard/efootball/tournaments/${tournament.id}`);
     } catch (err: any) {
-      console.error("Tournament creation error:", err);
-      setErrorMessage(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to create tournament. Please ensure you are the President or Vice President of the community.",
-      );
+      const resData = err?.response?.data;
+      const resMsg = resData?.message || err?.message;
+      let displayMsg = "Failed to create tournament. Please ensure you are the President or Vice President of the community.";
+      if (Array.isArray(resMsg)) {
+        displayMsg = resMsg.join(", ");
+      } else if (typeof resMsg === "string" && resMsg.trim()) {
+        displayMsg = resMsg;
+      } else if (err?.message) {
+        displayMsg = err.message;
+      }
+      console.warn("Tournament creation error:", displayMsg);
+      setErrorMessage(displayMsg);
     }
   }
 
-  const isEligible = eligibleCommunities.length > 0;
+  const isEligible = eligibleCommunities.length > 0 || Boolean(queryCommunityId) || Boolean(user?.community?.id);
 
   if (!loadingCommunities && !isEligible) {
     return (
@@ -243,7 +254,6 @@ function CreateTournamentForm() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g., Champions Cup Winter 2026"
                   required
-                  disabled={!isEligible}
                   className={fieldClass}
                 />
               </label>
@@ -539,7 +549,7 @@ function CreateTournamentForm() {
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={!isEligible || createMutation.isPending}
+                disabled={createMutation.isPending}
                 className="w-full sm:w-auto rounded-full bg-accent px-8 py-3.5 font-display text-sm font-bold text-bg shadow-[0_0_25px_rgba(217,165,68,0.3)] transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:pointer-events-none"
               >
                 {createMutation.isPending ? "Creating Tournament..." : "Publish Tournament"}
