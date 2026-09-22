@@ -592,3 +592,32 @@ nav::-webkit-scrollbar-thumb:hover {
   box-shadow: 0 0 30px rgba(76, 141, 255, 0.28), inset 0 0 20px rgba(76, 141, 255, 0.12);
   color: #ffffff;
 }
+
+/* Global dropdown & select dark theme styling */
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #10141c !important;
+  color: #f4f6f8 !important;
+  padding: 8px 12px;
+}
+
+select option:disabled {
+  color: #667085 !important;
+  background-color: #0c0f15 !important;
+}
+
+select option:hover,
+select option:focus,
+select option:active,
+select option:checked {
+  background-color: #1b2230 !important;
+  color: #f0c878 !important;
+}
+
+select optgroup {
+  background-color: #10141c !important;
+  color: #98a2b3 !important;
+}

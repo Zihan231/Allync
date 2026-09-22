@@ -1,38 +1,52 @@
 import Link from "next/link";
 import type { Tournament } from "@/lib/mock/types";
+import type { BackendTournament } from "@/lib/api/tournaments";
 import { StatusPill, type StatusTone } from "./StatusPill";
 import { TrophyIcon, BracketIcon, UsersIcon, CrosshairIcon, ArrowRightIcon } from "../icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-const toneByStatus: Record<Tournament["status"], StatusTone> = {
+const toneByStatus: Record<string, StatusTone> = {
   open: "info",
+  registration_closed: "neutral",
+  ongoing: "danger",
   live: "danger",
   completed: "neutral",
+  cancelled: "neutral",
 };
 
-const iconByFormat: Record<Tournament["format"], typeof TrophyIcon> = {
+const iconByFormat: Record<string, typeof TrophyIcon> = {
   default: TrophyIcon,
   custom: BracketIcon,
   clubVsClub: UsersIcon,
+  cvc: UsersIcon,
   open: TrophyIcon,
   playerVsPlayer: CrosshairIcon,
+  pvp: CrosshairIcon,
 };
 
 export function TournamentListItem({
   tournament,
   href,
 }: {
-  tournament: Tournament;
+  tournament: Tournament | BackendTournament | any;
   href: string;
 }) {
   const { t } = useLanguage();
-  const Icon = iconByFormat[tournament.format];
+  const rawFormat = (tournament.type || tournament.format || "pvp") as string;
+  const Icon = iconByFormat[rawFormat] || TrophyIcon;
 
+  const rawStatus = (tournament.status || "open") as string;
   const statusLabel = {
-    open: t.dashboard.tournaments.statusOpen,
-    live: t.dashboard.tournaments.statusLive,
-    completed: t.dashboard.tournaments.statusCompleted,
-  }[tournament.status];
+    open: t.dashboard.tournaments.statusOpen || "Open",
+    registration_closed: "Registration Closed",
+    ongoing: "Live Now",
+    live: t.dashboard.tournaments.statusLive || "Live Now",
+    completed: t.dashboard.tournaments.statusCompleted || "Completed",
+    cancelled: "Cancelled",
+  }[rawStatus] || rawStatus;
+
+  const entrants = tournament.participants?.length ?? tournament.entrants ?? 0;
+  const prize = tournament.prizePoolBdt ?? null;
 
   return (
     <Link
@@ -46,13 +60,13 @@ export function TournamentListItem({
         <div className="min-w-0">
           <div className="truncate text-sm font-medium text-ink">{tournament.name}</div>
           <div className="mt-0.5 flex items-center gap-2 font-mono text-xs text-ink-faint">
-            <span>{t.dashboard.tournaments.entrantsLabel}: {tournament.entrants}</span>
-            {tournament.prizePoolBdt ? <span>· ৳ {tournament.prizePoolBdt.toLocaleString()}</span> : null}
+            <span>{t.dashboard.tournaments.entrantsLabel || "Participants"}: {entrants}</span>
+            {prize ? <span>· ৳ {prize.toLocaleString()}</span> : null}
           </div>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        <StatusPill tone={toneByStatus[tournament.status]}>{statusLabel}</StatusPill>
+        <StatusPill tone={toneByStatus[rawStatus] || "neutral"}>{statusLabel}</StatusPill>
         <ArrowRightIcon className="h-4 w-4 text-ink-faint transition-transform group-hover:translate-x-1" />
       </div>
     </Link>

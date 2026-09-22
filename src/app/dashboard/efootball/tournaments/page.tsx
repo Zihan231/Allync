@@ -3,121 +3,313 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { useMockTournaments } from "@/lib/mock/store";
-import type { TournamentFormat } from "@/lib/mock/types";
+import { useSession } from "@/lib/session/SessionContext";
+import { getCommunities } from "@/lib/api/communities";
+import { useEffect } from "react";
+import { useTournaments } from "@/lib/api/hooks/useTournaments";
+import type { TournamentType, TournamentStatus } from "@/lib/api/tournaments";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
-import { TournamentCard, FORMAT_META } from "@/components/dashboard/TournamentCard";
+import { TournamentCard } from "@/components/dashboard/TournamentCard";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { Pagination } from "@/components/dashboard/Pagination";
-import { TrophyIcon, PlusIcon, FlameIcon, WalletIcon } from "@/components/icons";
+import {
+  TrophyIcon,
+  PlusIcon,
+  FlameIcon,
+  WalletIcon,
+  UsersIcon,
+  CrosshairIcon,
+  SearchIcon,
+} from "@/components/icons";
 
-const filters: (TournamentFormat | "all")[] = ["all", "playerVsPlayer", "clubVsClub", "open", "default", "custom"];
 const PAGE_SIZE = 9;
 
 export default function TournamentsPage() {
   const { t } = useLanguage();
-  const allTournaments = useMockTournaments();
-  const tournaments = useMemo(() => allTournaments.filter((tour) => tour.game === "efootball"), [allTournaments]);
-  const [filter, setFilter] = useState<TournamentFormat | "all">("all");
+  const { user } = useSession();
+  const [communities, setCommunities] = useState<any[]>([]);
+
+  useEffect(() => {
+    getCommunities().then(setCommunities).catch(() => {});
+  }, []);
+
+  const canCreate = useMemo(() => {
+    if (!user?.id) return false;
+    const sessionRole =
+      user.community?.role === "President" || user.community?.role === "Vice President";
+    const ownsCommunity = communities.some(
+      (c) => c.presidentId === user.id || c.vicePresidentId === user.id,
+    );
+    return sessionRole || ownsCommunity;
+  }, [user, communities]);
+  const [activeTab, setActiveTab] = useState<TournamentType>("cvc");
+  const [search, setSearch] = useState("");
+  const [feeFilter, setFeeFilter] = useState<"all" | "free" | "paid">("all");
+  const [prizeFilter, setPrizeFilter] = useState<"all" | "with_prize" | "friendly">("all");
+  const [sortBy, setSortBy] = useState<"startAt" | "prizePoolBdt">("startAt");
   const [page, setPage] = useState(1);
 
-  // Reset to page 1 whenever the filter changes, without a setState-in-effect
-  // render pass — the standard React pattern for adjusting state during render.
-  const [prevFilter, setPrevFilter] = useState(filter);
-  if (filter !== prevFilter) {
-    setPrevFilter(filter);
-    setPage(1);
-  }
+  // Fetch backend tournaments
+  const { data: tournaments = [], isLoading } = useTournaments({
+    type: activeTab,
+    sortBy,
+  });
 
-  const filterLabel: Record<TournamentFormat | "all", string> = {
-    all: t.dashboard.tournaments.filterAll,
-    default: t.dashboard.tournaments.filterDefault,
-    custom: t.dashboard.tournaments.filterCustom,
-    clubVsClub: t.dashboard.tournaments.filterClubVsClub,
-    open: t.dashboard.tournaments.filterOpen,
-    playerVsPlayer: t.dashboard.tournaments.filterPlayerVsPlayer,
-  };
+  // Client-side search and filters
+  const filtered = useMemo(() => {
+    return tournaments.filter((tour) => {
+      // Search
+      if (search.trim()) {
+        const query = search.toLowerCase();
+        const matchName = tour.name?.toLowerCase().includes(query);
+        const matchComm = tour.community?.name?.toLowerCase().includes(query);
+        if (!matchName && !matchComm) return false;
+      }
 
-  const filtered = filter === "all" ? tournaments : tournaments.filter((tour) => tour.format === filter);
+      // Fee filter
+      if (feeFilter === "free" && (tour.isPaid || (tour.entryFeeBdt && tour.entryFeeBdt > 0))) {
+        return false;
+      }
+      if (feeFilter === "paid" && (!tour.isPaid && (!tour.entryFeeBdt || tour.entryFeeBdt <= 0))) {
+        return false;
+      }
+
+      // Prize filter
+      if (prizeFilter === "with_prize" && (!tour.prizePoolBdt || tour.prizePoolBdt <= 0)) {
+        return false;
+      }
+      if (prizeFilter === "friendly" && tour.prizePoolBdt && tour.prizePoolBdt > 0) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [tournaments, search, feeFilter, prizeFilter]);
+
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // Stats calculation across the current active tab
   const stats = useMemo(() => {
-    const liveCount = tournaments.filter((tour) => tour.status === "live").length;
-    const openCount = tournaments.filter((tour) => tour.status === "open").length;
-    const totalPrizePool = tournaments.reduce((sum, tour) => sum + (tour.prizePoolBdt ?? 0), 0);
+    const liveCount = tournaments.filter(
+      (tour) => tour.status === "ongoing",
+    ).length;
+    const openCount = tournaments.filter(
+      (tour) => tour.status === "open",
+    ).length;
+    const totalPrizePool = tournaments.reduce(
+      (sum, tour) => sum + (tour.prizePoolBdt || 0),
+      0,
+    );
     return { liveCount, openCount, totalPrizePool };
   }, [tournaments]);
+
+  function handleTabChange(tab: TournamentType) {
+    setActiveTab(tab);
+    setPage(1);
+  }
 
   return (
     <div className="relative">
       <div className="glow-gold pointer-events-none absolute left-1/2 top-0 -z-10 h-[420px] w-[600px] -translate-x-1/2 blur-[100px] opacity-30" />
 
       <PageHeader
-        eyebrow="eFootball"
-        title={t.dashboard.shell.navTournaments}
+        eyebrow="eFootball Community Competitions"
+        title={t.dashboard.shell.navTournaments || "Tournaments"}
         action={
-          <Link
-            href="/dashboard/efootball/tournaments/create"
-            className="group inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg shadow-[0_0_20px_rgba(217,165,68,0.3)] transition-transform hover:-translate-y-0.5"
-          >
-            <PlusIcon className="h-4 w-4" />
-            {t.dashboard.shell.navCreateTournament}
-          </Link>
+          canCreate ? (
+            <Link
+              href="/dashboard/efootball/tournaments/create"
+              className="group inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg shadow-[0_0_20px_rgba(217,165,68,0.3)] transition-transform hover:-translate-y-0.5"
+            >
+              <PlusIcon className="h-4 w-4" />
+              {t.dashboard.shell.navCreateTournament || "Create Tournament"}
+            </Link>
+          ) : null
         }
       />
 
+      {/* Stats row */}
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <StatTile label={t.dashboard.tournaments.liveNowLabel} value={String(stats.liveCount)} icon={FlameIcon} />
-        <StatTile label={t.dashboard.tournaments.openForEntryLabel} value={String(stats.openCount)} icon={TrophyIcon} />
         <StatTile
-          label={t.dashboard.tournaments.totalPrizePoolLabel}
+          label={t.dashboard.tournaments.liveNowLabel || "Live Now"}
+          value={String(stats.liveCount)}
+          icon={FlameIcon}
+        />
+        <StatTile
+          label={t.dashboard.tournaments.openForEntryLabel || "Open for Entry"}
+          value={String(stats.openCount)}
+          icon={TrophyIcon}
+        />
+        <StatTile
+          label={t.dashboard.tournaments.totalPrizePoolLabel || "Total Prize Pool"}
           value={`৳ ${stats.totalPrizePool.toLocaleString()}`}
           icon={WalletIcon}
         />
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-2">
-        {filters.map((f) => {
-          const FilterIcon = f === "all" ? null : FORMAT_META[f].icon;
-          const active = filter === f;
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                active
-                  ? "border-accent bg-accent-soft text-accent-ink"
-                  : "border-surface-line-strong text-ink-soft hover:text-ink"
-              }`}
-            >
-              {FilterIcon ? (
-                <FilterIcon
-                  className="h-3.5 w-3.5"
-                  style={{ color: active ? undefined : FORMAT_META[f as TournamentFormat].color }}
-                />
-              ) : null}
-              {filterLabel[f]}
-            </button>
-          );
-        })}
+      {/* Top Tabs: Club Tournaments (CvC) vs Player Tournaments (PvP) */}
+      <div className="mt-8 flex border-b border-surface-line">
+        <button
+          onClick={() => handleTabChange("cvc")}
+          className={`flex items-center gap-2 border-b-2 px-6 py-3 font-display text-sm font-semibold transition-colors ${
+            activeTab === "cvc"
+              ? "border-accent text-accent-ink"
+              : "border-transparent text-ink-soft hover:text-ink"
+          }`}
+        >
+          <UsersIcon className="h-4 w-4" />
+          Club Tournaments (CvC)
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs ${
+              activeTab === "cvc" ? "bg-accent/20 text-accent-ink" : "bg-surface-line text-ink-faint"
+            }`}
+          >
+            {activeTab === "cvc" ? tournaments.length : "•"}
+          </span>
+        </button>
+
+        <button
+          onClick={() => handleTabChange("pvp")}
+          className={`flex items-center gap-2 border-b-2 px-6 py-3 font-display text-sm font-semibold transition-colors ${
+            activeTab === "pvp"
+              ? "border-accent text-accent-ink"
+              : "border-transparent text-ink-soft hover:text-ink"
+          }`}
+        >
+          <CrosshairIcon className="h-4 w-4" />
+          Player Tournaments (PvP)
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs ${
+              activeTab === "pvp" ? "bg-accent/20 text-accent-ink" : "bg-surface-line text-ink-faint"
+            }`}
+          >
+            {activeTab === "pvp" ? tournaments.length : "•"}
+          </span>
+        </button>
       </div>
 
+      {/* Filter and Search Bar */}
+      <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        {/* Search */}
+        <div className="relative flex-1 max-w-md">
+          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search by tournament or community name..."
+            className="w-full rounded-xl border border-surface-line bg-surface/60 py-2 pl-10 pr-4 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
+          />
+        </div>
+
+        {/* Filter Pills */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Entry Fee Filters */}
+          <div className="flex items-center rounded-lg border border-surface-line bg-surface/50 p-1 text-xs">
+            <button
+              onClick={() => setFeeFilter("all")}
+              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                feeFilter === "all" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
+              }`}
+            >
+              All Fees
+            </button>
+            <button
+              onClick={() => setFeeFilter("free")}
+              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                feeFilter === "free" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
+              }`}
+            >
+              Free Entry
+            </button>
+            <button
+              onClick={() => setFeeFilter("paid")}
+              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                feeFilter === "paid" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
+              }`}
+            >
+              Paid Entry
+            </button>
+          </div>
+
+          {/* Prize Pool Filters */}
+          <div className="flex items-center rounded-lg border border-surface-line bg-surface/50 p-1 text-xs">
+            <button
+              onClick={() => setPrizeFilter("all")}
+              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                prizeFilter === "all" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
+              }`}
+            >
+              All Prizes
+            </button>
+            <button
+              onClick={() => setPrizeFilter("with_prize")}
+              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                prizeFilter === "with_prize" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
+              }`}
+            >
+              With Prize
+            </button>
+            <button
+              onClick={() => setPrizeFilter("friendly")}
+              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+                prizeFilter === "friendly" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
+              }`}
+            >
+              Friendly
+            </button>
+          </div>
+
+          {/* Sort Selector */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as "startAt" | "prizePoolBdt")}
+            className="rounded-lg border border-surface-line bg-surface px-3 py-1.5 text-xs text-ink-soft outline-none focus:border-accent [color-scheme:dark]"
+          >
+            <option value="startAt">Starts Soonest</option>
+            <option value="prizePoolBdt">Highest Prize Pool</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Tournament Cards Grid */}
       <div className="mt-6">
-        {filtered.length > 0 ? (
+        {isLoading ? (
+          <div className="flex h-64 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          </div>
+        ) : filtered.length > 0 ? (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {pageItems.map((tour) => (
-                <TournamentCard key={tour.id} tournament={tour} href={`/dashboard/efootball/tournaments/${tour.id}`} />
+                <TournamentCard
+                  key={tour.id}
+                  tournament={tour}
+                  href={`/dashboard/efootball/tournaments/${tour.id}`}
+                />
               ))}
             </div>
-            <div className="mt-6">
-              <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
-            </div>
+            {pageCount > 1 && (
+              <div className="mt-8">
+                <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+              </div>
+            )}
           </>
         ) : (
-          <EmptyState icon={TrophyIcon} title={t.dashboard.tournaments.noTournaments} body="" />
+          <EmptyState
+            icon={TrophyIcon}
+            title={activeTab === "cvc" ? "No Club Tournaments Found" : "No Player Tournaments Found"}
+            body={
+              search || feeFilter !== "all" || prizeFilter !== "all"
+                ? "Try clearing your search query or filters."
+                : "No tournaments are currently hosted. Community leaders can create one anytime!"
+            }
+          />
         )}
       </div>
     </div>

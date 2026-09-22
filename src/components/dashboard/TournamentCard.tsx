@@ -1,50 +1,100 @@
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Tournament } from "@/lib/mock/types";
+import type { BackendTournament } from "@/lib/api/tournaments";
 import { StatusPill, type StatusTone } from "./StatusPill";
-import { TrophyIcon, BracketIcon, UsersIcon, CrosshairIcon } from "../icons";
+import { TrophyIcon, BracketIcon, UsersIcon, CrosshairIcon, ClockIcon } from "../icons";
 
-const toneByStatus: Record<Tournament["status"], StatusTone> = {
+const toneByStatus: Record<string, StatusTone> = {
   open: "info",
+  registration_closed: "neutral",
+  ongoing: "danger",
   live: "danger",
   completed: "neutral",
+  cancelled: "neutral",
 };
 
-export const FORMAT_META: Record<Tournament["format"], { icon: typeof TrophyIcon; color: string }> = {
-  default: { icon: TrophyIcon, color: "var(--blue)" },
-  custom: { icon: BracketIcon, color: "var(--accent)" },
-  clubVsClub: { icon: UsersIcon, color: "var(--accent)" },
-  open: { icon: TrophyIcon, color: "var(--success)" },
-  playerVsPlayer: { icon: CrosshairIcon, color: "var(--blue)" },
+export const FORMAT_META: Record<string, { icon: typeof TrophyIcon; color: string; label: string }> = {
+  default: { icon: TrophyIcon, color: "var(--blue)", label: "Tournament" },
+  custom: { icon: BracketIcon, color: "var(--accent)", label: "Custom" },
+  clubVsClub: { icon: UsersIcon, color: "var(--accent)", label: "Club vs Club" },
+  cvc: { icon: UsersIcon, color: "var(--accent)", label: "Club vs Club" },
+  open: { icon: TrophyIcon, color: "var(--success)", label: "Open" },
+  playerVsPlayer: { icon: CrosshairIcon, color: "var(--blue)", label: "Player vs Player" },
+  pvp: { icon: CrosshairIcon, color: "var(--blue)", label: "Player vs Player" },
 };
 
-export function TournamentCard({ tournament, href }: { tournament: Tournament; href: string }) {
+export function TournamentCard({
+  tournament,
+  href,
+}: {
+  tournament: Tournament | BackendTournament | any;
+  href: string;
+}) {
   const { t } = useLanguage();
-  const meta = FORMAT_META[tournament.format];
+  
+  // Normalize format
+  const rawFormat = (tournament.type || tournament.format || "pvp") as string;
+  const meta = FORMAT_META[rawFormat] || FORMAT_META.pvp;
   const Icon = meta.icon;
 
+  // Status
+  const rawStatus = tournament.status || "open";
+  const isLive = rawStatus === "live" || rawStatus === "ongoing";
   const statusLabel = {
-    open: t.dashboard.tournaments.statusOpen,
-    live: t.dashboard.tournaments.statusLive,
-    completed: t.dashboard.tournaments.statusCompleted,
-  }[tournament.status];
+    open: t.dashboard.tournaments.statusOpen || "Open",
+    registration_closed: "Registration Closed",
+    ongoing: "Live Now",
+    live: t.dashboard.tournaments.statusLive || "Live Now",
+    completed: t.dashboard.tournaments.statusCompleted || "Completed",
+    cancelled: "Cancelled",
+  }[rawStatus as string] || rawStatus;
 
-  const formatLabel = {
-    default: t.dashboard.tournaments.filterDefault,
-    custom: t.dashboard.tournaments.filterCustom,
-    clubVsClub: t.dashboard.tournaments.filterClubVsClub,
-    open: t.dashboard.tournaments.filterOpen,
-    playerVsPlayer: t.dashboard.tournaments.filterPlayerVsPlayer,
-  }[tournament.format];
+  // Roster format text
+  let formatBadgeText = meta.label;
+  if (rawFormat === "cvc" || rawFormat === "clubVsClub") {
+    if (tournament.preset === "preset_11v11" || tournament.startersCount === 11) {
+      formatBadgeText = "CvC · 11 v 11";
+    } else if (tournament.preset === "preset_8v8" || tournament.startersCount === 8) {
+      formatBadgeText = "CvC · 8 v 8";
+    } else if (tournament.preset === "custom" || (tournament.startersCount && tournament.startersCount > 0)) {
+      formatBadgeText = `CvC · ${tournament.startersCount}v${tournament.startersCount}`;
+    }
+  } else if (rawFormat === "pvp" || rawFormat === "playerVsPlayer") {
+    formatBadgeText = "PvP · 1 v 1";
+  }
 
-  const startLabel = new Date(tournament.startAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  // Organizer / Community
+  const organizerName =
+    tournament.community?.name || tournament.organizerName || "eFootball Community";
+
+  // Counts
+  const entrantsCount =
+    tournament.participants?.length ?? tournament.entrants ?? 0;
+  const maxParticipants = tournament.maxParticipants;
+
+  // Start date
+  const startAt = tournament.startAt ? new Date(tournament.startAt) : new Date();
+  const startLabel = startAt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const startTime = startAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+
+  // Entry fee & prize badges
+  const isPaid = Boolean(tournament.isPaid || (tournament.entryFeeBdt && tournament.entryFeeBdt > 0));
+  const entryFeeBdt = tournament.entryFeeBdt ?? 0;
+  const prizePoolBdt = tournament.prizePoolBdt ?? 0;
+
+  // 2h Lineup Cutoff
+  const submissionDeadline = tournament.teamSubmissionDeadline
+    ? new Date(tournament.teamSubmissionDeadline)
+    : new Date(startAt.getTime() - 2 * 60 * 60 * 1000);
+  const isSubmissionOpen = new Date() < submissionDeadline;
 
   return (
     <Link
       href={href}
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-surface-line bg-surface/40 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-surface-line-strong hover:shadow-[0_20px_50px_-24px_rgba(0,0,0,0.6)]"
     >
-      {/* Ambient glow, tinted by format */}
+      {/* Ambient glow */}
       <div
         className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-25"
         style={{ backgroundColor: meta.color }}
@@ -62,39 +112,90 @@ export function TournamentCard({ tournament, href }: { tournament: Tournament; h
         >
           <Icon className="h-5 w-5" />
         </div>
-        <StatusPill tone={toneByStatus[tournament.status]} className="shrink-0 gap-1.5">
-          {tournament.status === "live" ? (
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
-          ) : null}
-          {statusLabel}
-        </StatusPill>
+        <div className="flex items-center gap-1.5">
+          <StatusPill tone={toneByStatus[rawStatus] || "neutral"} className="shrink-0 gap-1.5">
+            {isLive ? <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" /> : null}
+            {statusLabel}
+          </StatusPill>
+        </div>
       </div>
 
-      <h3 className="font-display relative mt-4 line-clamp-2 text-base font-bold leading-snug text-ink">
+      <h3 className="font-display relative mt-4 line-clamp-2 text-base font-bold leading-snug text-ink group-hover:text-accent-ink transition-colors">
         {tournament.name}
       </h3>
-      <p className="relative mt-1 truncate text-xs text-ink-faint">{tournament.organizerName}</p>
+      <p className="relative mt-1 truncate text-xs text-ink-faint flex items-center gap-1.5">
+        <span className="h-1.5 w-1.5 rounded-full bg-accent/60" />
+        {organizerName}
+      </p>
 
-      <span
-        className="relative mt-3 inline-flex w-fit items-center rounded-full px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider"
-        style={{ backgroundColor: `${meta.color}1a`, color: meta.color }}
-      >
-        {formatLabel}
-      </span>
+      {/* Badges Bar: Format, Entry Fee, Prize */}
+      <div className="relative mt-3.5 flex flex-wrap items-center gap-1.5">
+        <span
+          className="inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider"
+          style={{ backgroundColor: `${meta.color}1a`, color: meta.color }}
+        >
+          {formatBadgeText}
+        </span>
 
-      <div className="relative mt-5 grid grid-cols-2 gap-3 border-t border-surface-line/70 pt-4">
+        {isPaid ? (
+          <span className="inline-flex items-center rounded-full bg-warning/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-warning-ink">
+            ৳{entryFeeBdt.toLocaleString()} Entry
+          </span>
+        ) : (
+          <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-400">
+            Free Entry
+          </span>
+        )}
+
+        {prizePoolBdt > 0 ? (
+          <span className="inline-flex items-center rounded-full bg-accent/20 px-2.5 py-0.5 font-mono text-[10px] font-bold text-accent-ink">
+            ৳{prizePoolBdt.toLocaleString()} Prize
+          </span>
+        ) : (
+          <span className="inline-flex items-center rounded-full bg-surface-line px-2.5 py-0.5 font-mono text-[10px] text-ink-faint">
+            Friendly / No Prize
+          </span>
+        )}
+      </div>
+
+      {/* 2h Lineup Cutoff alert (if upcoming) */}
+      {(rawFormat === "cvc" || rawFormat === "clubVsClub") && rawStatus === "open" && (
+        <div className="relative mt-3 flex items-center gap-1.5 rounded-lg border border-surface-line/80 bg-surface/30 px-2.5 py-1.5 text-[11px] text-ink-soft">
+          <ClockIcon className="h-3.5 w-3.5 text-accent shrink-0" />
+          <span className="truncate">
+            {isSubmissionOpen ? (
+              <>
+                Lineups lock at:{" "}
+                <span className="font-semibold text-ink">
+                  {submissionDeadline.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </>
+            ) : (
+              <span className="text-warning-ink font-semibold">Lineups Locked (2h before start)</span>
+            )}
+          </span>
+        </div>
+      )}
+
+      {/* Card Footer: Entrants & Schedule */}
+      <div className="relative mt-auto pt-4 border-t border-surface-line/70 grid grid-cols-2 gap-3">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
-            {t.dashboard.tournaments.entrantsLabel}
+            {t.dashboard.tournaments.entrantsLabel || "Participants"}
           </div>
-          <div className="mt-0.5 font-display text-sm font-bold text-ink">{tournament.entrants}</div>
+          <div className="mt-0.5 font-display text-sm font-bold text-ink">
+            {entrantsCount}
+            {maxParticipants ? (
+              <span className="text-xs font-normal text-ink-faint"> / {maxParticipants}</span>
+            ) : null}
+          </div>
         </div>
         <div className="text-right">
           <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
-            {tournament.prizePoolBdt ? t.dashboard.tournaments.prizePoolLabel : t.dashboard.tournaments.startsLabel}
+            Starts
           </div>
-          <div className="mt-0.5 font-display text-sm font-bold text-accent-ink">
-            {tournament.prizePoolBdt ? `৳ ${tournament.prizePoolBdt.toLocaleString()}` : startLabel}
+          <div className="mt-0.5 font-display text-sm font-bold text-ink">
+            {startLabel} <span className="text-xs font-normal text-ink-faint">{startTime}</span>
           </div>
         </div>
       </div>
