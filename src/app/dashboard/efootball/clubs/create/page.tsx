@@ -37,10 +37,14 @@ export default function CreateClubPage() {
   const handleSubmit = async ({
     name,
     description,
+    dpUrl,
+    coverUrl,
     joinPolicy,
   }: {
     name: string;
     description: string;
+    dpUrl: string | null;
+    coverUrl: string | null;
     joinPolicy: "instant" | "approval";
   }) => {
     if (user.club) {
@@ -51,7 +55,7 @@ export default function CreateClubPage() {
     setError(null);
     try {
       const club = await createClub.mutateAsync({
-        input: { name, description, color: colorFromString(name), joinPolicy },
+        input: { name, description, color: colorFromString(name), joinPolicy, dpUrl, coverUrl },
         creatorPersonId: user.personId,
       });
       setClub({ id: club.id, name: club.name, role: "President" });

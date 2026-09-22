@@ -17,6 +17,8 @@ export interface CreateClubPayload {
   color: string;
   initials: string;
   joinPolicy: string;
+  dpUrl?: string | null;
+  coverUrl?: string | null;
 }
 
 export async function createClubRequest(payload: CreateClubPayload): Promise<BackendClub> {

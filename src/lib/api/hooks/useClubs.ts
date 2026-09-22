@@ -47,12 +47,20 @@ const CLUB_PATCH_FIELDS = [
 ] as const;
 
 export function useCreateClub() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       input,
       creatorPersonId,
     }: {
-      input: { name: string; description: string; color: string; joinPolicy: Club["joinPolicy"] };
+      input: {
+        name: string;
+        description: string;
+        color: string;
+        joinPolicy: Club["joinPolicy"];
+        dpUrl?: string | null;
+        coverUrl?: string | null;
+      };
       creatorPersonId: string;
     }) => {
       const person = getPerson(creatorPersonId);
@@ -75,6 +83,8 @@ export function useCreateClub() {
         color: input.color,
         initials,
         joinPolicy: input.joinPolicy,
+        dpUrl: input.dpUrl ?? undefined,
+        coverUrl: input.coverUrl ?? undefined,
       });
 
       const club: Club = {
@@ -82,8 +92,8 @@ export function useCreateClub() {
         name: input.name,
         color: input.color,
         initials,
-        dpUrl: backendClub?.dpUrl ?? null,
-        coverUrl: backendClub?.coverUrl ?? null,
+        dpUrl: backendClub?.dpUrl ?? input.dpUrl ?? null,
+        coverUrl: backendClub?.coverUrl ?? input.coverUrl ?? null,
         description: input.description,
         points: 0,
         joinPolicy: input.joinPolicy,
@@ -95,6 +105,9 @@ export function useCreateClub() {
 
       applyClubCreated(club, creatorPersonId);
       return club;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: clubKeys.all });
     },
   });
 }

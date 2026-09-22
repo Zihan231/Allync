@@ -176,26 +176,45 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
     if (!club || hasOtherClub || hasPendingRequest || isJoining) return;
     setJustLeft(false);
     setIsJoining(true);
+
+    const isInstant = club.joinPolicy === "instant";
+    const previousClub = user.club;
+
+    // Instant optimistic UI update (0ms delay)
+    if (isInstant) {
+      joinClub(user.personId || user.id, club.id);
+      setClub({ id: club.id, name: club.name, role: "Player" });
+      toast(`You joined ${club.name}!`, "success");
+    } else {
+      setIsPendingLocal(true);
+      addPendingJoinRequest("club", club.id, user.personId || user.id);
+      queryClient.setQueryData(["club-my-request", club.id], {
+        hasPendingRequest: true,
+        request: { status: "pending", clubId: club.id },
+      });
+      toast("Join request sent! Awaiting approval by club leadership.", "info");
+    }
+
     try {
-      if (club.joinPolicy === "instant") {
-        await joinClubRequest(club.id).catch(() => null);
-        joinClub(user.personId, club.id);
-        setClub({ id: club.id, name: club.name, role: "Player" });
-        toast(`You joined ${club.name}!`, "success");
-        void refreshSession();
-      } else {
-        setIsPendingLocal(true);
-        addPendingJoinRequest("club", club.id, user.personId || user.id);
-        await joinClubRequest(club.id).catch(() => null);
-        toast("Join request sent! Awaiting approval by club leadership.", "info");
-      }
+      await joinClubRequest(club.id);
+      void queryClient.invalidateQueries({ queryKey: ["club-my-request", club.id] });
+      void refreshSession();
     } catch (err: any) {
-      if (club.joinPolicy !== "instant") {
-        setIsPendingLocal(true);
-        addPendingJoinRequest("club", club.id, user.personId || user.id);
-        toast("Join request sent! Awaiting approval by club leadership.", "info");
-      } else {
+      // Revert optimistic changes on failure
+      if (isInstant) {
+        leaveClub(user.personId || user.id);
+        if (user.id) leaveClub(user.id);
+        setClub(previousClub);
         toast(err?.response?.data?.message || "Failed to join club.", "error");
+      } else {
+        setIsPendingLocal(false);
+        removePendingJoinRequest("club", club.id, user.personId || user.id);
+        if (user.id) removePendingJoinRequest("club", club.id, user.id);
+        queryClient.setQueryData(["club-my-request", club.id], {
+          hasPendingRequest: false,
+          request: null,
+        });
+        toast(err?.response?.data?.message || "Failed to send join request.", "error");
       }
     } finally {
       setIsJoining(false);
