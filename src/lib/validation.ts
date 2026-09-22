@@ -1,5 +1,5 @@
 export function isValidPasswordLength(value: string): boolean {
-  return value.length >= 4 && value.length <= 10;
+  return value.length >= 6 && value.length <= 72;
 }
 
 export const KONAMI_UID_REGEX = /^[A-Z]{4}-\d{3}-\d{3}-\d{3}$/;
