@@ -32,6 +32,8 @@ import type {
 import type { MockUser } from "@/lib/session/SessionContext";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useConfirm } from "@/lib/useConfirm";
+import { useToast } from "@/lib/useToast";
+import { ToastContainer } from "@/components/common/Toast";
 
 const BLOOD_GROUPS: BloodGroup[] = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const INSTITUTE_TYPES: EducationEntry["instituteType"][] = ["University", "College", "School", "Other"];
@@ -211,6 +213,7 @@ export function ProfileEditForm() {
 
   const updateMe = useUpdateMe();
   const { confirm, confirmProps } = useConfirm();
+  const { toasts, toast, dismiss } = useToast();
   const upsertEfootballProfile = useUpsertEfootballProfile();
   const deleteAccount = useDeleteAccount();
 
@@ -386,6 +389,8 @@ export function ProfileEditForm() {
       setForm((prev) => ({ ...prev, password: "" }));
 
       // 6. Finish editing & show success
+      const tabLabel = tabs.find((t) => t.id === tab)?.label || "Profile";
+      toast(`${tabLabel} updated successfully!`, "success");
       setEditingTab(null);
       setTabSuccess((prev) => ({ ...prev, [tab]: true }));
       setTimeout(() => {
@@ -398,6 +403,7 @@ export function ProfileEditForm() {
         "Failed to save profile changes to server.";
       console.error(`Profile save error [${tab}]:`, message, err);
       setTabErrors((prev) => ({ ...prev, [tab]: message }));
+      toast(message, "error");
     } finally {
       setTabSaving((prev) => ({ ...prev, [tab]: false }));
     }
@@ -1115,6 +1121,7 @@ export function ProfileEditForm() {
       )}
 
       {confirmProps ? <ConfirmDialog {...confirmProps} /> : null}
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
 }
@@ -1181,22 +1188,7 @@ function TabCard({
         ) : null}
       </div>
 
-      {/* Success Notification */}
-      {hasSuccess ? (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs sm:text-sm font-medium text-emerald-300 flex items-center gap-2 animate-fadeIn">
-          <svg className="h-4 w-4 shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-          <span>Changes saved successfully to server.</span>
-        </div>
-      ) : null}
 
-      {/* Error Notification */}
-      {error ? (
-        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs sm:text-sm text-rose-300">
-          {error}
-        </div>
-      ) : null}
 
       {/* Form Content for this Tab */}
       <div>{children}</div>
