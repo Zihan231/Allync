@@ -83,8 +83,36 @@ export default function CommunityRequestsPage({ params }: { params: Promise<{ co
     );
 
     const bIds = new Set(fromBackend.map((r: any) => r.id));
-    const all = [...fromBackend, ...fromMock.filter((r) => !bIds.has(r.id))];
-    return all.filter((r) => !reviewedIds.has(r.id));
+    const bUserIds = new Set(fromBackend.map((r: any) => r.personId || r.requesterUserId).filter(Boolean));
+    const bClubIds = new Set(fromBackend.map((r: any) => r.clubId).filter(Boolean));
+
+    const uniqueMock = fromMock.filter((r) => {
+      if (bIds.has(r.id)) return false;
+      if (r.personId && bUserIds.has(r.personId)) return false;
+      if ((r as any).clubId && bClubIds.has((r as any).clubId)) return false;
+      return true;
+    });
+
+    const all = [...fromBackend, ...uniqueMock];
+    const seenUsers = new Set<string>();
+    const seenClubs = new Set<string>();
+    const deduped: typeof all = [];
+
+    for (const req of all) {
+      if (reviewedIds.has(req.id)) continue;
+      const uid = (req as any).personId || (req as any).requesterUserId;
+      const cid = (req as any).clubId;
+      if ((req as any).targetType === "club" || cid) {
+        if (cid && seenClubs.has(cid)) continue;
+        if (cid) seenClubs.add(cid);
+      } else {
+        if (uid && seenUsers.has(uid)) continue;
+        if (uid) seenUsers.add(uid);
+      }
+      deduped.push(req);
+    }
+
+    return deduped;
   }, [backendRequests, mockRequests, communityId, reviewedIds]);
 
   const handleApprove = async (requestId: string) => {

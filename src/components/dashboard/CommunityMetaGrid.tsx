@@ -79,7 +79,12 @@ export function CommunityMetaGrid({
       <StatCell label={t.dashboard.community.communityGlobalRankLabel} value={`#${globalRank}`} />
       {tournamentsCount !== undefined ? (
         <StatCell label={t.dashboard.shell.navTournaments} value={`${tournamentsCount}`} />
-      ) : null}
+      ) : (
+        <div className="rounded-xl border border-surface-line bg-surface/40 p-4">
+          <div className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">{t.dashboard.shell.navTournaments}</div>
+          <div className="mt-2.5 h-6 w-12 rounded bg-surface-line/60 animate-pulse" />
+        </div>
+      )}
     </div>
   );
 }

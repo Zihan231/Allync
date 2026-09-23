@@ -11,15 +11,50 @@ export function JoinRequestQueue({
   requests,
   onApprove,
   onReject,
+  isLoading = false,
 }: {
   requests: any[];
   onApprove: (id: string) => void | Promise<void>;
   onReject: (id: string) => void | Promise<void>;
+  isLoading?: boolean;
 }) {
   const { t } = useLanguage();
   const people = useMockPeople();
   const mockClubs = useMockClubs();
   const pending = requests.filter((r) => r.status === "pending");
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2.5 text-accent-ink px-1">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          <span className="font-mono text-xs font-semibold uppercase tracking-wider animate-pulse">
+            Loading join requests...
+          </span>
+        </div>
+        <div className="space-y-2.5">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between gap-3 rounded-xl border border-surface-line bg-surface/40 p-4 animate-pulse"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 shrink-0 rounded-lg bg-surface-line/70" />
+                <div className="space-y-2">
+                  <div className="h-4 w-36 rounded bg-surface-line/80" />
+                  <div className="h-3 w-24 rounded bg-surface-line/50" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="h-7 w-20 rounded-full bg-surface-line/60" />
+                <div className="h-7 w-20 rounded-full bg-surface-line/50" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (pending.length === 0) {
     return <EmptyState icon={UsersIcon} title={t.dashboard.clubs.noRequests} body="" />;

@@ -88,7 +88,16 @@ export async function transferCommunityPresidentRequest(
   return res.data;
 }
 
-export async function getMyCommunityRequest(communityId: string): Promise<{ hasPendingRequest: boolean; request: any }> {
+export async function getMyCommunityRequest(communityId: string): Promise<{
+  hasPendingRequest: boolean;
+  request: any;
+  hasAnyPendingRequest?: boolean;
+  pendingCommunityId?: string | null;
+  pendingCommunityName?: string | null;
+  isClubRequest?: boolean;
+  clubRequest?: any;
+  playerRequest?: any;
+}> {
   const res = await api.get(`/communities/${communityId}/my-request`);
   return res.data;
 }

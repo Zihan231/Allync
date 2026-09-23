@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
@@ -36,6 +36,7 @@ import { WithdrawClubModal } from "@/components/dashboard/WithdrawClubModal";
 import { AppLoader } from "@/components/common/AppLoader";
 import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon, ClockIcon, PlusIcon, TrophyIcon } from "@/components/icons";
 import { TournamentCard } from "@/components/dashboard/TournamentCard";
+import { TournamentCardSkeleton } from "@/components/dashboard/TournamentCardSkeleton";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { ToastContainer } from "@/components/common/Toast";
 import { useToast } from "@/lib/useToast";
@@ -180,18 +181,52 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
           r.status === "pending"
       ));
 
+  const hasOtherPendingRequest =
+    !isMine &&
+    !isMemberOfCommunity &&
+    !hasPendingRequest &&
+    Boolean(
+      (myRequestData?.hasAnyPendingRequest && myRequestData?.pendingCommunityId !== community?.id) ||
+      joinRequests.some(
+        (r) =>
+          r.targetType === "community" &&
+          r.targetId !== community?.id &&
+          (r.personId === user.personId || r.personId === user.id) &&
+          r.status === "pending"
+      )
+    );
+
+  const isSubmittingJoinRef = useRef(false);
+
   const handleJoin = async () => {
-    if (!community || hasOtherCommunity || hasPendingRequest || joinMutation.isPending) return;
+    if (
+      isSubmittingJoinRef.current ||
+      !community ||
+      hasOtherCommunity ||
+      hasPendingRequest ||
+      hasOtherPendingRequest ||
+      joinMutation.isPending ||
+      isPendingLocal
+    ) {
+      return;
+    }
+    isSubmittingJoinRef.current = true;
     setJustLeft(false);
 
     if (community.joinPolicy === "approval") {
       setIsPendingLocal(true);
-      addPendingJoinRequest("community", community.id, user.personId || user.id);
       try {
         await joinMutation.mutateAsync();
+        await queryClient.invalidateQueries({ queryKey: ["community-my-request", communityId] });
         toast("Join request sent! Awaiting approval by community leadership.", "info");
       } catch (err: any) {
-        toast("Join request sent! Awaiting approval by community leadership.", "info");
+        setIsPendingLocal(false);
+        const msg = isApiError(err)
+          ? err.message
+          : (err as any)?.response?.data?.message || (err as any)?.message || "Failed to send join request.";
+        toast(msg, "error");
+      } finally {
+        isSubmittingJoinRef.current = false;
       }
       return;
     }
@@ -202,7 +237,12 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
       toast(`You joined ${community.name}!`, "success");
       void refreshSession();
     } catch (err: any) {
-      toast(err?.response?.data?.message || "Failed to join community.", "error");
+      const msg = isApiError(err)
+        ? err.message
+        : (err as any)?.response?.data?.message || (err as any)?.message || "Failed to join community.";
+      toast(msg, "error");
+    } finally {
+      isSubmittingJoinRef.current = false;
     }
   };
   const userClubId = user.club?.id || currentUserPerson?.clubId || null;
@@ -452,13 +492,24 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
               <ClockIcon className="h-4 w-4 text-amber-400 animate-pulse" />
               <span>Requested</span>
             </button>
+          ) : hasOtherPendingRequest ? (
+            <button
+              type="button"
+              disabled
+              title={`You already have a pending join request for ${myRequestData?.pendingCommunityName || "another community"}`}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-surface-line border border-surface-line-strong px-5 py-2 font-display text-sm font-semibold text-ink-muted cursor-not-allowed opacity-70"
+            >
+              <ClockIcon className="h-4 w-4 text-ink-muted" />
+              <span>Request Pending Elsewhere</span>
+            </button>
           ) : (
             <button
+              type="button"
               onClick={handleJoin}
-              disabled={hasOtherCommunity || joinMutation.isPending}
+              disabled={hasOtherCommunity || hasPendingRequest || hasOtherPendingRequest || joinMutation.isPending || isPendingLocal}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2 font-display text-sm font-semibold text-bg transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {joinMutation.isPending ? (
+              {joinMutation.isPending || isPendingLocal ? (
                 <>
                   <svg className="h-4 w-4 animate-spin text-bg" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -476,7 +527,11 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
         </div>
       </div>
 
-      {hasPendingRequest ? (
+      {hasOtherPendingRequest ? (
+        <p className="mt-3 font-mono text-xs text-warning-ink">
+          You already have a pending join request for &ldquo;{myRequestData?.pendingCommunityName || "another community"}&rdquo;. A player cannot request to join multiple communities at once.
+        </p>
+      ) : hasPendingRequest ? (
         <p className="mt-3 font-mono text-xs text-warning-ink">{t.dashboard.clubs.pendingRequestNotice}</p>
       ) : null}
 
@@ -504,9 +559,16 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
             <h2 className="font-display text-base font-bold text-ink">
               {t.dashboard.community.tabTournaments}
             </h2>
-            <span className="rounded-full bg-surface-line px-2 py-0.5 font-mono text-xs font-semibold text-ink-muted">
-              {communityTournaments.length}
-            </span>
+            {isLoadingTournaments ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-accent-ink">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-ping" />
+                Loading...
+              </span>
+            ) : (
+              <span className="rounded-full bg-surface-line px-2 py-0.5 font-mono text-xs font-semibold text-ink-muted">
+                {communityTournaments.length}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -532,13 +594,16 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
         </div>
 
         {isLoadingTournaments && communityTournaments.length === 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-44 rounded-2xl border border-surface-line bg-surface/30 animate-pulse"
-              />
-            ))}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1 text-ink-faint">
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+              <span className="font-mono text-xs text-ink-muted">Loading tournaments...</span>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <TournamentCardSkeleton key={i} />
+              ))}
+            </div>
           </div>
         ) : communityTournaments.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -602,13 +667,18 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
             clubMembers={clubMembers}
             allPeople={people}
             allCommunities={communities}
-            tournamentsCount={communityTournaments.length}
+            tournamentsCount={isLoadingTournaments ? undefined : communityTournaments.length}
           />
         ) : null}
         {tab === "members" ? <CommunityMembersTab members={allMembers} memberClubs={memberClubs} /> : null}
         {tab === "clubs" ? <CommunityClubsTab community={community} memberClubs={memberClubs} allPeople={people} /> : null}
         {tab === "rankings" ? <CommunityRankingsTab memberClubs={memberClubs} /> : null}
-        {tab === "tournaments" ? <CommunityTournamentsTab tournaments={communityTournaments} /> : null}
+        {tab === "tournaments" ? (
+          <CommunityTournamentsTab
+            tournaments={communityTournaments}
+            isLoading={isLoadingTournaments}
+          />
+        ) : null}
       </div>
       <TransferAuthorityModal
         open={showTransferAuthorityModal}
