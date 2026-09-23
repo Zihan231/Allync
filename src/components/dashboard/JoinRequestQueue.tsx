@@ -128,14 +128,14 @@ export function JoinRequestQueue({
                 <button
                   type="button"
                   onClick={() => onApprove(request.id)}
-                  className="rounded-full bg-success-soft px-3.5 py-1.5 text-xs font-semibold text-success-ink transition-all hover:bg-success hover:text-white active:scale-95"
+                  className="rounded-full bg-success-soft px-3.5 py-1.5 text-xs font-semibold text-success-ink transition-all hover:bg-success hover:text-white active:scale-95 cursor-pointer"
                 >
                   {t.dashboard.organizer.community.approve}
                 </button>
                 <button
                   type="button"
                   onClick={() => onReject(request.id)}
-                  className="rounded-full bg-danger-soft px-3.5 py-1.5 text-xs font-semibold text-danger-ink transition-all hover:bg-danger hover:text-white active:scale-95"
+                  className="rounded-full bg-danger-soft px-3.5 py-1.5 text-xs font-semibold text-danger-ink transition-all hover:bg-danger hover:text-white active:scale-95 cursor-pointer"
                 >
                   {t.dashboard.organizer.community.reject}
                 </button>
@@ -174,14 +174,14 @@ export function JoinRequestQueue({
               <button
                 type="button"
                 onClick={() => onApprove(request.id)}
-                className="rounded-full bg-success-soft px-3.5 py-1.5 text-xs font-semibold text-success-ink transition-all hover:bg-success hover:text-white active:scale-95"
+                className="rounded-full bg-success-soft px-3.5 py-1.5 text-xs font-semibold text-success-ink transition-all hover:bg-success hover:text-white active:scale-95 cursor-pointer"
               >
                 {t.dashboard.organizer.community.approve}
               </button>
               <button
                 type="button"
                 onClick={() => onReject(request.id)}
-                className="rounded-full bg-danger-soft px-3.5 py-1.5 text-xs font-semibold text-danger-ink transition-all hover:bg-danger hover:text-white active:scale-95"
+                className="rounded-full bg-danger-soft px-3.5 py-1.5 text-xs font-semibold text-danger-ink transition-all hover:bg-danger hover:text-white active:scale-95 cursor-pointer"
               >
                 {t.dashboard.organizer.community.reject}
               </button>

@@ -141,6 +141,7 @@ export type Community = {
   color: string;
   initials: string;
   tier: CommunityTier;
+  creatorId?: string | null;
   location?: string;
   motto?: string;
   facebookUrl?: string;

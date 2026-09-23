@@ -141,6 +141,7 @@ export function useCommunity(communityId: string) {
       const mapped: Community = {
         id: bc.id,
         name: bc.name,
+        creatorId: (bc as any).creatorId ?? null,
         dpUrl: bc.dpUrl ?? null,
         coverUrl: bc.coverUrl ?? null,
         rules: bc.rules || "",

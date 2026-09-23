@@ -7,6 +7,7 @@ import {
   hasSyncedFromBackend,
   useMockCommunities,
   useMockJoinRequests,
+  useMockPeople,
   approveCommunityRequest,
   rejectCommunityRequest,
   syncFromBackend,
@@ -31,6 +32,7 @@ export default function CommunityRequestsPage({ params }: { params: Promise<{ co
   const { user, isLoading: isSessionLoading } = useSession();
   const { data: remoteCommunity, isLoading: isRemoteLoading } = useCommunity(communityId);
   const communities = useMockCommunities();
+  const people = useMockPeople();
   const mockRequests = useMockJoinRequests();
   const { toasts, toast, dismiss } = useToast();
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
@@ -51,16 +53,39 @@ export default function CommunityRequestsPage({ params }: { params: Promise<{ co
     [remoteCommunity, communities, communityId]
   );
 
+  const currentUserPerson = useMemo(
+    () => people.find((p) => p.id === user.id || p.id === user.personId),
+    [people, user.id, user.personId]
+  );
+
   // Authority roles: President, Vice President, Team Manager, General Secretary
   const authorityRoles = ["President", "Vice President", "Team Manager", "General Secretary"];
   const userRole = user.community?.id === communityId ? user.community?.role : null;
+  const personRole = currentUserPerson?.communityId === communityId ? currentUserPerson?.communityRole : null;
+  const effectiveRole = userRole || personRole;
+  const isCreator =
+    (community as any)?.creatorId === user.id ||
+    (remoteCommunity as any)?.creatorId === user.id ||
+    (community as any)?.creatorId === user.personId ||
+    (community as any)?.presidentId === user.id;
+  const isPresident = effectiveRole === "President" || isCreator;
   const canManage =
-    userRole && authorityRoles.some((r) => r.toLowerCase() === userRole.toLowerCase());
+    Boolean(isPresident) ||
+    Boolean(effectiveRole && authorityRoles.some((r) => r.toLowerCase() === effectiveRole.toLowerCase()));
 
-  const { data: backendRequests, isLoading: isRequestsLoading, refetch: refetchRequests } = useQuery({
+  const {
+    data: backendRequests,
+    isLoading: isRequestsLoading,
+    isFetching: isRequestsFetching,
+    error: requestsError,
+    refetch: refetchRequests,
+  } = useQuery<any[]>({
     queryKey: ["community-requests", communityId],
-    queryFn: () => getCommunityRequestsRequest(communityId).catch(() => []),
-    enabled: !!communityId && Boolean(canManage),
+    queryFn: () => getCommunityRequestsRequest(communityId),
+    enabled: Boolean(communityId),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
     refetchInterval: 3000,
   });
 
@@ -116,7 +141,6 @@ export default function CommunityRequestsPage({ params }: { params: Promise<{ co
   }, [backendRequests, mockRequests, communityId, reviewedIds]);
 
   const handleApprove = async (requestId: string) => {
-    // Instant optimistic UI update & instant toast (0 delay)
     setReviewedIds((prev) => new Set([...prev, requestId]));
     toast("Join request approved!", "success");
     const targetReq = combinedRequests.find((r) => r.id === requestId);
@@ -142,7 +166,6 @@ export default function CommunityRequestsPage({ params }: { params: Promise<{ co
   };
 
   const handleReject = async (requestId: string) => {
-    // Instant optimistic UI update & instant toast (0 delay)
     setReviewedIds((prev) => new Set([...prev, requestId]));
     toast("Join request rejected.", "info");
     rejectCommunityRequest(requestId);
@@ -161,19 +184,38 @@ export default function CommunityRequestsPage({ params }: { params: Promise<{ co
     }
   };
 
-  const isPageLoading =
-    isSessionLoading ||
-    (isRemoteLoading && !community) ||
-    (!community && !synced) ||
-    (canManage && isRequestsLoading && !backendRequests);
-
-  if (isPageLoading) {
-    return <AppLoader />;
+  // Wait for initial session and community identification to avoid flashing unauthorized/empty screens
+  const isInitialLoading = isSessionLoading || (isRemoteLoading && !community) || (!community && !synced);
+  if (isInitialLoading || !community) {
+    return <AppLoader message="Loading requests queue..." />;
   }
 
-  if (!community || !canManage) {
-    return <EmptyState icon={LockIcon} title={t.dashboard.community.emptyState} body="" />;
+  const hasLoadedBackendOnce = backendRequests !== undefined;
+
+  // If backend returned 403 Forbidden, user has no permission
+  const isForbidden =
+    (requestsError as any)?.status === 403 ||
+    (requestsError as any)?.response?.status === 403 ||
+    (!canManage && !isRequestsLoading && hasLoadedBackendOnce);
+
+  if (isForbidden) {
+    return (
+      <EmptyState
+        icon={LockIcon}
+        title={t.dashboard.community.emptyState}
+        body="You do not have permission to review requests for this community."
+      />
+    );
   }
+
+  const pendingRequestsCount = combinedRequests.filter((r) => r.status === "pending").length;
+
+  // Show skeleton loader until backend has responded at least once,
+  // or while refetching if no pending requests are currently shown
+  const isLoadingQueue =
+    !hasLoadedBackendOnce ||
+    isRequestsLoading ||
+    (isRequestsFetching && pendingRequestsCount === 0);
 
   return (
     <div>
@@ -183,7 +225,12 @@ export default function CommunityRequestsPage({ params }: { params: Promise<{ co
         backHref={`/dashboard/efootball/community/${community.id}`}
       />
       <div className="mt-8">
-        <JoinRequestQueue requests={combinedRequests} onApprove={handleApprove} onReject={handleReject} />
+        <JoinRequestQueue
+          requests={combinedRequests}
+          isLoading={isLoadingQueue}
+          onApprove={handleApprove}
+          onReject={handleReject}
+        />
       </div>
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
