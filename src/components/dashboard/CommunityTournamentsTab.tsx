@@ -20,12 +20,13 @@ const FILTERS: {
   key: FilterKey;
   label: string;
   statuses: string[] | null;
+  dotClass: string;
 }[] = [
-  { key: "all", label: "All", statuses: null },
-  { key: "open", label: "Open", statuses: ["open", "registration_open"] },
-  { key: "live", label: "Live", statuses: ["ongoing", "live"] },
-  { key: "closed", label: "Closed", statuses: ["registration_closed", "submission_phase"] },
-  { key: "completed", label: "Completed", statuses: ["completed"] },
+  { key: "all", label: "All", statuses: null, dotClass: "bg-ink-soft" },
+  { key: "open", label: "Open", statuses: ["open", "registration_open"], dotClass: "bg-success" },
+  { key: "live", label: "Live", statuses: ["ongoing", "live"], dotClass: "bg-danger" },
+  { key: "closed", label: "Closed", statuses: ["registration_closed", "submission_phase"], dotClass: "bg-warning" },
+  { key: "completed", label: "Completed", statuses: ["completed"], dotClass: "bg-blue" },
 ];
 
 function getStatus(tournament: TournamentItem) {
@@ -246,8 +247,27 @@ export function CommunityTournamentsTab({
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+      <div className="space-y-3 rounded-2xl border border-surface-line bg-surface/25 p-3 sm:p-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-soft text-blue-ink">
+              <FilterIcon className="h-4 w-4" />
+            </span>
+            <div>
+              <h3 className="font-display text-sm font-bold text-ink">Filter by status</h3>
+              <p className="mt-0.5 text-xs text-ink-faint">Narrow the tournament list</p>
+            </div>
+          </div>
+
+          {filteredTournaments.length > 0 ? (
+            <p className="font-mono text-xs text-ink-faint" aria-live="polite">
+              Showing {firstItemIndex + 1}–{Math.min(firstItemIndex + ITEMS_PER_PAGE, filteredTournaments.length)} of{" "}
+              {filteredTournaments.length}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0" role="group" aria-label="Filter tournaments by status">
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               {FILTERS.map((filter) => {
@@ -262,16 +282,17 @@ export function CommunityTournamentsTab({
                     type="button"
                     aria-pressed={active}
                     onClick={() => selectFilter(filter.key)}
-                    className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto sm:px-4 ${
+                    className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto sm:px-4 ${
                       active
-                        ? "border-accent bg-accent-soft text-accent-ink"
-                        : "border-surface-line bg-surface/40 text-ink-soft hover:border-surface-line-strong hover:text-ink"
+                        ? "border-surface-line-strong bg-bg-raised text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                        : "border-transparent bg-bg/30 text-ink-soft hover:border-surface-line hover:bg-bg/55 hover:text-ink"
                     }`}
                   >
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${filter.dotClass}`} aria-hidden="true" />
                     {filter.label}
                     <span
                       className={`rounded-full px-2 py-0.5 font-mono text-[10px] ${
-                        active ? "bg-accent/15 text-accent-ink" : "bg-surface-line/70 text-ink-faint"
+                        active ? "bg-surface-line text-ink-soft" : "bg-surface-line/60 text-ink-faint"
                       }`}
                     >
                       {count}
@@ -282,16 +303,16 @@ export function CommunityTournamentsTab({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
             <button
               type="button"
               aria-expanded={showPrizeFilter}
               aria-controls="community-prize-filter"
               onClick={() => setShowPrizeFilter((visible) => !visible)}
-              className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto ${
+              className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto ${
                 hasPrizeFilter
                   ? "border-accent bg-accent-soft text-accent-ink"
-                  : "border-surface-line bg-surface/40 text-ink-soft hover:border-surface-line-strong hover:text-ink"
+                  : "border-surface-line bg-bg/30 text-ink-soft hover:border-surface-line-strong hover:bg-bg/55 hover:text-ink"
               }`}
             >
               <FilterIcon className="h-4 w-4" />
@@ -300,12 +321,6 @@ export function CommunityTournamentsTab({
                 : "Prize range"}
             </button>
 
-            {filteredTournaments.length > 0 ? (
-              <p className="text-center font-mono text-xs text-ink-faint sm:text-left" aria-live="polite">
-                Showing {firstItemIndex + 1}–{Math.min(firstItemIndex + ITEMS_PER_PAGE, filteredTournaments.length)} of{" "}
-                {filteredTournaments.length}
-              </p>
-            ) : null}
           </div>
         </div>
 
