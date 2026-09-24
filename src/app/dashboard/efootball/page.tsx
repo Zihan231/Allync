@@ -101,7 +101,11 @@ export default function EfootballOverviewPage() {
                 </p>
               ) : null}
               <Link
-                href={`/dashboard/efootball/tournaments/${latestTournament.id}`}
+                href={
+                  latestTournament.communityId
+                    ? `/dashboard/efootball/community/${latestTournament.communityId}/tournaments/${latestTournament.id}`
+                    : `/dashboard/efootball/tournaments/${latestTournament.id}`
+                }
                 className="group mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-accent-ink"
               >
                 View

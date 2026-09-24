@@ -89,27 +89,41 @@ export default function TournamentDetailPage({
 }) {
   return (
     <Suspense fallback={<AppLoader />}>
-      <TournamentDetailContent params={params} />
+      <TournamentDetailRoute params={params} />
     </Suspense>
   );
 }
 
-function TournamentDetailContent({
+function TournamentDetailRoute({
   params,
 }: {
   params: Promise<{ tournamentId: string }>;
 }) {
   const { tournamentId } = use(params);
+  return (
+    <TournamentDetailView
+      tournamentId={tournamentId}
+      backHref="/dashboard/efootball/tournaments"
+      context="my-tournaments"
+    />
+  );
+}
+
+export function TournamentDetailView({
+  tournamentId,
+  backHref,
+  context,
+}: {
+  tournamentId: string;
+  backHref: string;
+  context: "community" | "my-tournaments";
+}) {
   const { t } = useLanguage();
-  const { user } = useSession();
+  const { user, isLoading: isSessionLoading } = useSession();
   const router = useRouter();
 
   function handleBack() {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/dashboard/efootball/tournaments");
-    }
+    router.push(backHref);
   }
 
   const { data: tournament, isLoading, refetch } = useTournament(tournamentId);
@@ -119,6 +133,28 @@ function TournamentDetailContent({
   const submitLineupMutation = useSubmitTournamentLineup(tournamentId);
   const generateBracketMutation = useGenerateTournamentBracket(tournamentId);
   const people = useMockPeople();
+  const viewerIsParticipant = Boolean(
+    tournament?.participants?.some((participant) =>
+      tournament.type === "cvc"
+        ? participant.clubId === user?.club?.id
+        : participant.userId === user?.id || participant.userId === user?.personId,
+    ),
+  );
+
+  useEffect(() => {
+    if (
+      context !== "my-tournaments" ||
+      isSessionLoading ||
+      !tournament ||
+      viewerIsParticipant
+    ) {
+      return;
+    }
+
+    router.replace(
+      `/dashboard/efootball/community/${tournament.communityId}/tournaments/${tournament.id}`,
+    );
+  }, [context, isSessionLoading, router, tournament, viewerIsParticipant]);
 
   // Club and teams state for CvC
   const [userClubDetails, setUserClubDetails] = useState<BackendClub | null>(null);
@@ -175,7 +211,11 @@ function TournamentDetailContent({
     [people, user?.id, user?.personId]
   );
 
-  if (isLoading) {
+  if (
+    isLoading ||
+    isSessionLoading ||
+    (context === "my-tournaments" && tournament && !viewerIsParticipant)
+  ) {
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-3">
         <div className="h-10 w-10 animate-spin rounded-full border-3 border-accent border-t-transparent shadow-[0_0_20px_rgba(217,165,68,0.4)]" />

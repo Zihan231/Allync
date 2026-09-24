@@ -1,13 +1,10 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
-import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { getCommunities } from "@/lib/api/communities";
-import { useEffect } from "react";
 import { useTournaments } from "@/lib/api/hooks/useTournaments";
-import type { TournamentType, TournamentStatus } from "@/lib/api/tournaments";
+import type { TournamentType } from "@/lib/api/tournaments";
 import { useUrlTab } from "@/lib/navigation/useUrlTab";
 import { AppLoader } from "@/components/common/AppLoader";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -17,7 +14,6 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
 import { Pagination } from "@/components/dashboard/Pagination";
 import {
   TrophyIcon,
-  PlusIcon,
   FlameIcon,
   WalletIcon,
   UsersIcon,
@@ -38,22 +34,7 @@ export default function TournamentsPage() {
 
 function TournamentsContent() {
   const { t } = useLanguage();
-  const { user } = useSession();
-  const [communities, setCommunities] = useState<any[]>([]);
-
-  useEffect(() => {
-    getCommunities().then(setCommunities).catch(() => {});
-  }, []);
-
-  const canCreate = useMemo(() => {
-    if (!user?.id) return false;
-    const sessionRole =
-      user.community?.role === "President" || user.community?.role === "Vice President";
-    const ownsCommunity = communities.some(
-      (c) => c.presidentId === user.id || c.vicePresidentId === user.id,
-    );
-    return sessionRole || ownsCommunity;
-  }, [user, communities]);
+  const { user, isLoading: isSessionLoading } = useSession();
   const [activeTab, setActiveTab] = useUrlTab(TOURNAMENT_TABS, "cvc");
   const [search, setSearch] = useState("");
   const [feeFilter, setFeeFilter] = useState<"all" | "free" | "paid">("all");
@@ -67,9 +48,23 @@ function TournamentsContent() {
     sortBy,
   });
 
+  const joinedTournaments = useMemo(() => {
+    const userIds = [user?.id, user?.personId].filter(
+      (id): id is string => Boolean(id),
+    );
+
+    return tournaments.filter((tournament) =>
+      tournament.participants?.some(
+        (participant) =>
+          (participant.userId !== null && userIds.includes(participant.userId)) ||
+          (participant.clubId !== null && participant.clubId === user?.club?.id),
+      ),
+    );
+  }, [tournaments, user?.club?.id, user?.id, user?.personId]);
+
   // Client-side search and filters
   const filtered = useMemo(() => {
-    return tournaments.filter((tour) => {
+    return joinedTournaments.filter((tour) => {
       // Search
       if (search.trim()) {
         const query = search.toLowerCase();
@@ -96,25 +91,25 @@ function TournamentsContent() {
 
       return true;
     });
-  }, [tournaments, search, feeFilter, prizeFilter]);
+  }, [joinedTournaments, search, feeFilter, prizeFilter]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   // Stats calculation across the current active tab
   const stats = useMemo(() => {
-    const liveCount = tournaments.filter(
+    const liveCount = joinedTournaments.filter(
       (tour) => tour.status === "ongoing" || tour.status === "live",
     ).length;
-    const openCount = tournaments.filter(
+    const openCount = joinedTournaments.filter(
       (tour) => tour.status === "open" || tour.status === "registration_open",
     ).length;
-    const totalPrizePool = tournaments.reduce(
+    const totalPrizePool = joinedTournaments.reduce(
       (sum, tour) => sum + (tour.prizePoolBdt || 0),
       0,
     );
     return { liveCount, openCount, totalPrizePool };
-  }, [tournaments]);
+  }, [joinedTournaments]);
 
   function handleTabChange(tab: TournamentType) {
     setActiveTab(tab);
@@ -126,19 +121,8 @@ function TournamentsContent() {
       <div className="glow-gold pointer-events-none absolute left-1/2 top-0 -z-10 h-[420px] w-[600px] -translate-x-1/2 blur-[100px] opacity-30" />
 
       <PageHeader
-        eyebrow="eFootball Community Competitions"
-        title={t.dashboard.shell.navTournaments || "Tournaments"}
-        action={
-          canCreate ? (
-            <Link
-              href="/dashboard/efootball/tournaments/create"
-              className="group inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg shadow-[0_0_20px_rgba(217,165,68,0.3)] transition-transform hover:-translate-y-0.5"
-            >
-              <PlusIcon className="h-4 w-4" />
-              {t.dashboard.shell.navCreateTournament || "Create Tournament"}
-            </Link>
-          ) : null
-        }
+        eyebrow="Your eFootball Competitions"
+        title={t.dashboard.shell.navMyTournaments || "My Tournaments"}
       />
 
       {/* Stats row */}
@@ -171,13 +155,13 @@ function TournamentsContent() {
           }`}
         >
           <UsersIcon className="h-4 w-4" />
-          Club Tournaments (CvC)
+          My Club Tournaments (CvC)
           <span
             className={`rounded-full px-2 py-0.5 text-xs ${
               activeTab === "cvc" ? "bg-accent/20 text-accent-ink" : "bg-surface-line text-ink-faint"
             }`}
           >
-            {activeTab === "cvc" ? tournaments.length : "•"}
+            {activeTab === "cvc" ? joinedTournaments.length : "•"}
           </span>
         </button>
 
@@ -190,13 +174,13 @@ function TournamentsContent() {
           }`}
         >
           <CrosshairIcon className="h-4 w-4" />
-          Player Tournaments (PvP)
+          My Player Tournaments (PvP)
           <span
             className={`rounded-full px-2 py-0.5 text-xs ${
               activeTab === "pvp" ? "bg-accent/20 text-accent-ink" : "bg-surface-line text-ink-faint"
             }`}
           >
-            {activeTab === "pvp" ? tournaments.length : "•"}
+            {activeTab === "pvp" ? joinedTournaments.length : "•"}
           </span>
         </button>
       </div>
@@ -290,7 +274,7 @@ function TournamentsContent() {
 
       {/* Tournament Cards Grid */}
       <div className="mt-6">
-        {isLoading ? (
+        {isLoading || isSessionLoading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
           </div>
@@ -314,11 +298,11 @@ function TournamentsContent() {
         ) : (
           <EmptyState
             icon={TrophyIcon}
-            title={activeTab === "cvc" ? "No Club Tournaments Found" : "No Player Tournaments Found"}
+            title={activeTab === "cvc" ? "No Joined Club Tournaments" : "No Joined Player Tournaments"}
             body={
               search || feeFilter !== "all" || prizeFilter !== "all"
                 ? "Try clearing your search query or filters."
-                : "No tournaments are currently hosted. Community leaders can create one anytime!"
+                : "Join a tournament from its community page and it will appear here."
             }
           />
         )}

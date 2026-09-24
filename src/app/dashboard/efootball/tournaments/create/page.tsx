@@ -170,7 +170,9 @@ function CreateTournamentForm() {
         communityId: effectiveCommunityId,
       });
 
-      router.push(`/dashboard/efootball/tournaments/${tournament.id}`);
+      router.push(
+        `/dashboard/efootball/community/${tournament.communityId}/tournaments/${tournament.id}`,
+      );
     } catch (err: any) {
       const resData = err?.response?.data;
       const resMsg = resData?.message || err?.message;
@@ -188,6 +190,10 @@ function CreateTournamentForm() {
   }
 
   const isEligible = eligibleCommunities.length > 0 || Boolean(queryCommunityId) || Boolean(user?.community?.id);
+  const backCommunityId = communityId || queryCommunityId || user?.community?.id;
+  const communityBackHref = backCommunityId
+    ? `/dashboard/efootball/community/${backCommunityId}?tab=tournaments`
+    : "/dashboard/efootball/community";
 
   if (!loadingCommunities && !isEligible) {
     return (
@@ -195,7 +201,7 @@ function CreateTournamentForm() {
         <PageHeader
           eyebrow="Community Tournament Management"
           title="Host a Tournament"
-          backHref="/dashboard/efootball/tournaments"
+          backHref={communityBackHref}
         />
         <div className="mt-8">
           <div className="rounded-2xl border border-surface-line bg-surface/40 p-8 text-center max-w-lg mx-auto">
@@ -208,10 +214,10 @@ function CreateTournamentForm() {
             </p>
             <div className="mt-6">
               <Link
-                href="/dashboard/efootball/tournaments"
+                href={communityBackHref}
                 className="inline-flex items-center gap-2 rounded-full bg-surface-line px-5 py-2.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-line-strong"
               >
-                Back to Tournaments
+                Back to Community
               </Link>
             </div>
           </div>
@@ -225,7 +231,7 @@ function CreateTournamentForm() {
       <PageHeader
         eyebrow={eligibleCommunities[0]?.name ? `Community · ${eligibleCommunities[0].name}` : "Community Tournament"}
         title="Host a Tournament"
-        backHref="/dashboard/efootball/tournaments"
+        backHref={communityBackHref}
       />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-12">

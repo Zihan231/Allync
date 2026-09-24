@@ -76,7 +76,15 @@ export function ClubTournamentsTab({
               <SectionHeading tone={STATUS_TONE[status]}>{statusLabel[status]}</SectionHeading>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map((tour) => (
-                  <TournamentCard key={tour.id} tournament={tour} href={`/dashboard/efootball/tournaments/${tour.id}`} />
+                  <TournamentCard
+                    key={tour.id}
+                    tournament={tour}
+                    href={
+                      tour.communityId
+                        ? `/dashboard/efootball/community/${tour.communityId}/tournaments/${tour.id}`
+                        : `/dashboard/efootball/tournaments/${tour.id}`
+                    }
+                  />
                 ))}
               </div>
             </div>

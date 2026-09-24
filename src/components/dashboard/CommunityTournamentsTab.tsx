@@ -13,9 +13,11 @@ const STATUS_GROUPS: { key: string; label: string; matches: string[] }[] = [
 ];
 
 export function CommunityTournamentsTab({
+  communityId,
   tournaments,
   isLoading = false,
 }: {
+  communityId: string;
   tournaments: (Tournament | BackendTournament | any)[];
   isLoading?: boolean;
 }) {
@@ -75,7 +77,7 @@ export function CommunityTournamentsTab({
                 <TournamentListItem
                   key={tour.id}
                   tournament={tour}
-                  href={`/dashboard/efootball/tournaments/${tour.id}`}
+                  href={`/dashboard/efootball/community/${communityId}/tournaments/${tour.id}`}
                 />
               ))}
             </div>

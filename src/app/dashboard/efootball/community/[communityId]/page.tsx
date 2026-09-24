@@ -621,7 +621,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
               <TournamentCard
                 key={tour.id}
                 tournament={tour}
-                href={`/dashboard/efootball/tournaments/${tour.id}`}
+                href={`/dashboard/efootball/community/${community.id}/tournaments/${tour.id}`}
               />
             ))}
           </div>
@@ -685,6 +685,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
         {tab === "rankings" ? <CommunityRankingsTab memberClubs={memberClubs} /> : null}
         {tab === "tournaments" ? (
           <CommunityTournamentsTab
+            communityId={community.id}
             tournaments={communityTournaments}
             isLoading={isLoadingTournaments}
           />

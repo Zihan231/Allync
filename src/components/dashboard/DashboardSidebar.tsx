@@ -58,7 +58,7 @@ export function DashboardSidebar({
       label: t.dashboard.community.browseTitle,
       icon: ShieldIcon,
     },
-    { href: `${playerBase}/tournaments`, label: t.dashboard.shell.navTournaments, icon: TrophyIcon },
+    { href: `${playerBase}/tournaments`, label: t.dashboard.shell.navMyTournaments, icon: TrophyIcon },
     { href: `${playerBase}/matches`, label: t.dashboard.shell.navMatches, icon: CalendarIcon },
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
     { href: `${playerBase}/rankings`, label: t.dashboard.rankings.pageTitle, icon: TrophyIcon },
