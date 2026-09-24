@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useUrlTab } from "@/lib/navigation/useUrlTab";
 import type { Tournament } from "@/lib/mock/types";
 import type { BackendTournament } from "@/lib/api/tournaments";
 import { TournamentCard } from "./TournamentCard";
@@ -10,7 +11,8 @@ import { TournamentCardSkeleton } from "./TournamentCardSkeleton";
 import { BracketIcon, FilterIcon, FlameIcon, PlusIcon, TrophyIcon, UsersIcon } from "../icons";
 
 type TournamentItem = Tournament | BackendTournament;
-type FilterKey = "all" | "open" | "live" | "closed" | "completed";
+const FILTER_KEYS = ["all", "open", "live", "closed", "completed"] as const;
+type FilterKey = (typeof FILTER_KEYS)[number];
 
 const ITEMS_PER_PAGE = 6;
 
@@ -52,7 +54,7 @@ export function CommunityTournamentsTab({
   canManage?: boolean;
 }) {
   const { t } = useLanguage();
-  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const [activeFilter, setActiveFilter] = useUrlTab(FILTER_KEYS, "all", "tournamentStatus");
   const [page, setPage] = useState(1);
   const [showPrizeFilter, setShowPrizeFilter] = useState(false);
   const [minPrize, setMinPrize] = useState(0);
