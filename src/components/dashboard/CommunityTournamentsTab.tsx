@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Tournament } from "@/lib/mock/types";
 import type { BackendTournament } from "@/lib/api/tournaments";
 import { TournamentCard } from "./TournamentCard";
 import { TournamentCardSkeleton } from "./TournamentCardSkeleton";
-import { EmptyState } from "./EmptyState";
-import { TrophyIcon } from "../icons";
+import { PlusIcon, TrophyIcon } from "../icons";
 
 type TournamentItem = Tournament | BackendTournament;
 type FilterKey = "all" | "open" | "live" | "closed" | "completed" | "cancelled";
@@ -41,10 +41,12 @@ export function CommunityTournamentsTab({
   communityId,
   tournaments,
   isLoading = false,
+  canManage = false,
 }: {
   communityId: string;
   tournaments: TournamentItem[];
   isLoading?: boolean;
+  canManage?: boolean;
 }) {
   const { t } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
@@ -66,16 +68,6 @@ export function CommunityTournamentsTab({
           ))}
         </div>
       </section>
-    );
-  }
-
-  if (!tournaments || tournaments.length === 0) {
-    return (
-      <EmptyState
-        icon={TrophyIcon}
-        title={t.dashboard.tournaments.noTournaments || "No tournaments yet"}
-        body="New tournaments hosted by this community will appear here."
-      />
     );
   }
 
@@ -115,19 +107,30 @@ export function CommunityTournamentsTab({
             </div>
           </div>
 
-          <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:min-w-64">
-            {[
-              { label: "Total", value: tournaments.length },
-              { label: "Open", value: openCount },
-              { label: "Live", value: liveCount },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border border-surface-line bg-bg/45 px-3 py-2.5 text-center">
-                <div className="font-display text-lg font-bold text-ink">{stat.value}</div>
-                <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
-                  {stat.label}
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
+            {canManage ? (
+              <Link
+                href={`/dashboard/efootball/tournaments/create?communityId=${communityId}`}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-5 font-display text-sm font-semibold text-bg shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                <PlusIcon className="h-4 w-4" />
+                {t.dashboard.shell.navCreateTournament}
+              </Link>
+            ) : null}
+            <div className="grid w-full grid-cols-3 gap-2 sm:min-w-64">
+              {[
+                { label: "Total", value: tournaments.length },
+                { label: "Open", value: openCount },
+                { label: "Live", value: liveCount },
+              ].map((stat) => (
+                <div key={stat.label} className="rounded-xl border border-surface-line bg-bg/45 px-3 py-2.5 text-center">
+                  <div className="font-display text-lg font-bold text-ink">{stat.value}</div>
+                  <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
+                    {stat.label}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -192,15 +195,25 @@ export function CommunityTournamentsTab({
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-surface-line/60 text-ink-soft">
             <TrophyIcon className="h-6 w-6" />
           </div>
-          <h3 className="mt-4 font-display text-base font-bold text-ink">No {selectedFilter.label.toLowerCase()} tournaments</h3>
-          <p className="mt-1 text-sm text-ink-soft">Try another status to see more competitions.</p>
-          <button
-            type="button"
-            onClick={() => selectFilter("all")}
-            className="mt-5 min-h-11 rounded-full border border-accent/50 bg-accent-soft px-5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            View all tournaments
-          </button>
+          <h3 className="mt-4 font-display text-base font-bold text-ink">
+            {tournaments.length === 0
+              ? t.dashboard.tournaments.noTournaments || "No tournaments yet"
+              : `No ${selectedFilter.label.toLowerCase()} tournaments`}
+          </h3>
+          <p className="mt-1 text-sm text-ink-soft">
+            {tournaments.length === 0
+              ? "New tournaments hosted by this community will appear here."
+              : "Try another status to see more competitions."}
+          </p>
+          {tournaments.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => selectFilter("all")}
+              className="mt-5 min-h-11 rounded-full border border-accent/50 bg-accent-soft px-5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              View all tournaments
+            </button>
+          ) : null}
         </div>
       )}
 

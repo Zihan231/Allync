@@ -34,7 +34,7 @@ import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthority
 import { JoinAsClubModal } from "@/components/dashboard/JoinAsClubModal";
 import { WithdrawClubModal } from "@/components/dashboard/WithdrawClubModal";
 import { AppLoader } from "@/components/common/AppLoader";
-import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon, ClockIcon, PlusIcon, TrophyIcon } from "@/components/icons";
+import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon, ClockIcon, TrophyIcon } from "@/components/icons";
 import { TournamentCard } from "@/components/dashboard/TournamentCard";
 import { TournamentCardSkeleton } from "@/components/dashboard/TournamentCardSkeleton";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -560,6 +560,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
       ) : null}
 
       {/* Community Tournaments Section (in place of relocated meta info) */}
+      {tab !== "tournaments" ? (
       <div className="mt-6">
         <div className="mb-3.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -581,26 +582,15 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {canManage ? (
-              <Link
-                href={`/dashboard/efootball/tournaments/create?communityId=${community.id}`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 font-display text-xs font-semibold text-bg transition-opacity hover:opacity-90 shadow-sm"
-              >
-                <PlusIcon className="h-3.5 w-3.5" />
-                {t.dashboard.shell.navCreateTournament}
-              </Link>
-            ) : null}
-            {communityTournaments.length > 0 && tab !== "tournaments" ? (
-              <button
-                type="button"
-                onClick={() => setTab("tournaments")}
-                className="font-mono text-xs font-semibold text-accent-ink hover:underline"
-              >
-                View all &rarr;
-              </button>
-            ) : null}
-          </div>
+          {communityTournaments.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => setTab("tournaments")}
+              className="font-mono text-xs font-semibold text-accent-ink hover:underline"
+            >
+              View all &rarr;
+            </button>
+          ) : null}
         </div>
 
         {isLoadingTournaments && communityTournaments.length === 0 ? (
@@ -638,20 +628,10 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
                 ? "Host the first tournament for your community to bring member clubs and players together."
                 : "Upcoming tournaments organized by this community will appear here."}
             </p>
-            {canManage ? (
-              <div className="mt-4">
-                <Link
-                  href={`/dashboard/efootball/tournaments/create?communityId=${community.id}`}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-xs font-semibold text-bg shadow-sm transition-all hover:opacity-90"
-                >
-                  <PlusIcon className="h-4 w-4" />
-                  {t.dashboard.shell.navCreateTournament}
-                </Link>
-              </div>
-            ) : null}
           </div>
         )}
       </div>
+      ) : null}
 
       <div className="mt-6 flex flex-wrap gap-2">
         {tabs.map((tb) => (
@@ -688,6 +668,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
             communityId={community.id}
             tournaments={communityTournaments}
             isLoading={isLoadingTournaments}
+            canManage={canManage}
           />
         ) : null}
       </div>
