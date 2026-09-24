@@ -164,6 +164,15 @@ export function useCommunity(communityId: string) {
   });
 }
 
+export function useCommunityMembers(communityId: string) {
+  return useQuery({
+    queryKey: communityKeys.members(communityId),
+    queryFn: () => getCommunityMembersRequest(communityId),
+    enabled: Boolean(communityId),
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
 export function useTransferCommunityPresident(communityId: string) {
   const queryClient = useQueryClient();
   return useMutation({

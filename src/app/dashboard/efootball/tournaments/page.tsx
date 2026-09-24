@@ -93,10 +93,10 @@ export default function TournamentsPage() {
   // Stats calculation across the current active tab
   const stats = useMemo(() => {
     const liveCount = tournaments.filter(
-      (tour) => tour.status === "ongoing",
+      (tour) => tour.status === "ongoing" || tour.status === "live",
     ).length;
     const openCount = tournaments.filter(
-      (tour) => tour.status === "open",
+      (tour) => tour.status === "open" || tour.status === "registration_open",
     ).length;
     const totalPrizePool = tournaments.reduce(
       (sum, tour) => sum + (tour.prizePoolBdt || 0),

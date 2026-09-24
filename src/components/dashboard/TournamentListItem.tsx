@@ -7,6 +7,8 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const toneByStatus: Record<string, StatusTone> = {
   open: "info",
+  registration_open: "info",
+  submission_phase: "warning",
   registration_closed: "neutral",
   ongoing: "danger",
   live: "danger",
@@ -38,12 +40,14 @@ export function TournamentListItem({
   const rawStatus = (tournament.status || "open") as string;
   const statusLabel = {
     open: t.dashboard.tournaments.statusOpen || "Open",
+    registration_open: t.dashboard.tournaments.statusOpen || "Registration Open",
+    submission_phase: "Submission Phase",
     registration_closed: "Registration Closed",
     ongoing: "Live Now",
     live: t.dashboard.tournaments.statusLive || "Live Now",
     completed: t.dashboard.tournaments.statusCompleted || "Completed",
     cancelled: "Cancelled",
-  }[rawStatus] || rawStatus;
+  }[rawStatus] || (rawStatus === "registration_open" ? "Registration Open" : rawStatus);
 
   const entrants = tournament.participants?.length ?? tournament.entrants ?? 0;
   const prize = tournament.prizePoolBdt ?? null;

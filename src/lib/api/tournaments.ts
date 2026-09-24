@@ -4,8 +4,11 @@ export type TournamentType = "pvp" | "cvc";
 export type TournamentPreset = "preset_11v11" | "preset_8v8" | "custom";
 export type TournamentStatus =
   | "open"
+  | "registration_open"
+  | "submission_phase"
   | "registration_closed"
   | "ongoing"
+  | "live"
   | "completed"
   | "cancelled";
 export type ParticipantType = "club" | "player";
@@ -99,13 +102,15 @@ export interface BackendTournament {
   endAt: string | null;
   teamSubmissionDeadline: string;
   communityId: string;
-  createdById: string;
+  createdById?: string;
+  creatorId?: string;
   bracket: TournamentBracket | null;
   createdAt: string;
   updatedAt: string;
   community?: {
     id: string;
     name: string;
+    creatorId?: string;
     color?: string;
     initials?: string;
     dpUrl?: string | null;

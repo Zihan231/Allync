@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
+import { useMockPeople } from "@/lib/mock/communityStore";
 import {
   useTournament,
   useJoinTournament,
   useSubmitTournamentLineup,
   useGenerateTournamentBracket,
 } from "@/lib/api/hooks/useTournaments";
+import { useCommunityMembers } from "@/lib/api/hooks/useCommunities";
 import { getClub } from "@/lib/api/clubs";
 import { getTeams, getClubMembers, type Team, type ClubMemberProfile } from "@/lib/api/teams";
 import type { BackendClub } from "@/lib/api/types";
@@ -90,9 +92,12 @@ export default function TournamentDetailPage({
   }
 
   const { data: tournament, isLoading, refetch } = useTournament(tournamentId);
+  const { data: communityMembers = [], isLoading: isLoadingCommunityMembers } =
+    useCommunityMembers(tournament?.communityId ?? "");
   const joinMutation = useJoinTournament(tournamentId);
   const submitLineupMutation = useSubmitTournamentLineup(tournamentId);
   const generateBracketMutation = useGenerateTournamentBracket(tournamentId);
+  const people = useMockPeople();
 
   // Club and teams state for CvC
   const [userClubDetails, setUserClubDetails] = useState<BackendClub | null>(null);
@@ -144,6 +149,11 @@ export default function TournamentDetailPage({
     };
   }, [user?.club?.id]);
 
+  const currentUserPerson = useMemo(
+    () => people.find((p) => p.id === user?.id || p.id === user?.personId),
+    [people, user?.id, user?.personId]
+  );
+
   if (isLoading) {
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-3">
@@ -163,13 +173,46 @@ export default function TournamentDetailPage({
     );
   }
 
+  // Normalized Status
+  const rawStatus = (tournament.status || "open").toLowerCase();
+  const isRegistrationOpen = rawStatus === "open" || rawStatus === "registration_open";
+  const isOngoing = rawStatus === "ongoing" || rawStatus === "live";
+  const isCompleted = rawStatus === "completed";
+  const isRegistrationClosed = rawStatus === "registration_closed" || rawStatus === "submission_phase";
+
   // Permissions and Eligibility Checks
   const isOrganizer =
+    tournament.creatorId === user?.id ||
     tournament.createdById === user?.id ||
+    tournament.community?.creatorId === user?.id ||
     tournament.community?.presidentId === user?.id ||
     tournament.community?.vicePresidentId === user?.id ||
     (user?.community?.id === tournament.communityId &&
       (user?.community?.role === "President" || user?.community?.role === "Vice President"));
+
+  const currentUserIds = [user?.id, user?.personId].filter(
+    (id): id is string => Boolean(id),
+  );
+  const isCurrentUserId = (candidateId?: string) =>
+    Boolean(candidateId && currentUserIds.includes(candidateId));
+  const currentCommunityMembership = communityMembers.find((member) =>
+    isCurrentUserId(member.id),
+  );
+  const hostingCommunityRole =
+    currentCommunityMembership?.communityRole ??
+    (user?.community?.id === tournament.communityId
+      ? user.community.role
+      : currentUserPerson?.communityId === tournament.communityId
+        ? currentUserPerson.communityRole
+        : null);
+  const isHostingCommunityLeader =
+    hostingCommunityRole === "President" ||
+    hostingCommunityRole === "Vice President" ||
+    isCurrentUserId(tournament.community?.creatorId) ||
+    isCurrentUserId(tournament.community?.presidentId) ||
+    isCurrentUserId(tournament.community?.vicePresidentId);
+  const canShowJoinAction =
+    !isLoadingCommunityMembers && !isHostingCommunityLeader;
 
   const isCvC = tournament.type === "cvc";
 
@@ -178,7 +221,7 @@ export default function TournamentDetailPage({
     if (isCvC) {
       return p.clubId === user?.club?.id;
     }
-    return p.userId === user?.id;
+    return p.userId === user?.id || p.userId === user?.personId;
   });
 
   const isRegistered = Boolean(myParticipation);
@@ -197,7 +240,11 @@ export default function TournamentDetailPage({
   // Player community membership for PvP
   const playerBelongsToCommunity =
     user?.community?.id === tournament.communityId ||
+    currentUserPerson?.communityId === tournament.communityId ||
+    tournament.creatorId === user?.id ||
+    tournament.creatorId === user?.personId ||
     tournament.createdById === user?.id ||
+    tournament.community?.creatorId === user?.id ||
     tournament.community?.presidentId === user?.id ||
     tournament.community?.vicePresidentId === user?.id;
 
@@ -467,20 +514,30 @@ export default function TournamentDetailPage({
 
           {/* Quick Header CTA */}
           <div className="flex flex-wrap items-center gap-3">
-            {!isRegistered && tournament.status === "open" && (
+            {canShowJoinAction && !isRegistered && isRegistrationOpen && (
               <>
-                {isCvC && canJoinCvC && clubBelongsToCommunity && (
-                  <button
-                    onClick={handleJoinTournament}
-                    disabled={joinMutation.isPending}
-                    className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40"
-                  >
-                    <FlameIcon className="h-4 w-4" />
-                    {joinMutation.isPending ? "Joining..." : `Register ${user?.club?.name}`}
-                  </button>
-                )}
-
-                {!isCvC && (
+                {isCvC ? (
+                  canJoinCvC && clubBelongsToCommunity ? (
+                    <button
+                      onClick={handleJoinTournament}
+                      disabled={joinMutation.isPending}
+                      className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40 cursor-pointer"
+                    >
+                      <FlameIcon className="h-4 w-4" />
+                      {joinMutation.isPending ? "Joining..." : `Register ${user?.club?.name}`}
+                    </button>
+                  ) : user?.club ? (
+                    <div className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300">
+                      <UsersIcon className="h-3.5 w-3.5 text-amber-400" />
+                      <span>CvC: Club President registers {user?.club?.name}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface-raised px-4 py-2 text-xs font-medium text-ink-soft">
+                      <UsersIcon className="h-3.5 w-3.5 text-ink-muted" />
+                      <span>Join a club to participate</span>
+                    </div>
+                  )
+                ) : (
                   !playerBelongsToCommunity ? (
                     <div className="flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-300">
                       <span>Must be a community member</span>
@@ -495,24 +552,39 @@ export default function TournamentDetailPage({
                     <button
                       onClick={handleJoinTournament}
                       disabled={joinMutation.isPending}
-                      className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40"
+                      className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-7 py-3.5 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40 cursor-pointer"
                     >
                       <FlameIcon className="h-4 w-4" />
-                      {joinMutation.isPending ? "Joining..." : "Join Tournament"}
+                      {joinMutation.isPending ? "Joining..." : "Participate (Join Tournament)"}
                     </button>
                   )
                 )}
               </>
             )}
 
-            {isRegistered && isCvC && (
-              <button
-                onClick={() => setActiveTab("lineup")}
-                className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-5 py-2.5 font-display text-xs font-bold text-accent-ink transition-all hover:bg-accent hover:text-bg hover:shadow-[0_0_20px_rgba(217,165,68,0.3)]"
-              >
-                <ShieldIcon className="h-4 w-4" />
-                {myParticipation?.lineup ? "Manage Official Lineup" : "Submit Lineup"}
-              </button>
+            {isRegistered && (
+              <>
+                {isCvC ? (
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-xs font-bold text-emerald-300">
+                      <CheckIcon className="h-3.5 w-3.5 text-emerald-400" />
+                      {user?.club?.name || "Club"} Enrolled
+                    </span>
+                    <button
+                      onClick={() => setActiveTab("lineup")}
+                      className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-5 py-2.5 font-display text-xs font-bold text-accent-ink transition-all hover:bg-accent hover:text-bg hover:shadow-[0_0_20px_rgba(217,165,68,0.3)] cursor-pointer"
+                    >
+                      <ShieldIcon className="h-4 w-4" />
+                      {myParticipation?.lineup ? "Manage Official Lineup" : "Submit Lineup"}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-5 py-2.5 text-xs font-bold text-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.25)]">
+                    <CheckIcon className="h-4 w-4 text-emerald-400" />
+                    Enrolled as Player
+                  </span>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -531,7 +603,7 @@ export default function TournamentDetailPage({
       )}
 
       {/* 2-HOUR CUTOFF COCKPIT COUNTDOWN BANNER */}
-      {isCvC && tournament.status === "open" && (
+      {isCvC && isRegistrationOpen && (
         <div className="relative mt-8 overflow-hidden rounded-3xl border border-accent/40 bg-gradient-to-r from-accent/15 via-surface/85 to-blue-500/10 p-6 md:p-8 backdrop-blur-xl shadow-[0_10px_35px_-10px_rgba(217,165,68,0.25)]">
           {/* Subtle grid texture overlay */}
           <div className="pointer-events-none absolute inset-0 bg-grid opacity-25" />
@@ -715,7 +787,9 @@ export default function TournamentDetailPage({
                     ? "Official match lineup is verified and locked for bracket play."
                     : "Your club is enrolled. Please complete and submit your match lineup before the 2-hour cutoff."
                   : "You are enrolled in this tournament."
-                : isCvC
+                : isHostingCommunityLeader
+                  ? "Community Presidents and Vice Presidents manage this tournament and cannot participate."
+                  : isCvC
                   ? "Only the President or General Secretary can register their club for this community tournament."
                   : !playerBelongsToCommunity
                     ? "You must be a member of this community to join this PvP tournament."
@@ -725,7 +799,7 @@ export default function TournamentDetailPage({
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Join Tournament Button */}
-            {!isRegistered && tournament.status === "open" && (
+            {canShowJoinAction && !isRegistered && isRegistrationOpen && (
               <>
                 {isCvC ? (
                   !user?.club ? (
@@ -766,7 +840,7 @@ export default function TournamentDetailPage({
                       disabled={joinMutation.isPending}
                       className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
                     >
-                      {joinMutation.isPending ? "Joining..." : "Join Tournament"}
+                      {joinMutation.isPending ? "Joining..." : "Participate (Join Tournament)"}
                     </button>
                   )
                 )}

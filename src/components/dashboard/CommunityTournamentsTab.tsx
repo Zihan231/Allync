@@ -7,8 +7,8 @@ import { TrophyIcon } from "../icons";
 
 const STATUS_GROUPS: { key: string; label: string; matches: string[] }[] = [
   { key: "live", label: "Live Now", matches: ["ongoing", "live"] },
-  { key: "open", label: "Registration Open", matches: ["open"] },
-  { key: "registration_closed", label: "Registration Closed", matches: ["registration_closed"] },
+  { key: "open", label: "Registration Open", matches: ["open", "registration_open"] },
+  { key: "registration_closed", label: "Registration Closed", matches: ["registration_closed", "submission_phase"] },
   { key: "completed", label: "Completed", matches: ["completed"] },
 ];
 
