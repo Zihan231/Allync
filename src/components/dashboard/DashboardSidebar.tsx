@@ -91,7 +91,7 @@ export function DashboardSidebar({
       {items.map((item) => {
         const active = isActive(item.href);
         return (
-          <Link
+          <a
             key={item.href}
             href={item.href}
             onClick={onClose}
@@ -103,7 +103,7 @@ export function DashboardSidebar({
           >
             <item.icon className="h-4.5 w-4.5" />
             {item.label}
-          </Link>
+          </a>
         );
       })}
     </nav>
