@@ -7,7 +7,7 @@ import type { Tournament } from "@/lib/mock/types";
 import type { BackendTournament } from "@/lib/api/tournaments";
 import { TournamentCard } from "./TournamentCard";
 import { TournamentCardSkeleton } from "./TournamentCardSkeleton";
-import { PlusIcon, TrophyIcon } from "../icons";
+import { FilterIcon, PlusIcon, TrophyIcon } from "../icons";
 
 type TournamentItem = Tournament | BackendTournament;
 type FilterKey = "all" | "open" | "live" | "closed" | "completed";
@@ -30,6 +30,10 @@ function getStatus(tournament: TournamentItem) {
   return String(tournament.status || "open").toLowerCase();
 }
 
+function getPrize(tournament: TournamentItem) {
+  return Math.max(0, Number(tournament.prizePoolBdt) || 0);
+}
+
 function getVisiblePages(currentPage: number, totalPages: number) {
   const visibleCount = Math.min(5, totalPages);
   const start = Math.max(1, Math.min(currentPage - 2, totalPages - visibleCount + 1));
@@ -50,6 +54,9 @@ export function CommunityTournamentsTab({
   const { t } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [page, setPage] = useState(1);
+  const [showPrizeFilter, setShowPrizeFilter] = useState(false);
+  const [minPrize, setMinPrize] = useState(0);
+  const [maxPrize, setMaxPrize] = useState<number | null>(null);
 
   if (isLoading) {
     return (
@@ -70,10 +77,18 @@ export function CommunityTournamentsTab({
     );
   }
 
+  const highestPrize = Math.max(0, ...tournaments.map(getPrize));
+  const prizeCeiling = Math.max(1000, Math.ceil(highestPrize / 500) * 500);
+  const effectiveMaxPrize = Math.min(maxPrize ?? prizeCeiling, prizeCeiling);
+  const hasPrizeFilter = minPrize > 0 || effectiveMaxPrize < prizeCeiling;
+  const prizeFilteredTournaments = tournaments.filter((tournament) => {
+    const prize = getPrize(tournament);
+    return prize >= minPrize && prize <= effectiveMaxPrize;
+  });
   const selectedFilter = FILTERS.find((filter) => filter.key === activeFilter) ?? FILTERS[0];
   const filteredTournaments = selectedFilter.statuses
-    ? tournaments.filter((tournament) => selectedFilter.statuses?.includes(getStatus(tournament)))
-    : tournaments;
+    ? prizeFilteredTournaments.filter((tournament) => selectedFilter.statuses?.includes(getStatus(tournament)))
+    : prizeFilteredTournaments;
   const totalPages = Math.max(1, Math.ceil(filteredTournaments.length / ITEMS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
   const firstItemIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -81,9 +96,28 @@ export function CommunityTournamentsTab({
   const visiblePages = getVisiblePages(currentPage, totalPages);
   const liveCount = tournaments.filter((tournament) => ["ongoing", "live"].includes(getStatus(tournament))).length;
   const openCount = tournaments.filter((tournament) => ["open", "registration_open"].includes(getStatus(tournament))).length;
+  const minPrizePercent = (minPrize / prizeCeiling) * 100;
+  const maxPrizePercent = (effectiveMaxPrize / prizeCeiling) * 100;
 
   const selectFilter = (filter: FilterKey) => {
     setActiveFilter(filter);
+    setPage(1);
+  };
+
+  const updateMinPrize = (value: number) => {
+    setMinPrize(Math.min(Math.max(0, value), effectiveMaxPrize));
+    setPage(1);
+  };
+
+  const updateMaxPrize = (value: number) => {
+    setMaxPrize(Math.max(minPrize, Math.min(prizeCeiling, value)));
+    setPage(1);
+  };
+
+  const clearFilters = () => {
+    setActiveFilter("all");
+    setMinPrize(0);
+    setMaxPrize(null);
     setPage(1);
   };
 
@@ -134,14 +168,14 @@ export function CommunityTournamentsTab({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <div className="overflow-x-auto pb-1" role="group" aria-label="Filter tournaments by status">
+      <div className="space-y-3">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0 overflow-x-auto pb-1" role="group" aria-label="Filter tournaments by status">
             <div className="flex min-w-max gap-2">
               {FILTERS.map((filter) => {
                 const count = filter.statuses
-                  ? tournaments.filter((tournament) => filter.statuses?.includes(getStatus(tournament))).length
-                  : tournaments.length;
+                  ? prizeFilteredTournaments.filter((tournament) => filter.statuses?.includes(getStatus(tournament))).length
+                  : prizeFilteredTournaments.length;
                 const active = activeFilter === filter.key;
 
                 return (
@@ -169,13 +203,95 @@ export function CommunityTournamentsTab({
               })}
             </div>
           </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              aria-expanded={showPrizeFilter}
+              aria-controls="community-prize-filter"
+              onClick={() => setShowPrizeFilter((visible) => !visible)}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                hasPrizeFilter
+                  ? "border-accent bg-accent-soft text-accent-ink"
+                  : "border-surface-line bg-surface/40 text-ink-soft hover:border-surface-line-strong hover:text-ink"
+              }`}
+            >
+              <FilterIcon className="h-4 w-4" />
+              {hasPrizeFilter
+                ? `BDT ${minPrize.toLocaleString()}–${effectiveMaxPrize.toLocaleString()}`
+                : "Prize range"}
+            </button>
+
+            {filteredTournaments.length > 0 ? (
+              <p className="shrink-0 font-mono text-xs text-ink-faint" aria-live="polite">
+                Showing {firstItemIndex + 1}–{Math.min(firstItemIndex + ITEMS_PER_PAGE, filteredTournaments.length)} of{" "}
+                {filteredTournaments.length}
+              </p>
+            ) : null}
+          </div>
         </div>
 
-        {filteredTournaments.length > 0 ? (
-          <p className="shrink-0 font-mono text-xs text-ink-faint" aria-live="polite">
-            Showing {firstItemIndex + 1}–{Math.min(firstItemIndex + ITEMS_PER_PAGE, filteredTournaments.length)} of{" "}
-            {filteredTournaments.length}
-          </p>
+        {showPrizeFilter ? (
+          <div id="community-prize-filter" className="rounded-2xl border border-surface-line bg-surface/45 p-4 sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="font-display text-sm font-bold text-ink">Prize money</h3>
+                <p className="mt-1 text-xs text-ink-soft">Show tournaments within this prize-pool range.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="rounded-full bg-accent-soft px-3 py-1 font-mono text-xs font-semibold text-accent-ink">
+                  BDT {minPrize.toLocaleString()} – {effectiveMaxPrize.toLocaleString()}
+                </span>
+                {hasPrizeFilter ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMinPrize(0);
+                      setMaxPrize(null);
+                      setPage(1);
+                    }}
+                    className="min-h-11 px-2 text-sm font-semibold text-ink-soft transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  >
+                    Reset
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <div className="relative h-6">
+                <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-surface-line" />
+                <div
+                  className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-accent"
+                  style={{ left: `${minPrizePercent}%`, right: `${100 - maxPrizePercent}%` }}
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={prizeCeiling}
+                  step={100}
+                  value={minPrize}
+                  onChange={(event) => updateMinPrize(Number(event.target.value))}
+                  aria-label="Minimum prize money"
+                  className="range-thumb pointer-events-none absolute inset-0 w-full appearance-none bg-transparent"
+                />
+                <input
+                  type="range"
+                  min={0}
+                  max={prizeCeiling}
+                  step={100}
+                  value={effectiveMaxPrize}
+                  onChange={(event) => updateMaxPrize(Number(event.target.value))}
+                  aria-label="Maximum prize money"
+                  className="range-thumb pointer-events-none absolute inset-0 w-full appearance-none bg-transparent"
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between font-mono text-xs text-ink-faint">
+                <span>BDT 0</span>
+                <span>BDT {prizeCeiling.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
         ) : null}
       </div>
 
@@ -197,20 +313,22 @@ export function CommunityTournamentsTab({
           <h3 className="mt-4 font-display text-base font-bold text-ink">
             {tournaments.length === 0
               ? t.dashboard.tournaments.noTournaments || "No tournaments yet"
-              : `No ${selectedFilter.label.toLowerCase()} tournaments`}
+              : hasPrizeFilter
+                ? "No tournaments in this prize range"
+                : `No ${selectedFilter.label.toLowerCase()} tournaments`}
           </h3>
           <p className="mt-1 text-sm text-ink-soft">
             {tournaments.length === 0
               ? "New tournaments hosted by this community will appear here."
-              : "Try another status to see more competitions."}
+              : "Try another status or clear the prize range."}
           </p>
           {tournaments.length > 0 ? (
             <button
               type="button"
-              onClick={() => selectFilter("all")}
+              onClick={clearFilters}
               className="mt-5 min-h-11 rounded-full border border-accent/50 bg-accent-soft px-5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
-              View all tournaments
+              Clear filters
             </button>
           ) : null}
         </div>
