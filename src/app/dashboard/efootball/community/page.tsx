@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockCommunities, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
+import { mockCommunities } from "@/lib/mock/communities";
 import { AppLoader } from "@/components/common/AppLoader";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
@@ -14,10 +15,16 @@ import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { Pagination } from "@/components/dashboard/Pagination";
 import { PlusIcon, SearchIcon, UsersIcon } from "@/components/icons";
 
+const DEMO_COMMUNITY_IDS = new Set(mockCommunities.map((community) => community.id));
+
 export default function CommunityBrowsePage() {
   const { t } = useLanguage();
   const { user, isLoading: sessionLoading } = useSession();
-  const communities = useMockCommunities();
+  const syncedCommunities = useMockCommunities();
+  const communities = useMemo(
+    () => syncedCommunities.filter((community) => !DEMO_COMMUNITY_IDS.has(community.id)),
+    [syncedCommunities],
+  );
   const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -32,10 +39,6 @@ export default function CommunityBrowsePage() {
       mounted = false;
     };
   }, []);
-
-  useEffect(() => {
-    setPage(1);
-  }, [search]);
 
   const myCommunity = user.community ? communities.find((c) => c.id === user.community!.id) : null;
   const otherCommunities = communities.filter((c) => c.id !== user.community?.id);
@@ -93,7 +96,10 @@ export default function CommunityBrowsePage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search communities..."
             className="w-full rounded-lg border border-surface-line-strong bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-faint"
           />
