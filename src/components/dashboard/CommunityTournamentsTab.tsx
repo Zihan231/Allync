@@ -7,7 +7,7 @@ import type { Tournament } from "@/lib/mock/types";
 import type { BackendTournament } from "@/lib/api/tournaments";
 import { TournamentCard } from "./TournamentCard";
 import { TournamentCardSkeleton } from "./TournamentCardSkeleton";
-import { FilterIcon, PlusIcon, TrophyIcon } from "../icons";
+import { BracketIcon, FilterIcon, FlameIcon, PlusIcon, TrophyIcon, UsersIcon } from "../icons";
 
 type TournamentItem = Tournament | BackendTournament;
 type FilterKey = "all" | "open" | "live" | "closed" | "completed";
@@ -153,47 +153,93 @@ export function CommunityTournamentsTab({
 
   return (
     <section className="space-y-5" aria-labelledby="community-tournaments-heading">
-      <div className="relative overflow-hidden rounded-2xl border border-surface-line bg-gradient-to-br from-surface via-surface/80 to-bg-raised p-5 sm:p-6">
-        <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-accent/10 blur-3xl" />
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-start gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-accent-soft text-accent-ink">
-              <TrophyIcon className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 id="community-tournaments-heading" className="font-display text-lg font-bold text-ink sm:text-xl">
-                Community tournaments
-              </h2>
-              <p className="mt-1 max-w-xl text-sm leading-6 text-ink-soft">
-                Browse every competition hosted by this community and open a card for full details.
-              </p>
-            </div>
-          </div>
+      <div className="relative isolate overflow-hidden rounded-3xl border border-accent/20 bg-[#0d1118] shadow-[0_24px_60px_-36px_rgba(217,165,68,0.55)]">
+        <div className="pointer-events-none absolute inset-0 bg-grid opacity-25" aria-hidden="true" />
+        <div
+          className="pointer-events-none absolute -left-24 -top-28 h-72 w-72 rounded-full bg-accent/15 blur-3xl"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -bottom-32 right-0 h-72 w-72 rounded-full bg-blue/10 blur-3xl"
+          aria-hidden="true"
+        />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent to-transparent" />
 
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
+        <div className="relative grid gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)] lg:items-center lg:gap-8">
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-accent-ink">
+              <TrophyIcon className="h-3.5 w-3.5" />
+              Tournament hub
+            </div>
+            <h2
+              id="community-tournaments-heading"
+              className="mt-4 max-w-xl font-display text-2xl font-black tracking-tight text-ink sm:text-3xl"
+            >
+              Community tournaments
+            </h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-ink-soft sm:text-[15px]">
+              Browse every competition hosted by this community and open a card for schedules, entrants, and full details.
+            </p>
+
             {canManage ? (
               <Link
                 href={`/dashboard/efootball/tournaments/create?communityId=${communityId}`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-5 font-display text-sm font-semibold text-bg shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 font-display text-sm font-bold text-bg shadow-[0_10px_28px_-14px_rgba(217,165,68,0.9)] transition-all hover:-translate-y-0.5 hover:bg-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
               >
                 <PlusIcon className="h-4 w-4" />
                 {t.dashboard.shell.navCreateTournament}
               </Link>
             ) : null}
-            <div className="grid w-full grid-cols-3 gap-2 sm:min-w-64">
-              {[
-                { label: "Total", value: tournaments.length },
-                { label: "Open", value: openCount },
-                { label: "Live", value: liveCount },
-              ].map((stat) => (
-                <div key={stat.label} className="rounded-xl border border-surface-line bg-bg/45 px-3 py-2.5 text-center">
-                  <div className="font-display text-lg font-bold text-ink">{stat.value}</div>
-                  <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
-                    {stat.label}
-                  </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {[
+              {
+                label: "Total",
+                value: tournaments.length,
+                icon: BracketIcon,
+                cardClass: "border-accent/25 bg-accent/10",
+                iconClass: "bg-accent/15 text-accent-ink",
+                valueClass: "text-accent-ink",
+              },
+              {
+                label: "Open",
+                value: openCount,
+                icon: UsersIcon,
+                cardClass: "border-success/25 bg-success-soft/60",
+                iconClass: "bg-success/15 text-success-ink",
+                valueClass: "text-success-ink",
+              },
+              {
+                label: "Live",
+                value: liveCount,
+                icon: FlameIcon,
+                cardClass: "border-danger/25 bg-danger-soft/60",
+                iconClass: "bg-danger/15 text-danger-ink",
+                valueClass: "text-danger-ink",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className={`relative overflow-hidden rounded-2xl border p-3 backdrop-blur-sm sm:p-4 ${stat.cardClass}`}
+              >
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${stat.iconClass}`}>
+                  <stat.icon className="h-4 w-4" />
                 </div>
-              ))}
-            </div>
+                <div className={`mt-5 font-display text-2xl font-black leading-none sm:text-3xl ${stat.valueClass}`}>
+                  {stat.value}
+                </div>
+                <div className="mt-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft">
+                  {stat.label}
+                </div>
+                {stat.label === "Live" && stat.value > 0 ? (
+                  <span
+                    className="absolute right-3 top-3 h-2 w-2 rounded-full bg-danger motion-safe:animate-pulse"
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </div>
+            ))}
           </div>
         </div>
       </div>
