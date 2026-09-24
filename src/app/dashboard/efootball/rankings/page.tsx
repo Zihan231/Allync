@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useMockPeople, useMockClubs, useMockCommunities } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -11,6 +11,8 @@ import { DualRangeSlider } from "@/components/dashboard/DualRangeSlider";
 import { Pagination } from "@/components/dashboard/Pagination";
 import { FilterModal } from "@/components/dashboard/FilterModal";
 import { FilterIcon } from "@/components/icons";
+import { AppLoader } from "@/components/common/AppLoader";
+import { useUrlTab } from "@/lib/navigation/useUrlTab";
 import {
   getPlayerRankings,
   getClubRankings,
@@ -24,13 +26,22 @@ import {
 } from "@/lib/mock/rankingsData";
 
 type Tab = "players" | "clubs" | "communities";
+const RANKING_TABS: readonly Tab[] = ["players", "clubs", "communities"];
 const PAGE_SIZE = 20;
 
 type Range2 = [number, number];
 
 export default function RankingsPage() {
+  return (
+    <Suspense fallback={<AppLoader />}>
+      <RankingsContent />
+    </Suspense>
+  );
+}
+
+function RankingsContent() {
   const { t } = useLanguage();
-  const [tab, setTab] = useState<Tab>("players");
+  const [tab, setTab] = useUrlTab(RANKING_TABS, "players");
   const people = useMockPeople();
   const clubs = useMockClubs();
   const communities = useMockCommunities();

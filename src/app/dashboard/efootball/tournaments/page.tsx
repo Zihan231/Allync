@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
@@ -8,6 +8,8 @@ import { getCommunities } from "@/lib/api/communities";
 import { useEffect } from "react";
 import { useTournaments } from "@/lib/api/hooks/useTournaments";
 import type { TournamentType, TournamentStatus } from "@/lib/api/tournaments";
+import { useUrlTab } from "@/lib/navigation/useUrlTab";
+import { AppLoader } from "@/components/common/AppLoader";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { TournamentCard } from "@/components/dashboard/TournamentCard";
@@ -24,8 +26,17 @@ import {
 } from "@/components/icons";
 
 const PAGE_SIZE = 9;
+const TOURNAMENT_TABS: readonly TournamentType[] = ["cvc", "pvp"];
 
 export default function TournamentsPage() {
+  return (
+    <Suspense fallback={<AppLoader />}>
+      <TournamentsContent />
+    </Suspense>
+  );
+}
+
+function TournamentsContent() {
   const { t } = useLanguage();
   const { user } = useSession();
   const [communities, setCommunities] = useState<any[]>([]);
@@ -43,7 +54,7 @@ export default function TournamentsPage() {
     );
     return sessionRole || ownsCommunity;
   }, [user, communities]);
-  const [activeTab, setActiveTab] = useState<TournamentType>("cvc");
+  const [activeTab, setActiveTab] = useUrlTab(TOURNAMENT_TABS, "cvc");
   const [search, setSearch] = useState("");
   const [feeFilter, setFeeFilter] = useState<"all" | "free" | "paid">("all");
   const [prizeFilter, setPrizeFilter] = useState<"all" | "with_prize" | "friendly">("all");

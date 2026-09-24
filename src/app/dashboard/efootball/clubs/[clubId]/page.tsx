@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { Suspense, use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -42,6 +42,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/lib/useToast";
 import { ToastContainer } from "@/components/common/Toast";
 import { useConfirm } from "@/lib/useConfirm";
+import { useUrlTab } from "@/lib/navigation/useUrlTab";
 
 type Tab =
   | "overview"
@@ -57,7 +58,30 @@ type Tab =
   | "teamUp"
   | "tournaments";
 
+const CLUB_TABS: readonly Tab[] = [
+  "overview",
+  "fixtures",
+  "squad",
+  "teams",
+  "transfers",
+  "rankings",
+  "table",
+  "rounds",
+  "roundStats",
+  "matchStats",
+  "teamUp",
+  "tournaments",
+];
+
 export default function ClubDetailPage({ params }: { params: Promise<{ clubId: string }> }) {
+  return (
+    <Suspense fallback={<AppLoader />}>
+      <ClubDetailContent params={params} />
+    </Suspense>
+  );
+}
+
+function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) {
   const { clubId } = use(params);
   const { t } = useLanguage();
   const { user, setClub, refreshSession } = useSession();
@@ -67,7 +91,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
   const people = useMockPeople();
   const joinRequests = useMockJoinRequests();
   const tournaments = useMockTournaments();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useUrlTab(CLUB_TABS, "overview");
   const [showChangeManagerModal, setShowChangeManagerModal] = useState(false);
   const [showTransferAuthorityModal, setShowTransferAuthorityModal] = useState(false);
   const { confirm, confirmProps } = useConfirm();

@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { Suspense, use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -23,6 +23,8 @@ import type {
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { AppLoader } from "@/components/common/AppLoader";
+import { useUrlTab } from "@/lib/navigation/useUrlTab";
 import {
   TrophyIcon,
   BracketIcon,
@@ -37,6 +39,13 @@ import {
   ShieldIcon,
   FlameIcon,
 } from "@/components/icons";
+
+type TournamentDetailTab = "bracket" | "participants" | "lineup";
+const TOURNAMENT_DETAIL_TABS: readonly TournamentDetailTab[] = [
+  "bracket",
+  "participants",
+  "lineup",
+];
 
 // Live Countdown Timer Hook
 function useSubmissionCountdown(deadlineIso?: string) {
@@ -78,6 +87,18 @@ export default function TournamentDetailPage({
 }: {
   params: Promise<{ tournamentId: string }>;
 }) {
+  return (
+    <Suspense fallback={<AppLoader />}>
+      <TournamentDetailContent params={params} />
+    </Suspense>
+  );
+}
+
+function TournamentDetailContent({
+  params,
+}: {
+  params: Promise<{ tournamentId: string }>;
+}) {
   const { tournamentId } = use(params);
   const { t } = useLanguage();
   const { user } = useSession();
@@ -106,7 +127,7 @@ export default function TournamentDetailPage({
   const [loadingClubData, setLoadingClubData] = useState(false);
 
   // Active tab and builder states
-  const [activeTab, setActiveTab] = useState<"bracket" | "participants" | "lineup">("bracket");
+  const [activeTab, setActiveTab] = useUrlTab(TOURNAMENT_DETAIL_TABS, "bracket");
   const [submissionType, setSubmissionType] = useState<"preset" | "custom">("preset");
   const [selectedTeamId, setSelectedTeamId] = useState<string>("");
   const [customStarters, setCustomStarters] = useState<TournamentLineupPlayer[]>([]);

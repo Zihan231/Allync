@@ -34,6 +34,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useConfirm } from "@/lib/useConfirm";
 import { useToast } from "@/lib/useToast";
 import { ToastContainer } from "@/components/common/Toast";
+import { useUrlTab } from "@/lib/navigation/useUrlTab";
 
 const BLOOD_GROUPS: BloodGroup[] = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const INSTITUTE_TYPES: EducationEntry["instituteType"][] = ["University", "College", "School", "Other"];
@@ -63,6 +64,13 @@ const DOCUMENT_TYPE_LABEL_KEY: Record<DocumentType, string> = {
 };
 
 export type ProfileTab = "account" | "social" | "personal" | "work_education" | "verification";
+const PROFILE_TABS: readonly ProfileTab[] = [
+  "account",
+  "social",
+  "personal",
+  "work_education",
+  "verification",
+];
 
 type FormState = {
   dpUrl: string | null;
@@ -199,7 +207,7 @@ export function ProfileEditForm() {
   const person = getPerson(user.id) || getPerson(user.personId);
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<ProfileTab>("account");
+  const [activeTab, setActiveTab] = useUrlTab(PROFILE_TABS, "account");
   const [showPassword, setShowPassword] = useState(false);
   const [editingTab, setEditingTab] = useState<ProfileTab | null>(null);
 

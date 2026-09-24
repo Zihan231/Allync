@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
@@ -43,10 +43,20 @@ import { useToast } from "@/lib/useToast";
 import { useConfirm } from "@/lib/useConfirm";
 import { useCommunity, useJoinCommunity, useLeaveCommunity, useRemoveClubFromCommunity } from "@/lib/api/hooks/useCommunities";
 import { isApiError } from "@/lib/api/axios";
+import { useUrlTab } from "@/lib/navigation/useUrlTab";
 
 type Tab = "overview" | "members" | "clubs" | "rankings" | "tournaments";
+const COMMUNITY_TABS: readonly Tab[] = ["overview", "members", "clubs", "rankings", "tournaments"];
 
 export default function CommunityDetailPage({ params }: { params: Promise<{ communityId: string }> }) {
+  return (
+    <Suspense fallback={<AppLoader />}>
+      <CommunityDetailContent params={params} />
+    </Suspense>
+  );
+}
+
+function CommunityDetailContent({ params }: { params: Promise<{ communityId: string }> }) {
   const { communityId } = use(params);
   const { t } = useLanguage();
   const { user, setCommunity, refreshSession } = useSession();
@@ -73,7 +83,7 @@ export default function CommunityDetailPage({ params }: { params: Promise<{ comm
   const tournaments = useMockTournaments();
   const { data: realTournaments = [], isLoading: isLoadingTournaments } = useTournaments({ communityId });
   const joinRequests = useMockJoinRequests();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useUrlTab(COMMUNITY_TABS, "overview");
   const [showTransferAuthorityModal, setShowTransferAuthorityModal] = useState(false);
   const [showJoinAsClubModal, setShowJoinAsClubModal] = useState(false);
   const [showWithdrawClubModal, setShowWithdrawClubModal] = useState(false);

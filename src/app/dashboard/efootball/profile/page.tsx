@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
@@ -262,7 +262,9 @@ export default function ProfilePage() {
 
       {/* Profile Edit Form */}
       <div className="mt-8">
-        <ProfileEditForm />
+        <Suspense fallback={<AppLoader />}>
+          <ProfileEditForm />
+        </Suspense>
       </div>
     </div>
   );
