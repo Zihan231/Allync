@@ -333,6 +333,22 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
   ];
 
   const isLoading = (isRemoteLoading && !community) || (!community && !synced);
+  const tabNavigationRef = useRef<HTMLDivElement>(null);
+  const hasRestoredTabScroll = useRef(false);
+
+  useEffect(() => {
+    if (isLoading || tab === "overview" || hasRestoredTabScroll.current) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      tabNavigationRef.current?.scrollIntoView({
+        behavior: "auto",
+        block: "start",
+      });
+      hasRestoredTabScroll.current = true;
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [isLoading, tab]);
 
   if (isLoading) {
     return <AppLoader />;
@@ -633,7 +649,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
       </div>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div ref={tabNavigationRef} className="mt-6 flex scroll-mt-24 flex-wrap gap-2">
         {tabs.map((tb) => (
           <button
             key={tb.key}
