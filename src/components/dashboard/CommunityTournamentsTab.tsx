@@ -57,6 +57,8 @@ export function CommunityTournamentsTab({
   const [showPrizeFilter, setShowPrizeFilter] = useState(false);
   const [minPrize, setMinPrize] = useState(0);
   const [maxPrize, setMaxPrize] = useState<number | null>(null);
+  const [minPrizeInput, setMinPrizeInput] = useState("0");
+  const [maxPrizeInput, setMaxPrizeInput] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -105,19 +107,47 @@ export function CommunityTournamentsTab({
   };
 
   const updateMinPrize = (value: number) => {
-    setMinPrize(Math.min(Math.max(0, value), effectiveMaxPrize));
+    const normalizedValue = Math.min(Math.max(0, value), effectiveMaxPrize);
+    setMinPrize(normalizedValue);
+    setMinPrizeInput(String(normalizedValue));
     setPage(1);
   };
 
   const updateMaxPrize = (value: number) => {
-    setMaxPrize(Math.max(minPrize, Math.min(prizeCeiling, value)));
+    const normalizedValue = Math.max(minPrize, Math.min(prizeCeiling, value));
+    setMaxPrize(normalizedValue);
+    setMaxPrizeInput(String(normalizedValue));
     setPage(1);
   };
+
+  const changeMinPrizeInput = (value: string) => {
+    setMinPrizeInput(value);
+    if (value === "") return;
+    const parsedValue = Number(value);
+    if (!Number.isFinite(parsedValue)) return;
+    setMinPrize(Math.min(Math.max(0, parsedValue), effectiveMaxPrize));
+    setPage(1);
+  };
+
+  const changeMaxPrizeInput = (value: string) => {
+    setMaxPrizeInput(value);
+    if (value === "") return;
+    const parsedValue = Number(value);
+    if (!Number.isFinite(parsedValue)) return;
+    setMaxPrize(Math.max(minPrize, Math.min(prizeCeiling, parsedValue)));
+    setPage(1);
+  };
+
+  const commitMinPrizeInput = () => updateMinPrize(Number(minPrizeInput) || 0);
+  const commitMaxPrizeInput = () =>
+    updateMaxPrize(maxPrizeInput === null || maxPrizeInput === "" ? prizeCeiling : Number(maxPrizeInput));
 
   const clearFilters = () => {
     setActiveFilter("all");
     setMinPrize(0);
     setMaxPrize(null);
+    setMinPrizeInput("0");
+    setMaxPrizeInput(null);
     setPage(1);
   };
 
@@ -170,8 +200,8 @@ export function CommunityTournamentsTab({
 
       <div className="space-y-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-          <div className="min-w-0 overflow-x-auto pb-1" role="group" aria-label="Filter tournaments by status">
-            <div className="flex min-w-max gap-2">
+          <div className="min-w-0" role="group" aria-label="Filter tournaments by status">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               {FILTERS.map((filter) => {
                 const count = filter.statuses
                   ? prizeFilteredTournaments.filter((tournament) => filter.statuses?.includes(getStatus(tournament))).length
@@ -184,7 +214,7 @@ export function CommunityTournamentsTab({
                     type="button"
                     aria-pressed={active}
                     onClick={() => selectFilter(filter.key)}
-                    className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                    className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto sm:px-4 ${
                       active
                         ? "border-accent bg-accent-soft text-accent-ink"
                         : "border-surface-line bg-surface/40 text-ink-soft hover:border-surface-line-strong hover:text-ink"
@@ -204,13 +234,13 @@ export function CommunityTournamentsTab({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
             <button
               type="button"
               aria-expanded={showPrizeFilter}
               aria-controls="community-prize-filter"
               onClick={() => setShowPrizeFilter((visible) => !visible)}
-              className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+              className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto ${
                 hasPrizeFilter
                   ? "border-accent bg-accent-soft text-accent-ink"
                   : "border-surface-line bg-surface/40 text-ink-soft hover:border-surface-line-strong hover:text-ink"
@@ -223,7 +253,7 @@ export function CommunityTournamentsTab({
             </button>
 
             {filteredTournaments.length > 0 ? (
-              <p className="shrink-0 font-mono text-xs text-ink-faint" aria-live="polite">
+              <p className="text-center font-mono text-xs text-ink-faint sm:text-left" aria-live="polite">
                 Showing {firstItemIndex + 1}–{Math.min(firstItemIndex + ITEMS_PER_PAGE, filteredTournaments.length)} of{" "}
                 {filteredTournaments.length}
               </p>
@@ -233,12 +263,12 @@ export function CommunityTournamentsTab({
 
         {showPrizeFilter ? (
           <div id="community-prize-filter" className="rounded-2xl border border-surface-line bg-surface/45 p-4 sm:p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h3 className="font-display text-sm font-bold text-ink">Prize money</h3>
                 <p className="mt-1 text-xs text-ink-soft">Show tournaments within this prize-pool range.</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
                 <span className="rounded-full bg-accent-soft px-3 py-1 font-mono text-xs font-semibold text-accent-ink">
                   BDT {minPrize.toLocaleString()} – {effectiveMaxPrize.toLocaleString()}
                 </span>
@@ -248,6 +278,8 @@ export function CommunityTournamentsTab({
                     onClick={() => {
                       setMinPrize(0);
                       setMaxPrize(null);
+                      setMinPrizeInput("0");
+                      setMaxPrizeInput(null);
                       setPage(1);
                     }}
                     className="min-h-11 px-2 text-sm font-semibold text-ink-soft transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
@@ -258,37 +290,85 @@ export function CommunityTournamentsTab({
               </div>
             </div>
 
-            <div className="mt-5">
-              <div className="relative h-6">
-                <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-surface-line" />
-                <div
-                  className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-accent"
-                  style={{ left: `${minPrizePercent}%`, right: `${100 - maxPrizePercent}%` }}
-                />
-                <input
-                  type="range"
-                  min={0}
-                  max={prizeCeiling}
-                  step={100}
-                  value={minPrize}
-                  onChange={(event) => updateMinPrize(Number(event.target.value))}
-                  aria-label="Minimum prize money"
-                  className="range-thumb pointer-events-none absolute inset-0 w-full appearance-none bg-transparent"
-                />
-                <input
-                  type="range"
-                  min={0}
-                  max={prizeCeiling}
-                  step={100}
-                  value={effectiveMaxPrize}
-                  onChange={(event) => updateMaxPrize(Number(event.target.value))}
-                  aria-label="Maximum prize money"
-                  className="range-thumb pointer-events-none absolute inset-0 w-full appearance-none bg-transparent"
-                />
+            <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,0.55fr)] lg:items-end">
+              <div>
+                <div className="relative h-8">
+                  <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-surface-line" />
+                  <div
+                    className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-accent"
+                    style={{ left: `${minPrizePercent}%`, right: `${100 - maxPrizePercent}%` }}
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={prizeCeiling}
+                    step={100}
+                    value={minPrize}
+                    onChange={(event) => updateMinPrize(Number(event.target.value))}
+                    aria-label="Minimum prize money"
+                    className="range-thumb pointer-events-none absolute inset-0 w-full appearance-none bg-transparent"
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={prizeCeiling}
+                    step={100}
+                    value={effectiveMaxPrize}
+                    onChange={(event) => updateMaxPrize(Number(event.target.value))}
+                    aria-label="Maximum prize money"
+                    className="range-thumb pointer-events-none absolute inset-0 w-full appearance-none bg-transparent"
+                  />
+                </div>
+                <div className="mt-1 flex items-center justify-between font-mono text-xs text-ink-faint">
+                  <span>BDT 0</span>
+                  <span>BDT {prizeCeiling.toLocaleString()}</span>
+                </div>
               </div>
-              <div className="mt-2 flex items-center justify-between font-mono text-xs text-ink-faint">
-                <span>BDT 0</span>
-                <span>BDT {prizeCeiling.toLocaleString()}</span>
+
+              <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-ink-soft">Minimum prize</span>
+                  <span className="relative block">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center font-mono text-xs text-ink-faint">BDT</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={effectiveMaxPrize}
+                      step={100}
+                      value={minPrizeInput}
+                      onChange={(event) => changeMinPrizeInput(event.target.value)}
+                      onBlur={commitMinPrizeInput}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") event.currentTarget.blur();
+                      }}
+                      className="min-h-11 w-full rounded-xl border border-surface-line-strong bg-bg/65 py-2 pl-12 pr-3 font-mono text-sm text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
+                      aria-label="Minimum prize amount in BDT"
+                    />
+                  </span>
+                </label>
+
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-ink-soft">Maximum prize</span>
+                  <span className="relative block">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center font-mono text-xs text-ink-faint">BDT</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={minPrize}
+                      max={prizeCeiling}
+                      step={100}
+                      value={maxPrizeInput ?? String(effectiveMaxPrize)}
+                      onChange={(event) => changeMaxPrizeInput(event.target.value)}
+                      onBlur={commitMaxPrizeInput}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") event.currentTarget.blur();
+                      }}
+                      className="min-h-11 w-full rounded-xl border border-surface-line-strong bg-bg/65 py-2 pl-12 pr-3 font-mono text-sm text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
+                      aria-label="Maximum prize amount in BDT"
+                    />
+                  </span>
+                </label>
               </div>
             </div>
           </div>
