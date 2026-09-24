@@ -10,7 +10,7 @@ import { TournamentCardSkeleton } from "./TournamentCardSkeleton";
 import { PlusIcon, TrophyIcon } from "../icons";
 
 type TournamentItem = Tournament | BackendTournament;
-type FilterKey = "all" | "open" | "live" | "closed" | "completed" | "cancelled";
+type FilterKey = "all" | "open" | "live" | "closed" | "completed";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -24,7 +24,6 @@ const FILTERS: {
   { key: "live", label: "Live", statuses: ["ongoing", "live"] },
   { key: "closed", label: "Closed", statuses: ["registration_closed", "submission_phase"] },
   { key: "completed", label: "Completed", statuses: ["completed"] },
-  { key: "cancelled", label: "Cancelled", statuses: ["cancelled"] },
 ];
 
 function getStatus(tournament: TournamentItem) {
