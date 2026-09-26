@@ -39,12 +39,14 @@ export default function CreateCommunityPage() {
     dpUrl,
     coverUrl,
     joinPolicy,
+    location,
   }: {
     name: string;
     description: string;
     dpUrl: string | null;
     coverUrl: string | null;
     joinPolicy: "instant" | "approval";
+    location: string;
   }) => {
     if (user.community) {
       setError(`You are already a member of ${user.community.name}. You cannot create a new community.`);
@@ -54,7 +56,7 @@ export default function CreateCommunityPage() {
 
     try {
       const community = await createCommunity.mutateAsync({
-        input: { name, rules: description, joinPolicy, dpUrl, coverUrl },
+        input: { name, rules: description, joinPolicy, dpUrl, coverUrl, location },
         creatorPersonId: user.personId,
       });
 
@@ -119,6 +121,7 @@ export default function CreateCommunityPage() {
               nameLabel={t.dashboard.community.createNameLabel}
               descriptionLabel={t.dashboard.community.rulesLabel}
               submitLabel={createCommunity.isPending ? "Creating community..." : t.dashboard.community.createSubmit}
+              showLocation
               onSubmit={handleSubmit}
             />
           </div>

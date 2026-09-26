@@ -105,6 +105,8 @@ export default function EditCommunityPage({ params }: { params: Promise<{ commun
             initialDpUrl={community.dpUrl}
             initialCoverUrl={community.coverUrl}
             initialJoinPolicy={community.joinPolicy}
+            showLocation
+            initialLocation={community.location ?? ""}
             onSubmit={async (values) => {
               setError(null);
               try {
@@ -114,6 +116,7 @@ export default function EditCommunityPage({ params }: { params: Promise<{ commun
                   dpUrl: values.dpUrl,
                   coverUrl: values.coverUrl,
                   joinPolicy: values.joinPolicy,
+                  location: values.location,
                 });
                 toast("Community updated successfully!", "success");
                 router.push(`/dashboard/efootball/community/${community.id}`);

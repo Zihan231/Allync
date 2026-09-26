@@ -14,6 +14,8 @@ export function EntityEditForm({
   initialDpUrl = null,
   initialCoverUrl = null,
   initialJoinPolicy = "instant",
+  showLocation = false,
+  initialLocation = "",
   onSubmit,
 }: {
   nameLabel: string;
@@ -24,12 +26,15 @@ export function EntityEditForm({
   initialDpUrl?: string | null;
   initialCoverUrl?: string | null;
   initialJoinPolicy?: JoinPolicy;
+  showLocation?: boolean;
+  initialLocation?: string;
   onSubmit: (values: {
     name: string;
     description: string;
     dpUrl: string | null;
     coverUrl: string | null;
     joinPolicy: JoinPolicy;
+    location: string;
   }) => void;
 }) {
   const { t } = useLanguage();
@@ -38,12 +43,13 @@ export function EntityEditForm({
   const [dpUrl, setDpUrl] = useState<string | null>(initialDpUrl);
   const [coverUrl, setCoverUrl] = useState<string | null>(initialCoverUrl);
   const [joinPolicy, setJoinPolicy] = useState<JoinPolicy>(initialJoinPolicy);
+  const [location, setLocation] = useState(initialLocation);
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ name, description, dpUrl, coverUrl, joinPolicy });
+        onSubmit({ name, description, dpUrl, coverUrl, joinPolicy, location: location.trim() });
       }}
       className="space-y-5"
     >
@@ -56,6 +62,19 @@ export function EntityEditForm({
           className="mt-1.5 w-full rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
         />
       </label>
+
+      {showLocation ? (
+        <label className="block">
+          <span className="text-sm font-medium text-ink-soft">Community location</span>
+          <input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            required
+            placeholder="e.g. Dhaka"
+            className="mt-1.5 w-full rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+          />
+        </label>
+      ) : null}
 
       <label className="block">
         <span className="text-sm font-medium text-ink-soft">{descriptionLabel}</span>

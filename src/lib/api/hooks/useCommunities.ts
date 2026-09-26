@@ -39,6 +39,7 @@ export function useCreateCommunity() {
         joinPolicy: Community["joinPolicy"];
         dpUrl?: string | null;
         coverUrl?: string | null;
+        location: string;
       };
       creatorPersonId: string;
     }) => {
@@ -58,6 +59,7 @@ export function useCreateCommunity() {
         initials,
         dpUrl: input.dpUrl,
         coverUrl: input.coverUrl,
+        location: input.location,
       });
 
       const community: Community = {
@@ -74,6 +76,7 @@ export function useCreateCommunity() {
         freeAgentCount: backendComm.freeAgentCount ?? 0,
         tournamentIds: [],
         tier: (backendComm.tier as Community["tier"]) || "New",
+        location: backendComm.location ?? input.location,
       };
 
       applyCommunityCreated(community, creatorPersonId);
@@ -94,6 +97,7 @@ export function useUpdateCommunity(communityId: string) {
       dpUrl?: string | null;
       coverUrl?: string | null;
       joinPolicy?: Community["joinPolicy"];
+      location?: string;
     }) => {
       const updated = await updateCommunityRequest(communityId, payload);
       applyCommunityUpdated(communityId, {
@@ -102,6 +106,7 @@ export function useUpdateCommunity(communityId: string) {
         dpUrl: updated.dpUrl ?? payload.dpUrl ?? null,
         coverUrl: updated.coverUrl ?? payload.coverUrl ?? null,
         joinPolicy: (updated.joinPolicy || "instant") as Community["joinPolicy"],
+        location: updated.location ?? payload.location,
       });
       return updated;
     },
