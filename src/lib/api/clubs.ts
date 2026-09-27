@@ -1,5 +1,20 @@
 import { api } from "./axios";
-import type { BackendClub } from "./types";
+import type { BackendClub, PaginatedResponse } from "./types";
+
+export interface ClubListQuery {
+  page: number;
+  limit: number;
+  search?: string;
+  stage?: string;
+  id?: string;
+  excludeId?: string;
+}
+
+/** One page of lightweight club cards (no members). */
+export async function getClubsPage(query: ClubListQuery): Promise<PaginatedResponse<BackendClub>> {
+  const res = await api.get<PaginatedResponse<BackendClub>>("/clubs", { params: query });
+  return res.data;
+}
 
 export async function getClubs(): Promise<BackendClub[]> {
   const res = await api.get<BackendClub[]>("/clubs");

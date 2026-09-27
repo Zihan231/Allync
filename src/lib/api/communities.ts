@@ -1,5 +1,5 @@
 import { api } from "./axios";
-import type { BackendCommunity, BackendCommunityMember } from "./types";
+import type { BackendCommunity, BackendCommunityMember, PaginatedResponse } from "./types";
 
 export interface CreateCommunityPayload {
   name: string;
@@ -12,6 +12,32 @@ export interface CreateCommunityPayload {
   location?: string | null;
   motto?: string | null;
   facebookUrl?: string | null;
+}
+
+export interface CommunityListQuery {
+  page: number;
+  limit: number;
+  search?: string;
+  tier?: string;
+  joinPolicy?: string;
+  location?: string;
+  minPoints?: number;
+  minClubs?: number;
+  hasFreeAgents?: boolean;
+  sort?: "rating" | "clubs" | "name";
+  id?: string;
+  excludeId?: string;
+}
+
+/** One page of lightweight community cards, filtered and sorted server-side. */
+export async function getCommunitiesPage(query: CommunityListQuery): Promise<PaginatedResponse<BackendCommunity>> {
+  const res = await api.get<PaginatedResponse<BackendCommunity>>("/communities", { params: query });
+  return res.data;
+}
+
+export async function getCommunityLocations(): Promise<string[]> {
+  const res = await api.get<string[]>("/communities/locations");
+  return res.data;
 }
 
 export async function getCommunities(query?: { search?: string; tier?: string }): Promise<BackendCommunity[]> {

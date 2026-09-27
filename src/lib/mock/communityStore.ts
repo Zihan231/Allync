@@ -3,6 +3,7 @@
 import { getClubs } from "@/lib/api/clubs";
 import { getCommunities, createCommunityRequest, updateCommunityRequest, deleteCommunityRequest, joinCommunityRequest, leaveCommunityRequest } from "@/lib/api/communities";
 import { getUsers } from "@/lib/api/users";
+import { mapBackendClub, mapBackendCommunity } from "@/lib/api/mappers";
 
 import { useSyncExternalStore } from "react";
 import type { Club, Community, JoinRequest, Person } from "./types";
@@ -74,28 +75,7 @@ export async function syncFromBackend(force = false): Promise<void> {
     ]);
 
     if (backendClubs && Array.isArray(backendClubs) && backendClubs.length > 0) {
-      // The backend serializes joinPolicy/stage as plain strings; the mock
-      // layer models them as literal unions. Trusting the backend's enum
-      // values here (rather than re-validating them) matches how this sync
-      // has always treated backend data.
-      const mappedClubs: Club[] = backendClubs.map((bc) => ({
-        id: bc.id,
-        name: bc.name,
-        color: bc.color || "#E63946",
-        initials: bc.initials || "FC",
-        dpUrl: bc.dpUrl ?? null,
-        coverUrl: bc.coverUrl ?? null,
-        description: bc.description || "",
-        points: bc.points ?? 0,
-        joinPolicy: (bc.joinPolicy || "instant") as Club["joinPolicy"],
-        minRoster: bc.minRoster ?? 4,
-        maxRoster: bc.maxRoster ?? 8,
-        communityIds: bc.communityIds || [],
-        stage: (bc.stage || "Foundation") as Club["stage"],
-        location: bc.location ?? undefined,
-        motto: bc.motto ?? undefined,
-        facebookUrl: bc.facebookUrl ?? undefined,
-      }));
+      const mappedClubs: Club[] = backendClubs.map(mapBackendClub);
 
       const backendNames = new Set(mappedClubs.map((c) => c.name.toLowerCase()));
       const remainingMocks = mockClubs.filter((c) => !backendNames.has(c.name.toLowerCase()));
@@ -155,57 +135,13 @@ export async function syncFromBackend(force = false): Promise<void> {
 
     
     if (backendCommunities && Array.isArray(backendCommunities) && backendCommunities.length > 0) {
-      const mappedCommunities: Community[] = backendCommunities.map((bc) => ({
-        id: bc.id,
-        name: bc.name,
-        dpUrl: bc.dpUrl ?? null,
-        coverUrl: bc.coverUrl ?? null,
-        rules: bc.rules || "",
-        points: bc.points ?? 0,
-        joinPolicy: (bc.joinPolicy || "instant") as Community["joinPolicy"],
-        memberClubIds: bc.memberClubIds || [],
-        freeAgentCount: bc.freeAgentCount ?? 0,
-        tournamentIds: [],
-        color: bc.color || "#4c8dff",
-        initials: bc.initials || "CM",
-        tier: (bc.tier || "New") as Community["tier"],
-        creatorId: (bc as any).creatorId ?? null,
-        location: bc.location ?? undefined,
-        motto: bc.motto ?? undefined,
-        facebookUrl: bc.facebookUrl ?? undefined,
-      }));
+      const mappedCommunities: Community[] = backendCommunities.map(mapBackendCommunity);
 
       const backendNames = new Set(mappedCommunities.map((c) => c.name.toLowerCase()));
       const remainingMocks = mockCommunities.filter((c) => !backendNames.has(c.name.toLowerCase()));
       communities = [...mappedCommunities, ...remainingMocks];
     }
 
-    
-    if (backendCommunities && Array.isArray(backendCommunities) && backendCommunities.length > 0) {
-      const mappedCommunities: Community[] = backendCommunities.map((bc) => ({
-        id: bc.id,
-        name: bc.name,
-        dpUrl: bc.dpUrl ?? null,
-        coverUrl: bc.coverUrl ?? null,
-        rules: bc.rules || "",
-        points: bc.points ?? 0,
-        joinPolicy: (bc.joinPolicy || "instant") as Community["joinPolicy"],
-        memberClubIds: bc.memberClubIds || [],
-        freeAgentCount: bc.freeAgentCount ?? 0,
-        tournamentIds: [],
-        color: bc.color || "#4c8dff",
-        initials: bc.initials || "CM",
-        tier: (bc.tier || "New") as Community["tier"],
-        creatorId: (bc as any).creatorId ?? null,
-        location: bc.location ?? undefined,
-        motto: bc.motto ?? undefined,
-        facebookUrl: bc.facebookUrl ?? undefined,
-      }));
-
-      const backendNames = new Set(mappedCommunities.map((c) => c.name.toLowerCase()));
-      const remainingMocks = mockCommunities.filter((c) => !backendNames.has(c.name.toLowerCase()));
-      communities = [...mappedCommunities, ...remainingMocks];
-    }
 
     hasSynced = true;
     emit();

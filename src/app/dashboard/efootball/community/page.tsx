@@ -2,10 +2,13 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockCommunities, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
-import { mockCommunities } from "@/lib/mock/communities";
+import { getCommunitiesPage, getCommunityLocations, type CommunityListQuery } from "@/lib/api/communities";
+import { communityKeys } from "@/lib/api/hooks/useCommunities";
+import { mapBackendCommunity } from "@/lib/api/mappers";
+import type { Community } from "@/lib/mock/types";
 import { AppLoader } from "@/components/common/AppLoader";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
@@ -15,44 +18,69 @@ import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { Pagination } from "@/components/dashboard/Pagination";
 import { PlusIcon, SearchIcon, UsersIcon } from "@/components/icons";
 
-const DEMO_COMMUNITY_IDS = new Set(mockCommunities.map((community) => community.id));
+const PAGE_SIZE = 9;
 
 export default function CommunityBrowsePage() {
   const { t } = useLanguage();
   const { user, isLoading: sessionLoading } = useSession();
-  const syncedCommunities = useMockCommunities();
-  const communities = useMemo(
-    () => syncedCommunities.filter((community) => !DEMO_COMMUNITY_IDS.has(community.id)),
-    [syncedCommunities],
-  );
-  const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [tier, setTier] = useState("all");
   const [joinPolicy, setJoinPolicy] = useState("all");
   const [location, setLocation] = useState("all");
   const [rating, setRating] = useState("all");
   const [clubCount, setClubCount] = useState("all");
   const [freeAgents, setFreeAgents] = useState("all");
-  const [sort, setSort] = useState("rating");
+  const [sort, setSort] = useState<NonNullable<CommunityListQuery["sort"]>>("rating");
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 9;
 
   useEffect(() => {
-    let mounted = true;
-    syncFromBackend().finally(() => {
-      if (mounted) setLoading(false);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const myCommunity = user.community ? communities.find((c) => c.id === user.community!.id) : null;
-  const otherCommunities = communities.filter((c) => c.id !== user.community?.id);
-  const locations = useMemo(
-    () => [...new Set(otherCommunities.map((community) => community.location).filter(Boolean))].sort(),
-    [otherCommunities],
+  const myCommunityId = user.community?.id;
+
+  // Only the visible page is fetched; filtering, sorting and paging happen on the server.
+  const listQuery: CommunityListQuery = {
+    page,
+    limit: PAGE_SIZE,
+    search: debouncedSearch || undefined,
+    tier: tier === "all" ? undefined : tier,
+    joinPolicy: joinPolicy === "all" ? undefined : joinPolicy,
+    location: location === "all" ? undefined : location,
+    minPoints: rating === "all" ? undefined : Number(rating),
+    minClubs: clubCount === "all" ? undefined : Number(clubCount),
+    hasFreeAgents: freeAgents === "available" ? true : undefined,
+    sort,
+    excludeId: myCommunityId,
+  };
+  const listResult = useQuery({
+    queryKey: [...communityKeys.all, "page", listQuery],
+    queryFn: () => getCommunitiesPage(listQuery),
+    placeholderData: keepPreviousData,
+    enabled: !sessionLoading,
+  });
+  const myCommunityResult = useQuery({
+    queryKey: [...communityKeys.all, "card", myCommunityId],
+    queryFn: () => getCommunitiesPage({ page: 1, limit: 1, id: myCommunityId! }),
+    enabled: Boolean(myCommunityId),
+  });
+  const locationsResult = useQuery({
+    queryKey: [...communityKeys.all, "locations"],
+    queryFn: getCommunityLocations,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const pageCommunities = useMemo(
+    () => (listResult.data?.data ?? []).map(mapBackendCommunity),
+    [listResult.data],
   );
+  const myCommunityRow = myCommunityResult.data?.data[0];
+  const myCommunity = myCommunityRow ? mapBackendCommunity(myCommunityRow) : null;
+  const totalCommunities = listResult.data?.meta.total ?? 0;
+  const totalPages = listResult.data?.meta.totalPages ?? 1;
+  const locations = locationsResult.data ?? [];
   const hasFilters =
     tier !== "all" ||
     joinPolicy !== "all" ||
@@ -73,35 +101,7 @@ export default function CommunityBrowsePage() {
     setPage(1);
   }
 
-  const filteredCommunities = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const matches = otherCommunities.filter((c) => {
-      const searchableText = `${c.name} ${c.rules || ""} ${c.location || ""}`.toLowerCase();
-      return (
-        (!q || searchableText.includes(q)) &&
-        (tier === "all" || c.tier === tier) &&
-        (joinPolicy === "all" || c.joinPolicy === joinPolicy) &&
-        (location === "all" || c.location === location) &&
-        (rating === "all" || (rating === "2000" ? c.points >= 2000 : c.points >= 3000)) &&
-        (clubCount === "all" || (clubCount === "1" ? c.memberClubIds.length >= 1 : c.memberClubIds.length >= 5)) &&
-        (freeAgents === "all" || c.freeAgentCount > 0)
-      );
-    });
-
-    return matches.sort((a, b) => {
-      if (sort === "name") return a.name.localeCompare(b.name);
-      if (sort === "clubs") return b.memberClubIds.length - a.memberClubIds.length;
-      return b.points - a.points;
-    });
-  }, [clubCount, freeAgents, joinPolicy, location, otherCommunities, rating, search, sort, tier]);
-
-  const totalPages = Math.ceil(filteredCommunities.length / PAGE_SIZE) || 1;
-  const paginatedCommunities = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return filteredCommunities.slice(start, start + PAGE_SIZE);
-  }, [filteredCommunities, page]);
-
-  if (loading || sessionLoading) {
+  if (sessionLoading || listResult.isPending) {
     return <AppLoader />;
   }
 
@@ -170,7 +170,7 @@ export default function CommunityBrowsePage() {
               <option value="all">All locations</option>
               {locations.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
-            <select aria-label="Sort communities" value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }} className="rounded-full border border-surface-line-strong bg-transparent px-3.5 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
+            <select aria-label="Sort communities" value={sort} onChange={(e) => { setSort(e.target.value as typeof sort); setPage(1); }} className="rounded-full border border-surface-line-strong bg-transparent px-3.5 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
               <option value="rating">Highest rating</option>
               <option value="clubs">Most clubs</option>
               <option value="name">Name A–Z</option>
@@ -179,12 +179,19 @@ export default function CommunityBrowsePage() {
           </div>
         </div>
 
-        {filteredCommunities.length === 0 ? (
+        {listResult.isError ? (
+          <p className="mt-6 text-sm text-ink-soft">
+            Couldn&apos;t load communities.{" "}
+            <button type="button" onClick={() => listResult.refetch()} className="font-medium text-accent hover:text-accent-ink">
+              Try again
+            </button>
+          </p>
+        ) : pageCommunities.length === 0 ? (
           <p className="mt-6 text-sm text-ink-soft">No communities found.</p>
         ) : (
           <>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {paginatedCommunities.map((c) => (
+            <div className={`mt-4 grid gap-4 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${listResult.isPlaceholderData ? "opacity-60" : ""}`}>
+              {pageCommunities.map((c) => (
                 <CommunityCard key={c.id} community={c} />
               ))}
             </div>
@@ -192,7 +199,7 @@ export default function CommunityBrowsePage() {
             {totalPages > 1 ? (
               <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-surface-line pt-6 sm:flex-row">
                 <span className="font-mono text-xs text-ink-faint">
-                  Showing {(page - 1) * PAGE_SIZE + 1} - {Math.min(page * PAGE_SIZE, filteredCommunities.length)} of {filteredCommunities.length} communities
+                  Showing {(page - 1) * PAGE_SIZE + 1} - {Math.min(page * PAGE_SIZE, totalCommunities)} of {totalCommunities} communities
                 </span>
                 <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
               </div>
@@ -232,7 +239,7 @@ function CommunityCard({
   community,
   isMine = false,
 }: {
-  community: ReturnType<typeof useMockCommunities>[number];
+  community: Community;
   isMine?: boolean;
 }) {
   const { t } = useLanguage();

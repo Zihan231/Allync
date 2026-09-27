@@ -24,6 +24,7 @@ export interface BackendClub {
   maxRoster: number;
   communityIds: string[];
   stage: string;
+  memberCount?: number;
   location: string | null;
   motto: string | null;
   facebookUrl: string | null;
@@ -102,6 +103,7 @@ export interface BackendCommunity {
   location: string | null;
   motto: string | null;
   facebookUrl: string | null;
+  creatorId?: string | null;
   memberClubIds: string[];
   freeAgentCount: number;
   memberCount: number;
@@ -125,4 +127,16 @@ export interface BackendCommunityMember {
   sourceClubIds: string[];
   joinedAt: string;
   points: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
 }

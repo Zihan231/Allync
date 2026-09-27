@@ -2,9 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockClubs, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
+import { getClubsPage, type ClubListQuery } from "@/lib/api/clubs";
+import { clubKeys } from "@/lib/api/hooks/useClubs";
+import { mapBackendClub } from "@/lib/api/mappers";
+import type { Club } from "@/lib/mock/types";
 import { AppLoader } from "@/components/common/AppLoader";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
@@ -17,55 +21,50 @@ import { CLUB_STAGES, type ClubStage } from "@/lib/mock/types";
 
 type StageFilter = "all" | ClubStage;
 
+const PAGE_SIZE = 15;
+
 export default function ClubsPage() {
   const { t } = useLanguage();
   const { user, isLoading: sessionLoading } = useSession();
-  const clubs = useMockClubs();
-  const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 15;
 
   useEffect(() => {
-    setPage(1);
-  }, [search, stageFilter]);
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  useEffect(() => {
-    let mounted = true;
-    syncFromBackend().finally(() => {
-      if (mounted) setLoading(false);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const myClubId = user.club?.id;
 
-  const myClub = user.club
-    ? clubs.find(
-        (c) =>
-          c.id === user.club!.id ||
-          (user.club?.name && c.name.toLowerCase() === user.club.name.toLowerCase())
-      )
-    : null;
-  const otherClubs = clubs.filter((c) => c.id !== myClub?.id);
+  // Only the visible page is fetched; filtering and paging happen on the server.
+  const listQuery: ClubListQuery = {
+    page,
+    limit: PAGE_SIZE,
+    search: debouncedSearch || undefined,
+    stage: stageFilter === "all" ? undefined : stageFilter,
+    excludeId: myClubId,
+  };
+  const listResult = useQuery({
+    queryKey: [...clubKeys.all, "page", listQuery],
+    queryFn: () => getClubsPage(listQuery),
+    placeholderData: keepPreviousData,
+    enabled: !sessionLoading,
+  });
+  const myClubResult = useQuery({
+    queryKey: [...clubKeys.all, "card", myClubId],
+    queryFn: () => getClubsPage({ page: 1, limit: 1, id: myClubId! }),
+    enabled: Boolean(myClubId),
+  });
 
-  const filteredClubs = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return otherClubs.filter((club) => {
-      if (q && !club.name.toLowerCase().includes(q)) return false;
-      if (stageFilter !== "all" && club.stage !== stageFilter) return false;
-      return true;
-    });
-  }, [otherClubs, search, stageFilter]);
+  const pageClubs = useMemo(() => (listResult.data?.data ?? []).map(mapBackendClub), [listResult.data]);
+  const myClubRow = myClubResult.data?.data[0];
+  const myClub = myClubRow ? mapBackendClub(myClubRow) : null;
+  const totalClubs = listResult.data?.meta.total ?? 0;
+  const totalPages = listResult.data?.meta.totalPages ?? 1;
 
-  const totalPages = Math.ceil(filteredClubs.length / PAGE_SIZE) || 1;
-  const paginatedClubs = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return filteredClubs.slice(start, start + PAGE_SIZE);
-  }, [filteredClubs, page]);
-
-  if (loading || sessionLoading) {
+  if (sessionLoading || listResult.isPending) {
     return <AppLoader />;
   }
 
@@ -122,7 +121,10 @@ export default function ClubsPage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             placeholder={t.dashboard.clubs.searchPlaceholder}
             className="w-full rounded-lg border border-surface-line-strong bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-faint"
           />
@@ -137,7 +139,10 @@ export default function ClubsPage() {
               <button
                 key={opt.key}
                 type="button"
-                onClick={() => setStageFilter(opt.key)}
+                onClick={() => {
+                  setStageFilter(opt.key);
+                  setPage(1);
+                }}
                 className={`rounded-full border px-4 py-1.5 text-xs font-medium transition-colors ${
                   stageFilter === opt.key
                     ? "border-blue bg-blue-soft text-blue-ink"
@@ -150,12 +155,19 @@ export default function ClubsPage() {
           </div>
         </div>
 
-        {filteredClubs.length === 0 ? (
+        {listResult.isError ? (
+          <p className="mt-6 text-sm text-ink-soft">
+            Couldn&apos;t load clubs.{" "}
+            <button type="button" onClick={() => listResult.refetch()} className="font-medium text-accent hover:text-accent-ink">
+              Try again
+            </button>
+          </p>
+        ) : pageClubs.length === 0 ? (
           <p className="mt-6 text-sm text-ink-soft">{t.dashboard.rankings.noResults}</p>
         ) : (
           <>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {paginatedClubs.map((club) => (
+            <div className={`mt-4 grid grid-cols-2 gap-3 transition-opacity sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 ${listResult.isPlaceholderData ? "opacity-60" : ""}`}>
+              {pageClubs.map((club) => (
                 <ClubCard key={club.id} club={club} />
               ))}
             </div>
@@ -163,7 +175,7 @@ export default function ClubsPage() {
             {totalPages > 1 ? (
               <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-surface-line pt-6 sm:flex-row">
                 <span className="font-mono text-xs text-ink-faint">
-                  Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filteredClubs.length)} of {filteredClubs.length} clubs
+                  Showing {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, totalClubs)} of {totalClubs} clubs
                 </span>
                 <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
               </div>
@@ -175,7 +187,7 @@ export default function ClubsPage() {
   );
 }
 
-function ClubBadge({ club, t }: { club: ReturnType<typeof useMockClubs>[number]; t: ReturnType<typeof useLanguage>["t"] }) {
+function ClubBadge({ club, t }: { club: Club; t: ReturnType<typeof useLanguage>["t"] }) {
   return (
     <div
       className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 backdrop-blur-sm"
@@ -189,7 +201,7 @@ function ClubBadge({ club, t }: { club: ReturnType<typeof useMockClubs>[number];
   );
 }
 
-function ClubCard({ club, isMine = false }: { club: ReturnType<typeof useMockClubs>[number]; isMine?: boolean }) {
+function ClubCard({ club, isMine = false }: { club: Club; isMine?: boolean }) {
   const { t } = useLanguage();
 
   if (isMine) {
