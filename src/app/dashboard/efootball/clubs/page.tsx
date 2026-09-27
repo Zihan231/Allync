@@ -5,6 +5,7 @@ import Link from "next/link";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
+import { clubCreateBlockReason } from "@/lib/session/createPermissions";
 import { getClubsPage, type ClubListQuery } from "@/lib/api/clubs";
 import { clubKeys } from "@/lib/api/hooks/useClubs";
 import { mapBackendClub } from "@/lib/api/mappers";
@@ -37,6 +38,7 @@ export default function ClubsPage() {
   }, [search]);
 
   const myClubId = user.club?.id;
+  const createBlockedReason = clubCreateBlockReason(user);
 
   // Only the visible page is fetched; filtering and paging happen on the server.
   const listQuery: ClubListQuery = {
@@ -79,15 +81,17 @@ export default function ClubsPage() {
         eyebrow="eFootball"
         title={t.dashboard.clubs.browseTitle}
         action={
-          user.club ? (
+          createBlockedReason ? (
             <div className="flex items-center gap-2">
-              <span className="hidden sm:inline-block font-mono text-xs text-ink-faint">
-                Member of {user.club.name}
-              </span>
+              {user.club ? (
+                <span className="hidden sm:inline-block font-mono text-xs text-ink-faint">
+                  Member of {user.club.name}
+                </span>
+              ) : null}
               <button
                 type="button"
                 disabled
-                title={`You are already in ${user.club.name}. Leave your club to create a new one.`}
+                title={createBlockedReason}
                 className="inline-flex items-center gap-1.5 rounded-full border border-surface-line-strong bg-surface/60 px-4 py-2 font-display text-sm font-semibold text-ink-faint opacity-60 cursor-not-allowed"
               >
                 <LockIcon className="h-4 w-4" />

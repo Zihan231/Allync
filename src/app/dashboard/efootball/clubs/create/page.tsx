@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
+import { clubCreateBlockReason } from "@/lib/session/createPermissions";
 import { useCreateClub } from "@/lib/api/hooks/useClubs";
 import { isApiError } from "@/lib/api/axios";
 import { colorFromString } from "@/lib/colorHash";
@@ -47,8 +48,9 @@ export default function CreateClubPage() {
     coverUrl: string | null;
     joinPolicy: "instant" | "approval";
   }) => {
-    if (user.club) {
-      setError(`You are already a member of ${user.club.name}. You cannot create a new club.`);
+    const blockedReason = clubCreateBlockReason(user);
+    if (blockedReason) {
+      setError(blockedReason);
       return;
     }
 
@@ -105,6 +107,24 @@ export default function CreateClubPage() {
               className="inline-flex items-center gap-2 rounded-full border border-surface-line-strong px-5 py-2.5 font-display text-sm font-medium text-ink transition-colors hover:bg-surface"
             >
               Browse All Clubs
+            </Link>
+          </div>
+        </div>
+      ) : clubCreateBlockReason(user) ? (
+        // Leadership conflict: community Presidents/VPs can't found clubs and vice versa
+        <div className="mt-8 rounded-2xl border border-warning/40 bg-surface/60 p-8 text-center backdrop-blur">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-warning-soft text-warning-ink">
+            <LockIcon className="h-7 w-7" />
+          </div>
+          <h2 className="mt-4 font-display text-xl font-bold text-ink">You hold a leadership role</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">{clubCreateBlockReason(user)}</p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href={`/dashboard/efootball/community/${user.community?.id ?? ""}`}
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-display text-sm font-semibold text-bg shadow-md transition-transform hover:-translate-y-0.5"
+            >
+              Go to My Community
+              <ArrowRightIcon className="h-4 w-4" />
             </Link>
           </div>
         </div>

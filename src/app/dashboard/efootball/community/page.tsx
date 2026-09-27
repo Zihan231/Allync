@@ -5,6 +5,7 @@ import Link from "next/link";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
+import { communityCreateBlockReason } from "@/lib/session/createPermissions";
 import { getCommunitiesPage, getCommunityLocations, type CommunityListQuery } from "@/lib/api/communities";
 import { communityKeys } from "@/lib/api/hooks/useCommunities";
 import { mapBackendCommunity } from "@/lib/api/mappers";
@@ -16,7 +17,7 @@ import { ClubCrest } from "@/components/common/ClubCrest";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { Pagination } from "@/components/dashboard/Pagination";
-import { PlusIcon, SearchIcon, UsersIcon } from "@/components/icons";
+import { LockIcon, PlusIcon, SearchIcon, UsersIcon } from "@/components/icons";
 
 const PAGE_SIZE = 9;
 
@@ -40,6 +41,7 @@ export default function CommunityBrowsePage() {
   }, [search]);
 
   const myCommunityId = user.community?.id;
+  const createBlockedReason = communityCreateBlockReason(user);
 
   // Only the visible page is fetched; filtering, sorting and paging happen on the server.
   const listQuery: CommunityListQuery = {
@@ -111,7 +113,7 @@ export default function CommunityBrowsePage() {
         eyebrow="eFootball"
         title={t.dashboard.community.browseTitle}
         action={
-          !user.community ? (
+          !createBlockedReason ? (
             <Link
               href="/dashboard/efootball/community/create"
               className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg transition-transform hover:-translate-y-0.5"
@@ -119,6 +121,17 @@ export default function CommunityBrowsePage() {
               <PlusIcon className="h-4 w-4" />
               {t.dashboard.community.createCta}
             </Link>
+          ) : !user.community ? (
+            // Club leaders without a community see why they can't create one
+            <button
+              type="button"
+              disabled
+              title={createBlockedReason}
+              className="inline-flex items-center gap-1.5 rounded-full border border-surface-line-strong bg-surface/60 px-4 py-2 font-display text-sm font-semibold text-ink-faint opacity-60 cursor-not-allowed"
+            >
+              <LockIcon className="h-4 w-4" />
+              {t.dashboard.community.createCta}
+            </button>
           ) : null
         }
       />
