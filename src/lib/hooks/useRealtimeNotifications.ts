@@ -13,6 +13,10 @@ import { useSession } from "@/lib/session/SessionContext";
 import { useToast } from "@/lib/useToast";
 import { syncFromBackend } from "@/lib/mock/communityStore";
 
+// The SSE stream pushes new notifications instantly; polling is only a fallback for missed events
+// (e.g. while the stream reconnects).
+const FALLBACK_POLL_MS = 60_000;
+
 export function useRealtimeNotifications() {
   const { isAuthenticated, user } = useSession();
   const queryClient = useQueryClient();
@@ -22,7 +26,7 @@ export function useRealtimeNotifications() {
     queryKey: ["notifications"],
     queryFn: getNotifications,
     enabled: isAuthenticated,
-    refetchInterval: 5000,
+    refetchInterval: FALLBACK_POLL_MS,
     staleTime: 3000,
   });
 
@@ -30,7 +34,7 @@ export function useRealtimeNotifications() {
     queryKey: ["notifications-unread-count"],
     queryFn: getUnreadNotificationsCount,
     enabled: isAuthenticated,
-    refetchInterval: 5000,
+    refetchInterval: FALLBACK_POLL_MS,
     staleTime: 3000,
   });
 
@@ -40,7 +44,7 @@ export function useRealtimeNotifications() {
 
     let eventSource: EventSource | null = null;
     try {
-      eventSource = new EventSource("/api/v1/notifications/stream", {
+      eventSource = new EventSource("/api/notifications/stream", {
         withCredentials: true,
       });
 
@@ -51,14 +55,23 @@ export function useRealtimeNotifications() {
             toast(`${notif.title}: ${notif.message}`, "info");
             void queryClient.invalidateQueries({ queryKey: ["notifications"] });
             void queryClient.invalidateQueries({ queryKey: ["notifications-unread-count"] });
-            void queryClient.invalidateQueries({ queryKey: ["community-my-request"] });
-            void queryClient.invalidateQueries({ queryKey: ["club-my-request"] });
-            void queryClient.invalidateQueries({ queryKey: ["community-requests"] });
-            void queryClient.invalidateQueries({ queryKey: ["club-requests"] });
-            void queryClient.invalidateQueries({ queryKey: ["community"] });
-            void queryClient.invalidateQueries({ queryKey: ["club"] });
-            void queryClient.invalidateQueries({ queryKey: ["me"] });
-            void syncFromBackend(true);
+
+            // Refresh only what this kind of notification can have changed.
+            if (notif.type === "club_join_request") {
+              void queryClient.invalidateQueries({ queryKey: ["club-my-request"] });
+              void queryClient.invalidateQueries({ queryKey: ["club-requests"] });
+            } else if (notif.type === "community_join_request") {
+              void queryClient.invalidateQueries({ queryKey: ["community-my-request"] });
+              void queryClient.invalidateQueries({ queryKey: ["community-requests"] });
+            }
+            // Approvals and new club members change club/community rosters, which the
+            // client-side store also caches — only then is a full store resync worth it.
+            if (notif.type === "club_member_joined" || /approved/i.test(notif.title)) {
+              void queryClient.invalidateQueries({ queryKey: ["me"] });
+              void queryClient.invalidateQueries({ queryKey: ["clubs"] });
+              void queryClient.invalidateQueries({ queryKey: ["communities"] });
+              void syncFromBackend(true);
+            }
           }
         } catch (err) {
           console.error("Failed to parse incoming notification event:", err);
