@@ -41,12 +41,14 @@ export default function CreateClubPage() {
     dpUrl,
     coverUrl,
     joinPolicy,
+    location,
   }: {
     name: string;
     description: string;
     dpUrl: string | null;
     coverUrl: string | null;
     joinPolicy: "instant" | "approval";
+    location: string;
   }) => {
     const blockedReason = clubCreateBlockReason(user);
     if (blockedReason) {
@@ -57,7 +59,7 @@ export default function CreateClubPage() {
     setError(null);
     try {
       const club = await createClub.mutateAsync({
-        input: { name, description, color: colorFromString(name), joinPolicy, dpUrl, coverUrl },
+        input: { name, description, color: colorFromString(name), joinPolicy, dpUrl, coverUrl, location },
         creatorPersonId: user.personId,
       });
       setClub({ id: club.id, name: club.name, role: "President" });
@@ -135,6 +137,8 @@ export default function CreateClubPage() {
               nameLabel={t.dashboard.clubs.createNameLabel}
               descriptionLabel={t.dashboard.clubs.descriptionLabel}
               submitLabel={createClub.isPending ? "Creating club..." : t.dashboard.clubs.createSubmit}
+              showLocation
+              locationLabel="Club location"
               onSubmit={handleSubmit}
             />
           </div>

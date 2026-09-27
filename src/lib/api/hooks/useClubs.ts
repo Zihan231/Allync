@@ -60,6 +60,7 @@ export function useCreateClub() {
         joinPolicy: Club["joinPolicy"];
         dpUrl?: string | null;
         coverUrl?: string | null;
+        location?: string | null;
       };
       creatorPersonId: string;
     }) => {
@@ -85,6 +86,7 @@ export function useCreateClub() {
         joinPolicy: input.joinPolicy,
         dpUrl: input.dpUrl ?? undefined,
         coverUrl: input.coverUrl ?? undefined,
+        location: input.location || undefined,
       });
 
       const club: Club = {
@@ -101,6 +103,7 @@ export function useCreateClub() {
         maxRoster: 8,
         communityIds: [],
         stage: "Foundation",
+        location: backendClub?.location ?? input.location ?? undefined,
       };
 
       applyClubCreated(club, creatorPersonId);

@@ -34,6 +34,7 @@ export interface CreateClubPayload {
   joinPolicy: string;
   dpUrl?: string | null;
   coverUrl?: string | null;
+  location?: string | null;
 }
 
 export async function createClubRequest(payload: CreateClubPayload): Promise<BackendClub> {

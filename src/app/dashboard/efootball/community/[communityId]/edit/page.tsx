@@ -106,6 +106,7 @@ export default function EditCommunityPage({ params }: { params: Promise<{ commun
             initialCoverUrl={community.coverUrl}
             initialJoinPolicy={community.joinPolicy}
             showLocation
+            locationLabel="Community location"
             initialLocation={community.location ?? ""}
             onSubmit={async (values) => {
               setError(null);

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { ImageUploadControl } from "@/components/common/ImageUploadControl";
+import { LocationSelect } from "@/components/common/LocationSelect";
 import type { JoinPolicy } from "@/lib/mock/types";
 
 export function EntityEditForm({
@@ -15,6 +16,7 @@ export function EntityEditForm({
   initialCoverUrl = null,
   initialJoinPolicy = "instant",
   showLocation = false,
+  locationLabel = "Location",
   initialLocation = "",
   onSubmit,
 }: {
@@ -27,6 +29,7 @@ export function EntityEditForm({
   initialCoverUrl?: string | null;
   initialJoinPolicy?: JoinPolicy;
   showLocation?: boolean;
+  locationLabel?: string;
   initialLocation?: string;
   onSubmit: (values: {
     name: string;
@@ -64,16 +67,7 @@ export function EntityEditForm({
       </label>
 
       {showLocation ? (
-        <label className="block">
-          <span className="text-sm font-medium text-ink-soft">Community location</span>
-          <input
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            required
-            placeholder="e.g. Dhaka"
-            className="mt-1.5 w-full rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
-          />
-        </label>
+        <LocationSelect label={locationLabel} value={location} onChange={setLocation} required />
       ) : null}
 
       <label className="block">

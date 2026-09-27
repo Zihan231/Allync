@@ -142,6 +142,7 @@ export default function CreateCommunityPage() {
               descriptionLabel={t.dashboard.community.rulesLabel}
               submitLabel={createCommunity.isPending ? "Creating community..." : t.dashboard.community.createSubmit}
               showLocation
+              locationLabel="Community location"
               onSubmit={handleSubmit}
             />
           </div>

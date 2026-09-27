@@ -86,6 +86,9 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
             initialDpUrl={club.dpUrl}
             initialCoverUrl={club.coverUrl}
             initialJoinPolicy={club.joinPolicy}
+            showLocation
+            locationLabel="Club location"
+            initialLocation={club.location ?? ""}
             onSubmit={async (values) => {
               setError(null);
               try {
@@ -95,6 +98,7 @@ export default function EditClubPage({ params }: { params: Promise<{ clubId: str
                   dpUrl: values.dpUrl,
                   coverUrl: values.coverUrl,
                   joinPolicy: values.joinPolicy,
+                  location: values.location,
                 });
                 router.push(`/dashboard/efootball/clubs/${club.id}`);
               } catch (err) {

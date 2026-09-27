@@ -228,6 +228,7 @@ function ClubCard({ club, isMine = false }: { club: Club; isMine?: boolean }) {
             <div className="mt-2 flex items-center gap-1.5 font-mono text-[11px] text-ink-faint">
               <TrophyIcon className="h-3.5 w-3.5" style={{ color: club.color }} />
               {club.points.toLocaleString()} pts · {club.minRoster}-{club.maxRoster} squad
+              {club.location ? <> · {club.location}</> : null}
             </div>
           </div>
         </div>
@@ -247,7 +248,12 @@ function ClubCard({ club, isMine = false }: { club: Club; isMine?: boolean }) {
       </div>
       <div className="flex items-center gap-2 px-2.5 pb-2 pt-2">
         <Avatar dpUrl={club.dpUrl} name={club.name} size="sm" mode="static" shape="circle" className="shrink-0" />
-        <span className="truncate text-sm font-bold leading-tight text-ink">{club.name}</span>
+        <div className="min-w-0">
+          <span className="block truncate text-sm font-bold leading-tight text-ink">{club.name}</span>
+          {club.location ? (
+            <span className="block truncate font-mono text-[10px] text-ink-faint">{club.location}</span>
+          ) : null}
+        </div>
       </div>
       <div className="flex items-center gap-1.5 border-t border-surface-line/70 px-2.5 py-2 font-mono text-[10px] text-ink-faint">
         <TrophyIcon className="h-3 w-3 shrink-0" style={{ color: club.color }} />
