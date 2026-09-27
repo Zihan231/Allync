@@ -83,15 +83,11 @@ export default function ClubsPage() {
         action={
           createBlockedReason ? (
             <div className="flex items-center gap-2">
-              {user.club ? (
-                <span className="hidden sm:inline-block font-mono text-xs text-ink-faint">
-                  Member of {user.club.name}
-                </span>
-              ) : null}
+              <span className="font-mono text-xs text-ink-faint">{createBlockedReason.short}</span>
               <button
                 type="button"
                 disabled
-                title={createBlockedReason}
+                title={createBlockedReason.full}
                 className="inline-flex items-center gap-1.5 rounded-full border border-surface-line-strong bg-surface/60 px-4 py-2 font-display text-sm font-semibold text-ink-faint opacity-60 cursor-not-allowed"
               >
                 <LockIcon className="h-4 w-4" />

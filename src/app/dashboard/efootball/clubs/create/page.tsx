@@ -50,7 +50,7 @@ export default function CreateClubPage() {
   }) => {
     const blockedReason = clubCreateBlockReason(user);
     if (blockedReason) {
-      setError(blockedReason);
+      setError(blockedReason.full);
       return;
     }
 
@@ -117,7 +117,7 @@ export default function CreateClubPage() {
             <LockIcon className="h-7 w-7" />
           </div>
           <h2 className="mt-4 font-display text-xl font-bold text-ink">You hold a leadership role</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">{clubCreateBlockReason(user)}</p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">{clubCreateBlockReason(user)?.full}</p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
               href={`/dashboard/efootball/community/${user.community?.id ?? ""}`}

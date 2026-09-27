@@ -123,15 +123,18 @@ export default function CommunityBrowsePage() {
             </Link>
           ) : !user.community ? (
             // Club leaders without a community see why they can't create one
-            <button
-              type="button"
-              disabled
-              title={createBlockedReason}
-              className="inline-flex items-center gap-1.5 rounded-full border border-surface-line-strong bg-surface/60 px-4 py-2 font-display text-sm font-semibold text-ink-faint opacity-60 cursor-not-allowed"
-            >
-              <LockIcon className="h-4 w-4" />
-              {t.dashboard.community.createCta}
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs text-ink-faint">{createBlockedReason.short}</span>
+              <button
+                type="button"
+                disabled
+                title={createBlockedReason.full}
+                className="inline-flex items-center gap-1.5 rounded-full border border-surface-line-strong bg-surface/60 px-4 py-2 font-display text-sm font-semibold text-ink-faint opacity-60 cursor-not-allowed"
+              >
+                <LockIcon className="h-4 w-4" />
+                {t.dashboard.community.createCta}
+              </button>
+            </div>
           ) : null
         }
       />
