@@ -46,7 +46,8 @@ export function TournamentCard({
     tournament.community?.name || tournament.organizerName || "eFootball Community";
 
   // Entrants and capacity
-  const entrantsCount = tournament.participants?.length ?? tournament.entrants ?? 0;
+  const entrantsCount =
+    tournament.participants?.length ?? tournament.participantCount ?? tournament.entrants ?? 0;
   const maxCapacity = tournament.maxParticipants || 16;
   const fillPercent = Math.min(100, Math.round((entrantsCount / maxCapacity) * 100));
 

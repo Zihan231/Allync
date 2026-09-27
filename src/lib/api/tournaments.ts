@@ -105,6 +105,8 @@ export interface BackendTournament {
   createdById?: string;
   creatorId?: string;
   bracket: TournamentBracket | null;
+  /** Returned by the list endpoint instead of the full participants array. */
+  participantCount?: number;
   createdAt: string;
   updatedAt: string;
   community?: {
@@ -129,6 +131,8 @@ export interface TournamentQueryParams {
   hasPrizePool?: boolean;
   sortBy?: "startAt" | "prizePoolBdt";
   sortOrder?: "ASC" | "DESC";
+  /** Only tournaments the signed-in user (or their club) has entered. */
+  joined?: boolean;
 }
 
 export interface CreateTournamentPayload {

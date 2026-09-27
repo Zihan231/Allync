@@ -19,10 +19,16 @@ export const tournamentKeys = {
   detail: (id: string) => ["tournaments", "detail", id] as const,
 };
 
-export function useTournaments(params?: TournamentQueryParams) {
+/**
+ * `viewerId` must be passed for per-user queries (e.g. `joined: true`) so cached results are
+ * never shown to a different signed-in user; the query waits until it is known.
+ */
+export function useTournaments(params?: TournamentQueryParams, viewerId?: string | null) {
+  const perUser = Boolean(params?.joined);
   return useQuery<BackendTournament[]>({
-    queryKey: tournamentKeys.list(params),
+    queryKey: perUser ? [...tournamentKeys.list(params), viewerId] : tournamentKeys.list(params),
     queryFn: () => getTournaments(params),
+    enabled: !perUser || Boolean(viewerId),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });

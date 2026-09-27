@@ -42,25 +42,11 @@ function TournamentsContent() {
   const [sortBy, setSortBy] = useState<"startAt" | "prizePoolBdt">("startAt");
   const [page, setPage] = useState(1);
 
-  // Fetch backend tournaments
-  const { data: tournaments = [], isLoading } = useTournaments({
-    type: activeTab,
-    sortBy,
-  });
-
-  const joinedTournaments = useMemo(() => {
-    const userIds = [user?.id, user?.personId].filter(
-      (id): id is string => Boolean(id),
-    );
-
-    return tournaments.filter((tournament) =>
-      tournament.participants?.some(
-        (participant) =>
-          (participant.userId !== null && userIds.includes(participant.userId)) ||
-          (participant.clubId !== null && participant.clubId === user?.club?.id),
-      ),
-    );
-  }, [tournaments, user?.club?.id, user?.id, user?.personId]);
+  // Only tournaments the user (or their club) entered — filtered on the server.
+  const { data: joinedTournaments = [], isLoading } = useTournaments(
+    { type: activeTab, sortBy, joined: true },
+    isSessionLoading ? null : user?.id,
+  );
 
   // Client-side search and filters
   const filtered = useMemo(() => {
