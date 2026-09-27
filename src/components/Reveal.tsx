@@ -14,16 +14,18 @@ export function Reveal({
   y?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(() => {
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return true;
-    }
-    return false;
-  });
+  // Always start hidden so the server HTML and the first client render match;
+  // reduced-motion is checked after hydration.
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || visible) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setVisible(true);
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
