@@ -2,7 +2,7 @@
 
 import { Suspense, use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format, formatNodes } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
@@ -96,6 +96,9 @@ export function TournamentDetailView({
   const dateLocale = locale === "bn" ? "bn-BD" : "en-US";
   const { user, isLoading: isSessionLoading } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Set by "picked for a tournament" notifications: focus the viewer's own lineup row.
+  const highlightMe = searchParams.get("highlight") === "me";
 
   function handleBack() {
     router.push(backHref);
@@ -181,6 +184,20 @@ export function TournamentDetailView({
   }, [user?.club?.id]);
 
   const clubMemberById = useMemo(() => new Map(clubMembers.map((m) => [m.id, m])), [clubMembers]);
+  const myProfileId = useMemo(
+    () => clubMembers.find((m) => m.userId === user?.id)?.id ?? null,
+    [clubMembers, user?.id],
+  );
+  const myLineupRowId = myProfileId ? `lineup-player-${myProfileId}` : null;
+
+  useEffect(() => {
+    if (!highlightMe || activeTab !== "lineup" || !myLineupRowId) return;
+    // Wait a frame so the lineup has rendered before scrolling to it.
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(myLineupRowId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [highlightMe, activeTab, myLineupRowId, tournament?.id]);
 
   const currentUserPerson = useMemo(
     () => people.find((p) => p.id === user?.id || p.id === user?.personId),
@@ -1122,9 +1139,11 @@ export function TournamentDetailView({
               {td.windowClosed}
             </div>
           ) : !canSubmitLineup ? (
-            <div className="mt-8 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 text-center text-xs font-semibold text-amber-300">
-              {td.noAuthority}
-            </div>
+            myParticipation?.lineup ? null : (
+              <div className="mt-8 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 text-center text-xs font-semibold text-amber-300">
+                {td.noAuthority}
+              </div>
+            )
           ) : myParticipation?.lineup ? (
             <div className="mt-8 flex flex-col items-start justify-between gap-3 rounded-2xl border border-accent/30 bg-accent-soft/40 p-5 sm:flex-row sm:items-center">
               <p className="text-xs text-ink-soft">{format(ts.editSubtitle, { preset: `${tournament.startersCount} v ${tournament.startersCount}` })}</p>
@@ -1192,16 +1211,26 @@ export function TournamentDetailView({
                     {myParticipation.lineup.starters.map((s, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between rounded-xl border border-surface-line bg-surface/80 px-3.5 py-2.5 text-xs"
+                        id={`lineup-player-${s.profileId}`}
+                        className={`flex scroll-mt-24 items-center justify-between rounded-xl border px-3.5 py-2.5 text-xs transition-colors ${
+                          s.profileId === myProfileId
+                            ? `border-accent bg-accent-soft ring-2 ring-accent/40 ${highlightMe ? "motion-safe:animate-pulse" : ""}`
+                            : "border-surface-line bg-surface/80"
+                        }`}
                       >
                         <span className="flex min-w-0 items-center gap-2.5">
                           <Avatar
-                            dpUrl={clubMemberById.get(s.profileId)?.user?.dpUrl}
+                            dpUrl={s.dpUrl ?? clubMemberById.get(s.profileId)?.user?.dpUrl}
                             name={s.name}
                             size="sm"
                             mode="static"
                           />
                           <span className="truncate font-semibold text-white">{s.name}</span>
+                          {s.profileId === myProfileId ? (
+                            <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-black uppercase text-bg">
+                              {t.dashboard.participantView.you}
+                            </span>
+                          ) : null}
                         </span>
                         <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
                           {s.gamePosition}
@@ -1221,16 +1250,26 @@ export function TournamentDetailView({
                     {myParticipation.lineup.substitutes.map((s, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between rounded-xl border border-surface-line bg-surface/80 px-3.5 py-2.5 text-xs"
+                        id={`lineup-player-${s.profileId}`}
+                        className={`flex scroll-mt-24 items-center justify-between rounded-xl border px-3.5 py-2.5 text-xs transition-colors ${
+                          s.profileId === myProfileId
+                            ? `border-accent bg-accent-soft ring-2 ring-accent/40 ${highlightMe ? "motion-safe:animate-pulse" : ""}`
+                            : "border-surface-line bg-surface/80"
+                        }`}
                       >
                         <span className="flex min-w-0 items-center gap-2.5">
                           <Avatar
-                            dpUrl={clubMemberById.get(s.profileId)?.user?.dpUrl}
+                            dpUrl={s.dpUrl ?? clubMemberById.get(s.profileId)?.user?.dpUrl}
                             name={s.name}
                             size="sm"
                             mode="static"
                           />
                           <span className="truncate font-semibold text-white">{s.name}</span>
+                          {s.profileId === myProfileId ? (
+                            <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-black uppercase text-bg">
+                              {t.dashboard.participantView.you}
+                            </span>
+                          ) : null}
                         </span>
                         <span className="rounded-md bg-blue-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-blue-300">
                           {s.gamePosition}
