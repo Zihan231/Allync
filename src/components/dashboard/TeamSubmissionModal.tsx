@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { CloseIcon, UsersIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
-import { useJoinTournament } from "@/lib/api/hooks/useTournaments";
+import { useJoinTournament, useSubmitTournamentLineup } from "@/lib/api/hooks/useTournaments";
 import type { ClubMemberProfile, Team } from "@/lib/api/teams";
-import type { BackendTournament, SubmitLineupPayload } from "@/lib/api/tournaments";
+import type { BackendTournament, SubmitLineupPayload, TournamentParticipant } from "@/lib/api/tournaments";
 import { TeamSubmissionForm } from "./TeamSubmissionForm";
 
 function apiErrorMessage(err: unknown): string | undefined {
@@ -14,45 +14,61 @@ function apiErrorMessage(err: unknown): string | undefined {
   return Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
 }
 
-/** Registers a club for a CvC tournament together with its team. Mount only while open. */
-export function RegisterClubModal({
+/**
+ * CvC team popup. Without `participant` it registers the club together with its
+ * team; with `participant` it edits that club's submitted team (pre-filled).
+ * Mount only while open.
+ */
+export function TeamSubmissionModal({
   tournament,
   club,
+  participant,
   members,
   teams,
   isLoadingSquad,
   onClose,
-  onRegistered,
+  onSaved,
 }: {
   tournament: BackendTournament;
   club: { id: string; name: string };
+  participant?: TournamentParticipant | null;
   members: ClubMemberProfile[];
   teams: Team[];
   isLoadingSquad: boolean;
   onClose: () => void;
-  onRegistered: (message: string) => void;
+  onSaved: (message: string) => void;
 }) {
   const { t } = useLanguage();
   const ts = t.dashboard.teamSubmission;
+  const isEditing = Boolean(participant);
   const joinMutation = useJoinTournament(tournament.id);
+  const lineupMutation = useSubmitTournamentLineup(tournament.id);
+  const isPending = joinMutation.isPending || lineupMutation.isPending;
   const [error, setError] = useState("");
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !joinMutation.isPending) onClose();
+      if (e.key === "Escape" && !isPending) onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, joinMutation.isPending]);
+  }, [onClose, isPending]);
 
   async function handleSubmit(lineup: SubmitLineupPayload) {
     setError("");
     try {
-      await joinMutation.mutateAsync({ clubId: club.id, lineup });
-      onRegistered(format(ts.registered, { club: club.name }));
+      if (participant) {
+        await lineupMutation.mutateAsync({ participantId: participant.id, payload: lineup });
+        onSaved(ts.lineupSaved);
+      } else {
+        await joinMutation.mutateAsync({ clubId: club.id, lineup });
+        onSaved(format(ts.registered, { club: club.name }));
+      }
       onClose();
     } catch (err: unknown) {
-      setError(apiErrorMessage(err) || (err as Error)?.message || ts.errRegister);
+      setError(
+        apiErrorMessage(err) || (err as Error)?.message || (isEditing ? ts.errLineup : ts.errRegister),
+      );
     }
   }
 
@@ -63,7 +79,7 @@ export function RegisterClubModal({
       <button
         type="button"
         aria-label={ts.close}
-        disabled={joinMutation.isPending}
+        disabled={isPending}
         onClick={onClose}
         className="fixed inset-0 cursor-default"
         tabIndex={-1}
@@ -84,16 +100,16 @@ export function RegisterClubModal({
             </div>
             <div>
               <h3 id="register-club-title" className="font-display text-lg font-black text-ink">
-                {format(ts.registerTitle, { club: club.name })}
+                {format(isEditing ? ts.editTitle : ts.registerTitle, { club: club.name })}
               </h3>
               <p className="mt-0.5 max-w-xl text-xs leading-relaxed text-ink-soft">
-                {format(ts.registerSubtitle, { preset })}
+                {format(isEditing ? ts.editSubtitle : ts.registerSubtitle, { preset })}
               </p>
             </div>
           </div>
           <button
             type="button"
-            disabled={joinMutation.isPending}
+            disabled={isPending}
             onClick={onClose}
             aria-label={ts.close}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-surface-line/60 hover:text-ink disabled:opacity-40"
@@ -114,9 +130,10 @@ export function RegisterClubModal({
               subsCount={tournament.subsCount}
               members={members}
               teams={teams}
-              submitLabel={ts.registerSubmit}
-              submittingLabel={ts.registering}
-              isSubmitting={joinMutation.isPending}
+              initialLineup={participant?.lineup}
+              submitLabel={isEditing ? ts.updateSubmit : ts.registerSubmit}
+              submittingLabel={isEditing ? ts.updating : ts.registering}
+              isSubmitting={isPending}
               error={error}
               onSubmit={handleSubmit}
             />

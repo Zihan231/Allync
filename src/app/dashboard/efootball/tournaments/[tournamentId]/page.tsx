@@ -15,7 +15,7 @@ import {
   useDeleteTournament,
 } from "@/lib/api/hooks/useTournaments";
 import { EditTournamentModal } from "@/components/dashboard/EditTournamentModal";
-import { RegisterClubModal } from "@/components/dashboard/RegisterClubModal";
+import { TeamSubmissionModal } from "@/components/dashboard/TeamSubmissionModal";
 import { TournamentParticipantCard } from "@/components/dashboard/TournamentParticipantCard";
 import { ParticipantLineupModal } from "@/components/dashboard/ParticipantLineupModal";
 import { Avatar } from "@/components/common/Avatar";
@@ -143,7 +143,7 @@ export function TournamentDetailView({
 
   // Active tab and builder states
   const [activeTab, setActiveTab] = useUrlTab(TOURNAMENT_DETAIL_TABS, "bracket");
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [teamModal, setTeamModal] = useState<"register" | "edit" | null>(null);
   const [viewedParticipantId, setViewedParticipantId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string>("");
   const [actionSuccess, setActionSuccess] = useState<string>("");
@@ -296,6 +296,9 @@ export function TournamentDetailView({
       user.club.role === "Manager");
 
   const isSubmissionOpen = !countdown.isPast;
+  // Registered club officials can change their team until the lineup cutoff.
+  const canEditTeam = Boolean(isCvC && isRegistered && canSubmitLineup && isSubmissionOpen);
+  const ts = t.dashboard.teamSubmission;
 
   // Date labels
   const startsDate = new Date(tournament.startAt);
@@ -530,7 +533,7 @@ export function TournamentDetailView({
                 {isCvC ? (
                   canJoinCvC && clubBelongsToCommunity ? (
                     <button
-                      onClick={() => setShowRegisterModal(true)}
+                      onClick={() => setTeamModal("register")}
                       disabled={joinMutation.isPending}
                       className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40 cursor-pointer"
                     >
@@ -582,11 +585,11 @@ export function TournamentDetailView({
                       {format(td.clubEnrolled, { club: user?.club?.name || td.clubFallback })}
                     </span>
                     <button
-                      onClick={() => setActiveTab("lineup")}
+                      onClick={() => (canEditTeam ? setTeamModal("edit") : setActiveTab("lineup"))}
                       className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-5 py-2.5 font-display text-xs font-bold text-accent-ink transition-all hover:bg-accent hover:text-bg hover:shadow-[0_0_20px_rgba(217,165,68,0.3)] cursor-pointer"
                     >
                       <ShieldIcon className="h-4 w-4" />
-                      {myParticipation?.lineup ? td.manageLineup : td.submitLineup}
+                      {canEditTeam ? (myParticipation?.lineup ? ts.editTeam : td.submitLineup) : td.manageLineup}
                     </button>
                   </div>
                 ) : (
@@ -829,7 +832,7 @@ export function TournamentDetailView({
                     </div>
                   ) : (
                     <button
-                      onClick={() => setShowRegisterModal(true)}
+                      onClick={() => setTeamModal("register")}
                       disabled={joinMutation.isPending}
                       className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
                     >
@@ -864,16 +867,26 @@ export function TournamentDetailView({
             {isRegistered && isCvC && (
               <>
                 {myParticipation?.lineup ? (
-                  <div className="flex items-center gap-2 rounded-full border border-emerald-500/50 bg-emerald-500/15 px-4 py-2 text-xs font-bold text-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.2)]">
-                    <CheckIcon className="h-4 w-4 text-emerald-400" />
-                    {format(td.lineupReady, {
-                      starters: myParticipation.lineup.starters.length,
-                      subs: myParticipation.lineup.substitutes.length,
-                    })}
-                  </div>
+                  <>
+                    <div className="flex items-center gap-2 rounded-full border border-emerald-500/50 bg-emerald-500/15 px-4 py-2 text-xs font-bold text-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.2)]">
+                      <CheckIcon className="h-4 w-4 text-emerald-400" />
+                      {format(td.lineupReady, {
+                        starters: myParticipation.lineup.starters.length,
+                        subs: myParticipation.lineup.substitutes.length,
+                      })}
+                    </div>
+                    {canEditTeam ? (
+                      <button
+                        onClick={() => setTeamModal("edit")}
+                        className="rounded-full border border-accent/50 bg-accent-soft px-5 py-2 font-display text-xs font-bold text-accent-ink transition-colors hover:bg-accent hover:text-bg"
+                      >
+                        {ts.editTeam}
+                      </button>
+                    ) : null}
+                  </>
                 ) : (
                   <button
-                    onClick={() => setActiveTab("lineup")}
+                    onClick={() => setTeamModal("edit")}
                     disabled={!isSubmissionOpen || !canSubmitLineup}
                     className="rounded-full bg-gradient-to-r from-amber-500 to-accent px-6 py-2.5 font-display text-xs font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.3)] transition-all hover:scale-105 disabled:opacity-40"
                   >
@@ -1112,6 +1125,17 @@ export function TournamentDetailView({
             <div className="mt-8 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 text-center text-xs font-semibold text-amber-300">
               {td.noAuthority}
             </div>
+          ) : myParticipation?.lineup ? (
+            <div className="mt-8 flex flex-col items-start justify-between gap-3 rounded-2xl border border-accent/30 bg-accent-soft/40 p-5 sm:flex-row sm:items-center">
+              <p className="text-xs text-ink-soft">{format(ts.editSubtitle, { preset: `${tournament.startersCount} v ${tournament.startersCount}` })}</p>
+              <button
+                type="button"
+                onClick={() => setTeamModal("edit")}
+                className="shrink-0 rounded-full bg-accent px-6 py-2.5 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.35)] transition-transform hover:-translate-y-0.5"
+              >
+                {ts.editTeam}
+              </button>
+            </div>
           ) : (
             <div className="mt-8">
               {loadingClubData ? (
@@ -1227,18 +1251,27 @@ export function TournamentDetailView({
           startersCount={tournament.startersCount}
           dateLocale={dateLocale}
           onClose={() => setViewedParticipantId(null)}
+          onEdit={
+            canEditTeam && viewedParticipant.id === myParticipation?.id
+              ? () => {
+                  setViewedParticipantId(null);
+                  setTeamModal("edit");
+                }
+              : undefined
+          }
         />
       ) : null}
 
-      {showRegisterModal && user?.club ? (
-        <RegisterClubModal
+      {teamModal && user?.club ? (
+        <TeamSubmissionModal
           tournament={tournament}
           club={{ id: user.club.id, name: user.club.name }}
+          participant={teamModal === "edit" ? myParticipation : null}
           members={clubMembers}
           teams={clubTeams}
           isLoadingSquad={loadingClubData}
-          onClose={() => setShowRegisterModal(false)}
-          onRegistered={(message) => {
+          onClose={() => setTeamModal(null)}
+          onSaved={(message) => {
             setActionError("");
             setActionSuccess(message);
             refetch();

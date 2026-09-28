@@ -14,11 +14,14 @@ export function ParticipantLineupModal({
   startersCount,
   dateLocale,
   onClose,
+  onEdit,
 }: {
   participant: TournamentParticipant;
   startersCount: number;
   dateLocale: string;
   onClose: () => void;
+  /** Shown for the viewer's own club while its team can still be changed. */
+  onEdit?: () => void;
 }) {
   const { t } = useLanguage();
   const pv = t.dashboard.participantView;
@@ -76,14 +79,25 @@ export function ParticipantLineupModal({
               </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={pv.close}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-surface-line/60 hover:text-ink"
-          >
-            <CloseIcon className="h-4 w-4" />
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {onEdit ? (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="rounded-full bg-accent px-4 py-1.5 font-display text-xs font-bold text-bg transition-transform hover:-translate-y-0.5"
+              >
+                {t.dashboard.teamSubmission.editTeam}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={pv.close}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-surface-line/60 hover:text-ink"
+            >
+              <CloseIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <div className="px-6 py-6">
