@@ -30,6 +30,7 @@ import { StatusPill } from "@/components/dashboard/StatusPill";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { AppLoader } from "@/components/common/AppLoader";
 import { useUrlTab } from "@/lib/navigation/useUrlTab";
+import { useCountdown } from "@/lib/hooks/useCountdown";
 import {
   TrophyIcon,
   BracketIcon,
@@ -51,41 +52,6 @@ const TOURNAMENT_DETAIL_TABS: readonly TournamentDetailTab[] = [
   "participants",
   "lineup",
 ];
-
-// Live Countdown Timer Hook
-function useSubmissionCountdown(deadlineIso?: string) {
-  const [timeLeft, setTimeLeft] = useState<{
-    totalMs: number;
-    days: number;
-    hours: number;
-    minutes: number;
-    seconds: number;
-    isPast: boolean;
-  }>({ totalMs: 0, days: 0, hours: 0, minutes: 0, seconds: 0, isPast: false });
-
-  useEffect(() => {
-    if (!deadlineIso) return;
-    function update() {
-      const deadline = new Date(deadlineIso!).getTime();
-      const now = Date.now();
-      const diff = deadline - now;
-      if (diff <= 0) {
-        setTimeLeft({ totalMs: 0, days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true });
-      } else {
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        setTimeLeft({ totalMs: diff, days, hours, minutes, seconds, isPast: false });
-      }
-    }
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [deadlineIso]);
-
-  return timeLeft;
-}
 
 export default function TournamentDetailPage({
   params,
@@ -183,7 +149,7 @@ export function TournamentDetailView({
   const [actionSuccess, setActionSuccess] = useState<string>("");
 
   // Countdown to 2-hour cutoff
-  const countdown = useSubmissionCountdown(tournament?.teamSubmissionDeadline);
+  const countdown = useCountdown(tournament?.teamSubmissionDeadline);
 
   // Fetch user's club details to verify membership in community
   useEffect(() => {

@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format } from "@/lib/i18n/translations";
+import { useCountdown } from "@/lib/hooks/useCountdown";
 import type { Tournament } from "@/lib/mock/types";
 import type { BackendTournament } from "@/lib/api/tournaments";
-import { TrophyIcon, UsersIcon, CrosshairIcon, CalendarIcon } from "../icons";
+import { TrophyIcon, UsersIcon, CrosshairIcon, CalendarIcon, ClockIcon } from "../icons";
+
+const LINEUP_CUTOFF_MS = 2 * 60 * 60 * 1000;
+const pad = (n: number) => String(n).padStart(2, "0");
 
 export function TournamentCard({
   tournament,
@@ -32,6 +37,21 @@ export function TournamentCard({
     formatBadgeText = `CvC · ${starters} v ${starters}`;
     startersLabel = `${starters} Starters · ${subs} Subs`;
   }
+
+  // Lineup cutoff countdown (CvC, while registration is open). Older data may
+  // lack the stored deadline, so fall back to 2 hours before kick-off.
+  const cutoffIso =
+    tournament.teamSubmissionDeadline ??
+    (tournament.startAt
+      ? new Date(new Date(tournament.startAt).getTime() - LINEUP_CUTOFF_MS).toISOString()
+      : null);
+  const showCutoff = isCvC && isOpen && Boolean(cutoffIso);
+  const countdown = useCountdown(showCutoff ? cutoffIso : null);
+  const countdownTime = `${pad(countdown.hours)}:${pad(countdown.minutes)}:${pad(countdown.seconds)}`;
+  const countdownText =
+    countdown.days > 0
+      ? format(t.dashboard.tournamentManage.cardCountdownDays, { days: countdown.days, time: countdownTime })
+      : countdownTime;
 
   // Host Name
   const hostName =
@@ -110,6 +130,27 @@ export function TournamentCard({
             </span>
           )}
         </div>
+
+        {/* Bottom-left of Banner: lineup 2-hour cutoff countdown */}
+        {showCutoff ? (
+          <div className="absolute bottom-2.5 left-3 z-10">
+            {countdown.isPast ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-danger/50 bg-black/70 px-2.5 py-1 font-mono text-[10px] font-bold text-danger-ink backdrop-blur-md">
+                <ClockIcon className="h-3 w-3 shrink-0" />
+                {t.dashboard.tournamentManage.cardLineupsLocked}
+              </span>
+            ) : (
+              <span
+                title={t.dashboard.tournamentManage.cardLineupCutoff}
+                className="inline-flex items-center gap-1.5 rounded-full border border-accent/50 bg-black/70 px-2.5 py-1 font-mono text-[11px] font-black tabular-nums text-accent-ink backdrop-blur-md"
+              >
+                <ClockIcon className="h-3 w-3 shrink-0" />
+                <span className="font-semibold text-ink-soft">{t.dashboard.tournamentManage.cardLineupShort}</span>
+                <span suppressHydrationWarning>{countdownText}</span>
+              </span>
+            )}
+          </div>
+        ) : null}
 
         {/* Bottom of Banner: Prominent Floating Prize Badge on Right */}
         <div className="absolute bottom-2.5 right-3 z-10">

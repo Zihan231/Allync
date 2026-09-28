@@ -816,6 +816,10 @@ export const translations = {
         deleteConfirmLabel: "Delete Tournament",
         deleting: "Deleting...",
         errDelete: "Failed to delete tournament.",
+        cardLineupCutoff: "Lineup cutoff in",
+        cardLineupShort: "Lineup",
+        cardLineupsLocked: "Lineups locked",
+        cardCountdownDays: "{days}d {time}",
       },
       tournamentCreate: {
         eyebrowRestricted: "Community Tournament Management",
@@ -2241,6 +2245,10 @@ export const translations = {
         deleteConfirmLabel: "টুর্নামেন্ট মুছুন",
         deleting: "মুছে ফেলা হচ্ছে...",
         errDelete: "টুর্নামেন্ট মুছে ফেলা যায়নি।",
+        cardLineupCutoff: "লাইনআপ জমার বাকি",
+        cardLineupShort: "লাইনআপ",
+        cardLineupsLocked: "লাইনআপ লক হয়ে গেছে",
+        cardCountdownDays: "{days} দিন {time}",
       },
       tournamentCreate: {
         eyebrowRestricted: "কমিউনিটি টুর্নামেন্ট ম্যানেজমেন্ট",
