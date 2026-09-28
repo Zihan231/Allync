@@ -34,7 +34,7 @@ import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthority
 import { JoinAsClubModal } from "@/components/dashboard/JoinAsClubModal";
 import { WithdrawClubModal } from "@/components/dashboard/WithdrawClubModal";
 import { AppLoader } from "@/components/common/AppLoader";
-import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon, ClockIcon, TrophyIcon } from "@/components/icons";
+import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon, ClockIcon, TrophyIcon, PlusIcon } from "@/components/icons";
 import { TournamentCard } from "@/components/dashboard/TournamentCard";
 import { TournamentCardSkeleton } from "@/components/dashboard/TournamentCardSkeleton";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -598,15 +598,26 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
             )}
           </div>
 
-          {communityTournaments.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setTab("tournaments")}
-              className="font-mono text-xs font-semibold text-accent-ink hover:underline"
-            >
-              View all &rarr;
-            </button>
-          ) : null}
+          <div className="flex items-center gap-3">
+            {canManage ? (
+              <Link
+                href={`/dashboard/efootball/tournaments/create?communityId=${community.id}`}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-accent px-3 font-display text-xs font-bold text-bg transition-colors hover:bg-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                <PlusIcon className="h-3.5 w-3.5" />
+                {t.dashboard.shell.navCreateTournament}
+              </Link>
+            ) : null}
+            {communityTournaments.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setTab("tournaments")}
+                className="font-mono text-xs font-semibold text-accent-ink hover:underline"
+              >
+                View all &rarr;
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {isLoadingTournaments && communityTournaments.length === 0 ? (
