@@ -12,7 +12,11 @@ import {
   useJoinTournament,
   useSubmitTournamentLineup,
   useGenerateTournamentBracket,
+  useDeleteTournament,
 } from "@/lib/api/hooks/useTournaments";
+import { EditTournamentModal } from "@/components/dashboard/EditTournamentModal";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useConfirm } from "@/lib/useConfirm";
 import { useCommunityMembers } from "@/lib/api/hooks/useCommunities";
 import { getClub } from "@/lib/api/clubs";
 import { getTeams, getClubMembers, type Team, type ClubMemberProfile } from "@/lib/api/teams";
@@ -135,6 +139,10 @@ export function TournamentDetailView({
   const joinMutation = useJoinTournament(tournamentId);
   const submitLineupMutation = useSubmitTournamentLineup(tournamentId);
   const generateBracketMutation = useGenerateTournamentBracket(tournamentId);
+  const deleteMutation = useDeleteTournament(tournamentId);
+  const { confirm, confirmProps } = useConfirm();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const tm = t.dashboard.tournamentManage;
   const people = useMockPeople();
   const viewerIsParticipant = Boolean(
     tournament?.participants?.some((participant) =>
@@ -463,6 +471,26 @@ export function TournamentDetailView({
     }
   }
 
+  async function handleDeleteTournament() {
+    if (!tournament) return;
+    const confirmed = await confirm(format(tm.deleteConfirm, { name: tournament.name }), {
+      title: tm.deleteTitle,
+      variant: "danger",
+      confirmLabel: tm.deleteConfirmLabel,
+    });
+    if (!confirmed) return;
+
+    setActionError("");
+    setActionSuccess("");
+    try {
+      await deleteMutation.mutateAsync();
+      router.push(`/dashboard/efootball/community/${tournament.communityId}?tab=tournaments`);
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setActionError(message || (err as Error)?.message || tm.errDelete);
+    }
+  }
+
   // Handle Generate Bracket
   async function handleGenerateBracket() {
     setActionError("");
@@ -501,8 +529,29 @@ export function TournamentDetailView({
             <span>{td.back}</span>
           </button>
 
-          {/* Status Indicator */}
-          <div className="flex items-center gap-2">
+          {/* Status Indicator + organizer actions */}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {isOrganizer ? (
+              <>
+                {!isCompleted ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(true)}
+                    className="inline-flex items-center rounded-full border border-accent/40 bg-accent-soft px-3.5 py-1 text-xs font-bold text-accent-ink transition-colors hover:bg-accent hover:text-bg"
+                  >
+                    {tm.edit}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleDeleteTournament}
+                  disabled={deleteMutation.isPending}
+                  className="inline-flex items-center rounded-full border border-danger/40 bg-danger-soft px-3.5 py-1 text-xs font-bold text-danger-ink transition-colors hover:bg-danger hover:text-white disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? tm.deleting : tm.delete}
+                </button>
+              </>
+            ) : null}
             <div className="flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface-raised px-3.5 py-1 text-xs font-bold">
               <span
                 className={`h-2 w-2 rounded-full ${
@@ -1482,6 +1531,18 @@ export function TournamentDetailView({
           )}
         </div>
       )}
+
+      {isOrganizer && showEditModal ? (
+        <EditTournamentModal
+          onClose={() => setShowEditModal(false)}
+          onSaved={(message) => {
+            setActionError("");
+            setActionSuccess(message);
+          }}
+          tournament={tournament}
+        />
+      ) : null}
+      <ConfirmDialog {...confirmProps} />
     </div>
   );
 }

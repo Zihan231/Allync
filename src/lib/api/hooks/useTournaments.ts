@@ -6,11 +6,14 @@ import {
   joinTournament,
   submitTournamentLineup,
   generateTournamentBracket,
+  updateTournament,
+  deleteTournament,
   type BackendTournament,
   type TournamentQueryParams,
   type CreateTournamentPayload,
   type SubmitLineupPayload,
   type TournamentParticipant,
+  type UpdateTournamentPayload,
 } from "../tournaments";
 
 export const tournamentKeys = {
@@ -95,6 +98,28 @@ export function useGenerateTournamentBracket(tournamentId: string) {
     mutationFn: () => generateTournamentBracket(tournamentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tournamentKeys.detail(tournamentId) });
+      queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
+    },
+  });
+}
+
+export function useUpdateTournament(tournamentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation<BackendTournament, Error, UpdateTournamentPayload>({
+    mutationFn: (payload) => updateTournament(tournamentId, payload),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(tournamentKeys.detail(tournamentId), updated);
+      queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
+    },
+  });
+}
+
+export function useDeleteTournament(tournamentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation<{ id: string }, Error, void>({
+    mutationFn: () => deleteTournament(tournamentId),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: tournamentKeys.detail(tournamentId) });
       queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
     },
   });

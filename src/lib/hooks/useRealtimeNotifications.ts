@@ -63,6 +63,8 @@ export function useRealtimeNotifications() {
             } else if (notif.type === "community_join_request") {
               void queryClient.invalidateQueries({ queryKey: ["community-my-request"] });
               void queryClient.invalidateQueries({ queryKey: ["community-requests"] });
+            } else if (notif.type === "tournament_update") {
+              void queryClient.invalidateQueries({ queryKey: ["tournaments"] });
             }
             // Approvals and new club members change club/community rosters, which the
             // client-side store also caches — only then is a full store resync worth it.

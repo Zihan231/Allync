@@ -183,6 +183,29 @@ export async function createTournament(
   return res.data;
 }
 
+/** Editable details; format and roster size are fixed at creation. */
+export interface UpdateTournamentPayload {
+  name?: string;
+  maxParticipants?: number;
+  entryFeeBdt?: number;
+  prizePoolBdt?: number;
+  startAt?: string;
+  endAt?: string | null;
+}
+
+export async function updateTournament(
+  id: string,
+  payload: UpdateTournamentPayload,
+): Promise<BackendTournament> {
+  const res = await api.patch<BackendTournament>(`/tournaments/${id}`, payload);
+  return res.data;
+}
+
+export async function deleteTournament(id: string): Promise<{ id: string }> {
+  const res = await api.delete<{ id: string }>(`/tournaments/${id}`);
+  return res.data;
+}
+
 export async function joinTournament(
   id: string,
   payload?: { clubId?: string },
