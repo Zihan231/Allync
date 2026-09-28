@@ -135,6 +135,7 @@ function FieldSlot({
   error,
   displayValue,
   multiline,
+  latinDigits,
   children,
 }: {
   editing: boolean;
@@ -144,6 +145,8 @@ function FieldSlot({
   error?: string;
   displayValue: string;
   multiline?: boolean;
+  /** Keep ASCII digits in the Bangla locale (IDs, phone numbers). */
+  latinDigits?: boolean;
   children: ReactNode;
 }) {
   if (editing) {
@@ -157,6 +160,7 @@ function FieldSlot({
     <div>
       <span className="text-sm font-medium text-ink-soft">{label}</span>
       <p
+        data-latin-digits={latinDigits || undefined}
         className={`mt-1.5 rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink ${
           multiline ? "whitespace-pre-wrap" : "truncate"
         }`}
@@ -629,6 +633,7 @@ export function ProfileEditForm() {
                   error={errors.konamiUid}
                   editing={editingTab === "social"}
                   displayValue={form.konamiUid || dash}
+                  latinDigits
                 >
                   <input
                     value={form.konamiUid}
@@ -743,6 +748,7 @@ export function ProfileEditForm() {
                 error={errors.phoneNumber}
                 editing={editingTab === "personal"}
                 displayValue={form.phoneNumber || dash}
+                latinDigits
               >
                 <input
                   value={form.phoneNumber}

@@ -212,7 +212,7 @@ export function TransferAuthorityModal({
                         <div className="truncate text-xs font-semibold text-ink">{member.name}</div>
                         <div className="flex items-center gap-2 text-[11px] text-ink-faint">
                           <span>{role}</span>
-                          {member.inGameId && <span>· IGN: {member.inGameId}</span>}
+                          {member.inGameId && <span>· IGN: <span data-latin-digits>{member.inGameId}</span></span>}
                         </div>
                       </div>
                     </div>

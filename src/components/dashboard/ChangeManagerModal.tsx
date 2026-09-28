@@ -226,7 +226,7 @@ export function ChangeManagerModal({
                   <div>
                     <div className="text-sm font-semibold text-ink">{currentManager.name}</div>
                     {currentManager.inGameId && (
-                      <div className="text-xs text-ink-faint">{format(cm.ign, { id: currentManager.inGameId })}</div>
+                      <div className="text-xs text-ink-faint">{formatNodes(cm.ign, { id: <span data-latin-digits>{currentManager.inGameId}</span> })}</div>
                     )}
                   </div>
                 </div>
@@ -288,7 +288,7 @@ export function ChangeManagerModal({
                         <div className="truncate text-xs font-semibold text-ink">{member.name}</div>
                         <div className="flex items-center gap-2 text-[11px] text-ink-faint">
                           <span>{roleLabel(member.clubRole ?? "Player", t)}</span>
-                          {member.inGameId && <span>· {format(cm.ign, { id: member.inGameId })}</span>}
+                          {member.inGameId && <span>· {formatNodes(cm.ign, { id: <span data-latin-digits>{member.inGameId}</span> })}</span>}
                         </div>
                       </div>
                     </div>

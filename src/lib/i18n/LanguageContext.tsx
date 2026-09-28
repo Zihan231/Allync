@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { translations, type Locale, type TranslationDict } from "./translations";
+import { useLocaleDigits } from "./useLocaleDigits";
 
 type LanguageContextValue = {
   locale: Locale;
@@ -41,6 +42,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = locale === "bn" ? "bn" : "en";
     document.documentElement.dataset.locale = locale;
   }, [locale]);
+
+  useLocaleDigits(locale);
 
   const setLocale = (next: Locale) => {
     setLocaleState(next);
