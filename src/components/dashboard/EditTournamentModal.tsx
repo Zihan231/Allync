@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { CloseIcon } from "@/components/icons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { useConfirm } from "@/lib/useConfirm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
 import { useUpdateTournament } from "@/lib/api/hooks/useTournaments";
@@ -37,6 +39,8 @@ export function EditTournamentModal({
   const tm = t.dashboard.tournamentManage;
   const tc = t.dashboard.tournamentCreate;
   const updateMutation = useUpdateTournament(tournament.id);
+  const { confirm, confirmProps } = useConfirm();
+  const confirmOpen = confirmProps.open;
 
   const [name, setName] = useState(tournament.name);
   const [capacity, setCapacity] = useState(String(tournament.maxParticipants));
@@ -51,11 +55,12 @@ export function EditTournamentModal({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !updateMutation.isPending) onClose();
+      // Escape belongs to the confirm dialog while it is open.
+      if (e.key === "Escape" && !updateMutation.isPending && !confirmOpen) onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, updateMutation.isPending]);
+  }, [onClose, updateMutation.isPending, confirmOpen]);
 
   const isCvc = tournament.type === "cvc";
   const enrolled = tournament.participants?.length ?? 0;
@@ -96,11 +101,35 @@ export function EditTournamentModal({
       return;
     }
 
+    const nextEntryFee = isPaid ? Number(entryFee) : 0;
+    const nextPrizePool = Number(prizePool);
+    const changedFields = [
+      name.trim() !== tournament.name && tm.fieldName,
+      capacityNumber !== tournament.maxParticipants && tm.fieldCapacity,
+      startChanged && tm.fieldStart,
+      endAt !== toLocalInput(tournament.endAt) && tm.fieldEnd,
+      nextEntryFee !== tournament.entryFeeBdt && tm.fieldEntryFee,
+      nextPrizePool !== tournament.prizePoolBdt && tm.fieldPrizePool,
+    ].filter((field): field is string => Boolean(field));
+
+    if (!changedFields.length) {
+      setSubmitError(tm.noChanges);
+      return;
+    }
+
+    const confirmed = await confirm(format(tm.saveConfirm, { fields: changedFields.join(", ") }), {
+      title: tm.saveConfirmTitle,
+      variant: "warning",
+      confirmLabel: tm.saveConfirmLabel,
+      cancelLabel: tm.cancel,
+    });
+    if (!confirmed) return;
+
     const payload: UpdateTournamentPayload = {
       name: name.trim(),
       maxParticipants: capacityNumber,
-      entryFeeBdt: isPaid ? Number(entryFee) : 0,
-      prizePoolBdt: Number(prizePool),
+      entryFeeBdt: nextEntryFee,
+      prizePoolBdt: nextPrizePool,
       endAt: endAt ? new Date(endAt).toISOString() : null,
     };
     // Only send the start time when it was changed, so an untouched past-due
@@ -286,6 +315,7 @@ export function EditTournamentModal({
           </button>
         </div>
       </div>
+      <ConfirmDialog {...confirmProps} />
     </div>
   );
 }

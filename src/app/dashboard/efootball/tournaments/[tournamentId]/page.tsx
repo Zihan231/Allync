@@ -477,6 +477,7 @@ export function TournamentDetailView({
       title: tm.deleteTitle,
       variant: "danger",
       confirmLabel: tm.deleteConfirmLabel,
+      cancelLabel: tm.cancel,
     });
     if (!confirmed) return;
 
