@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, type ComponentType, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -21,10 +21,79 @@ import {
   CalendarIcon,
   ClockIcon,
   CheckIcon,
+  BracketIcon,
+  WalletIcon,
 } from "@/components/icons";
 
 const fieldClass =
   "mt-1.5 w-full rounded-xl border border-surface-line bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all [color-scheme:dark]";
+
+type SectionTone = "neutral" | "accent" | "blue" | "success" | "danger";
+
+// Theme tokens only (see globals.css). Full class strings so Tailwind picks them up.
+const SECTION_TONES: Record<SectionTone, { card: string; bar: string; icon: string; title: string }> = {
+  neutral: {
+    card: "border-surface-line-strong bg-surface/40",
+    bar: "bg-ink-soft",
+    icon: "bg-surface-line text-ink",
+    title: "text-ink",
+  },
+  accent: {
+    card: "border-accent/30 bg-accent-soft/40",
+    bar: "bg-accent",
+    icon: "bg-accent-soft text-accent",
+    title: "text-accent-ink",
+  },
+  blue: {
+    card: "border-blue/30 bg-blue-soft/40",
+    bar: "bg-blue",
+    icon: "bg-blue-soft text-blue",
+    title: "text-blue-ink",
+  },
+  success: {
+    card: "border-success/30 bg-success-soft/40",
+    bar: "bg-success",
+    icon: "bg-success-soft text-success",
+    title: "text-success-ink",
+  },
+  danger: {
+    card: "border-danger/30 bg-danger-soft/40",
+    bar: "bg-danger",
+    icon: "bg-danger-soft text-danger",
+    title: "text-danger-ink",
+  },
+};
+
+function FormSection({
+  tone,
+  icon: Icon,
+  title,
+  required = false,
+  children,
+}: {
+  tone: SectionTone;
+  icon: ComponentType<{ className?: string }>;
+  title: string;
+  required?: boolean;
+  children: ReactNode;
+}) {
+  const styles = SECTION_TONES[tone];
+  return (
+    <section className={`relative overflow-hidden rounded-2xl border p-4 pl-5 sm:p-5 sm:pl-6 ${styles.card}`}>
+      <div className={`pointer-events-none absolute inset-y-0 left-0 w-1 ${styles.bar}`} aria-hidden="true" />
+      <h3 className="flex items-center gap-2.5">
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${styles.icon}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className={`font-display text-sm font-bold uppercase tracking-wide ${styles.title}`}>
+          {title}
+          {required ? <span className="ml-1 text-accent">*</span> : null}
+        </span>
+      </h3>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
 
 function CreateTournamentForm() {
   const { t, locale } = useLanguage();
@@ -258,7 +327,7 @@ function CreateTournamentForm() {
             className="space-y-6 rounded-2xl border border-surface-line bg-surface/50 p-6 md:p-8"
           >
             {errorMessage && (
-              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs font-medium text-rose-400">
+              <div className="rounded-xl border border-danger/30 bg-danger-soft p-4 text-xs font-medium text-danger-ink">
                 {errorMessage}
               </div>
             )}
@@ -266,45 +335,38 @@ function CreateTournamentForm() {
 
 
             {/* Tournament Title */}
-            <div>
-              <label className="block">
-                <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                  {tc.titleLabel} <span className="text-accent">*</span>
-                </span>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={tc.titlePlaceholder}
-                  required
-                  className={fieldClass}
-                />
-              </label>
-            </div>
+            <FormSection tone="neutral" icon={TrophyIcon} title={tc.titleLabel} required>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={tc.titlePlaceholder}
+                aria-label={tc.titleLabel}
+                required
+                className={fieldClass}
+              />
+            </FormSection>
 
             {/* Format: PvP vs CvC */}
-            <div>
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                {tc.formatLabel} <span className="text-accent">*</span>
-              </span>
-              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <FormSection tone="blue" icon={CrosshairIcon} title={tc.formatLabel} required>
+              <div className="grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => setType("cvc")}
                   className={`group relative flex flex-col rounded-xl border p-4 text-left transition-all ${
                     type === "cvc"
-                      ? "border-accent bg-accent-soft/80 shadow-[0_0_20px_rgba(217,165,68,0.15)]"
+                      ? "border-blue bg-blue-soft shadow-[0_0_20px_rgba(76,141,255,0.18)]"
                       : "border-surface-line bg-surface/40 hover:border-surface-line-strong"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/20 text-accent">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-soft text-blue">
                         <UsersIcon className="h-4 w-4" />
                       </div>
                       <div className="font-display text-sm font-bold text-ink">{tc.cvcTitle}</div>
                     </div>
-                    {type === "cvc" && <CheckIcon className="h-4 w-4 text-accent" />}
+                    {type === "cvc" && <CheckIcon className="h-4 w-4 text-blue" />}
                   </div>
                   <p className="mt-2 text-xs text-ink-soft">
                     {tc.cvcBody}
@@ -316,111 +378,109 @@ function CreateTournamentForm() {
                   onClick={() => setType("pvp")}
                   className={`group relative flex flex-col rounded-xl border p-4 text-left transition-all ${
                     type === "pvp"
-                      ? "border-accent bg-accent-soft/80 shadow-[0_0_20px_rgba(217,165,68,0.15)]"
+                      ? "border-blue bg-blue-soft shadow-[0_0_20px_rgba(76,141,255,0.18)]"
                       : "border-surface-line bg-surface/40 hover:border-surface-line-strong"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-soft text-blue">
                         <CrosshairIcon className="h-4 w-4" />
                       </div>
                       <div className="font-display text-sm font-bold text-ink">{tc.pvpTitle}</div>
                     </div>
-                    {type === "pvp" && <CheckIcon className="h-4 w-4 text-accent" />}
+                    {type === "pvp" && <CheckIcon className="h-4 w-4 text-blue" />}
                   </div>
                   <p className="mt-2 text-xs text-ink-soft">
                     {tc.pvpBody}
                   </p>
                 </button>
               </div>
-            </div>
 
-            {/* CvC Roster Presets (11v11 or 8v8 or Custom) */}
-            {type === "cvc" && (
-              <div className="rounded-xl border border-surface-line/80 bg-surface/30 p-4 space-y-4">
-                <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                  {tc.rosterPresetLabel}
-                </span>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <button
-                    type="button"
-                    onClick={() => handlePresetSelect("preset_11v11")}
-                    className={`rounded-lg border p-3 text-left transition-all ${
-                      preset === "preset_11v11"
-                        ? "border-accent bg-accent/15 text-ink"
-                        : "border-surface-line text-ink-soft hover:border-surface-line-strong"
-                    }`}
-                  >
-                    <div className="font-display text-sm font-bold">{tc.preset11Title}</div>
-                    <div className="mt-1 text-xs text-ink-faint">{tc.preset11Detail}</div>
-                    <div className="mt-1 font-mono text-[11px] text-accent">{tc.preset11Total}</div>
-                  </button>
+              {/* CvC Roster Presets (11v11 or 8v8 or Custom): a sub-step of the format choice */}
+              {type === "cvc" && (
+                <div className="mt-5 rounded-xl border border-surface-line bg-bg/50 p-4">
+                  <h4 className="mb-3 flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
+                    <ShieldIcon className="h-3.5 w-3.5 text-blue" />
+                    {tc.rosterPresetLabel}
+                  </h4>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <button
+                      type="button"
+                      onClick={() => handlePresetSelect("preset_11v11")}
+                      className={`rounded-lg border p-3 text-left transition-all ${
+                        preset === "preset_11v11"
+                          ? "border-blue/70 bg-bg-raised text-ink ring-1 ring-blue/40"
+                          : "border-surface-line text-ink-soft hover:border-surface-line-strong"
+                      }`}
+                    >
+                      <div className="font-display text-sm font-bold">{tc.preset11Title}</div>
+                      <div className="mt-1 text-xs text-ink-faint">{tc.preset11Detail}</div>
+                      <div className="mt-1 font-mono text-[11px] text-blue-ink">{tc.preset11Total}</div>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handlePresetSelect("preset_8v8")}
-                    className={`rounded-lg border p-3 text-left transition-all ${
-                      preset === "preset_8v8"
-                        ? "border-accent bg-accent/15 text-ink"
-                        : "border-surface-line text-ink-soft hover:border-surface-line-strong"
-                    }`}
-                  >
-                    <div className="font-display text-sm font-bold">{tc.preset8Title}</div>
-                    <div className="mt-1 text-xs text-ink-faint">{tc.preset8Detail}</div>
-                    <div className="mt-1 font-mono text-[11px] text-accent">{tc.preset8Total}</div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePresetSelect("preset_8v8")}
+                      className={`rounded-lg border p-3 text-left transition-all ${
+                        preset === "preset_8v8"
+                          ? "border-blue/70 bg-bg-raised text-ink ring-1 ring-blue/40"
+                          : "border-surface-line text-ink-soft hover:border-surface-line-strong"
+                      }`}
+                    >
+                      <div className="font-display text-sm font-bold">{tc.preset8Title}</div>
+                      <div className="mt-1 text-xs text-ink-faint">{tc.preset8Detail}</div>
+                      <div className="mt-1 font-mono text-[11px] text-blue-ink">{tc.preset8Total}</div>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setPreset("custom")}
-                    className={`rounded-lg border p-3 text-left transition-all ${
-                      preset === "custom"
-                        ? "border-accent bg-accent/15 text-ink"
-                        : "border-surface-line text-ink-soft hover:border-surface-line-strong"
-                    }`}
-                  >
-                    <div className="font-display text-sm font-bold">{tc.presetCustomTitle}</div>
-                    <div className="mt-1 text-xs text-ink-faint">{tc.presetCustomDetail}</div>
-                    <div className="mt-1 font-mono text-[11px] text-accent">{tc.presetCustomTotal}</div>
-                  </button>
-                </div>
-
-                {preset === "custom" && (
-                  <div className="grid grid-cols-2 gap-4 pt-2">
-                    <label className="block">
-                      <span className="text-xs text-ink-soft">{tc.startersLabel}</span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={15}
-                        value={startersCount}
-                        onChange={(e) => setStartersCount(Math.max(1, Number(e.target.value)))}
-                        className={fieldClass}
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs text-ink-soft">{tc.subsLabel}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={10}
-                        value={subsCount}
-                        onChange={(e) => setSubsCount(Math.max(0, Number(e.target.value)))}
-                        className={fieldClass}
-                      />
-                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setPreset("custom")}
+                      className={`rounded-lg border p-3 text-left transition-all ${
+                        preset === "custom"
+                          ? "border-blue/70 bg-bg-raised text-ink ring-1 ring-blue/40"
+                          : "border-surface-line text-ink-soft hover:border-surface-line-strong"
+                      }`}
+                    >
+                      <div className="font-display text-sm font-bold">{tc.presetCustomTitle}</div>
+                      <div className="mt-1 text-xs text-ink-faint">{tc.presetCustomDetail}</div>
+                      <div className="mt-1 font-mono text-[11px] text-blue-ink">{tc.presetCustomTotal}</div>
+                    </button>
                   </div>
-                )}
-              </div>
-            )}
+
+                  {preset === "custom" && (
+                    <div className="mt-4 grid grid-cols-2 gap-4">
+                      <label className="block">
+                        <span className="text-xs text-ink-soft">{tc.startersLabel}</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={15}
+                          value={startersCount}
+                          onChange={(e) => setStartersCount(Math.max(1, Number(e.target.value)))}
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-xs text-ink-soft">{tc.subsLabel}</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={10}
+                          value={subsCount}
+                          onChange={(e) => setSubsCount(Math.max(0, Number(e.target.value)))}
+                          className={fieldClass}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
+            </FormSection>
 
             {/* Bracket Participant Size Presets */}
-            <div>
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                {tc.capacityLabel}
-              </span>
-              <div className="mt-2 flex flex-wrap gap-2">
+            <FormSection tone="success" icon={BracketIcon} title={tc.capacityLabel}>
+              <div className="flex flex-wrap gap-2">
                 {[8, 16, 32, 64].map((size) => (
                   <button
                     key={size}
@@ -431,7 +491,7 @@ function CreateTournamentForm() {
                     }}
                     className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-all ${
                       !customParticipants && maxParticipants === size
-                        ? "border-accent bg-accent text-bg"
+                        ? "border-success bg-success text-bg"
                         : "border-surface-line bg-surface/40 text-ink-soft hover:border-surface-line-strong"
                     }`}
                   >
@@ -446,7 +506,7 @@ function CreateTournamentForm() {
                   }}
                   className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-all ${
                     customParticipants
-                      ? "border-accent bg-accent text-bg"
+                      ? "border-success bg-success text-bg"
                       : "border-surface-line bg-surface/40 text-ink-soft hover:border-surface-line-strong"
                   }`}
                 >
@@ -476,14 +536,11 @@ function CreateTournamentForm() {
                   ) : null}
                 </div>
               )}
-            </div>
+            </FormSection>
 
             {/* Schedule & 2h Submission Deadline */}
-            <div className="space-y-4">
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                {tc.scheduleLabel}
-              </span>
-
+            <FormSection tone="danger" icon={CalendarIcon} title={tc.scheduleLabel}>
+              <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
                   <span className="text-xs text-ink-soft">{tc.startLabel}</span>
@@ -509,10 +566,10 @@ function CreateTournamentForm() {
 
               {/* Live Cutoff Highlight */}
               {submissionDeadlineText && (
-                <div className="flex items-start gap-3 rounded-xl border border-accent/30 bg-accent/10 p-4">
-                  <ClockIcon className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                <div className="flex items-start gap-3 rounded-xl border border-danger/30 bg-danger-soft p-4">
+                  <ClockIcon className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
                   <div className="text-xs">
-                    <span className="font-bold text-accent-ink">
+                    <span className="font-bold text-danger-ink">
                       {tc.cutoffLabel}
                     </span>{" "}
                     <span className="text-ink font-semibold">{submissionDeadlineText}</span>
@@ -524,14 +581,12 @@ function CreateTournamentForm() {
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+            </FormSection>
 
             {/* Entry Fee & Prize Pool */}
-            <div className="space-y-4 pt-2 border-t border-surface-line">
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                {tc.feesLabel}
-              </span>
-
+            <FormSection tone="accent" icon={WalletIcon} title={tc.feesLabel}>
+              <div className="space-y-4">
               <div className="grid grid-cols-2 gap-2 rounded-xl border border-surface-line bg-surface/40 p-1">
                 <button
                   type="button"
@@ -578,7 +633,8 @@ function CreateTournamentForm() {
                   />
                 </label>
               </div>
-            </div>
+              </div>
+            </FormSection>
 
             {/* Submit Button */}
             <div className="pt-4">
