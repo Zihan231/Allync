@@ -27,7 +27,8 @@ const fieldClass =
   "mt-1.5 w-full rounded-xl border border-surface-line bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all [color-scheme:dark]";
 
 function CreateTournamentForm() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const tc = t.dashboard.tournamentCreate;
   const { user } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,17 +48,17 @@ function CreateTournamentForm() {
   const [maxParticipants, setMaxParticipants] = useState(16);
   const [customParticipants, setCustomParticipants] = useState(false);
   const [participantsInput, setParticipantsInput] = useState("16");
-  const participantLabel = type === "cvc" ? "clubs" : "players";
+  const isCvc = type === "cvc";
   const participantsError = !customParticipants
     ? null
     : participantsInput === ""
-      ? `Please enter the number of ${participantLabel}.`
+      ? (isCvc ? tc.errCapacityEmptyClubs : tc.errCapacityEmptyPlayers)
       : maxParticipants < 2
-        ? `At least 2 ${participantLabel} are required.`
+        ? (isCvc ? tc.errCapacityMinClubs : tc.errCapacityMinPlayers)
         : maxParticipants > 128
-          ? `Maximum 128 ${participantLabel} allowed.`
+          ? (isCvc ? tc.errCapacityMaxClubs : tc.errCapacityMaxPlayers)
           : maxParticipants % 2 !== 0
-            ? `Please enter an even number of ${participantLabel}.`
+            ? (isCvc ? tc.errCapacityOddClubs : tc.errCapacityOddPlayers)
             : null;
 
   // Schedule
@@ -131,14 +132,14 @@ function CreateTournamentForm() {
     const startDate = new Date(startAt);
     if (isNaN(startDate.getTime())) return null;
     const deadlineDate = new Date(startDate.getTime() - 2 * 60 * 60 * 1000);
-    return deadlineDate.toLocaleString([], {
+    return deadlineDate.toLocaleString(locale === "bn" ? "bn-BD" : "en-US", {
       weekday: "short",
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  }, [startAt]);
+  }, [startAt, locale]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -146,20 +147,18 @@ function CreateTournamentForm() {
 
     const effectiveCommunityId = communityId || queryCommunityId || eligibleCommunities[0]?.id || user?.community?.id;
     if (!effectiveCommunityId) {
-      setErrorMessage("No approved hosting community found for your account.");
+      setErrorMessage(tc.errNoCommunity);
       return;
     }
 
     if (!startAt) {
-      setErrorMessage("Please set the tournament start date & time.");
+      setErrorMessage(tc.errNoStart);
       return;
     }
 
     const startDate = new Date(startAt);
     if (startDate.getTime() <= Date.now() + 2 * 60 * 60 * 1000) {
-      setErrorMessage(
-        "Tournament start time must be at least 2 hours in the future to allow lineup submissions.",
-      );
+      setErrorMessage(tc.errStartTooSoon);
       return;
     }
 
@@ -194,7 +193,7 @@ function CreateTournamentForm() {
     } catch (err: any) {
       const resData = err?.response?.data;
       const resMsg = resData?.message || err?.message;
-      let displayMsg = "Failed to create tournament. Please ensure you are the President or Vice President of the community.";
+      let displayMsg: string = tc.errCreateFailed;
       if (Array.isArray(resMsg)) {
         displayMsg = resMsg.join(", ");
       } else if (typeof resMsg === "string" && resMsg.trim()) {
@@ -217,8 +216,8 @@ function CreateTournamentForm() {
     return (
       <div>
         <PageHeader
-          eyebrow="Community Tournament Management"
-          title="Host a Tournament"
+          eyebrow={tc.eyebrowRestricted}
+          title={tc.pageTitle}
           backHref={communityBackHref}
         />
         <div className="mt-8">
@@ -226,16 +225,16 @@ function CreateTournamentForm() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-warning/15 text-warning-ink">
               <LockIcon className="h-6 w-6" />
             </div>
-            <h3 className="mt-4 font-display text-base font-bold text-ink">Access Restricted</h3>
+            <h3 className="mt-4 font-display text-base font-bold text-ink">{tc.accessRestrictedTitle}</h3>
             <p className="mt-2 text-xs text-ink-soft leading-relaxed">
-              Only verified Presidents and Vice Presidents of a community can host tournaments.
+              {tc.accessRestrictedBody}
             </p>
             <div className="mt-6">
               <Link
                 href={communityBackHref}
                 className="inline-flex items-center gap-2 rounded-full bg-surface-line px-5 py-2.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-line-strong"
               >
-                Back to Community
+                {tc.backToCommunity}
               </Link>
             </div>
           </div>
@@ -247,8 +246,8 @@ function CreateTournamentForm() {
   return (
     <div>
       <PageHeader
-        eyebrow={eligibleCommunities[0]?.name ? `Community · ${eligibleCommunities[0].name}` : "Community Tournament"}
-        title="Host a Tournament"
+        eyebrow={eligibleCommunities[0]?.name ? `${tc.eyebrowCommunity} · ${eligibleCommunities[0].name}` : tc.eyebrowDefault}
+        title={tc.pageTitle}
         backHref={communityBackHref}
       />
 
@@ -270,13 +269,13 @@ function CreateTournamentForm() {
             <div>
               <label className="block">
                 <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                  Tournament Title <span className="text-accent">*</span>
+                  {tc.titleLabel} <span className="text-accent">*</span>
                 </span>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Champions Cup Winter 2026"
+                  placeholder={tc.titlePlaceholder}
                   required
                   className={fieldClass}
                 />
@@ -286,7 +285,7 @@ function CreateTournamentForm() {
             {/* Format: PvP vs CvC */}
             <div>
               <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                Tournament Format <span className="text-accent">*</span>
+                {tc.formatLabel} <span className="text-accent">*</span>
               </span>
               <div className="mt-2 grid gap-3 sm:grid-cols-2">
                 <button
@@ -303,12 +302,12 @@ function CreateTournamentForm() {
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/20 text-accent">
                         <UsersIcon className="h-4 w-4" />
                       </div>
-                      <div className="font-display text-sm font-bold text-ink">Club vs Club (CvC)</div>
+                      <div className="font-display text-sm font-bold text-ink">{tc.cvcTitle}</div>
                     </div>
                     {type === "cvc" && <CheckIcon className="h-4 w-4 text-accent" />}
                   </div>
                   <p className="mt-2 text-xs text-ink-soft">
-                    Member clubs register their official squad roster. President, General Secretary, or Manager submits the match lineup.
+                    {tc.cvcBody}
                   </p>
                 </button>
 
@@ -326,12 +325,12 @@ function CreateTournamentForm() {
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
                         <CrosshairIcon className="h-4 w-4" />
                       </div>
-                      <div className="font-display text-sm font-bold text-ink">Player vs Player (PvP)</div>
+                      <div className="font-display text-sm font-bold text-ink">{tc.pvpTitle}</div>
                     </div>
                     {type === "pvp" && <CheckIcon className="h-4 w-4 text-accent" />}
                   </div>
                   <p className="mt-2 text-xs text-ink-soft">
-                    Individual players register directly and face off in 1v1 knockout bracket fixtures.
+                    {tc.pvpBody}
                   </p>
                 </button>
               </div>
@@ -341,7 +340,7 @@ function CreateTournamentForm() {
             {type === "cvc" && (
               <div className="rounded-xl border border-surface-line/80 bg-surface/30 p-4 space-y-4">
                 <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                  CvC Roster Limit Preset
+                  {tc.rosterPresetLabel}
                 </span>
                 <div className="grid gap-3 sm:grid-cols-3">
                   <button
@@ -353,9 +352,9 @@ function CreateTournamentForm() {
                         : "border-surface-line text-ink-soft hover:border-surface-line-strong"
                     }`}
                   >
-                    <div className="font-display text-sm font-bold">11 v 11 Preset</div>
-                    <div className="mt-1 text-xs text-ink-faint">11 Starters + 5 Subs</div>
-                    <div className="mt-1 font-mono text-[11px] text-accent">16 Players Total</div>
+                    <div className="font-display text-sm font-bold">{tc.preset11Title}</div>
+                    <div className="mt-1 text-xs text-ink-faint">{tc.preset11Detail}</div>
+                    <div className="mt-1 font-mono text-[11px] text-accent">{tc.preset11Total}</div>
                   </button>
 
                   <button
@@ -367,9 +366,9 @@ function CreateTournamentForm() {
                         : "border-surface-line text-ink-soft hover:border-surface-line-strong"
                     }`}
                   >
-                    <div className="font-display text-sm font-bold">8 v 8 Preset</div>
-                    <div className="mt-1 text-xs text-ink-faint">8 Starters + 4 Subs</div>
-                    <div className="mt-1 font-mono text-[11px] text-accent">12 Players Total</div>
+                    <div className="font-display text-sm font-bold">{tc.preset8Title}</div>
+                    <div className="mt-1 text-xs text-ink-faint">{tc.preset8Detail}</div>
+                    <div className="mt-1 font-mono text-[11px] text-accent">{tc.preset8Total}</div>
                   </button>
 
                   <button
@@ -381,16 +380,16 @@ function CreateTournamentForm() {
                         : "border-surface-line text-ink-soft hover:border-surface-line-strong"
                     }`}
                   >
-                    <div className="font-display text-sm font-bold">Custom Roster</div>
-                    <div className="mt-1 text-xs text-ink-faint">Configure custom counts</div>
-                    <div className="mt-1 font-mono text-[11px] text-accent">Flexible</div>
+                    <div className="font-display text-sm font-bold">{tc.presetCustomTitle}</div>
+                    <div className="mt-1 text-xs text-ink-faint">{tc.presetCustomDetail}</div>
+                    <div className="mt-1 font-mono text-[11px] text-accent">{tc.presetCustomTotal}</div>
                   </button>
                 </div>
 
                 {preset === "custom" && (
                   <div className="grid grid-cols-2 gap-4 pt-2">
                     <label className="block">
-                      <span className="text-xs text-ink-soft">Starters Required</span>
+                      <span className="text-xs text-ink-soft">{tc.startersLabel}</span>
                       <input
                         type="number"
                         min={1}
@@ -401,7 +400,7 @@ function CreateTournamentForm() {
                       />
                     </label>
                     <label className="block">
-                      <span className="text-xs text-ink-soft">Substitutes Allowed</span>
+                      <span className="text-xs text-ink-soft">{tc.subsLabel}</span>
                       <input
                         type="number"
                         min={0}
@@ -419,7 +418,7 @@ function CreateTournamentForm() {
             {/* Bracket Participant Size Presets */}
             <div>
               <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                Participant Capacity (Bracket Size)
+                {tc.capacityLabel}
               </span>
               <div className="mt-2 flex flex-wrap gap-2">
                 {[8, 16, 32, 64].map((size) => (
@@ -436,7 +435,7 @@ function CreateTournamentForm() {
                         : "border-surface-line bg-surface/40 text-ink-soft hover:border-surface-line-strong"
                     }`}
                   >
-                    {size} {type === "cvc" ? "Clubs" : "Players"}
+                    {size} {isCvc ? tc.unitClubs : tc.unitPlayers}
                   </button>
                 ))}
                 <button
@@ -451,7 +450,7 @@ function CreateTournamentForm() {
                       : "border-surface-line bg-surface/40 text-ink-soft hover:border-surface-line-strong"
                   }`}
                 >
-                  Custom
+                  {tc.customCapacity}
                 </button>
               </div>
 
@@ -466,7 +465,7 @@ function CreateTournamentForm() {
                       setParticipantsInput(digits);
                       setMaxParticipants(digits === "" ? 0 : Number(digits));
                     }}
-                    placeholder="Enter maximum participants"
+                    placeholder={tc.capacityPlaceholder}
                     aria-invalid={participantsError !== null}
                     className={`${fieldClass} ${participantsError ? "border-danger focus:border-danger" : ""}`}
                   />
@@ -482,12 +481,12 @@ function CreateTournamentForm() {
             {/* Schedule & 2h Submission Deadline */}
             <div className="space-y-4">
               <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                Tournament Schedule & Cutoff
+                {tc.scheduleLabel}
               </span>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-xs text-ink-soft">Tournament Starting Time *</span>
+                  <span className="text-xs text-ink-soft">{tc.startLabel}</span>
                   <input
                     type="datetime-local"
                     value={startAt}
@@ -498,7 +497,7 @@ function CreateTournamentForm() {
                 </label>
 
                 <label className="block">
-                  <span className="text-xs text-ink-soft">Estimated End Time (Optional)</span>
+                  <span className="text-xs text-ink-soft">{tc.endLabel}</span>
                   <input
                     type="datetime-local"
                     value={endAt}
@@ -514,13 +513,13 @@ function CreateTournamentForm() {
                   <ClockIcon className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                   <div className="text-xs">
                     <span className="font-bold text-accent-ink">
-                      Lineup Submission Strict Cutoff:
+                      {tc.cutoffLabel}
                     </span>{" "}
                     <span className="text-ink font-semibold">{submissionDeadlineText}</span>
                     <p className="mt-1 text-ink-soft leading-relaxed">
-                      All club rosters and lineups must be submitted at least{" "}
-                      <strong className="text-ink">2 hours before tournament kick-off</strong>.
-                      Once this window elapses, rosters lock automatically and the bracket will be generated.
+                      {tc.cutoffBodyBefore}{" "}
+                      <strong className="text-ink">{tc.cutoffBodyStrong}</strong>
+                      {tc.cutoffBodyAfter}
                     </p>
                   </div>
                 </div>
@@ -530,7 +529,7 @@ function CreateTournamentForm() {
             {/* Entry Fee & Prize Pool */}
             <div className="space-y-4 pt-2 border-t border-surface-line">
               <span className="text-xs font-mono font-semibold uppercase tracking-wider text-ink-soft">
-                Entry Fee & Prize Pool
+                {tc.feesLabel}
               </span>
 
               <div className="grid grid-cols-2 gap-2 rounded-xl border border-surface-line bg-surface/40 p-1">
@@ -541,7 +540,7 @@ function CreateTournamentForm() {
                     !isPaid ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
                   }`}
                 >
-                  Free Entry
+                  {tc.freeEntry}
                 </button>
                 <button
                   type="button"
@@ -550,14 +549,14 @@ function CreateTournamentForm() {
                     isPaid ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
                   }`}
                 >
-                  Paid Entry
+                  {tc.paidEntry}
                 </button>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 {isPaid && (
                   <label className="block">
-                    <span className="text-xs text-ink-soft">Entry Fee (BDT ৳)</span>
+                    <span className="text-xs text-ink-soft">{tc.entryFeeLabel}</span>
                     <input
                       type="number"
                       min={0}
@@ -569,7 +568,7 @@ function CreateTournamentForm() {
                 )}
 
                 <label className="block">
-                  <span className="text-xs text-ink-soft">Prize Pool (BDT ৳ - 0 for Friendly)</span>
+                  <span className="text-xs text-ink-soft">{tc.prizePoolLabel}</span>
                   <input
                     type="number"
                     min={0}
@@ -588,7 +587,7 @@ function CreateTournamentForm() {
                 disabled={createMutation.isPending}
                 className="w-full sm:w-auto rounded-full bg-accent px-8 py-3.5 font-display text-sm font-bold text-bg shadow-[0_0_25px_rgba(217,165,68,0.3)] transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:pointer-events-none"
               >
-                {createMutation.isPending ? "Creating Tournament..." : "Publish Tournament"}
+                {createMutation.isPending ? tc.submitting : tc.submit}
               </button>
             </div>
           </form>
@@ -597,40 +596,20 @@ function CreateTournamentForm() {
         {/* Guidelines Sidebar */}
         <div className="space-y-6 lg:col-span-4 lg:sticky lg:top-24 lg:self-start">
           <EntityGuidelinesPanel
-            title="Tournament Rules"
+            title={tc.rules.title}
             items={[
-              {
-                icon: ShieldIcon,
-                title: "Creation Authority",
-                body: "Only community Presidents and Vice Presidents can sanction and host tournaments under their community umbrella.",
-              },
-              {
-                icon: UsersIcon,
-                title: "Club Membership",
-                body: "In CvC events, participant clubs must already be approved members of the hosting community.",
-              },
-              {
-                icon: ClockIcon,
-                title: "2-Hour Submission Cutoff",
-                body: "Club President, General Secretary, or Manager must submit team lineups at least 2 hours before the start time.",
-              },
+              { icon: ShieldIcon, title: tc.rules.item1Title, body: tc.rules.item1Body },
+              { icon: UsersIcon, title: tc.rules.item2Title, body: tc.rules.item2Body },
+              { icon: ClockIcon, title: tc.rules.item3Title, body: tc.rules.item3Body },
             ]}
             tone="rules"
           />
 
           <EntityGuidelinesPanel
-            title="Host Tips"
+            title={tc.tips.title}
             items={[
-              {
-                icon: CalendarIcon,
-                title: "Bracket Generation",
-                body: "Single-elimination brackets will seed registered clubs with Byes if participant numbers are uneven.",
-              },
-              {
-                icon: TrophyIcon,
-                title: "Lineup Presets",
-                body: "Participating clubs can choose from their pre-configured Team squads (Team A / Team B) or submit custom lineups.",
-              },
+              { icon: CalendarIcon, title: tc.tips.item1Title, body: tc.tips.item1Body },
+              { icon: TrophyIcon, title: tc.tips.item2Title, body: tc.tips.item2Body },
             ]}
             tone="tips"
           />
