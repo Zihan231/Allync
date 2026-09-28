@@ -150,6 +150,13 @@ function CreateTournamentForm() {
       return;
     }
 
+    if (maxParticipants % 2 !== 0) {
+      setErrorMessage(
+        `Number of ${type === "cvc" ? "clubs" : "players"} must be an even number.`,
+      );
+      return;
+    }
+
     try {
       const normalizedPreset = type === "cvc"
         ? (preset === "preset_11v11" ? "11v11" : preset === "preset_8v8" ? "8v8" : "custom")
@@ -442,9 +449,16 @@ function CreateTournamentForm() {
                     max={128}
                     value={maxParticipants}
                     onChange={(e) => setMaxParticipants(Math.max(2, Number(e.target.value)))}
+                    step={2}
                     placeholder="Enter maximum participants"
-                    className={fieldClass}
+                    aria-invalid={maxParticipants % 2 !== 0}
+                    className={`${fieldClass} ${maxParticipants % 2 !== 0 ? "border-danger focus:border-danger" : ""}`}
                   />
+                  {maxParticipants % 2 !== 0 ? (
+                    <p className="mt-1.5 text-xs font-semibold text-danger-ink" role="alert">
+                      Please enter an even number of {type === "cvc" ? "clubs" : "players"}.
+                    </p>
+                  ) : null}
                 </div>
               )}
             </div>
