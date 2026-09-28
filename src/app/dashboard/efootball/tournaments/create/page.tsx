@@ -46,6 +46,19 @@ function CreateTournamentForm() {
   const [subsCount, setSubsCount] = useState(5);
   const [maxParticipants, setMaxParticipants] = useState(16);
   const [customParticipants, setCustomParticipants] = useState(false);
+  const [participantsInput, setParticipantsInput] = useState("16");
+  const participantLabel = type === "cvc" ? "clubs" : "players";
+  const participantsError = !customParticipants
+    ? null
+    : participantsInput === ""
+      ? `Please enter the number of ${participantLabel}.`
+      : maxParticipants < 2
+        ? `At least 2 ${participantLabel} are required.`
+        : maxParticipants > 128
+          ? `Maximum 128 ${participantLabel} allowed.`
+          : maxParticipants % 2 !== 0
+            ? `Please enter an even number of ${participantLabel}.`
+            : null;
 
   // Schedule
   const [startAt, setStartAt] = useState("");
@@ -150,10 +163,8 @@ function CreateTournamentForm() {
       return;
     }
 
-    if (maxParticipants % 2 !== 0) {
-      setErrorMessage(
-        `Number of ${type === "cvc" ? "clubs" : "players"} must be an even number.`,
-      );
+    if (participantsError) {
+      setErrorMessage(participantsError);
       return;
     }
 
@@ -430,7 +441,10 @@ function CreateTournamentForm() {
                 ))}
                 <button
                   type="button"
-                  onClick={() => setCustomParticipants(true)}
+                  onClick={() => {
+                    setCustomParticipants(true);
+                    setParticipantsInput(String(maxParticipants));
+                  }}
                   className={`rounded-lg border px-4 py-2 text-sm font-semibold transition-all ${
                     customParticipants
                       ? "border-accent bg-accent text-bg"
@@ -444,19 +458,21 @@ function CreateTournamentForm() {
               {customParticipants && (
                 <div className="mt-3 max-w-xs">
                   <input
-                    type="number"
-                    min={2}
-                    max={128}
-                    value={maxParticipants}
-                    onChange={(e) => setMaxParticipants(Math.max(2, Number(e.target.value)))}
-                    step={2}
+                    type="text"
+                    inputMode="numeric"
+                    value={participantsInput}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "");
+                      setParticipantsInput(digits);
+                      setMaxParticipants(digits === "" ? 0 : Number(digits));
+                    }}
                     placeholder="Enter maximum participants"
-                    aria-invalid={maxParticipants % 2 !== 0}
-                    className={`${fieldClass} ${maxParticipants % 2 !== 0 ? "border-danger focus:border-danger" : ""}`}
+                    aria-invalid={participantsError !== null}
+                    className={`${fieldClass} ${participantsError ? "border-danger focus:border-danger" : ""}`}
                   />
-                  {maxParticipants % 2 !== 0 ? (
+                  {participantsError ? (
                     <p className="mt-1.5 text-xs font-semibold text-danger-ink" role="alert">
-                      Please enter an even number of {type === "cvc" ? "clubs" : "players"}.
+                      {participantsError}
                     </p>
                   ) : null}
                 </div>
