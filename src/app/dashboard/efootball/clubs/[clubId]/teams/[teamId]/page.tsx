@@ -3,6 +3,8 @@
 import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/session/SessionContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format } from "@/lib/i18n/translations";
 import { isApiError } from "@/lib/api/axios";
 import {
   useTeam,
@@ -33,6 +35,8 @@ export default function TeamManagePage({
 }) {
   const { clubId, teamId } = use(params);
   const { user } = useSession();
+  const { t } = useLanguage();
+  const tm = t.dashboard.teamManage;
   const router = useRouter();
 
   const canManage = user.club?.id === clubId && (user.club?.role === "President" || user.club?.role === "Manager");
@@ -90,7 +94,7 @@ export default function TeamManagePage({
   const subCount = Object.values(pending).filter((p) => p.lineupStatus === "Sub").length;
 
   if (!canManage) {
-    return <EmptyState icon={LockIcon} title="You can't manage this team" body="" />;
+    return <EmptyState icon={LockIcon} title={tm.cannotManage} body="" />;
   }
 
   if (teamQuery.isLoading || membersQuery.isLoading) {
@@ -102,10 +106,10 @@ export default function TeamManagePage({
       <div>
         {teamQuery.isError ? (
           <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-            {errorMessage(teamQuery.error, "Failed to load team")}
+            {errorMessage(teamQuery.error, tm.errLoad)}
           </div>
         ) : null}
-        <EmptyState icon={LockIcon} title="Team not found" body="" />
+        <EmptyState icon={LockIcon} title={tm.notFound} body="" />
       </div>
     );
   }
@@ -121,7 +125,7 @@ export default function TeamManagePage({
   };
 
   const handleDeleteTeam = async () => {
-    if (!await confirm(`Delete ${team.name}? This cannot be undone.`, { title: "Delete Squad", variant: "danger", confirmLabel: "Delete Forever" })) return;
+    if (!await confirm(format(tm.deleteConfirm, { name: team.name }), { title: tm.deleteTitle, variant: "danger", confirmLabel: tm.deleteConfirmLabel })) return;
     deleteTeam.mutate(teamId, {
       onSuccess: () => router.push(`/dashboard/efootball/clubs/${clubId}`),
     });
@@ -173,15 +177,15 @@ export default function TeamManagePage({
   const currentSubs = team.members.filter((m) => m.lineupStatus === "Sub");
 
   const pageError =
-    (updateTeam.isError && errorMessage(updateTeam.error, "Failed to save team")) ||
-    (deleteTeam.isError && errorMessage(deleteTeam.error, "Failed to delete team")) ||
-    (setLineup.isError && errorMessage(setLineup.error, "Failed to save lineup")) ||
-    (substitutePlayer.isError && errorMessage(substitutePlayer.error, "Failed to substitute player"));
+    (updateTeam.isError && errorMessage(updateTeam.error, tm.errSave)) ||
+    (deleteTeam.isError && errorMessage(deleteTeam.error, tm.errDelete)) ||
+    (setLineup.isError && errorMessage(setLineup.error, tm.errLineup)) ||
+    (substitutePlayer.isError && errorMessage(substitutePlayer.error, tm.errSubstitute));
 
   return (
     <div>
       <PageHeader
-        eyebrow="Team"
+        eyebrow={tm.eyebrow}
         title={team.name}
         backHref={`/dashboard/efootball/clubs/${clubId}`}
       />
@@ -194,10 +198,10 @@ export default function TeamManagePage({
 
       {/* Name + Captain */}
       <div className="mt-8 rounded-xl border border-surface-line bg-surface/50 p-6">
-        <h2 className="font-display text-lg font-bold text-ink">Team settings</h2>
+        <h2 className="font-display text-lg font-bold text-ink">{tm.settingsTitle}</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-medium text-ink-soft">Team name</span>
+            <span className="text-sm font-medium text-ink-soft">{tm.nameLabel}</span>
             <div className="mt-1.5 flex gap-2">
               <input
                 value={name}
@@ -210,20 +214,20 @@ export default function TeamManagePage({
                 disabled={updateTeam.isPending || !name.trim() || name.trim() === team.name}
                 className="shrink-0 rounded-lg border border-surface-line-strong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-40"
               >
-                {updateTeam.isPending ? "Saving..." : "Save"}
+                {updateTeam.isPending ? tm.saving : tm.save}
               </button>
             </div>
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-ink-soft">Captain</span>
+            <span className="text-sm font-medium text-ink-soft">{tm.captainLabel}</span>
             <select
               value={captainId}
               onChange={(e) => handleSaveCaptain(e.target.value)}
               disabled={updateTeam.isPending}
               className="mt-1.5 w-full rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
             >
-              <option value="">Unassigned</option>
+              <option value="">{tm.unassigned}</option>
               {roster.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.user?.name ?? m.id}
@@ -234,15 +238,15 @@ export default function TeamManagePage({
         </div>
 
         <div className="mt-6 border-t border-surface-line pt-6">
-          <h3 className="text-sm font-semibold text-ink">Danger zone</h3>
-          <p className="mt-1 text-xs text-ink-soft">Deleting this team is permanent.</p>
+          <h3 className="text-sm font-semibold text-ink">{tm.dangerZone}</h3>
+          <p className="mt-1 text-xs text-ink-soft">{tm.deleteHint}</p>
           <button
             type="button"
             onClick={handleDeleteTeam}
             disabled={deleteTeam.isPending}
             className="mt-3 rounded-full bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink disabled:opacity-50"
           >
-            {deleteTeam.isPending ? "Deleting..." : "Delete team"}
+            {deleteTeam.isPending ? tm.deleting : tm.deleteTeam}
           </button>
         </div>
       </div>
@@ -250,15 +254,15 @@ export default function TeamManagePage({
       {/* Lineup editor */}
       <div className="mt-6 rounded-xl border border-surface-line bg-surface/50 p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-display text-lg font-bold text-ink">Lineup</h2>
+          <h2 className="font-display text-lg font-bold text-ink">{tm.lineupTitle}</h2>
           <span className="font-mono text-xs text-ink-faint">
-            {starterCount}/11 starters · {subCount}/5 subs
+            {format(tm.lineupCounts, { starters: starterCount, subs: subCount })}
           </span>
         </div>
 
         <div className="mt-4 space-y-2">
           {Object.entries(pending).length === 0 ? (
-            <p className="text-sm text-ink-soft">No players assigned to this team yet.</p>
+            <p className="text-sm text-ink-soft">{tm.noPlayers}</p>
           ) : (
             Object.entries(pending).map(([profileId, entry]) => {
               const profile = rosterById.get(profileId);
@@ -277,15 +281,15 @@ export default function TeamManagePage({
                     }
                     className="rounded-lg border border-surface-line-strong bg-surface px-3 py-2 text-xs text-ink"
                   >
-                    <option value="Starter">Starter</option>
-                    <option value="Sub">Sub</option>
-                    <option value="None">None</option>
+                    <option value="Starter">{tm.statusStarter}</option>
+                    <option value="Sub">{tm.statusSub}</option>
+                    <option value="None">{tm.statusNone}</option>
                   </select>
                   <input
                     value={entry.gamePosition}
                     onChange={(e) => updatePendingEntry(profileId, { gamePosition: e.target.value })}
                     disabled={entry.lineupStatus !== "Starter"}
-                    placeholder="Position (e.g. CF)"
+                    placeholder={tm.positionPlaceholder}
                     className="w-36 rounded-lg border border-surface-line-strong bg-surface px-3 py-2 text-xs text-ink disabled:opacity-40"
                   />
                   <button
@@ -293,7 +297,7 @@ export default function TeamManagePage({
                     onClick={() => removeFromLineup(profileId)}
                     className="shrink-0 text-xs font-semibold text-danger-ink"
                   >
-                    Remove
+                    {tm.remove}
                   </button>
                 </div>
               );
@@ -304,17 +308,17 @@ export default function TeamManagePage({
         {availableToAdd.length > 0 ? (
           <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-surface-line pt-4">
             <label className="min-w-[220px] flex-1">
-              <span className="text-sm font-medium text-ink-soft">Add player from club roster</span>
+              <span className="text-sm font-medium text-ink-soft">{tm.addFromRoster}</span>
               <select
                 value={addProfileId}
                 onChange={(e) => setAddProfileId(e.target.value)}
                 className="mt-1.5 w-full rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
               >
-                <option value="">Select a player…</option>
+                <option value="">{tm.selectPlayer}</option>
                 {availableToAdd.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.user?.name ?? m.id}
-                    {m.teamId && m.teamId !== teamId ? " (on another team)" : ""}
+                    {m.teamId && m.teamId !== teamId ? tm.onAnotherTeam : ""}
                   </option>
                 ))}
               </select>
@@ -325,7 +329,7 @@ export default function TeamManagePage({
               disabled={!addProfileId}
               className="rounded-full border border-surface-line-strong px-5 py-3 text-sm font-semibold text-ink disabled:opacity-40"
             >
-              Add
+              {tm.add}
             </button>
           </div>
         ) : null}
@@ -336,25 +340,25 @@ export default function TeamManagePage({
           disabled={setLineup.isPending}
           className="mt-6 rounded-full bg-accent px-6 py-3 font-display text-sm font-semibold text-bg disabled:opacity-50"
         >
-          {setLineup.isPending ? "Saving..." : "Save lineup"}
+          {setLineup.isPending ? tm.saving : tm.saveLineup}
         </button>
       </div>
 
       {/* Substitution */}
       <div className="mt-6 rounded-xl border border-surface-line bg-surface/50 p-6">
-        <h2 className="font-display text-lg font-bold text-ink">Make a substitution</h2>
+        <h2 className="font-display text-lg font-bold text-ink">{tm.subTitle}</h2>
         <p className="mt-1 text-xs text-ink-soft">
-          Swaps a starter off for a substitute; the incoming player takes over their position.
+          {tm.subHint}
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-medium text-ink-soft">Out (starter)</span>
+            <span className="text-sm font-medium text-ink-soft">{tm.outLabel}</span>
             <select
               value={subOutId}
               onChange={(e) => setSubOutId(e.target.value)}
               className="mt-1.5 w-full rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
             >
-              <option value="">Select…</option>
+              <option value="">{tm.select}</option>
               {currentStarters.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.user?.name ?? m.id} ({m.gamePosition ?? "—"})
@@ -363,13 +367,13 @@ export default function TeamManagePage({
             </select>
           </label>
           <label className="block">
-            <span className="text-sm font-medium text-ink-soft">In (substitute)</span>
+            <span className="text-sm font-medium text-ink-soft">{tm.inLabel}</span>
             <select
               value={subInId}
               onChange={(e) => setSubInId(e.target.value)}
               className="mt-1.5 w-full rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
             >
-              <option value="">Select…</option>
+              <option value="">{tm.select}</option>
               {currentSubs.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.user?.name ?? m.id}
@@ -384,7 +388,7 @@ export default function TeamManagePage({
           disabled={substitutePlayer.isPending || !subOutId || !subInId}
           className="mt-4 rounded-full border border-surface-line-strong px-5 py-3 text-sm font-semibold text-ink disabled:opacity-40"
         >
-          {substitutePlayer.isPending ? "Substituting..." : "Substitute"}
+          {substitutePlayer.isPending ? tm.substituting : tm.substitute}
         </button>
       </div>
       <ConfirmDialog {...confirmProps} />

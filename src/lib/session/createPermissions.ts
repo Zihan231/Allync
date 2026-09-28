@@ -1,3 +1,4 @@
+import { format, type TranslationDict } from "@/lib/i18n/translations";
 import type { MockUser } from "./SessionContext";
 
 // UI mirror of the backend rules in ClubsService.create / CommunitiesService.create.
@@ -11,34 +12,44 @@ export type CreateBlock = {
 };
 
 /** Why this user can't create a club, or null if they can. */
-export function clubCreateBlockReason(user: MockUser): CreateBlock | null {
+export function clubCreateBlockReason(user: MockUser, t: TranslationDict): CreateBlock | null {
+  const cb = t.dashboard.createBlock;
   if (user.club) {
     return {
-      short: `You're already in ${user.club.name}`,
-      full: `You are already in ${user.club.name}. Leave your club to create a new one.`,
+      short: format(cb.alreadyInClubShort, { name: user.club.name }),
+      full: format(cb.alreadyInClubFull, { name: user.club.name }),
     };
   }
   if (user.community?.role === "President" || user.community?.role === "Vice President") {
+    const isPresident = user.community.role === "President";
     return {
-      short: `Community ${user.community.role}s can't create clubs`,
-      full: `As ${user.community.role} of ${user.community.name}, you can't create a club. Hand over your community role first.`,
+      short: isPresident ? cb.communityPresidentsNoClubShort : cb.communityVicePresidentsNoClubShort,
+      full: format(cb.communityLeaderNoClubFull, {
+        role: isPresident ? t.dashboard.community.presidentLabel : t.dashboard.community.vicePresidentLabel,
+        name: user.community.name,
+      }),
     };
   }
   return null;
 }
 
 /** Why this user can't create a community, or null if they can. */
-export function communityCreateBlockReason(user: MockUser): CreateBlock | null {
+export function communityCreateBlockReason(user: MockUser, t: TranslationDict): CreateBlock | null {
+  const cb = t.dashboard.createBlock;
   if (user.club?.role === "President" || user.club?.role === "General Secretary") {
+    const isPresident = user.club.role === "President";
     return {
-      short: `Club ${user.club.role === "President" ? "Presidents" : "General Secretaries"} can't create communities`,
-      full: `As ${user.club.role} of ${user.club.name}, you can't create a community. Hand over your club role first.`,
+      short: isPresident ? cb.clubPresidentsNoCommunityShort : cb.clubSecretariesNoCommunityShort,
+      full: format(cb.clubLeaderNoCommunityFull, {
+        role: isPresident ? t.dashboard.club.presidentLabel : t.dashboard.club.generalSecretaryLabel,
+        name: user.club.name,
+      }),
     };
   }
   if (user.community) {
     return {
-      short: `You're already in ${user.community.name}`,
-      full: `You are already a member of ${user.community.name}. Leave it to create a new community.`,
+      short: format(cb.alreadyInCommunityShort, { name: user.community.name }),
+      full: format(cb.alreadyInCommunityFull, { name: user.community.name }),
     };
   }
   return null;

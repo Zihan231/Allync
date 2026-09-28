@@ -3,6 +3,7 @@
 import { Suspense, use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { getMyCommunityRequest } from "@/lib/api/communities";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -228,12 +229,12 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
       try {
         await joinMutation.mutateAsync();
         await queryClient.invalidateQueries({ queryKey: ["community-my-request", communityId] });
-        toast("Join request sent! Awaiting approval by community leadership.", "info");
+        toast(t.dashboard.communityDetail.toastJoinRequested, "info");
       } catch (err: any) {
         setIsPendingLocal(false);
         const msg = isApiError(err)
           ? err.message
-          : (err as any)?.response?.data?.message || (err as any)?.message || "Failed to send join request.";
+          : (err as any)?.response?.data?.message || (err as any)?.message || t.dashboard.communityDetail.errJoinRequest;
         toast(msg, "error");
       } finally {
         isSubmittingJoinRef.current = false;
@@ -244,12 +245,12 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
     try {
       await joinMutation.mutateAsync();
       setCommunity({ id: community.id, name: community.name, role: "Member" });
-      toast(`You joined ${community.name}!`, "success");
+      toast(format(t.dashboard.communityDetail.toastJoined, { name: community.name }), "success");
       void refreshSession();
     } catch (err: any) {
       const msg = isApiError(err)
         ? err.message
-        : (err as any)?.response?.data?.message || (err as any)?.message || "Failed to join community.";
+        : (err as any)?.response?.data?.message || (err as any)?.message || t.dashboard.communityDetail.errJoin;
       toast(msg, "error");
     } finally {
       isSubmittingJoinRef.current = false;
@@ -277,21 +278,27 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
     if (!community || !userClubId || !isClubLeader) return;
     try {
       await removeClubMutation.mutateAsync(userClubId);
-      toast(`Withdrew ${userClubDetails?.name || "club"} from ${community.name}.`, "info");
+      toast(
+        format(t.dashboard.communityDetail.toastClubWithdrawn, {
+          club: userClubDetails?.name || t.dashboard.communityDetail.clubFallback,
+          name: community.name,
+        }),
+        "info",
+      );
       setShowWithdrawClubModal(false);
       void syncFromBackend(true);
       void refreshSession();
     } catch (err: any) {
-      const msg = isApiError(err) ? err.message : (err as Error)?.message || "Failed to withdraw club.";
+      const msg = isApiError(err) ? err.message : (err as Error)?.message || t.dashboard.communityDetail.errWithdrawClub;
       toast(msg, "error");
     }
   };
 
   const handleClubJoinSuccess = (status: "joined" | "pending") => {
     if (status === "pending") {
-      toast("Club join request submitted! Awaiting approval by community leadership.", "info");
+      toast(t.dashboard.communityDetail.toastClubRequested, "info");
     } else {
-      toast(`Your club joined ${community?.name}!`, "success");
+      toast(format(t.dashboard.communityDetail.toastClubJoined, { name: community?.name ?? "" }), "success");
       void refreshSession();
     }
     void syncFromBackend(true);
@@ -300,7 +307,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
 
   const handleLeave = async () => {
     if (!community) return;
-    if (!await confirm(t.dashboard.community.leaveConfirm, { title: "Leave Community", variant: "danger", confirmLabel: "Leave" })) return;
+    if (!await confirm(t.dashboard.community.leaveConfirm, { title: t.dashboard.communityDetail.leaveTitle, variant: "danger", confirmLabel: t.dashboard.communityDetail.leaveConfirmLabel })) return;
 
     // Instant optimistic UI switch (0ms delay)
     setJustLeft(true);
@@ -311,7 +318,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
     if (user.id) removePendingJoinRequest("community", community.id, user.id);
     setCommunity(null);
     queryClient.setQueryData(["community-my-request", community.id], { hasPendingRequest: false, request: null });
-    toast(`You left ${community.name}.`, "info");
+    toast(format(t.dashboard.communityDetail.toastLeft, { name: community.name }), "info");
 
     try {
       await leaveMutation.mutateAsync();
@@ -320,7 +327,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
       void refreshSession();
     } catch (err: any) {
       setJustLeft(false);
-      toast(err?.response?.data?.message || "Failed to leave community on server.", "error");
+      toast(err?.response?.data?.message || t.dashboard.communityDetail.errLeave, "error");
     }
   };
 
@@ -443,7 +450,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
               className="inline-flex items-center justify-center gap-1.5 rounded-full border border-danger/40 bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink transition-colors hover:bg-danger-soft/80 shadow-sm disabled:opacity-50"
             >
               <ShieldIcon className="h-4 w-4" />
-              Withdraw Club
+              {t.dashboard.communityDetail.withdrawClub}
             </button>
           ) : !isClubInCommunity && isClubLeader ? (
             isClubPending ? (
@@ -453,7 +460,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500/15 border border-amber-500/40 px-4 py-2 font-display text-sm font-semibold text-amber-400 cursor-default"
               >
                 <ClockIcon className="h-4 w-4 text-amber-400 animate-pulse" />
-                <span>Club Request Pending</span>
+                <span>{t.dashboard.communityDetail.clubRequestPending}</span>
               </button>
             ) : (
               <button
@@ -462,7 +469,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
                 className="inline-flex items-center justify-center gap-1.5 rounded-full border border-accent/40 bg-accent-soft px-4 py-2 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-soft/80 shadow-sm"
               >
                 <ShieldIcon className="h-4 w-4" />
-                Join as Club
+                {t.dashboard.communityDetail.joinAsClub}
               </button>
             )
           ) : isClubPending ? (
@@ -472,7 +479,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
               className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500/15 border border-amber-500/40 px-4 py-2 font-display text-sm font-semibold text-amber-400 cursor-default"
             >
               <ClockIcon className="h-4 w-4 text-amber-400 animate-pulse" />
-              <span>Club Request Pending</span>
+              <span>{t.dashboard.communityDetail.clubRequestPending}</span>
             </button>
           ) : null}
 
@@ -485,7 +492,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
                 className="inline-flex items-center justify-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-5 py-2 text-sm font-semibold text-warning-ink transition-colors hover:bg-warning/20 shadow-sm"
               >
                 <SwapIcon className="h-4 w-4" />
-                Transfer Authority
+                {t.dashboard.communityDetail.transferAuthority}
               </button>
             ) : isClubInCommunity ? (
               /* Club members cannot leave the community individually unless the club leaves */
@@ -502,7 +509,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                     </svg>
-                    <span>Leaving...</span>
+                    <span>{t.dashboard.communityDetail.leaving}</span>
                   </>
                 ) : (
                   t.dashboard.community.leaveButton
@@ -516,17 +523,19 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
               className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500/15 border border-amber-500/40 px-5 py-2 font-display text-sm font-semibold text-amber-400 cursor-default"
             >
               <ClockIcon className="h-4 w-4 text-amber-400 animate-pulse" />
-              <span>Requested</span>
+              <span>{t.dashboard.communityDetail.requested}</span>
             </button>
           ) : hasOtherPendingRequest ? (
             <button
               type="button"
               disabled
-              title={`You already have a pending join request for ${myRequestData?.pendingCommunityName || "another community"}`}
+              title={format(t.dashboard.communityDetail.pendingElsewhereTitle, {
+                name: myRequestData?.pendingCommunityName || t.dashboard.communityDetail.anotherCommunity,
+              })}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-surface-line border border-surface-line-strong px-5 py-2 font-display text-sm font-semibold text-ink-muted cursor-not-allowed opacity-70"
             >
               <ClockIcon className="h-4 w-4 text-ink-muted" />
-              <span>Request Pending Elsewhere</span>
+              <span>{t.dashboard.communityDetail.requestPendingElsewhere}</span>
             </button>
           ) : (
             <button
@@ -541,7 +550,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                   </svg>
-                  <span>Joining...</span>
+                  <span>{t.dashboard.communityDetail.joining}</span>
                 </>
               ) : (
                 community.joinPolicy === "instant"
@@ -555,7 +564,9 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
 
       {hasOtherPendingRequest ? (
         <p className="mt-3 font-mono text-xs text-warning-ink">
-          You already have a pending join request for &ldquo;{myRequestData?.pendingCommunityName || "another community"}&rdquo;. A player cannot request to join multiple communities at once.
+          {format(t.dashboard.communityDetail.pendingElsewhereBody, {
+            name: myRequestData?.pendingCommunityName || t.dashboard.communityDetail.anotherCommunity,
+          })}
         </p>
       ) : hasPendingRequest ? (
         <p className="mt-3 font-mono text-xs text-warning-ink">{t.dashboard.clubs.pendingRequestNotice}</p>
@@ -589,7 +600,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
             {isLoadingTournaments ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-accent-ink">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent animate-ping" />
-                Loading...
+                {t.dashboard.communityDetail.loading}
               </span>
             ) : (
               <span className="rounded-full bg-surface-line px-2 py-0.5 font-mono text-xs font-semibold text-ink-muted">
@@ -614,7 +625,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
                 onClick={() => setTab("tournaments")}
                 className="font-mono text-xs font-semibold text-accent-ink hover:underline"
               >
-                View all &rarr;
+                {t.dashboard.communityDetail.viewAll}
               </button>
             ) : null}
           </div>
@@ -624,7 +635,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
           <div className="space-y-3">
             <div className="flex items-center gap-2 px-1 text-ink-faint">
               <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-              <span className="font-mono text-xs text-ink-muted">Loading tournaments...</span>
+              <span className="font-mono text-xs text-ink-muted">{t.dashboard.communityDetail.loadingTournaments}</span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
@@ -652,8 +663,8 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
             </h3>
             <p className="mx-auto mt-1 max-w-md text-xs text-ink-faint">
               {canManage
-                ? "Host the first tournament for your community to bring member clubs and players together."
-                : "Upcoming tournaments organized by this community will appear here."}
+                ? t.dashboard.communityDetail.emptyTournamentsManage
+                : t.dashboard.communityDetail.emptyTournamentsMember}
             </p>
           </div>
         )}
@@ -706,7 +717,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
         entityId={community?.id ?? ""}
         entityName={community?.name ?? ""}
         members={allMembers}
-        onSuccess={() => toast("Authority transferred successfully. You are now a regular member.", "success")}
+        onSuccess={() => toast(t.dashboard.communityDetail.toastAuthorityTransferred, "success")}
       />
 
       {community && userClubDetails && isClubLeader && (

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format, type TranslationDict } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { communityCreateBlockReason } from "@/lib/session/createPermissions";
 import { getCommunitiesPage, getCommunityLocations, type CommunityListQuery } from "@/lib/api/communities";
@@ -20,6 +21,20 @@ import { Pagination } from "@/components/dashboard/Pagination";
 import { LockIcon, PlusIcon, SearchIcon, UsersIcon } from "@/components/icons";
 
 const PAGE_SIZE = 9;
+
+const TIERS = ["Featured", "Verified", "Regional", "Open", "New"] as const;
+
+function tierLabel(tier: string, t: TranslationDict) {
+  const b = t.dashboard.communityBrowse;
+  const labels: Record<string, string> = {
+    Featured: b.tierFeatured,
+    Verified: b.tierVerified,
+    Regional: b.tierRegional,
+    Open: b.tierOpen,
+    New: b.tierNew,
+  };
+  return labels[tier] ?? tier;
+}
 
 export default function CommunityBrowsePage() {
   const { t } = useLanguage();
@@ -41,7 +56,7 @@ export default function CommunityBrowsePage() {
   }, [search]);
 
   const myCommunityId = user.community?.id;
-  const createBlockedReason = communityCreateBlockReason(user);
+  const createBlockedReason = communityCreateBlockReason(user, t);
 
   // Only the visible page is fetched; filtering, sorting and paging happen on the server.
   const listQuery: CommunityListQuery = {
@@ -158,52 +173,52 @@ export default function CommunityBrowsePage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Search communities..."
+            placeholder={t.dashboard.communityBrowse.searchPlaceholder}
             className="w-full rounded-lg border border-surface-line-strong bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-faint"
           />
         </div>
 
         <div className="mt-4 space-y-4">
-          <FilterGroup label="Explore by tier">
-            {(["all", "Featured", "Verified", "Regional", "Open", "New"] as const).map((option) => (
+          <FilterGroup label={t.dashboard.communityBrowse.tierGroup}>
+            {(["all", ...TIERS] as const).map((option) => (
               <FilterChip key={option} active={tier === option} onClick={() => { setTier(option); setPage(1); }}>
-                {option === "all" ? "All tiers" : option}
+                {option === "all" ? t.dashboard.communityBrowse.allTiers : tierLabel(option, t)}
               </FilterChip>
             ))}
           </FilterGroup>
 
-          <FilterGroup label="Community features">
-            <FilterChip active={joinPolicy === "instant"} onClick={() => { setJoinPolicy(joinPolicy === "instant" ? "all" : "instant"); setPage(1); }}>Instant entry</FilterChip>
-            <FilterChip active={joinPolicy === "approval"} onClick={() => { setJoinPolicy(joinPolicy === "approval" ? "all" : "approval"); setPage(1); }}>Approval required</FilterChip>
-            <FilterChip active={rating === "2000"} onClick={() => { setRating(rating === "2000" ? "all" : "2000"); setPage(1); }}>2,000+ rating</FilterChip>
-            <FilterChip active={rating === "3000"} onClick={() => { setRating(rating === "3000" ? "all" : "3000"); setPage(1); }}>3,000+ rating</FilterChip>
-            <FilterChip active={clubCount === "5"} onClick={() => { setClubCount(clubCount === "5" ? "all" : "5"); setPage(1); }}>5+ clubs</FilterChip>
-            <FilterChip active={freeAgents === "available"} onClick={() => { setFreeAgents(freeAgents === "available" ? "all" : "available"); setPage(1); }}>Free agents available</FilterChip>
+          <FilterGroup label={t.dashboard.communityBrowse.featuresGroup}>
+            <FilterChip active={joinPolicy === "instant"} onClick={() => { setJoinPolicy(joinPolicy === "instant" ? "all" : "instant"); setPage(1); }}>{t.dashboard.communityBrowse.instantEntry}</FilterChip>
+            <FilterChip active={joinPolicy === "approval"} onClick={() => { setJoinPolicy(joinPolicy === "approval" ? "all" : "approval"); setPage(1); }}>{t.dashboard.communityBrowse.approvalRequired}</FilterChip>
+            <FilterChip active={rating === "2000"} onClick={() => { setRating(rating === "2000" ? "all" : "2000"); setPage(1); }}>{t.dashboard.communityBrowse.rating2000}</FilterChip>
+            <FilterChip active={rating === "3000"} onClick={() => { setRating(rating === "3000" ? "all" : "3000"); setPage(1); }}>{t.dashboard.communityBrowse.rating3000}</FilterChip>
+            <FilterChip active={clubCount === "5"} onClick={() => { setClubCount(clubCount === "5" ? "all" : "5"); setPage(1); }}>{t.dashboard.communityBrowse.clubs5}</FilterChip>
+            <FilterChip active={freeAgents === "available"} onClick={() => { setFreeAgents(freeAgents === "available" ? "all" : "available"); setPage(1); }}>{t.dashboard.communityBrowse.freeAgentsAvailable}</FilterChip>
           </FilterGroup>
 
           <div className="flex flex-wrap items-center gap-2">
-            <select aria-label="Filter by location" value={location} onChange={(e) => { setLocation(e.target.value); setPage(1); }} className="rounded-full border border-surface-line-strong bg-transparent px-3.5 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
-              <option value="all">All locations</option>
+            <select aria-label={t.dashboard.communityBrowse.locationAria} value={location} onChange={(e) => { setLocation(e.target.value); setPage(1); }} className="rounded-full border border-surface-line-strong bg-transparent px-3.5 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
+              <option value="all">{t.dashboard.communityBrowse.allLocations}</option>
               {locations.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
-            <select aria-label="Sort communities" value={sort} onChange={(e) => { setSort(e.target.value as typeof sort); setPage(1); }} className="rounded-full border border-surface-line-strong bg-transparent px-3.5 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
-              <option value="rating">Highest rating</option>
-              <option value="clubs">Most clubs</option>
-              <option value="name">Name A–Z</option>
+            <select aria-label={t.dashboard.communityBrowse.sortAria} value={sort} onChange={(e) => { setSort(e.target.value as typeof sort); setPage(1); }} className="rounded-full border border-surface-line-strong bg-transparent px-3.5 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
+              <option value="rating">{t.dashboard.communityBrowse.sortRating}</option>
+              <option value="clubs">{t.dashboard.communityBrowse.sortClubs}</option>
+              <option value="name">{t.dashboard.communityBrowse.sortName}</option>
             </select>
-            {hasFilters ? <button type="button" onClick={resetFilters} className="px-2 text-xs font-medium text-accent hover:text-accent-ink">Clear filters</button> : null}
+            {hasFilters ? <button type="button" onClick={resetFilters} className="px-2 text-xs font-medium text-accent hover:text-accent-ink">{t.dashboard.communityBrowse.clearFilters}</button> : null}
           </div>
         </div>
 
         {listResult.isError ? (
           <p className="mt-6 text-sm text-ink-soft">
-            Couldn&apos;t load communities.{" "}
+            {t.dashboard.communityBrowse.loadError}{" "}
             <button type="button" onClick={() => listResult.refetch()} className="font-medium text-accent hover:text-accent-ink">
-              Try again
+              {t.dashboard.communityBrowse.tryAgain}
             </button>
           </p>
         ) : pageCommunities.length === 0 ? (
-          <p className="mt-6 text-sm text-ink-soft">No communities found.</p>
+          <p className="mt-6 text-sm text-ink-soft">{t.dashboard.communityBrowse.empty}</p>
         ) : (
           <>
             <div className={`mt-4 grid gap-4 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${listResult.isPlaceholderData ? "opacity-60" : ""}`}>
@@ -215,7 +230,11 @@ export default function CommunityBrowsePage() {
             {totalPages > 1 ? (
               <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-surface-line pt-6 sm:flex-row">
                 <span className="font-mono text-xs text-ink-faint">
-                  Showing {(page - 1) * PAGE_SIZE + 1} - {Math.min(page * PAGE_SIZE, totalCommunities)} of {totalCommunities} communities
+                  {format(t.dashboard.communityBrowse.showingRange, {
+                    from: (page - 1) * PAGE_SIZE + 1,
+                    to: Math.min(page * PAGE_SIZE, totalCommunities),
+                    total: totalCommunities,
+                  })}
                 </span>
                 <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
               </div>
@@ -302,13 +321,17 @@ function CommunityCard({
           </div>
           <p className="mt-1 line-clamp-2 text-xs text-ink-soft">{community.rules}</p>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-ink-faint">
-            <span>{community.tier}</span>
-            <span>{community.joinPolicy === "instant" ? "Instant entry" : "Approval required"}</span>
+            <span>{tierLabel(community.tier, t)}</span>
+            <span>{community.joinPolicy === "instant" ? t.dashboard.communityBrowse.instantEntry : t.dashboard.communityBrowse.approvalRequired}</span>
             {community.location ? <span>{community.location}</span> : null}
           </div>
           <div className="mt-1 flex items-center gap-1.5 font-mono text-[11px] text-ink-faint">
             <UsersIcon className="h-3.5 w-3.5" style={{ color: community.color }} />
-            {community.points.toLocaleString()} rating · {community.memberClubIds.length} clubs · {community.freeAgentCount} free agents
+            {format(t.dashboard.communityBrowse.cardStats, {
+              rating: community.points.toLocaleString(),
+              clubs: community.memberClubIds.length,
+              agents: community.freeAgentCount,
+            })}
           </div>
         </div>
       </div>

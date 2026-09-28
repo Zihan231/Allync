@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format, formatNodes, roleLabel } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { clubCreateBlockReason } from "@/lib/session/createPermissions";
 import { useCreateClub } from "@/lib/api/hooks/useClubs";
@@ -50,7 +51,7 @@ export default function CreateClubPage() {
     joinPolicy: "instant" | "approval";
     location: string;
   }) => {
-    const blockedReason = clubCreateBlockReason(user);
+    const blockedReason = clubCreateBlockReason(user, t);
     if (blockedReason) {
       setError(blockedReason.full);
       return;
@@ -65,7 +66,7 @@ export default function CreateClubPage() {
       setClub({ id: club.id, name: club.name, role: "President" });
       router.push(`/dashboard/efootball/clubs/${club.id}`);
     } catch (err) {
-      setError(isApiError(err) ? err.message : (err as Error)?.message || "Failed to create club. Please try again.");
+      setError(isApiError(err) ? err.message : (err as Error)?.message || t.dashboard.createEntity.errCreateClub);
     }
   };
 
@@ -86,14 +87,16 @@ export default function CreateClubPage() {
             <LockIcon className="h-7 w-7" />
           </div>
           <h2 className="mt-4 font-display text-xl font-bold text-ink">
-            You are already in a club
+            {t.dashboard.createEntity.alreadyInClubTitle}
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">
-            You currently belong to <span className="font-semibold text-accent-ink">{user.club.name}</span> as{" "}
-            <span className="font-semibold text-ink">{user.club.role}</span>. Players and managers cannot create or own another club while already affiliated with an existing one.
+            {formatNodes(t.dashboard.createEntity.alreadyInClubBody, {
+              name: <span className="font-semibold text-accent-ink">{user.club.name}</span>,
+              role: <span className="font-semibold text-ink">{roleLabel(user.club.role, t)}</span>,
+            })}
           </p>
           <p className="mt-1 text-xs text-ink-faint">
-            If you wish to create a new club, you must leave or resign from your current club first.
+            {t.dashboard.createEntity.alreadyInClubHint}
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
@@ -101,31 +104,31 @@ export default function CreateClubPage() {
               href={`/dashboard/efootball/clubs/${user.club.id}`}
               className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-display text-sm font-semibold text-bg shadow-md transition-transform hover:-translate-y-0.5"
             >
-              Go to My Club ({user.club.name})
+              {format(t.dashboard.createEntity.goToMyClubNamed, { name: user.club.name })}
               <ArrowRightIcon className="h-4 w-4" />
             </Link>
             <Link
               href="/dashboard/efootball/clubs"
               className="inline-flex items-center gap-2 rounded-full border border-surface-line-strong px-5 py-2.5 font-display text-sm font-medium text-ink transition-colors hover:bg-surface"
             >
-              Browse All Clubs
+              {t.dashboard.createEntity.browseAllClubs}
             </Link>
           </div>
         </div>
-      ) : clubCreateBlockReason(user) ? (
+      ) : clubCreateBlockReason(user, t) ? (
         // Leadership conflict: community Presidents/VPs can't found clubs and vice versa
         <div className="mt-8 rounded-2xl border border-warning/40 bg-surface/60 p-8 text-center backdrop-blur">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-warning-soft text-warning-ink">
             <LockIcon className="h-7 w-7" />
           </div>
-          <h2 className="mt-4 font-display text-xl font-bold text-ink">You hold a leadership role</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">{clubCreateBlockReason(user)?.full}</p>
+          <h2 className="mt-4 font-display text-xl font-bold text-ink">{t.dashboard.createEntity.leadershipRoleTitle}</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-ink-soft">{clubCreateBlockReason(user, t)?.full}</p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
               href={`/dashboard/efootball/community/${user.community?.id ?? ""}`}
               className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-display text-sm font-semibold text-bg shadow-md transition-transform hover:-translate-y-0.5"
             >
-              Go to My Community
+              {t.dashboard.createEntity.goToMyCommunity}
               <ArrowRightIcon className="h-4 w-4" />
             </Link>
           </div>
@@ -136,9 +139,9 @@ export default function CreateClubPage() {
             <EntityEditForm
               nameLabel={t.dashboard.clubs.createNameLabel}
               descriptionLabel={t.dashboard.clubs.descriptionLabel}
-              submitLabel={createClub.isPending ? "Creating club..." : t.dashboard.clubs.createSubmit}
+              submitLabel={createClub.isPending ? t.dashboard.createEntity.creatingClub : t.dashboard.clubs.createSubmit}
               showLocation
-              locationLabel="Club location"
+              locationLabel={t.dashboard.createEntity.clubLocation}
               onSubmit={handleSubmit}
             />
           </div>

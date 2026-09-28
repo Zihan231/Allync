@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format } from "@/lib/i18n/translations";
 import { useUrlTab } from "@/lib/navigation/useUrlTab";
 import type { Tournament } from "@/lib/mock/types";
 import type { BackendTournament } from "@/lib/api/tournaments";
@@ -18,15 +19,14 @@ const ITEMS_PER_PAGE = 6;
 
 const FILTERS: {
   key: FilterKey;
-  label: string;
   statuses: string[] | null;
   dotClass: string;
 }[] = [
-  { key: "all", label: "All", statuses: null, dotClass: "bg-ink-soft" },
-  { key: "open", label: "Open", statuses: ["open", "registration_open"], dotClass: "bg-success" },
-  { key: "live", label: "Live", statuses: ["ongoing", "live"], dotClass: "bg-danger" },
-  { key: "closed", label: "Closed", statuses: ["registration_closed", "submission_phase"], dotClass: "bg-warning" },
-  { key: "completed", label: "Completed", statuses: ["completed"], dotClass: "bg-blue" },
+  { key: "all", statuses: null, dotClass: "bg-ink-soft" },
+  { key: "open", statuses: ["open", "registration_open"], dotClass: "bg-success" },
+  { key: "live", statuses: ["ongoing", "live"], dotClass: "bg-danger" },
+  { key: "closed", statuses: ["registration_closed", "submission_phase"], dotClass: "bg-warning" },
+  { key: "completed", statuses: ["completed"], dotClass: "bg-blue" },
 ];
 
 function getStatus(tournament: TournamentItem) {
@@ -55,6 +55,20 @@ export function CommunityTournamentsTab({
   canManage?: boolean;
 }) {
   const { t } = useLanguage();
+  const ct = t.dashboard.communityTournaments;
+  const filterLabels: Record<FilterKey, string> = {
+    all: ct.filterAll,
+    open: ct.filterOpen,
+    live: ct.filterLive,
+    closed: ct.filterClosed,
+    completed: ct.filterCompleted,
+  };
+  const emptyFilterLabels: Record<Exclude<FilterKey, "all">, string> = {
+    open: ct.emptyOpen,
+    live: ct.emptyLive,
+    closed: ct.emptyClosed,
+    completed: ct.emptyCompleted,
+  };
   const [activeFilter, setActiveFilter] = useUrlTab(FILTER_KEYS, "all", "tournamentStatus");
   const [page, setPage] = useState(1);
   const [showPrizeFilter, setShowPrizeFilter] = useState(false);
@@ -65,7 +79,7 @@ export function CommunityTournamentsTab({
 
   if (isLoading) {
     return (
-      <section aria-busy="true" aria-label="Loading community tournaments" className="space-y-5">
+      <section aria-busy="true" aria-label={ct.loadingAria} className="space-y-5">
         <div className="flex items-center justify-between gap-4 rounded-2xl border border-surface-line bg-surface/40 p-4">
           <div className="space-y-2">
             <div className="h-5 w-40 animate-pulse rounded bg-surface-line/80" />
@@ -172,16 +186,16 @@ export function CommunityTournamentsTab({
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-accent-ink">
               <TrophyIcon className="h-3.5 w-3.5" />
-              Tournament hub
+              {ct.hubBadge}
             </div>
             <h2
               id="community-tournaments-heading"
               className="mt-4 max-w-xl font-display text-2xl font-black tracking-tight text-ink sm:text-3xl"
             >
-              Community tournaments
+              {ct.heading}
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-ink-soft sm:text-[15px]">
-              Browse every competition hosted by this community and open a card for schedules, entrants, and full details.
+              {ct.intro}
             </p>
 
             {canManage ? (
@@ -198,7 +212,8 @@ export function CommunityTournamentsTab({
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {[
               {
-                label: "Total",
+                key: "total",
+                label: ct.statTotal,
                 value: tournaments.length,
                 icon: BracketIcon,
                 cardClass: "border-accent/25 bg-accent/10",
@@ -206,7 +221,8 @@ export function CommunityTournamentsTab({
                 valueClass: "text-accent-ink",
               },
               {
-                label: "Open",
+                key: "open",
+                label: ct.statOpen,
                 value: openCount,
                 icon: UsersIcon,
                 cardClass: "border-success/25 bg-success-soft/60",
@@ -214,7 +230,8 @@ export function CommunityTournamentsTab({
                 valueClass: "text-success-ink",
               },
               {
-                label: "Live",
+                key: "live",
+                label: ct.statLive,
                 value: liveCount,
                 icon: FlameIcon,
                 cardClass: "border-danger/25 bg-danger-soft/60",
@@ -223,7 +240,7 @@ export function CommunityTournamentsTab({
               },
             ].map((stat) => (
               <div
-                key={stat.label}
+                key={stat.key}
                 className={`relative overflow-hidden rounded-2xl border p-3 backdrop-blur-sm sm:p-4 ${stat.cardClass}`}
               >
                 <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${stat.iconClass}`}>
@@ -235,7 +252,7 @@ export function CommunityTournamentsTab({
                 <div className="mt-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft">
                   {stat.label}
                 </div>
-                {stat.label === "Live" && stat.value > 0 ? (
+                {stat.key === "live" && stat.value > 0 ? (
                   <span
                     className="absolute right-3 top-3 h-2 w-2 rounded-full bg-danger motion-safe:animate-pulse"
                     aria-hidden="true"
@@ -254,21 +271,24 @@ export function CommunityTournamentsTab({
               <FilterIcon className="h-4 w-4" />
             </span>
             <div>
-              <h3 className="font-display text-sm font-bold text-ink">Filter by status</h3>
-              <p className="mt-0.5 text-xs text-ink-faint">Narrow the tournament list</p>
+              <h3 className="font-display text-sm font-bold text-ink">{ct.filterHeading}</h3>
+              <p className="mt-0.5 text-xs text-ink-faint">{ct.filterSubheading}</p>
             </div>
           </div>
 
           {filteredTournaments.length > 0 ? (
             <p className="font-mono text-xs text-ink-faint" aria-live="polite">
-              Showing {firstItemIndex + 1}–{Math.min(firstItemIndex + ITEMS_PER_PAGE, filteredTournaments.length)} of{" "}
-              {filteredTournaments.length}
+              {format(ct.showingRange, {
+                from: firstItemIndex + 1,
+                to: Math.min(firstItemIndex + ITEMS_PER_PAGE, filteredTournaments.length),
+                total: filteredTournaments.length,
+              })}
             </p>
           ) : null}
         </div>
 
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="min-w-0" role="group" aria-label="Filter tournaments by status">
+          <div className="min-w-0" role="group" aria-label={ct.filterGroupAria}>
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               {FILTERS.map((filter) => {
                 const count = filter.statuses
@@ -289,7 +309,7 @@ export function CommunityTournamentsTab({
                     }`}
                   >
                     <span className={`h-2 w-2 shrink-0 rounded-full ${filter.dotClass}`} aria-hidden="true" />
-                    {filter.label}
+                    {filterLabels[filter.key]}
                     <span
                       className={`rounded-full px-2 py-0.5 font-mono text-[10px] ${
                         active ? "bg-surface-line text-ink-soft" : "bg-surface-line/60 text-ink-faint"
@@ -318,7 +338,7 @@ export function CommunityTournamentsTab({
               <FilterIcon className="h-4 w-4" />
               {hasPrizeFilter
                 ? `BDT ${minPrize.toLocaleString()}–${effectiveMaxPrize.toLocaleString()}`
-                : "Prize range"}
+                : ct.prizeRange}
             </button>
 
           </div>
@@ -328,8 +348,8 @@ export function CommunityTournamentsTab({
           <div id="community-prize-filter" className="rounded-2xl border border-surface-line bg-surface/45 p-4 sm:p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h3 className="font-display text-sm font-bold text-ink">Prize money</h3>
-                <p className="mt-1 text-xs text-ink-soft">Show tournaments within this prize-pool range.</p>
+                <h3 className="font-display text-sm font-bold text-ink">{ct.prizeMoney}</h3>
+                <p className="mt-1 text-xs text-ink-soft">{ct.prizeMoneyBody}</p>
               </div>
               <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
                 <span className="rounded-full bg-accent-soft px-3 py-1 font-mono text-xs font-semibold text-accent-ink">
@@ -347,7 +367,7 @@ export function CommunityTournamentsTab({
                     }}
                     className="min-h-11 px-2 text-sm font-semibold text-ink-soft transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                   >
-                    Reset
+                    {ct.reset}
                   </button>
                 ) : null}
               </div>
@@ -368,7 +388,7 @@ export function CommunityTournamentsTab({
                     step={100}
                     value={minPrize}
                     onChange={(event) => updateMinPrize(Number(event.target.value))}
-                    aria-label="Minimum prize money"
+                    aria-label={ct.minPrizeAria}
                     className="range-thumb pointer-events-none absolute inset-0 w-full appearance-none bg-transparent"
                   />
                   <input
@@ -378,7 +398,7 @@ export function CommunityTournamentsTab({
                     step={100}
                     value={effectiveMaxPrize}
                     onChange={(event) => updateMaxPrize(Number(event.target.value))}
-                    aria-label="Maximum prize money"
+                    aria-label={ct.maxPrizeAria}
                     className="range-thumb pointer-events-none absolute inset-0 w-full appearance-none bg-transparent"
                   />
                 </div>
@@ -390,7 +410,7 @@ export function CommunityTournamentsTab({
 
               <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
                 <label className="block">
-                  <span className="mb-1.5 block text-xs font-semibold text-ink-soft">Minimum prize</span>
+                  <span className="mb-1.5 block text-xs font-semibold text-ink-soft">{ct.minPrize}</span>
                   <span className="relative block">
                     <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center font-mono text-xs text-ink-faint">BDT</span>
                     <input
@@ -406,13 +426,13 @@ export function CommunityTournamentsTab({
                         if (event.key === "Enter") event.currentTarget.blur();
                       }}
                       className="min-h-11 w-full rounded-xl border border-surface-line-strong bg-bg/65 py-2 pl-12 pr-3 font-mono text-sm text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
-                      aria-label="Minimum prize amount in BDT"
+                      aria-label={ct.minPrizeInputAria}
                     />
                   </span>
                 </label>
 
                 <label className="block">
-                  <span className="mb-1.5 block text-xs font-semibold text-ink-soft">Maximum prize</span>
+                  <span className="mb-1.5 block text-xs font-semibold text-ink-soft">{ct.maxPrize}</span>
                   <span className="relative block">
                     <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center font-mono text-xs text-ink-faint">BDT</span>
                     <input
@@ -428,7 +448,7 @@ export function CommunityTournamentsTab({
                         if (event.key === "Enter") event.currentTarget.blur();
                       }}
                       className="min-h-11 w-full rounded-xl border border-surface-line-strong bg-bg/65 py-2 pl-12 pr-3 font-mono text-sm text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
-                      aria-label="Maximum prize amount in BDT"
+                      aria-label={ct.maxPrizeInputAria}
                     />
                   </span>
                 </label>
@@ -455,15 +475,15 @@ export function CommunityTournamentsTab({
           </div>
           <h3 className="mt-4 font-display text-base font-bold text-ink">
             {tournaments.length === 0
-              ? t.dashboard.tournaments.noTournaments || "No tournaments yet"
-              : hasPrizeFilter
-                ? "No tournaments in this prize range"
-                : `No ${selectedFilter.label.toLowerCase()} tournaments`}
+              ? t.dashboard.tournaments.noTournaments
+              : hasPrizeFilter || selectedFilter.key === "all"
+                ? ct.emptyPrizeRange
+                : emptyFilterLabels[selectedFilter.key]}
           </h3>
           <p className="mt-1 text-sm text-ink-soft">
             {tournaments.length === 0
-              ? "New tournaments hosted by this community will appear here."
-              : "Try another status or clear the prize range."}
+              ? ct.emptyAll
+              : ct.emptyFiltered}
           </p>
           {tournaments.length > 0 ? (
             <button
@@ -471,16 +491,16 @@ export function CommunityTournamentsTab({
               onClick={clearFilters}
               className="mt-5 min-h-11 rounded-full border border-accent/50 bg-accent-soft px-5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
-              Clear filters
+              {ct.clearFilters}
             </button>
           ) : null}
         </div>
       )}
 
       {totalPages > 1 ? (
-        <nav className="flex flex-col items-center justify-between gap-3 border-t border-surface-line pt-5 sm:flex-row" aria-label="Tournament pages">
+        <nav className="flex flex-col items-center justify-between gap-3 border-t border-surface-line pt-5 sm:flex-row" aria-label={ct.paginationAria}>
           <p className="font-mono text-xs text-ink-faint">
-            Page {currentPage} of {totalPages}
+            {format(ct.pageOf, { page: currentPage, total: totalPages })}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -489,13 +509,13 @@ export function CommunityTournamentsTab({
               disabled={currentPage === 1}
               className="min-h-11 rounded-lg border border-surface-line bg-surface/40 px-4 text-sm font-semibold text-ink-soft transition-colors hover:border-surface-line-strong hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Previous
+              {ct.previous}
             </button>
             {visiblePages.map((pageNumber) => (
               <button
                 key={pageNumber}
                 type="button"
-                aria-label={`Go to page ${pageNumber}`}
+                aria-label={`${ct.goToPage} ${pageNumber}`}
                 aria-current={currentPage === pageNumber ? "page" : undefined}
                 onClick={() => setPage(pageNumber)}
                 className={`h-11 min-w-11 rounded-lg border px-3 font-mono text-sm font-semibold transition-colors ${
@@ -513,7 +533,7 @@ export function CommunityTournamentsTab({
               disabled={currentPage === totalPages}
               className="min-h-11 rounded-lg border border-surface-line bg-surface/40 px-4 text-sm font-semibold text-ink-soft transition-colors hover:border-surface-line-strong hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Next
+              {ct.next}
             </button>
           </div>
         </nav>

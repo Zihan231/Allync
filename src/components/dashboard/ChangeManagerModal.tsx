@@ -5,6 +5,8 @@ import { Avatar } from "@/components/common/Avatar";
 import { CloseIcon, SearchIcon, SwapIcon, ShieldIcon } from "@/components/icons";
 import { useClubManager, useChangeClubManager, useTransferClubManager } from "@/lib/api/hooks/useClubs";
 import { useSession } from "@/lib/session/SessionContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format, formatNodes, roleLabel } from "@/lib/i18n/translations";
 import type { Person } from "@/lib/mock/types";
 
 export interface ChangeManagerModalProps {
@@ -25,6 +27,8 @@ export function ChangeManagerModal({
   isManagerSelfTransfer,
 }: ChangeManagerModalProps) {
   const { user, setClub, refreshSession } = useSession();
+  const { t } = useLanguage();
+  const cm = t.dashboard.changeManager;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -46,7 +50,7 @@ export function ChangeManagerModal({
         const match = members.find((m) => m.id === uId);
         return {
           id: uId,
-          name: uName || match?.name || "Manager",
+          name: uName || match?.name || cm.managerFallback,
           inGameId: inGame || match?.inGameId || null,
           dpUrl: match?.dpUrl ?? null,
         };
@@ -62,7 +66,7 @@ export function ChangeManagerModal({
       };
     }
     return null;
-  }, [managerData, members]);
+  }, [managerData, members, cm.managerFallback]);
 
   // Exclude current manager and President from eligible candidates
   const eligibleMembers = useMemo(() => {
@@ -126,13 +130,13 @@ export function ChangeManagerModal({
       }
 
       await refreshSession().catch(() => {});
-      setSuccessMessage(res.message || "Manager updated successfully!");
+      setSuccessMessage(res.message || cm.success);
 
       setTimeout(() => {
         onClose();
       }, 1200);
     } catch (err: any) {
-      setErrorMessage(err?.message || "Failed to update manager. Please try again.");
+      setErrorMessage(err?.message || cm.errUpdate);
     }
   };
 
@@ -140,7 +144,7 @@ export function ChangeManagerModal({
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 pt-[6vh] backdrop-blur-md sm:items-center sm:pt-4">
       <button
         type="button"
-        aria-label="Close"
+        aria-label={cm.close}
         disabled={isSubmitting}
         onClick={onClose}
         className="fixed inset-0 cursor-default"
@@ -162,7 +166,7 @@ export function ChangeManagerModal({
             </div>
             <div>
               <h3 className="font-display text-base font-bold text-ink">
-                {isManagerSelfTransfer ? "Hand Over Manager Role" : "Change Club Manager"}
+                {isManagerSelfTransfer ? cm.handoverTitle : cm.changeTitle}
               </h3>
               <p className="text-xs text-ink-faint">{clubName}</p>
             </div>
@@ -185,10 +189,11 @@ export function ChangeManagerModal({
               <div className="flex items-start gap-2.5">
                 <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0" />
                 <div className="space-y-1">
-                  <p className="font-semibold">Manager Handover Notice</p>
+                  <p className="font-semibold">{cm.handoverNoticeTitle}</p>
                   <p className="opacity-90 leading-relaxed">
-                    You are handing over manager authority to another member. You will automatically step down to a
-                    regular <span className="font-semibold text-ink">Player</span> in this club.
+                    {formatNodes(cm.handoverNoticeBody, {
+                      player: <span className="font-semibold text-ink">{roleLabel("Player", t)}</span>,
+                    })}
                   </p>
                 </div>
               </div>
@@ -198,10 +203,9 @@ export function ChangeManagerModal({
               <div className="flex items-start gap-2.5">
                 <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0" />
                 <div className="space-y-1">
-                  <p className="font-semibold">Executive Club Action</p>
+                  <p className="font-semibold">{cm.executiveTitle}</p>
                   <p className="opacity-90 leading-relaxed">
-                    As President / General Secretary, you can appoint any eligible club member as Manager. The previous
-                    manager will automatically be demoted to Player.
+                    {cm.executiveBody}
                   </p>
                 </div>
               </div>
@@ -211,26 +215,26 @@ export function ChangeManagerModal({
           {/* Current Manager Banner */}
           <div className="rounded-xl border border-surface-line bg-surface/40 p-3.5">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
-              Current Manager
+              {cm.currentManager}
             </div>
             <div className="mt-2 flex items-center justify-between">
               {isLoadingManager ? (
-                <div className="text-xs text-ink-faint animate-pulse">Loading manager details...</div>
+                <div className="text-xs text-ink-faint animate-pulse">{cm.loadingManager}</div>
               ) : currentManager ? (
                 <div className="flex items-center gap-3">
                   <Avatar dpUrl={currentManager.dpUrl} name={currentManager.name} size="sm" mode="static" />
                   <div>
                     <div className="text-sm font-semibold text-ink">{currentManager.name}</div>
                     {currentManager.inGameId && (
-                      <div className="text-xs text-ink-faint">IGN: {currentManager.inGameId}</div>
+                      <div className="text-xs text-ink-faint">{format(cm.ign, { id: currentManager.inGameId })}</div>
                     )}
                   </div>
                 </div>
               ) : (
-                <span className="text-xs italic text-ink-faint">No manager currently assigned</span>
+                <span className="text-xs italic text-ink-faint">{cm.noManager}</span>
               )}
               <span className="rounded-full border border-surface-line-strong bg-bg-raised px-2.5 py-0.5 text-[11px] font-medium text-ink-soft">
-                Active
+                {cm.active}
               </span>
             </div>
           </div>
@@ -239,10 +243,10 @@ export function ChangeManagerModal({
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="text-xs font-semibold text-ink">
-                Select New Manager <span className="text-accent">*</span>
+                {cm.selectNew} <span className="text-accent">*</span>
               </label>
               <span className="text-[11px] text-ink-faint">
-                {eligibleMembers.length} eligible {eligibleMembers.length === 1 ? "member" : "members"}
+                {format(eligibleMembers.length === 1 ? cm.eligibleOne : cm.eligibleMany, { count: eligibleMembers.length })}
               </span>
             </div>
             <div className="relative">
@@ -251,7 +255,7 @@ export function ChangeManagerModal({
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by member name or IGN..."
+                placeholder={cm.searchPlaceholder}
                 className="w-full rounded-xl border border-surface-line bg-bg py-2 pl-9 pr-3 text-xs text-ink placeholder-ink-faint outline-none transition focus:border-accent"
               />
             </div>
@@ -261,7 +265,7 @@ export function ChangeManagerModal({
           <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
             {eligibleMembers.length === 0 ? (
               <div className="rounded-xl border border-dashed border-surface-line py-8 text-center text-xs text-ink-faint">
-                {search.trim() ? "No eligible members match your search." : "No eligible members available to appoint."}
+                {search.trim() ? cm.noMatch : cm.noEligible}
               </div>
             ) : (
               eligibleMembers.map((member) => {
@@ -283,8 +287,8 @@ export function ChangeManagerModal({
                       <div className="min-w-0">
                         <div className="truncate text-xs font-semibold text-ink">{member.name}</div>
                         <div className="flex items-center gap-2 text-[11px] text-ink-faint">
-                          <span>{member.clubRole ?? "Player"}</span>
-                          {member.inGameId && <span>· IGN: {member.inGameId}</span>}
+                          <span>{roleLabel(member.clubRole ?? "Player", t)}</span>
+                          {member.inGameId && <span>· {format(cm.ign, { id: member.inGameId })}</span>}
                         </div>
                       </div>
                     </div>
@@ -311,9 +315,9 @@ export function ChangeManagerModal({
           {/* Selected Preview Notice */}
           {selectedCandidate && (
             <div className="flex items-center justify-between rounded-xl border border-surface-line bg-bg-raised p-3 text-xs">
-              <span className="text-ink-faint">Target Appointee:</span>
+              <span className="text-ink-faint">{cm.targetAppointee}</span>
               <span className="font-semibold text-accent-ink">
-                {selectedCandidate.name} ({selectedCandidate.clubRole ?? "Player"})
+                {selectedCandidate.name} ({roleLabel(selectedCandidate.clubRole ?? "Player", t)})
               </span>
             </div>
           )}
@@ -341,7 +345,7 @@ export function ChangeManagerModal({
             onClick={onClose}
             className="rounded-full border border-surface-line-strong px-4 py-2 text-xs font-semibold text-ink-soft transition-colors hover:text-ink disabled:opacity-40"
           >
-            Cancel
+            {cm.cancel}
           </button>
           <button
             type="button"
@@ -356,17 +360,17 @@ export function ChangeManagerModal({
             {isSubmitting ? (
               <>
                 <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-bg border-t-transparent" />
-                <span>Processing...</span>
+                <span>{cm.processing}</span>
               </>
             ) : isManagerSelfTransfer ? (
               <>
                 <SwapIcon className="h-3.5 w-3.5" />
-                <span>Confirm Handover & Step Down</span>
+                <span>{cm.confirmHandover}</span>
               </>
             ) : (
               <>
                 <SwapIcon className="h-3.5 w-3.5" />
-                <span>Appoint New Manager</span>
+                <span>{cm.appoint}</span>
               </>
             )}
           </button>

@@ -2,6 +2,8 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { ToastContainer } from "@/components/common/Toast";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format } from "@/lib/i18n/translations";
 import { useToast } from "@/lib/useToast";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useConfirm } from "@/lib/useConfirm";
@@ -44,6 +46,11 @@ export const FORMATIONS_LIST = [
   { id: "5-2-1-2", label: "5-2-1-2", summary: "3 CB, 1 LB, 1 RB, 2 CMF/DMF, 1 AMF, 2 CF" },
 ];
 
+/** Renders a hint string, turning its <b>…</b> spans into bold text. */
+function boldHint(text: string) {
+  return text.split(/<b>(.*?)<\/b>/g).map((part, i) => (i % 2 === 1 ? <b key={i}>{part}</b> : part));
+}
+
 export interface ClubTeamsTabProps {
   clubId: string;
   canManage?: boolean;
@@ -58,6 +65,8 @@ export interface ClubTeamsTabProps {
 export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabProps) {
   const { toasts, toast, dismiss } = useToast();
   const { confirm, confirmProps } = useConfirm();
+  const { t } = useLanguage();
+  const ct = t.dashboard.clubTeams;
   const { data: teams = [], isLoading: isTeamsLoading } = useTeams(clubId);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 
@@ -148,25 +157,25 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
       setNewTeamName("");
       setIsCreatingTeam(false);
       setSelectedTeamId(created.id);
-      setStatusNotice(`Squad ${created.name} created! Add members from the free players pool.`);
+      setStatusNotice(format(ct.toastSquadCreated, { name: created.name }));
     } catch (err: any) {
-      toast(err.response?.data?.message || "Failed to create squad", "error");
+      toast(err.response?.data?.message || ct.errCreateSquad, "error");
     }
   };
 
   // Handle Formation Change (Instant UI & Backend Update)
   const handleFormationChange = async (formation: string) => {
     setSelectedFormation(formation);
-    setStatusNotice(`Applying tactical formation ${formation}...`);
+    setStatusNotice(format(ct.applyingFormation, { formation }));
     try {
       const updated = await applyFormationMutation.mutateAsync(formation);
       if (updated.members) {
         setOptimisticMembers(updated.members);
       }
-      setStatusNotice(`Formation changed to ${formation}!`);
+      setStatusNotice(format(ct.formationChanged, { formation }));
       setTimeout(() => setStatusNotice(null), 3000);
     } catch (err: any) {
-      setStatusNotice("Failed to update formation");
+      setStatusNotice(ct.errFormation);
       setTimeout(() => setStatusNotice(null), 3000);
     }
   };
@@ -179,7 +188,10 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
     if (!selectedPitchPlayerId) {
       setSelectedPitchPlayerId(player.id);
       setStatusNotice(
-        `Selected ${player.user?.name || "Player"} (${player.gamePosition}). Click another starter to SWAP, or click a bench player to SUB.`
+        format(ct.selectedPlayer, {
+          name: player.user?.name || ct.playerFallback,
+          position: player.gamePosition ?? "",
+        }),
       );
       return;
     }
@@ -214,7 +226,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
     );
 
     setSelectedPitchPlayerId(null);
-    setStatusNotice(`Swapped ${playerA.user?.name || "Player"} and ${playerB.user?.name || "Player"}!`);
+    setStatusNotice(format(ct.swapped, { a: playerA.user?.name || ct.playerFallback, b: playerB.user?.name || ct.playerFallback }));
     setTimeout(() => setStatusNotice(null), 3000);
 
     try {
@@ -225,7 +237,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
     } catch (err) {
       // Revert on error
       if (teamDetail?.members) setOptimisticMembers(teamDetail.members);
-      setStatusNotice("Swap failed, reverted position");
+      setStatusNotice(ct.errSwap);
     }
   };
 
@@ -251,10 +263,10 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
       })
     );
 
-    const outName = outPlayer.user?.name || "Player";
-    const inName = benchPlayer.user?.name || "Player";
+    const outName = outPlayer.user?.name || ct.playerFallback;
+    const inName = benchPlayer.user?.name || ct.playerFallback;
     setSelectedPitchPlayerId(null);
-    setStatusNotice(`Substituted ${inName} IN for ${outName} (${pitchPos})!`);
+    setStatusNotice(format(ct.substituted, { in: inName, out: outName, position: pitchPos ?? "" }));
     setTimeout(() => setStatusNotice(null), 3500);
 
     try {
@@ -264,7 +276,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
       });
     } catch (err) {
       if (teamDetail?.members) setOptimisticMembers(teamDetail.members);
-      setStatusNotice("Substitution failed, reverted");
+      setStatusNotice(ct.errSubstitution);
     }
   };
 
@@ -281,7 +293,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
     );
 
     setPositionTargetPlayer(null);
-    setStatusNotice(`Position changed from ${oldPos} to ${newPos}!`);
+    setStatusNotice(format(ct.positionChanged, { from: oldPos ?? "", to: newPos }));
     setTimeout(() => setStatusNotice(null), 3000);
 
     try {
@@ -291,14 +303,14 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
       });
     } catch (err: any) {
       if (teamDetail?.members) setOptimisticMembers(teamDetail.members);
-      setStatusNotice("Position change failed");
+      setStatusNotice(ct.errPosition);
     }
   };
 
   // Handle Adding Free Player to Squad
   const handleAddPlayer = async (player: ClubMemberProfile) => {
     if (isSquadFull) {
-      toast("Squad is full (16/16). Remove a substitute before adding another player.", "warning");
+      toast(ct.squadFull, "warning");
       return;
     }
 
@@ -310,7 +322,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
     };
     setOptimisticMembers((prev) => [...prev, newMember]);
     setIsAddPlayerOpen(false);
-    setStatusNotice(`Added ${player.user?.name || "Player"} to the bench!`);
+    setStatusNotice(format(ct.addedToBench, { name: player.user?.name || ct.playerFallback }));
     setTimeout(() => setStatusNotice(null), 3000);
 
     try {
@@ -321,7 +333,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
       });
     } catch (err: any) {
       if (teamDetail?.members) setOptimisticMembers(teamDetail.members);
-      setStatusNotice(err.response?.data?.message || "Failed to add player");
+      setStatusNotice(err.response?.data?.message || ct.errAdd);
     }
   };
 
@@ -329,22 +341,22 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
   const handleRemovePlayer = async (player: ClubMemberProfile) => {
     if (!canManage) return;
     if (totalSquadCount <= 11) {
-      toast("A team must have at least 11 players. Cannot remove starters.", "warning");
+      toast(ct.minPlayers, "warning");
       return;
     }
 
-    if (!await confirm(`Remove ${player.user?.name || "this player"} from the squad? They will become a free club member.`, { title: "Remove Player", variant: "warning", confirmLabel: "Remove" })) return;
+    if (!await confirm(format(ct.removeConfirm, { name: player.user?.name || ct.thisPlayer }), { title: ct.removeTitle, variant: "warning", confirmLabel: ct.removeConfirmLabel })) return;
 
     // Optimistic removal
     setOptimisticMembers((prev) => prev.filter((m) => m.id !== player.id));
-    setStatusNotice(`Removed ${player.user?.name || "Player"} from squad.`);
+    setStatusNotice(format(ct.removed, { name: player.user?.name || ct.playerFallback }));
     setTimeout(() => setStatusNotice(null), 3000);
 
     try {
       await removePlayerMutation.mutateAsync(player.id);
     } catch (err: any) {
       if (teamDetail?.members) setOptimisticMembers(teamDetail.members);
-      setStatusNotice("Failed to remove player");
+      setStatusNotice(ct.errRemove);
     }
   };
 
@@ -390,7 +402,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
               className="flex items-center gap-1.5 rounded-xl border border-dashed border-surface-line px-3 py-2 text-xs font-bold text-ink-faint hover:border-accent hover:text-accent-ink transition-colors"
             >
               <PlusIcon className="h-3.5 w-3.5" />
-              <span>New Team</span>
+              <span>{ct.newTeam}</span>
             </button>
           )}
         </div>
@@ -400,7 +412,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
           {/* Formation Dropdown */}
           <div className="flex items-center gap-2 rounded-xl border border-surface-line bg-surface/60 px-3 py-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider text-ink-faint">
-              Formation:
+              {ct.formationLabel}
             </span>
             <select
               value={selectedFormation}
@@ -424,7 +436,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
                 : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
             }`}
           >
-            {totalSquadCount}/16 Squad
+            {format(ct.squadCount, { count: totalSquadCount })}
           </span>
         </div>
       </div>
@@ -439,7 +451,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
             type="text"
             value={newTeamName}
             onChange={(e) => setNewTeamName(e.target.value)}
-            placeholder="Squad Name (e.g. Team B)"
+            placeholder={ct.squadNamePlaceholder}
             className="rounded-lg border border-surface-line bg-bg px-3 py-1.5 text-xs text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
             autoFocus
           />
@@ -448,7 +460,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
             disabled={createTeam.isPending || !newTeamName.trim()}
             className="rounded-lg bg-accent px-3.5 py-1.5 font-display text-xs font-semibold text-bg disabled:opacity-50"
           >
-            Create
+            {ct.create}
           </button>
           <button
             type="button"
@@ -476,7 +488,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
               }}
               className="rounded-full bg-black/40 px-2.5 py-1 text-[10px] uppercase font-bold text-ink hover:text-danger-ink"
             >
-              Cancel
+              {ct.cancel}
             </button>
           )}
         </div>
@@ -503,10 +515,10 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
             )}
             <div className="min-w-0">
               <h3 className="truncate font-display text-sm font-bold text-ink">
-                {club?.name || "Club Squad"}
+                {club?.name || ct.clubSquad}
               </h3>
               <span className="inline-block rounded bg-bg-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-ink">
-                {currentTeam?.name || "Active Squad"}
+                {currentTeam?.name || ct.activeSquad}
               </span>
             </div>
           </div>
@@ -514,7 +526,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
           {/* Manager Card */}
           <div className="rounded-xl border border-surface-line bg-bg-raised/70 p-3">
             <div className="text-[10px] font-bold uppercase tracking-wider text-ink-faint">
-              Tactical Head
+              {ct.tacticalHead}
             </div>
             <div className="mt-2.5 flex items-center gap-3">
               <div className="relative">
@@ -525,8 +537,8 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
               </div>
               <div className="min-w-0">
                 <p className="truncate font-display text-xs font-bold text-ink">{manager.name}</p>
-                <p className="text-[10px] text-accent-ink font-semibold">Manager</p>
-                <p className="text-[9px] text-ink-faint">Tactical Gameplan</p>
+                <p className="text-[10px] text-accent-ink font-semibold">{ct.manager}</p>
+                <p className="text-[9px] text-ink-faint">{ct.tacticalGameplan}</p>
               </div>
             </div>
           </div>
@@ -534,22 +546,22 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
           {/* Collective Strength Card */}
           <div className="rounded-xl border border-accent/30 bg-gradient-to-br from-accent/15 via-accent/5 to-transparent p-4 text-center">
             <p className="font-display text-[10px] font-black tracking-widest text-accent uppercase">
-              COLLECTIVE STRENGTH
+              {ct.collectiveStrength}
             </p>
             <p className="mt-1 font-display text-4xl font-black tracking-tight text-ink drop-shadow-[0_0_15px_rgba(217,165,68,0.3)]">
               {collectiveStrength.toLocaleString()}
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-black/45 p-2 border border-white/5">
               <div className="flex flex-col items-center justify-center border-r border-white/10 pr-1">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-ink-faint">Formation</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-ink-faint">{ct.formation}</span>
                 <span className="font-display text-xs font-black text-accent-ink whitespace-nowrap">
                   {selectedFormation}
                 </span>
               </div>
               <div className="flex flex-col items-center justify-center pl-1">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-ink-faint">Starters</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-ink-faint">{ct.starters}</span>
                 <span className="font-display text-xs font-black text-emerald-400 whitespace-nowrap">
-                  {starters.length}/11 Active
+                  {format(ct.startersActive, { count: starters.length })}
                 </span>
               </div>
             </div>
@@ -558,9 +570,9 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
           {/* Captain Banner */}
           {currentTeam?.captain && (
             <div className="flex items-center justify-between rounded-xl border border-surface-line bg-bg px-3 py-2 text-xs">
-              <span className="text-ink-faint">Team Captain:</span>
+              <span className="text-ink-faint">{ct.teamCaptain}</span>
               <span className="font-bold text-accent-ink">
-                {currentTeam.captain.user?.name || "Unassigned"}
+                {currentTeam.captain.user?.name || ct.unassigned}
               </span>
             </div>
           )}
@@ -578,9 +590,9 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
           />
           {canManage && (
             <div className="mt-3 flex flex-wrap items-center justify-center gap-4 text-[11px] text-ink-faint">
-              <span>🔄 <b>Click starter</b> to select, then click another starter to <b>SWAP</b></span>
-              <span>⚡ <b>Click starter</b>, then click bench player to <b>SUB</b></span>
-              <span>⚙️ <b>Click gear</b> on player card to change compatible position</span>
+              <span>{boldHint(ct.hintSwap)}</span>
+              <span>{boldHint(ct.hintSub)}</span>
+              <span>{boldHint(ct.hintGear)}</span>
             </div>
           )}
         </div>
@@ -590,7 +602,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
           <div className="flex items-center justify-between border-b border-surface-line pb-3">
             <div className="flex items-center gap-1.5">
               <h4 className="font-display text-xs font-black uppercase tracking-wider text-ink">
-                Substitutes
+                {ct.substitutes}
               </h4>
               <span className="rounded-full bg-bg-raised px-2 py-0.5 text-[10px] font-bold text-accent-ink">
                 {subs.length}/5
@@ -607,17 +619,17 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
                     ? "bg-surface text-ink-faint/50 cursor-not-allowed"
                     : "bg-accent text-bg hover:brightness-110"
                 }`}
-                title={isSquadFull ? "Squad full (16/16)" : "Add free member"}
+                title={isSquadFull ? ct.squadFullTitle : ct.addFreeMember}
               >
                 <PlusIcon className="h-3 w-3" />
-                <span>{isSquadFull ? "Full" : "Add"}</span>
+                <span>{isSquadFull ? ct.full : ct.add}</span>
               </button>
             )}
           </div>
 
           {subs.length === 0 ? (
             <div className="rounded-xl border border-dashed border-surface-line py-10 text-center text-xs text-ink-faint">
-              No substitutes on the bench.
+              {ct.noSubs}
               {canManage && (
                 <div className="mt-2">
                   <button
@@ -625,7 +637,7 @@ export function ClubTeamsTab({ clubId, canManage = false, club }: ClubTeamsTabPr
                     onClick={() => setIsAddPlayerOpen(true)}
                     className="text-accent-ink underline font-bold"
                   >
-                    + Add from free members
+                    {ct.addFromFree}
                   </button>
                 </div>
               )}

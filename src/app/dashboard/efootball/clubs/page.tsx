@@ -38,7 +38,7 @@ export default function ClubsPage() {
   }, [search]);
 
   const myClubId = user.club?.id;
-  const createBlockedReason = clubCreateBlockReason(user);
+  const createBlockedReason = clubCreateBlockReason(user, t);
 
   // Only the visible page is fetched; filtering and paging happen on the server.
   const listQuery: ClubListQuery = {

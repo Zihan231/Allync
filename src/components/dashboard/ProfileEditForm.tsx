@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useUpdateMe, useUpsertEfootballProfile, useDeleteAccount } from "@/lib/api/hooks/useUsers";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { getPerson, updatePersonProfile } from "@/lib/mock/communityStore";
 import { ImageUploadControl } from "@/components/common/ImageUploadControl";
@@ -282,9 +283,9 @@ export function ProfileEditForm() {
   function validateTab(tab: ProfileTab): FormErrors {
     const next: FormErrors = {};
     if (tab === "account") {
-      if (!form.email.trim()) next.email = "Required.";
+      if (!form.email.trim()) next.email = t.dashboard.profileEdit.required;
       if (form.password && !isValidPasswordLength(form.password)) {
-        next.password = "Password must be at least 6 characters.";
+        next.password = t.dashboard.profileEdit.passwordTooShort;
       }
     } else if (tab === "social") {
       if (form.facebookUrl.trim() && !isFacebookUrl(form.facebookUrl)) {
@@ -398,8 +399,8 @@ export function ProfileEditForm() {
       setForm((prev) => ({ ...prev, password: "" }));
 
       // 6. Finish editing & show success
-      const tabLabel = tabs.find((t) => t.id === tab)?.label || "Profile";
-      toast(`${tabLabel} updated successfully!`, "success");
+      const tabLabel = tabs.find((t) => t.id === tab)?.label || t.dashboard.profileEdit.profileFallback;
+      toast(format(t.dashboard.profileEdit.tabUpdated, { tab: tabLabel }), "success");
       setEditingTab(null);
       setTabSuccess((prev) => ({ ...prev, [tab]: true }));
       setTimeout(() => {
@@ -409,7 +410,7 @@ export function ProfileEditForm() {
       const message =
         err?.message ||
         (err?.raw?.message ? (Array.isArray(err.raw.message) ? err.raw.message.join(", ") : err.raw.message) : null) ||
-        "Failed to save profile changes to server.";
+        t.dashboard.profileEdit.errSave;
       console.error(`Profile save error [${tab}]:`, message, err);
       setTabErrors((prev) => ({ ...prev, [tab]: message }));
       toast(message, "error");
@@ -421,10 +422,10 @@ export function ProfileEditForm() {
   async function handleDeleteAccount() {
     if (!user.id) return;
     if (
-      !(await confirm("Delete your account permanently? This cannot be undone.", {
-        title: "Delete Account",
+      !(await confirm(t.dashboard.profileEdit.deleteConfirm, {
+        title: t.dashboard.profileEdit.deleteAccount,
         variant: "danger",
-        confirmLabel: "Delete Account",
+        confirmLabel: t.dashboard.profileEdit.deleteAccount,
       }))
     )
       return;
@@ -435,7 +436,7 @@ export function ProfileEditForm() {
       router.push("/");
     } catch (err: any) {
       console.error("Account deletion error:", err);
-      setDeleteError(err?.message || "Failed to delete account.");
+      setDeleteError(err?.message || t.dashboard.profileEdit.errDelete);
     }
   }
 
@@ -463,7 +464,7 @@ export function ProfileEditForm() {
               {pf.title}
             </h2>
             <p className="mt-0.5 text-xs sm:text-sm text-ink-soft">
-              Manage your personal credentials, social profiles, location, and verification details.
+              {t.dashboard.profileEdit.intro}
             </p>
           </div>
 
@@ -498,12 +499,12 @@ export function ProfileEditForm() {
                 <span>{tab.label}</span>
                 {isEditing ? (
                   <span className="rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] font-bold text-accent-ink uppercase">
-                    Edit
+                    {t.dashboard.profileEdit.badgeEdit}
                   </span>
                 ) : null}
                 {hasSuccess ? (
                   <span className="rounded-full bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 text-[10px] font-bold">
-                    Saved
+                    {t.dashboard.profileEdit.badgeSaved}
                   </span>
                 ) : null}
               </button>
@@ -516,7 +517,7 @@ export function ProfileEditForm() {
       {activeTab === "account" && (
         <TabCard
           title={pf.accountInfo.title}
-          subtitle="Manage your public avatar, banner photo, login email and security credentials."
+          subtitle={t.dashboard.profileEdit.accountSubtitle}
           isEditing={editingTab === "account"}
           isSaving={Boolean(tabSaving.account)}
           hasSuccess={Boolean(tabSuccess.account)}
@@ -564,7 +565,7 @@ export function ProfileEditForm() {
 
               <FieldSlot
                 label={pf.accountInfo.passwordLabel}
-                hint="Minimum 6 characters"
+                hint={t.dashboard.profileEdit.passwordHint}
                 error={errors.password}
                 editing={editingTab === "account"}
                 displayValue={form.password ? "••••••••" : dash}
@@ -574,14 +575,14 @@ export function ProfileEditForm() {
                     type={showPassword ? "text" : "password"}
                     value={form.password}
                     onChange={(e) => set("password", e.target.value)}
-                    placeholder="Enter new password to change"
+                    placeholder={t.dashboard.profileEdit.passwordPlaceholder}
                     className={`${fieldInputClass} pr-11`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink transition-colors p-1 focus:outline-none"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? t.dashboard.profileEdit.hidePassword : t.dashboard.profileEdit.showPassword}
                   >
                     {showPassword ? (
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -605,7 +606,7 @@ export function ProfileEditForm() {
       {activeTab === "social" && (
         <TabCard
           title={pf.socialIds.title}
-          subtitle="Link your Konami in-game ID, social profiles, and gaming device details."
+          subtitle={t.dashboard.profileEdit.socialSubtitle}
           isEditing={editingTab === "social"}
           isSaving={Boolean(tabSaving.social)}
           hasSuccess={Boolean(tabSuccess.social)}
@@ -722,7 +723,7 @@ export function ProfileEditForm() {
       {activeTab === "personal" && (
         <TabCard
           title={pf.contactPersonal.title}
-          subtitle="Your contact numbers, date of birth, blood group, and geographical address details."
+          subtitle={t.dashboard.profileEdit.personalSubtitle}
           isEditing={editingTab === "personal"}
           isSaving={Boolean(tabSaving.personal)}
           hasSuccess={Boolean(tabSuccess.personal)}
@@ -897,7 +898,7 @@ export function ProfileEditForm() {
       {activeTab === "work_education" && (
         <TabCard
           title={pf.workEducation.title}
-          subtitle="Provide your employment background and educational degrees for tournament qualifications."
+          subtitle={t.dashboard.profileEdit.workSubtitle}
           isEditing={editingTab === "work_education"}
           isSaving={Boolean(tabSaving.work_education)}
           hasSuccess={Boolean(tabSuccess.work_education)}
@@ -1051,7 +1052,7 @@ export function ProfileEditForm() {
         <div className="space-y-6">
           <TabCard
             title={pf.documentVerification.title}
-            subtitle="Verify your identity with official identification documents to unlock higher competition tiers."
+            subtitle={t.dashboard.profileEdit.verificationSubtitle}
             isEditing={editingTab === "verification"}
             isSaving={Boolean(tabSaving.verification)}
             hasSuccess={Boolean(tabSuccess.verification)}
@@ -1127,9 +1128,9 @@ export function ProfileEditForm() {
           {/* Danger Zone */}
           {hasRealAccount && editingTab !== "verification" ? (
             <div className="rounded-2xl border border-danger-ink/30 bg-surface/60 p-6">
-              <h3 className="font-display text-lg font-bold text-ink">Danger Zone</h3>
+              <h3 className="font-display text-lg font-bold text-ink">{t.dashboard.profileEdit.dangerZone}</h3>
               <p className="mt-1 text-xs text-ink-soft">
-                Deleting your account permanently removes your profile, matches, and uploaded documents.
+                {t.dashboard.profileEdit.dangerBody}
               </p>
               {deleteError ? (
                 <div className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">
@@ -1141,7 +1142,7 @@ export function ProfileEditForm() {
                 onClick={handleDeleteAccount}
                 className="mt-4 rounded-full border border-danger-ink/40 bg-danger/10 px-5 py-2.5 text-xs font-semibold text-danger-ink transition-colors hover:bg-danger hover:text-white"
               >
-                Delete Account
+                {t.dashboard.profileEdit.deleteAccount}
               </button>
             </div>
           ) : null}
@@ -1184,6 +1185,7 @@ function TabCard({
   editLabel: string;
   children: ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="rounded-2xl border border-surface-line bg-surface/70 p-5 sm:p-7 shadow-sm space-y-6">
       {/* Section Card Header with Action Buttons */}
@@ -1193,7 +1195,7 @@ function TabCard({
             <h3 className="font-display text-xl font-bold text-ink">{title}</h3>
             {isEditing ? (
               <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-accent-ink">
-                Editing
+                {t.dashboard.profileEdit.editing}
               </span>
             ) : null}
           </div>
@@ -1225,7 +1227,7 @@ function TabCard({
       {isEditing ? (
         <div className="flex flex-col-reverse gap-3 pt-4 border-t border-surface-line/70 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-ink-faint">
-            Save or cancel changes in this section before switching tabs.
+            {t.dashboard.profileEdit.saveOrCancel}
           </p>
           <div className="flex items-center gap-2.5 self-end sm:self-auto">
             <button

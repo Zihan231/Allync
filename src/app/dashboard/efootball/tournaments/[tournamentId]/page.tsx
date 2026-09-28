@@ -4,6 +4,7 @@ import { Suspense, use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format, formatNodes } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockPeople } from "@/lib/mock/communityStore";
 import {
@@ -118,7 +119,9 @@ export function TournamentDetailView({
   backHref: string;
   context: "community" | "my-tournaments";
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const td = t.dashboard.tournamentDetail;
+  const dateLocale = locale === "bn" ? "bn-BD" : "en-US";
   const { user, isLoading: isSessionLoading } = useSession();
   const router = useRouter();
 
@@ -219,7 +222,7 @@ export function TournamentDetailView({
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-3">
         <div className="h-10 w-10 animate-spin rounded-full border-3 border-accent border-t-transparent shadow-[0_0_20px_rgba(217,165,68,0.4)]" />
-        <span className="font-display text-xs font-semibold tracking-wider text-accent-ink uppercase">Loading Tournament Arena...</span>
+        <span className="font-display text-xs font-semibold tracking-wider text-accent-ink uppercase">{td.loadingArena}</span>
       </div>
     );
   }
@@ -228,8 +231,8 @@ export function TournamentDetailView({
     return (
       <EmptyState
         icon={TrophyIcon}
-        title="Tournament Not Found"
-        body="This tournament may have been removed or does not exist."
+        title={td.notFoundTitle}
+        body={td.notFoundBody}
       />
     );
   }
@@ -322,18 +325,18 @@ export function TournamentDetailView({
 
   // Date labels
   const startsDate = new Date(tournament.startAt);
-  const startsDateLabel = startsDate.toLocaleDateString("en-US", {
+  const startsDateLabel = startsDate.toLocaleDateString(dateLocale, {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
-  const startsTimeLabel = startsDate.toLocaleTimeString("en-US", {
+  const startsTimeLabel = startsDate.toLocaleTimeString(dateLocale, {
     hour: "2-digit",
     minute: "2-digit",
   });
 
   const deadlineDate = new Date(tournament.teamSubmissionDeadline);
-  const deadlineTimeLabel = deadlineDate.toLocaleTimeString("en-US", {
+  const deadlineTimeLabel = deadlineDate.toLocaleTimeString(dateLocale, {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -344,9 +347,9 @@ export function TournamentDetailView({
   const relativeStartLabel =
     msUntilStart > 0
       ? daysUntilStart === 1
-        ? "Tomorrow"
-        : `In ${daysUntilStart} days`
-      : "Started";
+        ? td.tomorrow
+        : format(td.inDays, { days: daysUntilStart })
+      : td.started;
 
   // Capacity calculations
   const participantsCount = tournament.participants?.length || 0;
@@ -361,13 +364,13 @@ export function TournamentDetailView({
       await joinMutation.mutateAsync(isCvC ? { clubId: user?.club?.id } : {});
       setActionSuccess(
         isCvC
-          ? `${user?.club?.name} has successfully joined the tournament!`
-          : "You have successfully joined the tournament!",
+          ? format(td.toastClubJoined, { club: user?.club?.name ?? "" })
+          : td.toastJoined,
       );
       refetch();
     } catch (err: any) {
       setActionError(
-        err?.response?.data?.message || err?.message || "Failed to join tournament.",
+        err?.response?.data?.message || err?.message || td.errJoin,
       );
     }
   }
@@ -384,7 +387,7 @@ export function TournamentDetailView({
     if (submissionType === "preset") {
       const selectedTeam = clubTeams.find((t) => t.id === selectedTeamId);
       if (!selectedTeam) {
-        setActionError("Please select a valid club preset team squad.");
+        setActionError(td.errSelectPreset);
         return;
       }
       const starters = selectedTeam.members.filter((m) => m.lineupStatus === "Starter");
@@ -392,13 +395,21 @@ export function TournamentDetailView({
 
       if (starters.length !== tournament.startersCount) {
         setActionError(
-          `Preset team "${selectedTeam.name}" has ${starters.length} starters, but this tournament strictly requires exactly ${tournament.startersCount} starters.`,
+          format(td.errPresetStarters, {
+            team: selectedTeam.name,
+            count: starters.length,
+            required: tournament.startersCount,
+          }),
         );
         return;
       }
       if (subs.length !== tournament.subsCount) {
         setActionError(
-          `Preset team "${selectedTeam.name}" has ${subs.length} substitutes, but this tournament strictly requires exactly ${tournament.subsCount} substitutes.`,
+          format(td.errPresetSubs, {
+            team: selectedTeam.name,
+            count: subs.length,
+            required: tournament.subsCount,
+          }),
         );
         return;
       }
@@ -421,13 +432,13 @@ export function TournamentDetailView({
       // Custom Lineup
       if (customStarters.length !== tournament.startersCount) {
         setActionError(
-          `Please select exactly ${tournament.startersCount} starters (currently ${customStarters.length}).`,
+          format(td.errCustomStarters, { required: tournament.startersCount, count: customStarters.length }),
         );
         return;
       }
       if (customSubs.length !== tournament.subsCount) {
         setActionError(
-          `Please select exactly ${tournament.subsCount} substitutes (currently ${customSubs.length}).`,
+          format(td.errCustomSubs, { required: tournament.subsCount, count: customSubs.length }),
         );
         return;
       }
@@ -443,11 +454,11 @@ export function TournamentDetailView({
           substitutes: subsPayload,
         },
       });
-      setActionSuccess("Lineup successfully locked! Official squad is confirmed.");
+      setActionSuccess(td.toastLineupLocked);
       refetch();
     } catch (err: any) {
       setActionError(
-        err?.response?.data?.message || err?.message || "Failed to submit lineup.",
+        err?.response?.data?.message || err?.message || td.errLineup,
       );
     }
   }
@@ -458,11 +469,11 @@ export function TournamentDetailView({
     setActionSuccess("");
     try {
       await generateBracketMutation.mutateAsync();
-      setActionSuccess("Tournament single-elimination bracket generated successfully!");
+      setActionSuccess(td.toastBracketGenerated);
       refetch();
     } catch (err: any) {
       setActionError(
-        err?.response?.data?.message || err?.message || "Failed to generate bracket.",
+        err?.response?.data?.message || err?.message || td.errBracket,
       );
     }
   }
@@ -487,7 +498,7 @@ export function TournamentDetailView({
             className="group inline-flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface/80 px-4 py-1.5 text-xs font-semibold text-ink-soft transition-all hover:border-accent hover:text-accent-ink hover:shadow-[0_0_12px_rgba(217,165,68,0.2)] cursor-pointer"
           >
             <span className="transition-transform group-hover:-translate-x-1">&larr;</span>
-            <span>Back</span>
+            <span>{td.back}</span>
           </button>
 
           {/* Status Indicator */}
@@ -512,12 +523,12 @@ export function TournamentDetailView({
                 }`}
               >
                 {tournament.status === "ongoing"
-                  ? "Live Tournament"
+                  ? td.statusLive
                   : tournament.status === "open"
-                    ? "Registration Open"
+                    ? td.statusOpen
                     : tournament.status === "registration_closed"
-                      ? "Registration Closed"
-                      : "Completed"}
+                      ? td.statusClosed
+                      : td.statusCompleted}
               </span>
             </div>
           </div>
@@ -538,32 +549,32 @@ export function TournamentDetailView({
                 <CrosshairIcon className="h-3.5 w-3.5 text-blue-400" />
                 {isCvC
                   ? tournament.preset === "preset_11v11"
-                    ? "CvC · 11 v 11 Roster"
+                    ? td.badgeCvc11
                     : tournament.preset === "preset_8v8"
-                      ? "CvC · 8 v 8 Roster"
-                      : `CvC · ${tournament.startersCount}v${tournament.startersCount}`
-                  : "PvP · 1 v 1"}
+                      ? td.badgeCvc8
+                      : format(td.badgeCvcCustom, { count: tournament.startersCount })
+                  : td.badgePvp}
               </span>
 
               {tournament.prizePoolBdt && tournament.prizePoolBdt > 0 ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/50 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-3.5 py-1 font-mono text-[11px] font-extrabold text-amber-300 shadow-[0_0_15px_rgba(217,165,68,0.25)]">
                   <TrophyIcon className="h-3.5 w-3.5 text-amber-400" />
-                  ৳{tournament.prizePoolBdt.toLocaleString()} Prize Pool
+                  {format(td.badgePrizePool, { amount: tournament.prizePoolBdt.toLocaleString() })}
                 </span>
               ) : (
                 <span className="inline-flex items-center rounded-full border border-surface-line bg-surface-raised px-3 py-1 font-mono text-[11px] text-ink-faint">
-                  Friendly Match
+                  {td.badgeFriendly}
                 </span>
               )}
 
               {tournament.isPaid && tournament.entryFeeBdt && tournament.entryFeeBdt > 0 ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/15 px-3 py-1 font-mono text-[11px] font-bold text-warning-ink">
                   <WalletIcon className="h-3 w-3 text-warning-ink" />
-                  ৳{tournament.entryFeeBdt.toLocaleString()} Entry Fee
+                  {format(td.badgeEntryFee, { amount: tournament.entryFeeBdt.toLocaleString() })}
                 </span>
               ) : (
                 <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-3 py-1 font-mono text-[11px] font-bold text-emerald-400">
-                  Free Entry
+                  {td.badgeFreeEntry}
                 </span>
               )}
 
@@ -585,28 +596,28 @@ export function TournamentDetailView({
                       className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40 cursor-pointer"
                     >
                       <FlameIcon className="h-4 w-4" />
-                      {joinMutation.isPending ? "Joining..." : `Register ${user?.club?.name}`}
+                      {joinMutation.isPending ? td.joining : format(td.registerClub, { club: user?.club?.name ?? "" })}
                     </button>
                   ) : user?.club ? (
                     <div className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300">
                       <UsersIcon className="h-3.5 w-3.5 text-amber-400" />
-                      <span>CvC: Club President registers {user?.club?.name}</span>
+                      <span>{format(td.presidentRegisters, { club: user?.club?.name ?? "" })}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface-raised px-4 py-2 text-xs font-medium text-ink-soft">
                       <UsersIcon className="h-3.5 w-3.5 text-ink-muted" />
-                      <span>Join a club to participate</span>
+                      <span>{td.joinClubToParticipate}</span>
                     </div>
                   )
                 ) : (
                   !playerBelongsToCommunity ? (
                     <div className="flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-300">
-                      <span>Must be a community member</span>
+                      <span>{td.mustBeMember}</span>
                       <Link
                         href={`/dashboard/efootball/community/${tournament.communityId}`}
                         className="underline text-accent-ink hover:text-white"
                       >
-                        Join Community
+                        {td.joinCommunity}
                       </Link>
                     </div>
                   ) : (
@@ -616,7 +627,7 @@ export function TournamentDetailView({
                       className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-7 py-3.5 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40 cursor-pointer"
                     >
                       <FlameIcon className="h-4 w-4" />
-                      {joinMutation.isPending ? "Joining..." : "Participate (Join Tournament)"}
+                      {joinMutation.isPending ? td.joining : td.participate}
                     </button>
                   )
                 )}
@@ -629,20 +640,20 @@ export function TournamentDetailView({
                   <div className="flex flex-wrap items-center gap-2.5">
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-xs font-bold text-emerald-300">
                       <CheckIcon className="h-3.5 w-3.5 text-emerald-400" />
-                      {user?.club?.name || "Club"} Enrolled
+                      {format(td.clubEnrolled, { club: user?.club?.name || td.clubFallback })}
                     </span>
                     <button
                       onClick={() => setActiveTab("lineup")}
                       className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-5 py-2.5 font-display text-xs font-bold text-accent-ink transition-all hover:bg-accent hover:text-bg hover:shadow-[0_0_20px_rgba(217,165,68,0.3)] cursor-pointer"
                     >
                       <ShieldIcon className="h-4 w-4" />
-                      {myParticipation?.lineup ? "Manage Official Lineup" : "Submit Lineup"}
+                      {myParticipation?.lineup ? td.manageLineup : td.submitLineup}
                     </button>
                   </div>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-5 py-2.5 text-xs font-bold text-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.25)]">
                     <CheckIcon className="h-4 w-4 text-emerald-400" />
-                    Enrolled as Player
+                    {td.enrolledAsPlayer}
                   </span>
                 )}
               </>
@@ -678,17 +689,21 @@ export function TournamentDetailView({
                 </div>
                 <div>
                   <h3 className="font-display text-base font-bold text-white">
-                    Team Lineup 2-Hour Strict Cutoff
+                    {td.cutoffTitle}
                   </h3>
                   <p className="text-xs text-accent-ink font-medium">
-                    Strict deadline: {deadlineTimeLabel} · Kick-off: {startsTimeLabel} ({startsDateLabel})
+                    {format(td.cutoffTimes, {
+                      deadline: deadlineTimeLabel,
+                      time: startsTimeLabel,
+                      date: startsDateLabel,
+                    })}
                   </p>
                 </div>
               </div>
 
               <p className="max-w-xl text-xs text-ink-soft leading-relaxed">
-                Lineups must be submitted by the club's President, General Secretary, or Manager.
-                At exactly <strong>2 hours prior to kickoff</strong>, submissions freeze automatically and single-elimination bracket fixtures are locked.
+                {td.cutoffBodyBefore} <strong>{td.cutoffBodyStrong}</strong>
+                {td.cutoffBodyAfter}
               </p>
             </div>
 
@@ -701,7 +716,7 @@ export function TournamentDetailView({
                       <div className="font-mono text-2xl sm:text-3xl font-black text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.5)]">
                         {String(countdown.days).padStart(2, "0")}
                       </div>
-                      <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">Days</div>
+                      <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">{td.days}</div>
                     </div>
                     <span className="font-mono text-2xl font-black text-accent/50">:</span>
                   </>
@@ -710,27 +725,27 @@ export function TournamentDetailView({
                   <div className="font-mono text-2xl sm:text-3xl font-black text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.5)]">
                     {String(countdown.hours).padStart(2, "0")}
                   </div>
-                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">Hours</div>
+                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">{td.hours}</div>
                 </div>
                 <span className="font-mono text-2xl font-black text-accent/50">:</span>
                 <div className="text-center min-w-[52px]">
                   <div className="font-mono text-2xl sm:text-3xl font-black text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.5)]">
                     {String(countdown.minutes).padStart(2, "0")}
                   </div>
-                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">Mins</div>
+                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">{td.mins}</div>
                 </div>
                 <span className="font-mono text-2xl font-black text-accent/50">:</span>
                 <div className="text-center min-w-[52px]">
                   <div className="font-mono text-2xl sm:text-3xl font-black text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.5)]">
                     {String(countdown.seconds).padStart(2, "0")}
                   </div>
-                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">Secs</div>
+                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">{td.secs}</div>
                 </div>
               </div>
             ) : (
               <div className="rounded-2xl border border-rose-500/40 bg-rose-500/15 px-6 py-3.5 text-center shadow-[0_0_20px_rgba(244,63,94,0.2)]">
-                <div className="font-display text-sm font-bold text-rose-300">Cutoff Window Closed</div>
-                <div className="text-xs text-rose-300/80">Lineups are frozen for bracket fixtures</div>
+                <div className="font-display text-sm font-bold text-rose-300">{td.cutoffClosedTitle}</div>
+                <div className="text-xs text-rose-300/80">{td.cutoffClosedBody}</div>
               </div>
             )}
           </div>
@@ -743,7 +758,7 @@ export function TournamentDetailView({
         <div className="group relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 via-surface/80 to-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/50 hover:shadow-[0_10px_30px_-10px_rgba(59,130,246,0.3)]">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-blue-300">Format & Preset</span>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-blue-300">{td.formatPreset}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.3)]">
               {isCvC ? <UsersIcon className="h-4 w-4" /> : <CrosshairIcon className="h-4 w-4" />}
             </div>
@@ -751,16 +766,16 @@ export function TournamentDetailView({
           <div className="mt-3 font-display text-lg font-black text-white">
             {isCvC
               ? tournament.preset === "preset_11v11"
-                ? "11 v 11 Squad"
+                ? td.squad11
                 : tournament.preset === "preset_8v8"
-                  ? "8 v 8 Squad"
-                  : "Custom Squad"
-              : "1 v 1 Match"}
+                  ? td.squad8
+                  : td.squadCustom
+              : td.match1v1}
           </div>
           <div className="mt-1 text-xs text-blue-200/70">
             {isCvC
-              ? `${tournament.startersCount} Starters · ${tournament.subsCount} Substitutes`
-              : "Single player knockout"}
+              ? format(td.startersSubs, { starters: tournament.startersCount, subs: tournament.subsCount })
+              : td.singleKnockout}
           </div>
         </div>
 
@@ -768,14 +783,14 @@ export function TournamentDetailView({
         <div className="group relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-surface/80 to-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-purple-400/50 hover:shadow-[0_10px_30px_-10px_rgba(168,85,247,0.3)]">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-purple-400 to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-purple-300">Registered Teams</span>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-purple-300">{td.registeredTeams}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/20 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.3)]">
               <UsersIcon className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="font-display text-lg font-black text-white">{participantsCount}</span>
-            <span className="font-mono text-xs text-ink-faint">/ {tournament.maxParticipants} max</span>
+            <span className="font-mono text-xs text-ink-faint">{format(td.maxSuffix, { max: tournament.maxParticipants })}</span>
           </div>
           {/* Capacity Progress bar */}
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-line">
@@ -790,7 +805,7 @@ export function TournamentDetailView({
         <div className="group relative overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/15 via-surface/80 to-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-amber-400/60 hover:shadow-[0_10px_30px_-10px_rgba(217,165,68,0.3)]">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-amber-300">Prize & Fees</span>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-amber-300">{td.prizeFees}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/20 text-amber-300 shadow-[0_0_12px_rgba(217,165,68,0.3)]">
               <TrophyIcon className="h-4 w-4" />
             </div>
@@ -798,12 +813,12 @@ export function TournamentDetailView({
           <div className="mt-3 font-display text-lg font-black text-accent-ink">
             {tournament.prizePoolBdt && tournament.prizePoolBdt > 0
               ? `৳ ${tournament.prizePoolBdt.toLocaleString()}`
-              : "Friendly Cup"}
+              : td.friendlyCup}
           </div>
           <div className="mt-1 text-xs text-amber-200/70">
             {tournament.isPaid && tournament.entryFeeBdt && tournament.entryFeeBdt > 0
-              ? `৳ ${tournament.entryFeeBdt.toLocaleString()} Entry Fee`
-              : "Free to enter"}
+              ? format(td.entryFeeAmount, { amount: tournament.entryFeeBdt.toLocaleString() })
+              : td.freeToEnter}
           </div>
         </div>
 
@@ -811,7 +826,7 @@ export function TournamentDetailView({
         <div className="group relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-surface/80 to-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400/50 hover:shadow-[0_10px_30px_-10px_rgba(52,211,153,0.3)]">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-emerald-300">Match Schedule</span>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-emerald-300">{td.matchSchedule}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.3)]">
               <CalendarIcon className="h-4 w-4" />
             </div>
@@ -821,7 +836,7 @@ export function TournamentDetailView({
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-200/70">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-            <span>Kickoff {startsTimeLabel} ({relativeStartLabel})</span>
+            <span>{format(td.kickoff, { time: startsTimeLabel, relative: relativeStartLabel })}</span>
           </div>
         </div>
       </div>
@@ -832,12 +847,12 @@ export function TournamentDetailView({
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <h3 className="font-display text-base font-bold text-white">
-                {isCvC ? "Club Participation & Match Squad" : "Player Participation"}
+                {isCvC ? td.clubParticipation : td.playerParticipation}
               </h3>
               {isRegistered && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
                   <CheckIcon className="h-3 w-3" />
-                  Enrolled
+                  {td.enrolled}
                 </span>
               )}
             </div>
@@ -845,16 +860,16 @@ export function TournamentDetailView({
               {isRegistered
                 ? isCvC
                   ? myParticipation?.lineup
-                    ? "Official match lineup is verified and locked for bracket play."
-                    : "Your club is enrolled. Please complete and submit your match lineup before the 2-hour cutoff."
-                  : "You are enrolled in this tournament."
+                    ? td.infoLineupLocked
+                    : td.infoClubEnrolled
+                  : td.infoPlayerEnrolled
                 : isHostingCommunityLeader
-                  ? "Community Presidents and Vice Presidents manage this tournament and cannot participate."
+                  ? td.infoLeadersCannotJoin
                   : isCvC
-                  ? "Only the President or General Secretary can register their club for this community tournament."
+                  ? td.infoCvcWhoRegisters
                   : !playerBelongsToCommunity
-                    ? "You must be a member of this community to join this PvP tournament."
-                    : "Register now to secure your spot in the 1v1 bracket matches."}
+                    ? td.infoPvpMustBeMember
+                    : td.infoPvpRegister}
             </p>
           </div>
 
@@ -865,15 +880,15 @@ export function TournamentDetailView({
                 {isCvC ? (
                   !user?.club ? (
                     <div className="rounded-xl border border-surface-line bg-surface-raised px-4 py-2 text-xs text-ink-faint">
-                      You must belong to a club to join CvC tournaments.
+                      {td.needClub}
                     </div>
                   ) : !canJoinCvC ? (
                     <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300">
-                      Only club President or General Secretary can register {user.club.name}.
+                      {format(td.onlyLeadersRegister, { club: user.club.name })}
                     </div>
                   ) : !clubBelongsToCommunity ? (
                     <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-300">
-                      Your club must be a member of {tournament.community?.name || "this community"}.
+                      {format(td.clubMustBeMember, { community: tournament.community?.name || td.thisCommunity })}
                     </div>
                   ) : (
                     <button
@@ -881,18 +896,18 @@ export function TournamentDetailView({
                       disabled={joinMutation.isPending}
                       className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
                     >
-                      {joinMutation.isPending ? "Registering Club..." : `Register ${user.club.name}`}
+                      {joinMutation.isPending ? td.registeringClub : format(td.registerClub, { club: user.club.name })}
                     </button>
                   )
                 ) : (
                   !playerBelongsToCommunity ? (
                     <div className="flex items-center gap-2.5 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-300">
-                      <span>You must belong to this community to register for PvP.</span>
+                      <span>{td.pvpMustBelong}</span>
                       <Link
                         href={`/dashboard/efootball/community/${tournament.communityId}`}
                         className="rounded-full bg-rose-500/20 px-3 py-1 font-bold text-rose-200 hover:bg-rose-500/30 transition-colors"
                       >
-                        Join Community
+                        {td.joinCommunity}
                       </Link>
                     </div>
                   ) : (
@@ -901,7 +916,7 @@ export function TournamentDetailView({
                       disabled={joinMutation.isPending}
                       className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
                     >
-                      {joinMutation.isPending ? "Joining..." : "Participate (Join Tournament)"}
+                      {joinMutation.isPending ? td.joining : td.participate}
                     </button>
                   )
                 )}
@@ -914,7 +929,10 @@ export function TournamentDetailView({
                 {myParticipation?.lineup ? (
                   <div className="flex items-center gap-2 rounded-full border border-emerald-500/50 bg-emerald-500/15 px-4 py-2 text-xs font-bold text-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.2)]">
                     <CheckIcon className="h-4 w-4 text-emerald-400" />
-                    Lineup Ready ({myParticipation.lineup.starters.length} Starters, {myParticipation.lineup.substitutes.length} Subs)
+                    {format(td.lineupReady, {
+                      starters: myParticipation.lineup.starters.length,
+                      subs: myParticipation.lineup.substitutes.length,
+                    })}
                   </div>
                 ) : (
                   <button
@@ -922,7 +940,7 @@ export function TournamentDetailView({
                     disabled={!isSubmissionOpen || !canSubmitLineup}
                     className="rounded-full bg-gradient-to-r from-amber-500 to-accent px-6 py-2.5 font-display text-xs font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.3)] transition-all hover:scale-105 disabled:opacity-40"
                   >
-                    Build & Submit Lineup
+                    {td.buildLineup}
                   </button>
                 )}
               </>
@@ -940,10 +958,10 @@ export function TournamentDetailView({
                 className="rounded-full border border-purple-500/40 bg-purple-500/15 px-5 py-2.5 font-display text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all hover:bg-purple-500 hover:text-white disabled:opacity-40"
               >
                 {generateBracketMutation.isPending
-                  ? "Generating Bracket..."
+                  ? td.generatingBracket
                   : tournament.bracket
-                    ? "Re-generate Bracket Draw"
-                    : "Generate Auto Bracket"}
+                    ? td.regenerateBracket
+                    : td.generateBracket}
               </button>
             )}
           </div>
@@ -961,7 +979,7 @@ export function TournamentDetailView({
           }`}
         >
           <BracketIcon className="h-4 w-4" />
-          <span>Tournament Bracket</span>
+          <span>{td.tabBracket}</span>
         </button>
 
         <button
@@ -973,7 +991,7 @@ export function TournamentDetailView({
           }`}
         >
           <UsersIcon className="h-4 w-4" />
-          <span>Participants</span>
+          <span>{td.tabParticipants}</span>
           <span className="rounded-full bg-surface-line px-2 py-0.5 text-xs text-ink-faint">
             {tournament.participants?.length || 0}
           </span>
@@ -989,7 +1007,7 @@ export function TournamentDetailView({
             }`}
           >
             <ShieldIcon className="h-4 w-4" />
-            <span>Match Lineup</span>
+            <span>{td.tabLineup}</span>
             {myParticipation?.lineup && (
               <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
             )}
@@ -1011,7 +1029,7 @@ export function TournamentDetailView({
                         {round.roundName}
                       </span>
                       <span className="rounded-full bg-surface-line px-2 py-0.5 font-mono text-[10px] text-ink-faint">
-                        {round.matches.length} {round.matches.length === 1 ? "Match" : "Matches"}
+                        {round.matches.length} {round.matches.length === 1 ? td.match : td.matches}
                       </span>
                     </div>
 
@@ -1037,7 +1055,7 @@ export function TournamentDetailView({
                                     : "text-ink-faint"
                                 }`}
                               >
-                                {m.participantA?.name || "TBD (Bye)"}
+                                {m.participantA?.name || td.tbdBye}
                               </span>
                             </div>
                             {m.scoreA !== null ? (
@@ -1064,7 +1082,7 @@ export function TournamentDetailView({
                                     : "text-ink-faint"
                                 }`}
                               >
-                                {m.participantB?.name || "TBD (Bye)"}
+                                {m.participantB?.name || td.tbdBye}
                               </span>
                             </div>
                             {m.scoreB !== null ? (
@@ -1085,11 +1103,11 @@ export function TournamentDetailView({
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-accent-ink shadow-[0_0_20px_rgba(217,165,68,0.2)]">
                 <BracketIcon className="h-7 w-7" />
               </div>
-              <h3 className="mt-4 font-display text-base font-bold text-white">Bracket Draw Not Yet Generated</h3>
+              <h3 className="mt-4 font-display text-base font-bold text-white">{td.bracketEmptyTitle}</h3>
               <p className="mx-auto mt-1.5 max-w-md text-xs text-ink-soft leading-relaxed">
                 {isSubmissionOpen
-                  ? "Knockout bracket matches will be generated automatically once team lineup submissions close (2 hours before kick-off)."
-                  : "Lineup submissions have closed. The tournament organizers can now generate the official single-elimination bracket."}
+                  ? td.bracketEmptyOpen
+                  : td.bracketEmptyClosed}
               </p>
             </div>
           )}
@@ -1102,7 +1120,7 @@ export function TournamentDetailView({
           {tournament.participants && tournament.participants.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {tournament.participants.map((p) => {
-                const name = isCvC ? p.club?.name || "Club" : p.user?.name || "Player";
+                const name = isCvC ? p.club?.name || td.clubFallback : p.user?.name || td.playerFallback;
                 const hasLineup = Boolean(p.lineup);
 
                 return (
@@ -1120,7 +1138,7 @@ export function TournamentDetailView({
                             {name}
                           </div>
                           <div className="mt-0.5 font-mono text-[11px] text-ink-faint">
-                            Joined {new Date(p.joinedAt).toLocaleDateString()}
+                            {format(td.joinedOn, { date: new Date(p.joinedAt).toLocaleDateString(dateLocale) })}
                           </div>
                         </div>
                       </div>
@@ -1133,7 +1151,7 @@ export function TournamentDetailView({
                               : "bg-surface-line border border-surface-line-strong text-ink-faint"
                           }`}
                         >
-                          {hasLineup ? "Lineup Ready" : "Awaiting Lineup"}
+                          {hasLineup ? td.lineupReadyShort : td.awaitingLineup}
                         </span>
                       )}
                     </div>
@@ -1144,8 +1162,8 @@ export function TournamentDetailView({
           ) : (
             <EmptyState
               icon={UsersIcon}
-              title="No Entrants Yet"
-              body="Be the first to register and claim your spot in this tournament!"
+              title={td.noEntrantsTitle}
+              body={td.noEntrantsBody}
             />
           )}
         </div>
@@ -1157,14 +1175,22 @@ export function TournamentDetailView({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-surface-line pb-6">
             <div>
               <h3 className="font-display text-lg font-black text-white">
-                Official Match Lineup Builder
+                {td.builderTitle}
               </h3>
               <p className="mt-1 text-xs text-ink-soft">
-                Required squad size:{" "}
-                <span className="font-bold text-emerald-400">{tournament.startersCount} Starters</span>{" "}
-                and{" "}
-                <span className="font-bold text-blue-400">{tournament.subsCount} Substitutes</span>{" "}
-                ({tournament.startersCount + tournament.subsCount} total roster).
+                {formatNodes(td.requiredSquad, {
+                  starters: (
+                    <span className="font-bold text-emerald-400">
+                      {format(td.startersCount, { count: tournament.startersCount })}
+                    </span>
+                  ),
+                  subs: (
+                    <span className="font-bold text-blue-400">
+                      {format(td.substitutesCount, { count: tournament.subsCount })}
+                    </span>
+                  ),
+                  total: tournament.startersCount + tournament.subsCount,
+                })}
               </p>
             </div>
 
@@ -1180,7 +1206,7 @@ export function TournamentDetailView({
                       : "text-ink-soft hover:text-white"
                   }`}
                 >
-                  Saved Club Squad (Team A/B)
+                  {td.savedSquad}
                 </button>
                 <button
                   type="button"
@@ -1191,7 +1217,7 @@ export function TournamentDetailView({
                       : "text-ink-soft hover:text-white"
                   }`}
                 >
-                  Custom Roster
+                  {td.customRoster}
                 </button>
               </div>
             )}
@@ -1199,12 +1225,11 @@ export function TournamentDetailView({
 
           {!isSubmissionOpen ? (
             <div className="mt-8 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-6 text-center text-xs font-semibold text-rose-300">
-              Lineup submission window is closed (2 hours before kick-off cutoff reached).
-              Existing submitted squads are locked for tournament matches.
+              {td.windowClosed}
             </div>
           ) : !canSubmitLineup ? (
             <div className="mt-8 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 text-center text-xs font-semibold text-amber-300">
-              Only the club President, General Secretary, or Manager has authority to submit match lineups.
+              {td.noAuthority}
             </div>
           ) : (
             <div className="mt-8 space-y-8">
@@ -1212,7 +1237,7 @@ export function TournamentDetailView({
               {submissionType === "preset" ? (
                 <div className="space-y-4">
                   <span className="font-mono text-xs font-bold uppercase tracking-wider text-accent-ink">
-                    Select One of Your Club's Saved Squads
+                    {td.selectSavedSquad}
                   </span>
 
                   {clubTeams.length > 0 ? (
@@ -1249,17 +1274,17 @@ export function TournamentDetailView({
 
                             <div className="mt-3 flex items-center gap-2 font-mono text-xs text-ink-soft">
                               <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-emerald-300 font-bold">
-                                {starters.length} Starters
+                                {format(td.startersCount, { count: starters.length })}
                               </span>
                               <span>·</span>
                               <span className="rounded-full bg-blue-500/15 px-2 py-0.5 text-blue-300 font-bold">
-                                {subs.length} Subs
+                                {format(td.subsCount, { count: subs.length })}
                               </span>
                             </div>
 
                             {!isValid && (
                               <div className="mt-3 text-[11px] font-semibold text-amber-300">
-                                Requires {tournament.startersCount} starters & {tournament.subsCount} subs
+                                {format(td.requires, { starters: tournament.startersCount, subs: tournament.subsCount })}
                               </div>
                             )}
                           </button>
@@ -1268,7 +1293,7 @@ export function TournamentDetailView({
                     </div>
                   ) : (
                     <div className="rounded-2xl border border-surface-line bg-surface/40 p-6 text-xs text-ink-soft">
-                      No saved team squads found for {user?.club?.name}. You can use "Custom Roster" or create a squad in your Club management tab.
+                      {format(td.noSavedSquads, { club: user?.club?.name ?? "" })}
                     </div>
                   )}
                 </div>
@@ -1279,7 +1304,7 @@ export function TournamentDetailView({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-400">
-                        Select Starters ({customStarters.length} / {tournament.startersCount})
+                        {format(td.selectStarters, { count: customStarters.length, required: tournament.startersCount })}
                       </span>
                     </div>
 
@@ -1318,7 +1343,7 @@ export function TournamentDetailView({
                                   : "border-surface-line bg-surface/50 text-ink-soft hover:border-surface-line-strong hover:text-white"
                             }`}
                           >
-                            <span className="truncate">{member.user?.name || "Player"}</span>
+                            <span className="truncate">{member.user?.name || td.playerFallback}</span>
                             <span className="rounded-md bg-black/40 px-2 py-0.5 font-mono text-[10px] text-accent font-bold">
                               {member.gamePosition || "CMF"}
                             </span>
@@ -1332,7 +1357,7 @@ export function TournamentDetailView({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold uppercase tracking-wider text-blue-400">
-                        Select Substitutes ({customSubs.length} / {tournament.subsCount})
+                        {format(td.selectSubs, { count: customSubs.length, required: tournament.subsCount })}
                       </span>
                     </div>
 
@@ -1371,7 +1396,7 @@ export function TournamentDetailView({
                                   : "border-surface-line bg-surface/50 text-ink-soft hover:border-surface-line-strong hover:text-white"
                             }`}
                           >
-                            <span className="truncate">{member.user?.name || "Player"}</span>
+                            <span className="truncate">{member.user?.name || td.playerFallback}</span>
                             <span className="rounded-md bg-black/40 px-2 py-0.5 font-mono text-[10px] text-blue-300 font-bold">
                               {member.gamePosition || "SUB"}
                             </span>
@@ -1391,7 +1416,7 @@ export function TournamentDetailView({
                   disabled={submitLineupMutation.isPending}
                   className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-8 py-3.5 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
                 >
-                  {submitLineupMutation.isPending ? "Locking Lineup..." : "Confirm & Lock Lineup"}
+                  {submitLineupMutation.isPending ? td.lockingLineup : td.confirmLineup}
                 </button>
               </div>
             </div>
@@ -1402,21 +1427,23 @@ export function TournamentDetailView({
             <div className="mt-10 border-t border-surface-line pt-8">
               <div className="flex items-center justify-between">
                 <h4 className="font-display text-base font-bold text-white">
-                  Currently Locked Lineup
+                  {td.lockedLineup}
                 </h4>
                 <span className="font-mono text-xs text-emerald-400 font-bold">
-                  Verified Squad
+                  {td.verifiedSquad}
                 </span>
               </div>
               <p className="mt-0.5 text-xs text-ink-faint">
-                Submitted on {new Date(myParticipation.lineup.submittedAt).toLocaleString()}
+                {format(td.submittedOn, {
+                  date: new Date(myParticipation.lineup.submittedAt).toLocaleString(dateLocale),
+                })}
               </p>
 
               <div className="mt-5 grid gap-6 md:grid-cols-2">
                 {/* Starters Column */}
                 <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
                   <div className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-400 mb-3 flex items-center justify-between">
-                    <span>Starting XI ({myParticipation.lineup.starters.length})</span>
+                    <span>{format(td.startingXI, { count: myParticipation.lineup.starters.length })}</span>
                     <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
                   </div>
                   <div className="grid gap-2">
@@ -1437,7 +1464,7 @@ export function TournamentDetailView({
                 {/* Substitutes Column */}
                 <div className="rounded-2xl border border-blue-500/30 bg-blue-500/5 p-4">
                   <div className="font-mono text-xs font-bold uppercase tracking-wider text-blue-400 mb-3 flex items-center justify-between">
-                    <span>Substitutes Bench ({myParticipation.lineup.substitutes.length})</span>
+                    <span>{format(td.bench, { count: myParticipation.lineup.substitutes.length })}</span>
                     <span className="h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(59,130,246,0.8)]" />
                   </div>
                   <div className="grid gap-2">
