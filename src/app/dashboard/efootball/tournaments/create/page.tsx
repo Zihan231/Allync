@@ -161,9 +161,9 @@ function CreateTournamentForm() {
     ? null
     : startersInput === ""
       ? tc.errStartersEmpty
-      : startersCount < 2 || startersCount > 16
+      : startersCount < 4 || startersCount > 16
         ? tc.errStartersRange
-        : startersCount % 2 !== 0
+        : startersCount % 4 !== 0
           ? tc.errStartersOdd
           : null;
   const subsError = !isCustomRoster
@@ -177,11 +177,11 @@ function CreateTournamentForm() {
     ? null
     : participantsInput === ""
       ? (isCvc ? tc.errCapacityEmptyClubs : tc.errCapacityEmptyPlayers)
-      : maxParticipants < 2
+      : maxParticipants < 4
         ? (isCvc ? tc.errCapacityMinClubs : tc.errCapacityMinPlayers)
         : maxParticipants > 128
           ? (isCvc ? tc.errCapacityMaxClubs : tc.errCapacityMaxPlayers)
-          : maxParticipants % 2 !== 0
+          : maxParticipants % 4 !== 0
             ? (isCvc ? tc.errCapacityOddClubs : tc.errCapacityOddPlayers)
             : null;
 
@@ -550,7 +550,7 @@ function CreateTournamentForm() {
             {/* Bracket Participant Size Presets */}
             <FormSection tone="success" icon={BracketIcon} title={tc.capacityLabel}>
               <div className="flex flex-wrap gap-2">
-                {[8, 16, 32, 64].map((size) => (
+                {[4, 8, 12, 16, 24, 32].map((size) => (
                   <button
                     key={size}
                     type="button"

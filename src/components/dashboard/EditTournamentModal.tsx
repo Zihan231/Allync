@@ -72,11 +72,11 @@ export function EditTournamentModal({
   const capacityError =
     capacity === ""
       ? isCvc ? tc.errCapacityEmptyClubs : tc.errCapacityEmptyPlayers
-      : capacityNumber < 2
+      : capacityNumber < 4
         ? isCvc ? tc.errCapacityMinClubs : tc.errCapacityMinPlayers
         : capacityNumber > 128
           ? isCvc ? tc.errCapacityMaxClubs : tc.errCapacityMaxPlayers
-          : capacityNumber % 2 !== 0
+          : capacityNumber % 4 !== 0
             ? isCvc ? tc.errCapacityOddClubs : tc.errCapacityOddPlayers
             : capacityNumber < enrolled
               ? format(tm.errCapacityBelowEnrolled, { count: enrolled })

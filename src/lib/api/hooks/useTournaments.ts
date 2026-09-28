@@ -6,6 +6,7 @@ import {
   joinTournament,
   submitTournamentLineup,
   generateTournamentBracket,
+  getTournamentStructure,
   updateTournament,
   deleteTournament,
   type BackendTournament,
@@ -15,12 +16,14 @@ import {
   type TournamentParticipant,
   type UpdateTournamentPayload,
   type JoinTournamentPayload,
+  type TournamentStructure,
 } from "../tournaments";
 
 export const tournamentKeys = {
   all: ["tournaments"] as const,
   list: (params?: TournamentQueryParams) => ["tournaments", "list", params] as const,
   detail: (id: string) => ["tournaments", "detail", id] as const,
+  structure: (id: string) => ["tournaments", "structure", id] as const,
 };
 
 /**
@@ -93,11 +96,23 @@ export function useSubmitTournamentLineup(tournamentId: string) {
   });
 }
 
+/** Groups, standings and knockout rounds for a tournament (empty until generated). */
+export function useTournamentStructure(tournamentId: string, enabled = true) {
+  return useQuery<TournamentStructure>({
+    queryKey: tournamentKeys.structure(tournamentId),
+    queryFn: () => getTournamentStructure(tournamentId),
+    enabled: enabled && Boolean(tournamentId),
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: false,
+  });
+}
+
 export function useGenerateTournamentBracket(tournamentId: string) {
   const queryClient = useQueryClient();
-  return useMutation<BackendTournament, Error, void>({
+  return useMutation<TournamentStructure, Error, void>({
     mutationFn: () => generateTournamentBracket(tournamentId),
-    onSuccess: () => {
+    onSuccess: (structure) => {
+      queryClient.setQueryData(tournamentKeys.structure(tournamentId), structure);
       queryClient.invalidateQueries({ queryKey: tournamentKeys.detail(tournamentId) });
       queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
     },

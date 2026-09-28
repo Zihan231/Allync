@@ -122,6 +122,8 @@ export interface BackendTournament {
   createdById?: string;
   creatorId?: string;
   bracket: TournamentBracket | null;
+  /** Set once fixtures are generated. */
+  format?: TournamentFormat | null;
   /** Returned by the list endpoint instead of the full participants array. */
   participantCount?: number;
   createdAt: string;
@@ -242,10 +244,94 @@ export async function submitTournamentLineup(
   return res.data;
 }
 
+export type TournamentFormat = "knockout" | "groups_knockout";
+
+export interface FixtureEntrant {
+  participantId: string;
+  name: string;
+  dpUrl: string | null;
+  color: string | null;
+  initials: string | null;
+}
+
+export interface FixtureGamePlayer {
+  profileId: string | null;
+  userId: string | null;
+  name: string;
+  dpUrl: string | null;
+}
+
+export type FixtureGameStatus = "pending" | "submitted" | "approved" | "rejected";
+export type FixtureStatus = "scheduled" | "in_review" | "completed" | "bye";
+
+export interface FixtureGame {
+  id: string;
+  slot: number;
+  isDecider: boolean;
+  playerA: FixtureGamePlayer;
+  playerB: FixtureGamePlayer;
+  goalsA: number | null;
+  goalsB: number | null;
+  status: FixtureGameStatus;
+}
+
+export interface Fixture {
+  id: string;
+  stage: "group" | "knockout";
+  groupLabel: string | null;
+  round: number;
+  roundName: string;
+  matchNumber: number;
+  status: FixtureStatus;
+  participantA: FixtureEntrant | null;
+  participantB: FixtureEntrant | null;
+  scoreA: number | null;
+  scoreB: number | null;
+  goalsA: number | null;
+  goalsB: number | null;
+  winnerParticipantId: string | null;
+  games: FixtureGame[];
+}
+
+export interface StandingRow {
+  entrantId: string;
+  rank: number;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  scoreFor: number;
+  scoreAgainst: number;
+  scoreDiff: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  points: number;
+  entrant: FixtureEntrant | null;
+  qualifies: boolean;
+}
+
+export interface TournamentStructure {
+  tournamentId: string;
+  format: TournamentFormat | null;
+  isCvC: boolean;
+  groups: Array<{ label: string; standings: StandingRow[]; matches: Fixture[] }>;
+  knockout: {
+    pending: boolean;
+    size: number;
+    rounds: Array<{ round: number; name: string; matches: Fixture[] }>;
+  };
+}
+
+export async function getTournamentStructure(tournamentId: string): Promise<TournamentStructure> {
+  const res = await api.get<TournamentStructure>(`/tournaments/${tournamentId}/structure`);
+  return res.data;
+}
+
+/** Creates the fixtures: knockout for up to 8 entrants, otherwise groups + knockout. */
 export async function generateTournamentBracket(
   tournamentId: string,
-): Promise<BackendTournament> {
-  const res = await api.post<BackendTournament>(
+): Promise<TournamentStructure> {
+  const res = await api.post<TournamentStructure>(
     `/tournaments/${tournamentId}/generate-bracket`,
     {},
   );
