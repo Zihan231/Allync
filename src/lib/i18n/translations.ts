@@ -567,7 +567,7 @@ export const translations = {
         match1v1: "1 v 1 Match",
         startersSubs: "{starters} Starters · {subs} Substitutes",
         singleKnockout: "Single player knockout",
-        registeredTeams: "Registered Teams",
+        registeredTeams: "Registered Clubs",
         maxSuffix: "/ {max} max",
         prizeFees: "Prize & Fees",
         friendlyCup: "Friendly Cup",
