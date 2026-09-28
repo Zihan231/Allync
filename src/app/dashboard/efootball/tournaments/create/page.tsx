@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { getCommunities } from "@/lib/api/communities";
 import { useCreateTournament } from "@/lib/api/hooks/useTournaments";
 import type { BackendCommunity } from "@/lib/api/types";
-import type { TournamentType, TournamentPreset } from "@/lib/api/tournaments";
+import { TOURNAMENT_PRESET_ROSTERS, type TournamentType, type TournamentPreset } from "@/lib/api/tournaments";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EntityGuidelinesPanel } from "@/components/dashboard/EntityGuidelinesPanel";
 import {
@@ -64,6 +65,40 @@ const SECTION_TONES: Record<SectionTone, { card: string; bar: string; icon: stri
   },
 };
 
+// Each roster preset gets its own theme color so the options are easy to tell apart.
+const PRESET_TONES: Record<TournamentPreset, { idle: string; active: string; text: string }> = {
+  "16v16": {
+    idle: "border-danger/30 hover:border-danger/60",
+    active: "border-danger bg-danger-soft ring-1 ring-danger/40",
+    text: "text-danger-ink",
+  },
+  "12v12": {
+    idle: "border-accent/30 hover:border-accent/60",
+    active: "border-accent bg-accent-soft ring-1 ring-accent/40",
+    text: "text-accent-ink",
+  },
+  "8v8": {
+    idle: "border-blue/30 hover:border-blue/60",
+    active: "border-blue bg-blue-soft ring-1 ring-blue/40",
+    text: "text-blue-ink",
+  },
+  "4v4": {
+    idle: "border-success/30 hover:border-success/60",
+    active: "border-success bg-success-soft ring-1 ring-success/40",
+    text: "text-success-ink",
+  },
+  custom: {
+    idle: "border-surface-line-strong hover:border-ink-soft",
+    active: "border-ink-soft bg-surface-line/60 ring-1 ring-ink-soft/40",
+    text: "text-ink",
+  },
+  "11v11": {
+    idle: "border-surface-line hover:border-surface-line-strong",
+    active: "border-ink-soft bg-surface-line/60",
+    text: "text-ink",
+  },
+};
+
 function FormSection({
   tone,
   icon: Icon,
@@ -111,12 +146,12 @@ function CreateTournamentForm() {
   const [name, setName] = useState("");
   const [communityId, setCommunityId] = useState("");
   const [type, setType] = useState<TournamentType>("cvc");
-  const [preset, setPreset] = useState<TournamentPreset>("preset_11v11");
-  const [startersCount, setStartersCount] = useState(11);
-  const [subsCount, setSubsCount] = useState(5);
+  const [preset, setPreset] = useState<TournamentPreset>("8v8");
+  const [startersCount, setStartersCount] = useState(8);
+  const [subsCount, setSubsCount] = useState(4);
   // Raw text of the custom roster boxes, so they can be cleared while typing.
-  const [startersInput, setStartersInput] = useState("11");
-  const [subsInput, setSubsInput] = useState("5");
+  const [startersInput, setStartersInput] = useState("8");
+  const [subsInput, setSubsInput] = useState("4");
   const [maxParticipants, setMaxParticipants] = useState(16);
   const [customParticipants, setCustomParticipants] = useState(false);
   const [participantsInput, setParticipantsInput] = useState("16");
@@ -126,9 +161,11 @@ function CreateTournamentForm() {
     ? null
     : startersInput === ""
       ? tc.errStartersEmpty
-      : startersCount < 1 || startersCount > 15
+      : startersCount < 2 || startersCount > 16
         ? tc.errStartersRange
-        : null;
+        : startersCount % 2 !== 0
+          ? tc.errStartersOdd
+          : null;
   const subsError = !isCustomRoster
     ? null
     : subsInput === ""
@@ -204,16 +241,12 @@ function CreateTournamentForm() {
   // Adjust starters and subs when preset changes
   function handlePresetSelect(selectedPreset: TournamentPreset) {
     setPreset(selectedPreset);
-    if (selectedPreset === "preset_11v11") {
-      setStartersCount(11);
-      setSubsCount(5);
-      setStartersInput("11");
-      setSubsInput("5");
-    } else if (selectedPreset === "preset_8v8") {
-      setStartersCount(8);
-      setSubsCount(4);
-      setStartersInput("8");
-      setSubsInput("4");
+    const roster = TOURNAMENT_PRESET_ROSTERS.find((r) => r.preset === selectedPreset);
+    if (roster) {
+      setStartersCount(roster.startersCount);
+      setSubsCount(roster.subsCount);
+      setStartersInput(String(roster.startersCount));
+      setSubsInput(String(roster.subsCount));
     }
   }
 
@@ -265,14 +298,11 @@ function CreateTournamentForm() {
     }
 
     try {
-      const normalizedPreset = type === "cvc"
-        ? (preset === "preset_11v11" ? "11v11" : preset === "preset_8v8" ? "8v8" : "custom")
-        : "custom";
 
       const tournament = await createMutation.mutateAsync({
         name: name.trim(),
         type,
-        preset: normalizedPreset as any,
+        preset: type === "cvc" ? preset : "custom",
         startersCount: type === "cvc" ? startersCount : 1,
         subsCount: type === "cvc" ? subsCount : 0,
         maxParticipants,
@@ -425,54 +455,47 @@ function CreateTournamentForm() {
                 </button>
               </div>
 
-              {/* CvC Roster Presets (11v11 or 8v8 or Custom): a sub-step of the format choice */}
+              {/* CvC Roster Presets (16v16 / 12v12 / 8v8 / 4v4 or Custom): a sub-step of the format choice */}
               {type === "cvc" && (
                 <div className="mt-5 rounded-xl border border-surface-line bg-bg/50 p-4">
                   <h4 className="mb-3 flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
                     <ShieldIcon className="h-3.5 w-3.5 text-blue" />
                     {tc.rosterPresetLabel}
                   </h4>
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <button
-                      type="button"
-                      onClick={() => handlePresetSelect("preset_11v11")}
-                      className={`rounded-lg border p-3 text-left transition-all ${
-                        preset === "preset_11v11"
-                          ? "border-blue/70 bg-bg-raised text-ink ring-1 ring-blue/40"
-                          : "border-surface-line text-ink-soft hover:border-surface-line-strong"
-                      }`}
-                    >
-                      <div className="font-display text-sm font-bold">{tc.preset11Title}</div>
-                      <div className="mt-1 text-xs text-ink-faint">{tc.preset11Detail}</div>
-                      <div className="mt-1 font-mono text-[11px] text-blue-ink">{tc.preset11Total}</div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handlePresetSelect("preset_8v8")}
-                      className={`rounded-lg border p-3 text-left transition-all ${
-                        preset === "preset_8v8"
-                          ? "border-blue/70 bg-bg-raised text-ink ring-1 ring-blue/40"
-                          : "border-surface-line text-ink-soft hover:border-surface-line-strong"
-                      }`}
-                    >
-                      <div className="font-display text-sm font-bold">{tc.preset8Title}</div>
-                      <div className="mt-1 text-xs text-ink-faint">{tc.preset8Detail}</div>
-                      <div className="mt-1 font-mono text-[11px] text-blue-ink">{tc.preset8Total}</div>
-                    </button>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                    {TOURNAMENT_PRESET_ROSTERS.map((roster) => (
+                      <button
+                        key={roster.preset}
+                        type="button"
+                        onClick={() => handlePresetSelect(roster.preset)}
+                        className={`rounded-lg border p-3 text-left text-ink transition-all ${
+                          preset === roster.preset
+                            ? PRESET_TONES[roster.preset].active
+                            : PRESET_TONES[roster.preset].idle
+                        }`}
+                      >
+                        <div className={`font-display text-sm font-bold ${PRESET_TONES[roster.preset].text}`}>
+                          {format(tc.presetTitle, { count: roster.startersCount })}
+                        </div>
+                        <div className="mt-1 text-xs text-ink-faint">
+                          {format(tc.presetDetail, { starters: roster.startersCount, subs: roster.subsCount })}
+                        </div>
+                        <div className={`mt-1 font-mono text-[11px] ${PRESET_TONES[roster.preset].text}`}>
+                          {format(tc.presetTotal, { total: roster.startersCount + roster.subsCount })}
+                        </div>
+                      </button>
+                    ))}
 
                     <button
                       type="button"
                       onClick={() => setPreset("custom")}
-                      className={`rounded-lg border p-3 text-left transition-all ${
-                        preset === "custom"
-                          ? "border-blue/70 bg-bg-raised text-ink ring-1 ring-blue/40"
-                          : "border-surface-line text-ink-soft hover:border-surface-line-strong"
+                      className={`rounded-lg border p-3 text-left text-ink transition-all ${
+                        preset === "custom" ? PRESET_TONES.custom.active : PRESET_TONES.custom.idle
                       }`}
                     >
                       <div className="font-display text-sm font-bold">{tc.presetCustomTitle}</div>
                       <div className="mt-1 text-xs text-ink-faint">{tc.presetCustomDetail}</div>
-                      <div className="mt-1 font-mono text-[11px] text-blue-ink">{tc.presetCustomTotal}</div>
+                      <div className="mt-1 font-mono text-[11px] text-ink-soft">{tc.presetCustomTotal}</div>
                     </button>
                   </div>
 

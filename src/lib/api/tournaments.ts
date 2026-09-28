@@ -1,7 +1,16 @@
 import { api } from "./axios";
 
 export type TournamentType = "pvp" | "cvc";
-export type TournamentPreset = "preset_11v11" | "preset_8v8" | "custom";
+/** CvC roster presets. "11v11" is legacy (older tournaments only; not offered on create). */
+export type TournamentPreset = "16v16" | "12v12" | "8v8" | "4v4" | "custom" | "11v11";
+
+/** Selectable CvC presets with their fixed roster sizes (mirrors the backend). */
+export const TOURNAMENT_PRESET_ROSTERS = [
+  { preset: "16v16", startersCount: 16, subsCount: 8 },
+  { preset: "12v12", startersCount: 12, subsCount: 6 },
+  { preset: "8v8", startersCount: 8, subsCount: 4 },
+  { preset: "4v4", startersCount: 4, subsCount: 2 },
+] as const satisfies readonly { preset: TournamentPreset; startersCount: number; subsCount: number }[];
 export type TournamentStatus =
   | "open"
   | "registration_open"

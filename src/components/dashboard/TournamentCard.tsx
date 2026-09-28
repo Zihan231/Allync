@@ -27,18 +27,10 @@ export function TournamentCard({
   let formatBadgeText = "PvP · 1 v 1";
   let startersLabel = "1 v 1 Knockout";
   if (isCvC) {
-    const starters = tournament.startersCount || 11;
-    const subs = tournament.subsCount || 5;
-    if (tournament.preset === "preset_11v11" || starters === 11) {
-      formatBadgeText = "CvC · 11 v 11";
-      startersLabel = "11 Starters · 5 Subs";
-    } else if (tournament.preset === "preset_8v8" || starters === 8) {
-      formatBadgeText = "CvC · 8 v 8";
-      startersLabel = "8 Starters · 4 Subs";
-    } else {
-      formatBadgeText = `CvC · ${starters}v${starters}`;
-      startersLabel = `${starters} Starters · ${subs} Subs`;
-    }
+    const starters = tournament.startersCount || 12;
+    const subs = tournament.subsCount ?? 0;
+    formatBadgeText = `CvC · ${starters} v ${starters}`;
+    startersLabel = `${starters} Starters · ${subs} Subs`;
   }
 
   // Host Name

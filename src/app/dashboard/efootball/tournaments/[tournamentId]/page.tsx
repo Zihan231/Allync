@@ -548,11 +548,9 @@ export function TournamentDetailView({
               <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/15 px-3 py-1 font-mono text-[11px] font-bold text-blue-300">
                 <CrosshairIcon className="h-3.5 w-3.5 text-blue-400" />
                 {isCvC
-                  ? tournament.preset === "preset_11v11"
-                    ? td.badgeCvc11
-                    : tournament.preset === "preset_8v8"
-                      ? td.badgeCvc8
-                      : format(td.badgeCvcCustom, { count: tournament.startersCount })
+                  ? tournament.preset === "custom"
+                    ? format(td.badgeCvcCustom, { count: tournament.startersCount })
+                    : format(td.badgeCvcPreset, { count: tournament.startersCount })
                   : td.badgePvp}
               </span>
 
@@ -765,11 +763,9 @@ export function TournamentDetailView({
           </div>
           <div className="mt-3 font-display text-lg font-black text-white">
             {isCvC
-              ? tournament.preset === "preset_11v11"
-                ? td.squad11
-                : tournament.preset === "preset_8v8"
-                  ? td.squad8
-                  : td.squadCustom
+              ? tournament.preset === "custom"
+                ? td.squadCustom
+                : format(td.squadPreset, { count: tournament.startersCount })
               : td.match1v1}
           </div>
           <div className="mt-1 text-xs text-blue-200/70">
