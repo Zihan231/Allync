@@ -16,6 +16,9 @@ import {
 } from "@/lib/api/hooks/useTournaments";
 import { EditTournamentModal } from "@/components/dashboard/EditTournamentModal";
 import { RegisterClubModal } from "@/components/dashboard/RegisterClubModal";
+import { TournamentParticipantCard } from "@/components/dashboard/TournamentParticipantCard";
+import { ParticipantLineupModal } from "@/components/dashboard/ParticipantLineupModal";
+import { Avatar } from "@/components/common/Avatar";
 import { TeamSubmissionForm } from "@/components/dashboard/TeamSubmissionForm";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useConfirm } from "@/lib/useConfirm";
@@ -141,6 +144,7 @@ export function TournamentDetailView({
   // Active tab and builder states
   const [activeTab, setActiveTab] = useUrlTab(TOURNAMENT_DETAIL_TABS, "bracket");
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [viewedParticipantId, setViewedParticipantId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string>("");
   const [actionSuccess, setActionSuccess] = useState<string>("");
 
@@ -175,6 +179,8 @@ export function TournamentDetailView({
       isMounted = false;
     };
   }, [user?.club?.id]);
+
+  const clubMemberById = useMemo(() => new Map(clubMembers.map((m) => [m.id, m])), [clubMembers]);
 
   const currentUserPerson = useMemo(
     () => people.find((p) => p.id === user?.id || p.id === user?.personId),
@@ -256,6 +262,7 @@ export function TournamentDetailView({
   });
 
   const isRegistered = Boolean(myParticipation);
+  const viewedParticipant = tournament.participants?.find((p) => p.id === viewedParticipantId) ?? null;
 
   // Authority to join:
   // For CvC: Must be President or General Secretary of the club
@@ -1049,45 +1056,17 @@ export function TournamentDetailView({
         <div className="mt-8">
           {tournament.participants && tournament.participants.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {tournament.participants.map((p) => {
-                const name = isCvC ? p.club?.name || td.clubFallback : p.user?.name || td.playerFallback;
-                const hasLineup = Boolean(p.lineup);
-
-                return (
-                  <div
-                    key={p.id}
-                    className="group relative overflow-hidden rounded-2xl border border-surface-line bg-gradient-to-b from-surface/80 to-surface-raised/80 p-5 backdrop-blur-sm transition-all duration-300 hover:border-accent/40 hover:shadow-[0_8px_25px_-8px_rgba(217,165,68,0.2)]"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/20 to-surface-line font-display text-sm font-black text-accent-ink shadow-sm">
-                          {name.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="truncate font-display text-sm font-bold text-white group-hover:text-accent-ink transition-colors">
-                            {name}
-                          </div>
-                          <div className="mt-0.5 font-mono text-[11px] text-ink-faint">
-                            {format(td.joinedOn, { date: new Date(p.joinedAt).toLocaleDateString(dateLocale) })}
-                          </div>
-                        </div>
-                      </div>
-
-                      {isCvC && (
-                        <span
-                          className={`rounded-full px-3 py-1 font-mono text-[10px] font-bold ${
-                            hasLineup
-                              ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
-                              : "bg-surface-line border border-surface-line-strong text-ink-faint"
-                          }`}
-                        >
-                          {hasLineup ? td.lineupReadyShort : td.awaitingLineup}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              {tournament.participants.map((p, index) => (
+                <TournamentParticipantCard
+                  key={p.id}
+                  participant={p}
+                  seed={index + 1}
+                  isCvC={isCvC}
+                  isMine={p.id === myParticipation?.id}
+                  dateLocale={dateLocale}
+                  onViewTeam={isCvC ? () => setViewedParticipantId(p.id) : undefined}
+                />
+              ))}
             </div>
           ) : (
             <EmptyState
@@ -1191,7 +1170,15 @@ export function TournamentDetailView({
                         key={idx}
                         className="flex items-center justify-between rounded-xl border border-surface-line bg-surface/80 px-3.5 py-2.5 text-xs"
                       >
-                        <span className="font-semibold text-white">{s.name}</span>
+                        <span className="flex min-w-0 items-center gap-2.5">
+                          <Avatar
+                            dpUrl={clubMemberById.get(s.profileId)?.user?.dpUrl}
+                            name={s.name}
+                            size="sm"
+                            mode="static"
+                          />
+                          <span className="truncate font-semibold text-white">{s.name}</span>
+                        </span>
                         <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
                           {s.gamePosition}
                         </span>
@@ -1212,7 +1199,15 @@ export function TournamentDetailView({
                         key={idx}
                         className="flex items-center justify-between rounded-xl border border-surface-line bg-surface/80 px-3.5 py-2.5 text-xs"
                       >
-                        <span className="font-semibold text-white">{s.name}</span>
+                        <span className="flex min-w-0 items-center gap-2.5">
+                          <Avatar
+                            dpUrl={clubMemberById.get(s.profileId)?.user?.dpUrl}
+                            name={s.name}
+                            size="sm"
+                            mode="static"
+                          />
+                          <span className="truncate font-semibold text-white">{s.name}</span>
+                        </span>
                         <span className="rounded-md bg-blue-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-blue-300">
                           {s.gamePosition}
                         </span>
@@ -1225,6 +1220,15 @@ export function TournamentDetailView({
           )}
         </div>
       )}
+
+      {viewedParticipant ? (
+        <ParticipantLineupModal
+          participant={viewedParticipant}
+          startersCount={tournament.startersCount}
+          dateLocale={dateLocale}
+          onClose={() => setViewedParticipantId(null)}
+        />
+      ) : null}
 
       {showRegisterModal && user?.club ? (
         <RegisterClubModal

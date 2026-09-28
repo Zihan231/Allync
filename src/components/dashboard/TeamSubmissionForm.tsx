@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { CheckIcon, CloseIcon, SearchIcon, ShieldIcon } from "@/components/icons";
+import { Avatar } from "@/components/common/Avatar";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { format } from "@/lib/i18n/translations";
+import { format, roleLabel } from "@/lib/i18n/translations";
 import type { ClubMemberProfile, Team } from "@/lib/api/teams";
 import type { SubmitLineupPayload, TournamentLineupPlayer } from "@/lib/api/tournaments";
 
@@ -52,6 +53,7 @@ export function TeamSubmissionForm({
   const [search, setSearch] = useState("");
 
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
+  const teamNameById = useMemo(() => new Map(teams.map((team) => [team.id, team.name])), [teams]);
   const nameOf = (m?: ClubMemberProfile) => m?.user?.name || ts.playerFallback;
 
   const startersLeft = Math.max(0, startersCount - starterIds.length);
@@ -89,7 +91,13 @@ export function TeamSubmissionForm({
     if (!isComplete || isSubmitting) return;
     const toPlayer = (id: string): TournamentLineupPlayer => {
       const m = memberById.get(id);
-      return { profileId: id, name: nameOf(m), gamePosition: m?.gamePosition ?? undefined };
+      return {
+        profileId: id,
+        name: nameOf(m),
+        gamePosition: m?.gamePosition ?? undefined,
+        inGameId: m?.user?.inGameId ?? undefined,
+        dpUrl: m?.user?.dpUrl ?? undefined,
+      };
     };
     onSubmit({
       starters: starterIds.map(toPlayer),
@@ -195,14 +203,29 @@ export function TeamSubmissionForm({
                           : "border-surface-line bg-bg/40"
                     }`}
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-line font-display text-[11px] font-bold text-ink-soft">
-                      {nameOf(member).slice(0, 2).toUpperCase()}
-                    </span>
+                    <Avatar dpUrl={member.user?.dpUrl} name={nameOf(member)} size="md" mode="static" />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold text-ink">{nameOf(member)}</div>
-                      {member.gamePosition ? (
-                        <div className="font-mono text-[10px] font-bold text-accent-ink">{member.gamePosition}</div>
-                      ) : null}
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <span className="truncate text-sm font-semibold text-ink">{nameOf(member)}</span>
+                        {member.clubRole && member.clubRole !== "Player" ? (
+                          <span className="shrink-0 rounded-full bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-accent-ink">
+                            {roleLabel(member.clubRole, t)}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px] text-ink-faint">
+                        {member.gamePosition ? (
+                          <span className="rounded bg-bg-raised px-1.5 py-px font-bold text-accent-ink">{member.gamePosition}</span>
+                        ) : null}
+                        {member.user?.inGameId ? (
+                          <span data-latin-digits>{format(ts.ign, { id: member.user.inGameId })}</span>
+                        ) : null}
+                        <span>{format(ts.points, { points: member.points ?? 0 })}</span>
+                        {member.shirtNumber != null ? <span>{format(ts.shirt, { number: member.shirtNumber })}</span> : null}
+                        {member.teamId && teamNameById.get(member.teamId) ? (
+                          <span className="text-ink-soft">{teamNameById.get(member.teamId)}</span>
+                        ) : null}
+                      </div>
                     </div>
                     <div className="flex shrink-0 overflow-hidden rounded-lg border border-surface-line-strong">
                       <RoleButton
@@ -373,6 +396,7 @@ function SlotList({
           return id ? (
             <li key={id} className={`flex items-center gap-2 rounded-lg border bg-surface/70 px-2.5 py-1.5 text-xs ${styles.border}`}>
               <span className="w-4 shrink-0 text-right font-mono text-[10px] text-ink-faint">{index + 1}</span>
+              <Avatar dpUrl={member?.user?.dpUrl} name={nameOf(member)} size="sm" mode="static" />
               <span className="min-w-0 flex-1 truncate font-semibold text-ink">{nameOf(member)}</span>
               {member?.gamePosition ? (
                 <span className="font-mono text-[10px] font-bold text-accent-ink">{member.gamePosition}</span>

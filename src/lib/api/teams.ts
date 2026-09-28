@@ -11,7 +11,8 @@ export interface ClubMemberProfile {
   lineupStatus: BackendLineupStatus;
   gamePosition: string | null;
   points: number;
-  user: { id: string; name: string; dpUrl: string | null } | null;
+  shirtNumber?: number | null;
+  user: { id: string; name: string; dpUrl: string | null; inGameId?: string | null } | null;
 }
 
 export interface Team {

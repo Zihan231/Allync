@@ -32,6 +32,8 @@ export interface TournamentLineupPlayer {
   userId?: string;
   name: string;
   gamePosition?: string;
+  inGameId?: string;
+  dpUrl?: string;
   lineupStatus?: string;
 }
 
@@ -54,7 +56,8 @@ export interface TournamentParticipant {
   status: ParticipantStatus;
   lineup: TournamentLineup | null;
   submittedAt?: string | null;
-  joinedAt: string;
+  /** When the participant registered (the backend's creation timestamp). */
+  createdAt: string;
   club?: {
     id: string;
     name: string;
@@ -66,6 +69,7 @@ export interface TournamentParticipant {
     id: string;
     name: string;
     dpUrl?: string | null;
+    inGameId?: string | null;
   } | null;
 }
 
