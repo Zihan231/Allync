@@ -14,6 +14,7 @@ import {
   type SubmitLineupPayload,
   type TournamentParticipant,
   type UpdateTournamentPayload,
+  type JoinTournamentPayload,
 } from "../tournaments";
 
 export const tournamentKeys = {
@@ -67,8 +68,8 @@ export function useCreateTournament() {
 
 export function useJoinTournament(tournamentId: string) {
   const queryClient = useQueryClient();
-  return useMutation<TournamentParticipant, Error, { clubId?: string } | undefined>({
-    mutationFn: (payload?: { clubId?: string }) => joinTournament(tournamentId, payload),
+  return useMutation<TournamentParticipant, Error, JoinTournamentPayload | undefined>({
+    mutationFn: (payload?: JoinTournamentPayload) => joinTournament(tournamentId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tournamentKeys.detail(tournamentId) });
       queryClient.invalidateQueries({ queryKey: tournamentKeys.all });

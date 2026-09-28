@@ -36,9 +36,12 @@ export interface TournamentLineupPlayer {
 }
 
 export interface TournamentLineup {
+  teamId?: string | null;
+  teamName?: string | null;
   starters: TournamentLineupPlayer[];
   substitutes: TournamentLineupPlayer[];
-  submittedAt: string;
+  /** @deprecated The backend stores this on the participant (`submittedAt`). */
+  submittedAt?: string;
   submittedByUserId: string;
 }
 
@@ -50,6 +53,7 @@ export interface TournamentParticipant {
   userId: string | null;
   status: ParticipantStatus;
   lineup: TournamentLineup | null;
+  submittedAt?: string | null;
   joinedAt: string;
   club?: {
     id: string;
@@ -160,8 +164,16 @@ export interface CreateTournamentPayload {
 }
 
 export interface SubmitLineupPayload {
+  teamId?: string;
+  teamName?: string;
   starters: TournamentLineupPlayer[];
   substitutes: TournamentLineupPlayer[];
+}
+
+/** CvC clubs register together with their team; PvP players send nothing. */
+export interface JoinTournamentPayload {
+  clubId?: string;
+  lineup?: SubmitLineupPayload;
 }
 
 export async function getTournaments(
@@ -208,7 +220,7 @@ export async function deleteTournament(id: string): Promise<{ id: string }> {
 
 export async function joinTournament(
   id: string,
-  payload?: { clubId?: string },
+  payload?: JoinTournamentPayload,
 ): Promise<TournamentParticipant> {
   const res = await api.post<TournamentParticipant>(`/tournaments/${id}/join`, payload || {});
   return res.data;

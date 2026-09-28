@@ -15,16 +15,15 @@ import {
   useDeleteTournament,
 } from "@/lib/api/hooks/useTournaments";
 import { EditTournamentModal } from "@/components/dashboard/EditTournamentModal";
+import { RegisterClubModal } from "@/components/dashboard/RegisterClubModal";
+import { TeamSubmissionForm } from "@/components/dashboard/TeamSubmissionForm";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useConfirm } from "@/lib/useConfirm";
 import { useCommunityMembers } from "@/lib/api/hooks/useCommunities";
 import { getClub } from "@/lib/api/clubs";
 import { getTeams, getClubMembers, type Team, type ClubMemberProfile } from "@/lib/api/teams";
 import type { BackendClub } from "@/lib/api/types";
-import type {
-  TournamentLineupPlayer,
-  TournamentParticipant,
-} from "@/lib/api/tournaments";
+import type { SubmitLineupPayload } from "@/lib/api/tournaments";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { EmptyState } from "@/components/dashboard/EmptyState";
@@ -141,10 +140,7 @@ export function TournamentDetailView({
 
   // Active tab and builder states
   const [activeTab, setActiveTab] = useUrlTab(TOURNAMENT_DETAIL_TABS, "bracket");
-  const [submissionType, setSubmissionType] = useState<"preset" | "custom">("preset");
-  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
-  const [customStarters, setCustomStarters] = useState<TournamentLineupPlayer[]>([]);
-  const [customSubs, setCustomSubs] = useState<TournamentLineupPlayer[]>([]);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [actionError, setActionError] = useState<string>("");
   const [actionSuccess, setActionSuccess] = useState<string>("");
 
@@ -167,9 +163,6 @@ export function TournamentDetailView({
           setUserClubDetails(club);
           setClubTeams(teams);
           setClubMembers(members);
-          if (teams.length > 0) {
-            setSelectedTeamId(teams[0].id);
-          }
         }
       } catch (err) {
         console.error("Failed to load club info for tournament", err);
@@ -329,18 +322,14 @@ export function TournamentDetailView({
   const participantsCount = tournament.participants?.length || 0;
   const capacityPercent = Math.min(100, Math.round((participantsCount / (tournament.maxParticipants || 16)) * 100));
 
-  // Handle Registration
+  // PvP registration. CvC clubs register through RegisterClubModal with their team.
   async function handleJoinTournament() {
     if (!tournament) return;
     setActionError("");
     setActionSuccess("");
     try {
-      await joinMutation.mutateAsync(isCvC ? { clubId: user?.club?.id } : {});
-      setActionSuccess(
-        isCvC
-          ? format(td.toastClubJoined, { club: user?.club?.name ?? "" })
-          : td.toastJoined,
-      );
+      await joinMutation.mutateAsync({});
+      setActionSuccess(td.toastJoined);
       refetch();
     } catch (err: any) {
       setActionError(
@@ -349,90 +338,19 @@ export function TournamentDetailView({
     }
   }
 
-  // Handle Lineup Submission
-  async function handleSubmitLineup() {
+  // Update the submitted lineup (allowed until the 2-hour cutoff)
+  async function handleSubmitLineup(payload: SubmitLineupPayload) {
     if (!tournament || !myParticipation) return;
     setActionError("");
     setActionSuccess("");
-
-    let startersPayload: TournamentLineupPlayer[] = [];
-    let subsPayload: TournamentLineupPlayer[] = [];
-
-    if (submissionType === "preset") {
-      const selectedTeam = clubTeams.find((t) => t.id === selectedTeamId);
-      if (!selectedTeam) {
-        setActionError(td.errSelectPreset);
-        return;
-      }
-      const starters = selectedTeam.members.filter((m) => m.lineupStatus === "Starter");
-      const subs = selectedTeam.members.filter((m) => m.lineupStatus === "Sub");
-
-      if (starters.length !== tournament.startersCount) {
-        setActionError(
-          format(td.errPresetStarters, {
-            team: selectedTeam.name,
-            count: starters.length,
-            required: tournament.startersCount,
-          }),
-        );
-        return;
-      }
-      if (subs.length !== tournament.subsCount) {
-        setActionError(
-          format(td.errPresetSubs, {
-            team: selectedTeam.name,
-            count: subs.length,
-            required: tournament.subsCount,
-          }),
-        );
-        return;
-      }
-
-      startersPayload = starters.map((m) => ({
-        profileId: m.id,
-        userId: m.userId,
-        name: m.user?.name || "Player",
-        gamePosition: m.gamePosition || "CMF",
-        lineupStatus: "Starter",
-      }));
-      subsPayload = subs.map((m) => ({
-        profileId: m.id,
-        userId: m.userId,
-        name: m.user?.name || "Player",
-        gamePosition: m.gamePosition || "SUB",
-        lineupStatus: "Sub",
-      }));
-    } else {
-      // Custom Lineup
-      if (customStarters.length !== tournament.startersCount) {
-        setActionError(
-          format(td.errCustomStarters, { required: tournament.startersCount, count: customStarters.length }),
-        );
-        return;
-      }
-      if (customSubs.length !== tournament.subsCount) {
-        setActionError(
-          format(td.errCustomSubs, { required: tournament.subsCount, count: customSubs.length }),
-        );
-        return;
-      }
-      startersPayload = customStarters;
-      subsPayload = customSubs;
-    }
-
     try {
-      await submitLineupMutation.mutateAsync({
-        participantId: myParticipation.id,
-        payload: {
-          starters: startersPayload,
-          substitutes: subsPayload,
-        },
-      });
+      await submitLineupMutation.mutateAsync({ participantId: myParticipation.id, payload });
       setActionSuccess(td.toastLineupLocked);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       setActionError(
-        err?.response?.data?.message || err?.message || td.errLineup,
+        (Array.isArray(message) ? message.join(", ") : message) || (err as Error)?.message || td.errLineup,
       );
     }
   }
@@ -605,7 +523,7 @@ export function TournamentDetailView({
                 {isCvC ? (
                   canJoinCvC && clubBelongsToCommunity ? (
                     <button
-                      onClick={handleJoinTournament}
+                      onClick={() => setShowRegisterModal(true)}
                       disabled={joinMutation.isPending}
                       className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40 cursor-pointer"
                     >
@@ -904,7 +822,7 @@ export function TournamentDetailView({
                     </div>
                   ) : (
                     <button
-                      onClick={handleJoinTournament}
+                      onClick={() => setShowRegisterModal(true)}
                       disabled={joinMutation.isPending}
                       className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
                     >
@@ -1205,34 +1123,6 @@ export function TournamentDetailView({
                 })}
               </p>
             </div>
-
-            {/* Mode Toggle: Preset Squad vs Custom */}
-            {isSubmissionOpen && (
-              <div className="flex items-center rounded-2xl border border-surface-line-strong bg-black/40 p-1 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setSubmissionType("preset")}
-                  className={`rounded-xl px-4 py-2 font-display text-xs font-bold transition-all ${
-                    submissionType === "preset"
-                      ? "bg-accent text-bg shadow-[0_0_15px_rgba(217,165,68,0.4)]"
-                      : "text-ink-soft hover:text-white"
-                  }`}
-                >
-                  {td.savedSquad}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSubmissionType("custom")}
-                  className={`rounded-xl px-4 py-2 font-display text-xs font-bold transition-all ${
-                    submissionType === "custom"
-                      ? "bg-accent text-bg shadow-[0_0_15px_rgba(217,165,68,0.4)]"
-                      : "text-ink-soft hover:text-white"
-                  }`}
-                >
-                  {td.customRoster}
-                </button>
-              </div>
-            )}
           </div>
 
           {!isSubmissionOpen ? (
@@ -1244,193 +1134,28 @@ export function TournamentDetailView({
               {td.noAuthority}
             </div>
           ) : (
-            <div className="mt-8 space-y-8">
-              {/* OPTION 1: PICK SAVED CLUB SQUAD PRESET */}
-              {submissionType === "preset" ? (
-                <div className="space-y-4">
-                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-accent-ink">
-                    {td.selectSavedSquad}
-                  </span>
-
-                  {clubTeams.length > 0 ? (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {clubTeams.map((team) => {
-                        const isSelected = selectedTeamId === team.id;
-                        const starters = team.members.filter((m) => m.lineupStatus === "Starter");
-                        const subs = team.members.filter((m) => m.lineupStatus === "Sub");
-                        const isValid =
-                          starters.length === tournament.startersCount &&
-                          subs.length === tournament.subsCount;
-
-                        return (
-                          <button
-                            key={team.id}
-                            type="button"
-                            onClick={() => setSelectedTeamId(team.id)}
-                            className={`group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-300 ${
-                              isSelected
-                                ? "border-accent bg-gradient-to-br from-accent/20 via-surface to-surface shadow-[0_0_25px_rgba(217,165,68,0.25)]"
-                                : "border-surface-line bg-surface/60 hover:border-surface-line-strong hover:bg-surface"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="font-display text-base font-black text-white">
-                                {team.name}
-                              </div>
-                              {isSelected && (
-                                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-bg shadow-[0_0_10px_rgba(217,165,68,0.6)]">
-                                  <CheckIcon className="h-3.5 w-3.5" />
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="mt-3 flex items-center gap-2 font-mono text-xs text-ink-soft">
-                              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-emerald-300 font-bold">
-                                {format(td.startersCount, { count: starters.length })}
-                              </span>
-                              <span>·</span>
-                              <span className="rounded-full bg-blue-500/15 px-2 py-0.5 text-blue-300 font-bold">
-                                {format(td.subsCount, { count: subs.length })}
-                              </span>
-                            </div>
-
-                            {!isValid && (
-                              <div className="mt-3 text-[11px] font-semibold text-amber-300">
-                                {format(td.requires, { starters: tournament.startersCount, subs: tournament.subsCount })}
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-surface-line bg-surface/40 p-6 text-xs text-ink-soft">
-                      {format(td.noSavedSquads, { club: user?.club?.name ?? "" })}
-                    </div>
-                  )}
+            <div className="mt-8">
+              {loadingClubData ? (
+                <div className="flex items-center justify-center gap-3 py-12 text-xs text-ink-faint">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                  {t.dashboard.teamSubmission.loadingSquad}
                 </div>
               ) : (
-                /* OPTION 2: CUSTOM PLAYER SELECTION */
-                <div className="space-y-8">
-                  {/* Starters Picker */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-400">
-                        {format(td.selectStarters, { count: customStarters.length, required: tournament.startersCount })}
-                      </span>
-                    </div>
-
-                    <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                      {clubMembers.map((member) => {
-                        const isStarter = customStarters.some((s) => s.profileId === member.id);
-                        const isSub = customSubs.some((s) => s.profileId === member.id);
-
-                        return (
-                          <button
-                            key={member.id}
-                            type="button"
-                            disabled={isSub}
-                            onClick={() => {
-                              if (isStarter) {
-                                setCustomStarters(customStarters.filter((s) => s.profileId !== member.id));
-                              } else {
-                                if (customStarters.length >= tournament.startersCount) return;
-                                setCustomStarters([
-                                  ...customStarters,
-                                  {
-                                    profileId: member.id,
-                                    userId: member.userId,
-                                    name: member.user?.name || "Player",
-                                    gamePosition: member.gamePosition || "CMF",
-                                    lineupStatus: "Starter",
-                                  },
-                                ]);
-                              }
-                            }}
-                            className={`flex items-center justify-between rounded-xl border p-3 text-left text-xs transition-all ${
-                              isStarter
-                                ? "border-emerald-500 bg-emerald-500/20 text-white font-bold shadow-[0_0_12px_rgba(52,211,153,0.3)]"
-                                : isSub
-                                  ? "opacity-25 border-surface-line cursor-not-allowed"
-                                  : "border-surface-line bg-surface/50 text-ink-soft hover:border-surface-line-strong hover:text-white"
-                            }`}
-                          >
-                            <span className="truncate">{member.user?.name || td.playerFallback}</span>
-                            <span className="rounded-md bg-black/40 px-2 py-0.5 font-mono text-[10px] text-accent font-bold">
-                              {member.gamePosition || "CMF"}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Subs Picker */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold uppercase tracking-wider text-blue-400">
-                        {format(td.selectSubs, { count: customSubs.length, required: tournament.subsCount })}
-                      </span>
-                    </div>
-
-                    <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                      {clubMembers.map((member) => {
-                        const isStarter = customStarters.some((s) => s.profileId === member.id);
-                        const isSub = customSubs.some((s) => s.profileId === member.id);
-
-                        return (
-                          <button
-                            key={member.id}
-                            type="button"
-                            disabled={isStarter}
-                            onClick={() => {
-                              if (isSub) {
-                                setCustomSubs(customSubs.filter((s) => s.profileId !== member.id));
-                              } else {
-                                if (customSubs.length >= tournament.subsCount) return;
-                                setCustomSubs([
-                                  ...customSubs,
-                                  {
-                                    profileId: member.id,
-                                    userId: member.userId,
-                                    name: member.user?.name || "Player",
-                                    gamePosition: member.gamePosition || "SUB",
-                                    lineupStatus: "Sub",
-                                  },
-                                ]);
-                              }
-                            }}
-                            className={`flex items-center justify-between rounded-xl border p-3 text-left text-xs transition-all ${
-                              isSub
-                                ? "border-blue-500 bg-blue-500/20 text-white font-bold shadow-[0_0_12px_rgba(59,130,246,0.3)]"
-                                : isStarter
-                                  ? "opacity-25 border-surface-line cursor-not-allowed"
-                                  : "border-surface-line bg-surface/50 text-ink-soft hover:border-surface-line-strong hover:text-white"
-                            }`}
-                          >
-                            <span className="truncate">{member.user?.name || td.playerFallback}</span>
-                            <span className="rounded-md bg-black/40 px-2 py-0.5 font-mono text-[10px] text-blue-300 font-bold">
-                              {member.gamePosition || "SUB"}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
+                <TeamSubmissionForm
+                  key={myParticipation?.submittedAt ?? "new"}
+                  startersCount={tournament.startersCount}
+                  subsCount={tournament.subsCount}
+                  members={clubMembers}
+                  teams={clubTeams}
+                  initialLineup={myParticipation?.lineup}
+                  submitLabel={
+                    myParticipation?.lineup ? t.dashboard.teamSubmission.updateSubmit : t.dashboard.teamSubmission.submitLineup
+                  }
+                  submittingLabel={t.dashboard.teamSubmission.updating}
+                  isSubmitting={submitLineupMutation.isPending}
+                  onSubmit={handleSubmitLineup}
+                />
               )}
-
-              {/* Submit Official Lineup Action */}
-              <div className="pt-6 border-t border-surface-line">
-                <button
-                  type="button"
-                  onClick={handleSubmitLineup}
-                  disabled={submitLineupMutation.isPending}
-                  className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-8 py-3.5 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
-                >
-                  {submitLineupMutation.isPending ? td.lockingLineup : td.confirmLineup}
-                </button>
-              </div>
             </div>
           )}
 
@@ -1446,9 +1171,11 @@ export function TournamentDetailView({
                 </span>
               </div>
               <p className="mt-0.5 text-xs text-ink-faint">
-                {format(td.submittedOn, {
-                  date: new Date(myParticipation.lineup.submittedAt).toLocaleString(dateLocale),
-                })}
+                {myParticipation.submittedAt
+                  ? format(td.submittedOn, {
+                      date: new Date(myParticipation.submittedAt).toLocaleString(dateLocale),
+                    })
+                  : null}
               </p>
 
               <div className="mt-5 grid gap-6 md:grid-cols-2">
@@ -1498,6 +1225,22 @@ export function TournamentDetailView({
           )}
         </div>
       )}
+
+      {showRegisterModal && user?.club ? (
+        <RegisterClubModal
+          tournament={tournament}
+          club={{ id: user.club.id, name: user.club.name }}
+          members={clubMembers}
+          teams={clubTeams}
+          isLoadingSquad={loadingClubData}
+          onClose={() => setShowRegisterModal(false)}
+          onRegistered={(message) => {
+            setActionError("");
+            setActionSuccess(message);
+            refetch();
+          }}
+        />
+      ) : null}
 
       {isOrganizer && showEditModal ? (
         <EditTournamentModal
