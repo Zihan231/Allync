@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Manrope, JetBrains_Mono, Baloo_Da_2, Hind_Siliguri } from "next/font/google";
+import { Space_Grotesk, Manrope, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { SessionProvider } from "@/lib/session/SessionContext";
@@ -24,16 +25,15 @@ const jetbrains = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
-const balooDa2 = Baloo_Da_2({
-  variable: "--font-baloo",
-  subsets: ["bengali", "latin"],
-  weight: ["600", "700"],
-});
-
-const hindSiliguri = Hind_Siliguri({
-  variable: "--font-hind",
-  subsets: ["bengali", "latin"],
-  weight: ["400", "500", "600"],
+// AdorshoLipi (self-hosted — it isn't on Google Fonts). It ships a single
+// weight, so heavier text uses the browser's synthetic bold. Only needed when
+// the locale is "bn", so it isn't preloaded on every page.
+const adorshoLipi = localFont({
+  src: "../fonts/AdorshoLipi.woff2",
+  variable: "--font-adorsho-lipi",
+  weight: "400",
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -47,7 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${spaceGrotesk.variable} ${manrope.variable} ${jetbrains.variable} ${balooDa2.variable} ${hindSiliguri.variable} h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${manrope.variable} ${jetbrains.variable} ${adorshoLipi.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-ink" suppressHydrationWarning>
         <Suspense fallback={null}>

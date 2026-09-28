@@ -63,10 +63,27 @@
   --font-mono: var(--font-jetbrains);
 }
 
+/* Latin fonts stay first so English words, names and numbers keep the usual
+   look; the browser falls back to the Bangla font only for Bangla glyphs. */
 :root[data-locale="bn"] {
-  --font-display: var(--font-baloo);
-  --font-body: var(--font-hind);
-  --font-mono: var(--font-hind);
+  --font-display: var(--font-space), var(--font-adorsho-lipi);
+  --font-body: var(--font-manrope), var(--font-adorsho-lipi);
+  --font-mono: var(--font-jetbrains), var(--font-adorsho-lipi);
+}
+
+/* Bangla conjuncts and vowel signs break apart with extra letter-spacing and
+   get clipped by tight line-heights, so relax both in the bn locale. */
+:root[data-locale="bn"] body,
+:root[data-locale="bn"] body * {
+  letter-spacing: normal !important;
+}
+
+:root[data-locale="bn"] body {
+  line-height: 1.65;
+}
+
+:root[data-locale="bn"] :is(h1, h2, h3, h4, .font-display) {
+  line-height: 1.35;
 }
 
 * {
@@ -117,10 +134,6 @@ nav::-webkit-scrollbar-thumb:hover {
 
 .font-mono {
   font-family: var(--font-mono), monospace;
-}
-
-:root[data-locale="bn"] .font-mono {
-  letter-spacing: normal;
 }
 
 .text-balance {
