@@ -114,10 +114,28 @@ function CreateTournamentForm() {
   const [preset, setPreset] = useState<TournamentPreset>("preset_11v11");
   const [startersCount, setStartersCount] = useState(11);
   const [subsCount, setSubsCount] = useState(5);
+  // Raw text of the custom roster boxes, so they can be cleared while typing.
+  const [startersInput, setStartersInput] = useState("11");
+  const [subsInput, setSubsInput] = useState("5");
   const [maxParticipants, setMaxParticipants] = useState(16);
   const [customParticipants, setCustomParticipants] = useState(false);
   const [participantsInput, setParticipantsInput] = useState("16");
   const isCvc = type === "cvc";
+  const isCustomRoster = isCvc && preset === "custom";
+  const startersError = !isCustomRoster
+    ? null
+    : startersInput === ""
+      ? tc.errStartersEmpty
+      : startersCount < 1 || startersCount > 15
+        ? tc.errStartersRange
+        : null;
+  const subsError = !isCustomRoster
+    ? null
+    : subsInput === ""
+      ? tc.errSubsEmpty
+      : subsCount > 10
+        ? tc.errSubsRange
+        : null;
   const participantsError = !customParticipants
     ? null
     : participantsInput === ""
@@ -189,9 +207,13 @@ function CreateTournamentForm() {
     if (selectedPreset === "preset_11v11") {
       setStartersCount(11);
       setSubsCount(5);
+      setStartersInput("11");
+      setSubsInput("5");
     } else if (selectedPreset === "preset_8v8") {
       setStartersCount(8);
       setSubsCount(4);
+      setStartersInput("8");
+      setSubsInput("4");
     }
   }
 
@@ -228,6 +250,12 @@ function CreateTournamentForm() {
     const startDate = new Date(startAt);
     if (startDate.getTime() <= Date.now() + 2 * 60 * 60 * 1000) {
       setErrorMessage(tc.errStartTooSoon);
+      return;
+    }
+
+    const rosterError = startersError || subsError;
+    if (rosterError) {
+      setErrorMessage(rosterError);
       return;
     }
 
@@ -453,24 +481,42 @@ function CreateTournamentForm() {
                       <label className="block">
                         <span className="text-xs text-ink-soft">{tc.startersLabel}</span>
                         <input
-                          type="number"
-                          min={1}
-                          max={15}
-                          value={startersCount}
-                          onChange={(e) => setStartersCount(Math.max(1, Number(e.target.value)))}
-                          className={fieldClass}
+                          type="text"
+                          inputMode="numeric"
+                          value={startersInput}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, "");
+                            setStartersInput(digits);
+                            setStartersCount(digits === "" ? 0 : Number(digits));
+                          }}
+                          aria-invalid={startersError !== null}
+                          className={`${fieldClass} ${startersError ? "border-danger focus:border-danger" : ""}`}
                         />
+                        {startersError ? (
+                          <p className="mt-1.5 text-xs font-semibold text-danger-ink" role="alert">
+                            {startersError}
+                          </p>
+                        ) : null}
                       </label>
                       <label className="block">
                         <span className="text-xs text-ink-soft">{tc.subsLabel}</span>
                         <input
-                          type="number"
-                          min={0}
-                          max={10}
-                          value={subsCount}
-                          onChange={(e) => setSubsCount(Math.max(0, Number(e.target.value)))}
-                          className={fieldClass}
+                          type="text"
+                          inputMode="numeric"
+                          value={subsInput}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, "");
+                            setSubsInput(digits);
+                            setSubsCount(digits === "" ? 0 : Number(digits));
+                          }}
+                          aria-invalid={subsError !== null}
+                          className={`${fieldClass} ${subsError ? "border-danger focus:border-danger" : ""}`}
                         />
+                        {subsError ? (
+                          <p className="mt-1.5 text-xs font-semibold text-danger-ink" role="alert">
+                            {subsError}
+                          </p>
+                        ) : null}
                       </label>
                     </div>
                   )}
