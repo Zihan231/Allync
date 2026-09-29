@@ -989,6 +989,7 @@ export function TournamentDetailView({
         <div className="mt-8">
           <TournamentFixtures
             tournamentId={tournament.id}
+            tournamentName={tournament.name}
             entrantCount={participantsCount}
             myParticipantId={myParticipation?.id ?? null}
             viewerUserId={user?.id ?? null}

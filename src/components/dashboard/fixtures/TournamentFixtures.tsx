@@ -16,6 +16,7 @@ import { ReviewQueue } from "./ReviewQueue";
 /** The tournament's Fixtures tab: group tables + fixtures, then the knockout tree. */
 export function TournamentFixtures({
   tournamentId,
+  tournamentName,
   entrantCount,
   myParticipantId,
   viewerUserId,
@@ -23,6 +24,7 @@ export function TournamentFixtures({
   onResultSubmitted,
 }: {
   tournamentId: string;
+  tournamentName?: string;
   entrantCount: number;
   myParticipantId?: string | null;
   viewerUserId?: string | null;
@@ -100,6 +102,7 @@ export function TournamentFixtures({
         </h3>
         <KnockoutBracket
           knockout={structure.knockout}
+          title={tournamentName}
           isCvC={structure.isCvC}
           highlightParticipantId={myParticipantId}
           onOpenMatch={(m) => setOpenMatchId(m.id)}
