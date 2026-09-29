@@ -336,14 +336,17 @@ export function TournamentDetailView({
     minute: "2-digit",
   });
 
-  // Relative kick-off text
+  // Relative kick-off text, by calendar day in Bangladesh time (UTC+6)
   const msUntilStart = startsDate.getTime() - Date.now();
-  const daysUntilStart = Math.ceil(msUntilStart / (1000 * 60 * 60 * 24));
+  const dhakaDay = (ms: number) => Math.floor((ms + 6 * 60 * 60 * 1000) / (24 * 60 * 60 * 1000));
+  const daysUntilStart = dhakaDay(startsDate.getTime()) - dhakaDay(Date.now());
   const relativeStartLabel =
     msUntilStart > 0
-      ? daysUntilStart === 1
-        ? td.tomorrow
-        : format(td.inDays, { days: daysUntilStart })
+      ? daysUntilStart === 0
+        ? td.today
+        : daysUntilStart === 1
+          ? td.tomorrow
+          : format(td.inDays, { days: daysUntilStart })
       : td.started;
 
   // Capacity calculations
