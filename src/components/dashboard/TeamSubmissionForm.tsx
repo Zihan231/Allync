@@ -55,6 +55,7 @@ export function TeamSubmissionForm({
   // The saved squad the current selection came from, until it is edited by hand.
   const [loadedTeam, setLoadedTeam] = useState<{ id: string; name: string } | null>(null);
   const [search, setSearch] = useState("");
+  const [freeOnly, setFreeOnly] = useState(false);
 
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const teamNameById = useMemo(() => new Map(teams.map((team) => [team.id, team.name])), [teams]);
@@ -115,14 +116,15 @@ export function TeamSubmissionForm({
 
   const query = search.trim().toLowerCase();
   const lockedCount = members.filter((m) => lockedIn?.has(m.id)).length;
-  // Available players first; locked ones sink to the bottom of the list.
-  const visibleMembers = (query
-    ? members.filter(
-        (m) => nameOf(m).toLowerCase().includes(query) || (m.gamePosition ?? "").toLowerCase().includes(query),
-      )
-    : members
-  )
-    .slice()
+  const showFreeOnly = freeOnly && lockedCount > 0;
+  // Available players first; locked ones sink to the bottom of the list. "Free" hides
+  // locked players, except ones already picked so they can still be removed.
+  const visibleMembers = members
+    .filter(
+      (m) =>
+        (!query || nameOf(m).toLowerCase().includes(query) || (m.gamePosition ?? "").toLowerCase().includes(query)) &&
+        (!showFreeOnly || !lockedIn?.has(m.id) || roleOf(m.id) !== null),
+    )
     .sort((a, b) => Number(lockedIn?.has(a.id) ?? false) - Number(lockedIn?.has(b.id) ?? false));
 
   return (
@@ -202,6 +204,31 @@ export function TeamSubmissionForm({
           </div>
 
           {lockedCount ? (
+            <div className="mt-3 inline-flex self-start overflow-hidden rounded-lg border border-surface-line-strong" role="group">
+              {[
+                { free: false, label: format(ts.filterAll, { count: members.length }) },
+                { free: true, label: format(ts.filterFree, { count: members.length - lockedCount }) },
+              ].map((option) => (
+                <button
+                  key={option.label}
+                  type="button"
+                  aria-pressed={showFreeOnly === option.free}
+                  onClick={() => setFreeOnly(option.free)}
+                  className={`px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                    showFreeOnly === option.free
+                      ? option.free
+                        ? "bg-success text-bg"
+                        : "bg-accent text-bg"
+                      : "text-ink-soft hover:bg-surface-line/60 hover:text-ink"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          {lockedCount ? (
             <p className="mt-3 flex items-start gap-2 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2 text-[11px] leading-relaxed text-warning-ink">
               <LockIcon className="mt-px h-3.5 w-3.5 shrink-0" />
               {ts.oneTournamentRule}
@@ -213,7 +240,9 @@ export function TeamSubmissionForm({
               {ts.noMembers}
             </p>
           ) : visibleMembers.length === 0 ? (
-            <p className="mt-4 py-8 text-center text-xs text-ink-faint">{ts.noMatch}</p>
+            <p className="mt-4 py-8 text-center text-xs text-ink-faint">
+              {showFreeOnly && !query ? ts.noFreePlayers : ts.noMatch}
+            </p>
           ) : (
             <div className="relative mt-3 lg:min-h-[26rem] lg:flex-1">
               <ul className="max-h-[26rem] space-y-1.5 overflow-y-auto pr-1 lg:absolute lg:inset-0 lg:max-h-none">
