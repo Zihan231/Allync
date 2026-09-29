@@ -222,18 +222,22 @@ export function GrandBracket({
   };
 
   const totalH = TITLE_H + bodyH + 24;
-  const scale = containerWidth ? Math.min(1, containerWidth / totalW) : 1;
-  const offsetX = containerWidth && scale === 1 ? (containerWidth - totalW) / 2 : 0;
+  // Breathing room between the drawing and the frame (smaller on the compact layout).
+  const padX = compact ? 8 : 40;
+  const padY = compact ? 4 : 16;
+  const available = containerWidth ? Math.max(0, containerWidth - padX * 2) : null;
+  const scale = available ? Math.min(1, available / totalW) : 1;
+  const offsetX = available ? padX + (available - totalW * scale) / 2 : 0;
 
   return (
     <div
       ref={containerRef}
       className="overflow-hidden rounded-3xl border border-blue/25 bg-[radial-gradient(ellipse_at_center,rgba(76,141,255,0.18),transparent_65%)]"
-      style={{ height: totalH * scale }}
+      style={{ height: totalH * scale + padY * 2 }}
     >
       <div
         className="relative origin-top-left"
-        style={{ width: totalW, height: totalH, transform: `translate(${offsetX}px, 0) scale(${scale})` }}
+        style={{ width: totalW, height: totalH, transform: `translate(${offsetX}px, ${padY}px) scale(${scale})` }}
       >
         {/* Title */}
         <div className={`absolute inset-x-0 text-center ${compact ? "top-3" : "top-5"}`}>

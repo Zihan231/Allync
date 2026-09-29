@@ -12,9 +12,9 @@ export function EntrantBadge({
 }: {
   entrant: FixtureEntrant | null;
   isCvC: boolean;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
 }) {
-  const box = size === "sm" ? "h-8 w-8" : "h-11 w-11";
+  const box = size === "sm" ? "h-8 w-8" : size === "md" ? "h-11 w-11" : "h-16 w-16";
   if (!entrant) {
     return <span className={`inline-block shrink-0 rounded-lg border border-dashed border-surface-line-strong ${box}`} />;
   }
