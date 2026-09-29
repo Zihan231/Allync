@@ -961,30 +961,30 @@ export function TournamentDetailView({
       </div>
 
       {/* NAVIGATION TABS WITH RADIANT ACCENTS */}
-      <div className="mt-10 flex border-b border-surface-line">
+      <div className="mt-10 flex w-full overflow-hidden border-b border-surface-line">
         <button
           onClick={() => setActiveTab("bracket")}
-          className={`flex items-center gap-2.5 border-b-2 px-6 py-3.5 font-display text-sm font-bold transition-all ${
+          className={`flex min-w-0 flex-1 items-center justify-center gap-1 border-b-2 px-1 py-3 font-display text-[10px] font-bold transition-all sm:flex-none sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-sm ${
             activeTab === "bracket"
               ? "border-accent text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.4)]"
               : "border-transparent text-ink-soft hover:text-ink"
           }`}
         >
-          <BracketIcon className="h-4 w-4" />
-          <span>{td.tabBracket}</span>
+          <BracketIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+          <span className="min-w-0 text-center leading-tight sm:leading-normal">{td.tabBracket}</span>
         </button>
 
         <button
           onClick={() => setActiveTab("participants")}
-          className={`flex items-center gap-2.5 border-b-2 px-6 py-3.5 font-display text-sm font-bold transition-all ${
+          className={`flex min-w-0 flex-1 items-center justify-center gap-1 border-b-2 px-1 py-3 font-display text-[10px] font-bold transition-all sm:flex-none sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-sm ${
             activeTab === "participants"
               ? "border-accent text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.4)]"
               : "border-transparent text-ink-soft hover:text-ink"
           }`}
         >
-          <UsersIcon className="h-4 w-4" />
-          <span>{td.tabParticipants}</span>
-          <span className="rounded-full bg-surface-line px-2 py-0.5 text-xs text-ink-faint">
+          <UsersIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+          <span className="min-w-0 text-center leading-tight sm:leading-normal">{td.tabParticipants}</span>
+          <span className="hidden rounded-full bg-surface-line px-2 py-0.5 text-xs text-ink-faint sm:inline">
             {tournament.participants?.length || 0}
           </span>
         </button>
@@ -992,14 +992,14 @@ export function TournamentDetailView({
         {isCvC && isRegistered && (
           <button
             onClick={() => setActiveTab("lineup")}
-            className={`flex items-center gap-2.5 border-b-2 px-6 py-3.5 font-display text-sm font-bold transition-all ${
+            className={`flex min-w-0 flex-1 items-center justify-center gap-1 border-b-2 px-1 py-3 font-display text-[10px] font-bold transition-all sm:flex-none sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-sm ${
               activeTab === "lineup"
                 ? "border-accent text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.4)]"
                 : "border-transparent text-ink-soft hover:text-ink"
             }`}
           >
-            <ShieldIcon className="h-4 w-4" />
-            <span>{td.tabLineup}</span>
+            <ShieldIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+            <span className="min-w-0 text-center leading-tight sm:leading-normal">{td.tabLineup}</span>
             {myParticipation?.lineup && (
               <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
             )}
