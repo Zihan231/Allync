@@ -84,6 +84,38 @@ function TournamentDetailRoute({
   );
 }
 
+function BracketGenerationOverlay({ label }: { label: string }) {
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-bg/80 px-5 backdrop-blur-md"
+      role="status"
+      aria-live="polite"
+      aria-label={label}
+    >
+      <div className="w-full max-w-sm rounded-3xl border border-purple-400/30 bg-bg-raised/95 px-6 py-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+        <div className="relative mx-auto flex h-28 w-28 items-center justify-center" aria-hidden="true">
+          <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-purple-400 border-r-purple-400/40 motion-reduce:animate-none" />
+          <span className="absolute inset-3 animate-[spin_1.5s_linear_infinite_reverse] rounded-full border border-transparent border-b-accent border-l-accent/40 motion-reduce:animate-none" />
+          <span className="flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl border border-purple-400/30 bg-purple-500/15 text-purple-300 shadow-[0_0_32px_rgba(168,85,247,0.28)] motion-reduce:animate-none">
+            <BracketIcon className="h-8 w-8" />
+          </span>
+        </div>
+
+        <p className="mt-5 font-display text-base font-black text-ink">{label}</p>
+        <div className="mt-4 flex justify-center gap-2" aria-hidden="true">
+          {[0, 1, 2].map((index) => (
+            <span
+              key={index}
+              className="h-2 w-2 animate-pulse rounded-full bg-accent motion-reduce:animate-none"
+              style={{ animationDelay: `${index * 180}ms` }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TournamentDetailView({
   tournamentId,
   backHref,
@@ -454,6 +486,8 @@ export function TournamentDetailView({
 
   return (
     <div className="relative pb-16">
+      {generateBracketMutation.isPending ? <BracketGenerationOverlay label={td.generatingBracket} /> : null}
+
       {/* Ambient background glows with gold, blue, and emerald radiance */}
       <div className="pointer-events-none absolute -top-10 left-1/4 -z-10 h-96 w-96 rounded-full bg-accent/20 blur-[130px]" />
       <div className="pointer-events-none absolute top-40 right-10 -z-10 h-80 w-80 rounded-full bg-blue-500/15 blur-[120px]" />
@@ -952,9 +986,19 @@ export function TournamentDetailView({
                   onClick={handleGenerateBracket}
                   title={slotsFull ? undefined : format(t.dashboard.fixtures.earlyNeedsFull, { count: tournament.maxParticipants })}
                   disabled={generateBracketMutation.isPending || !slotsFull}
-                  className="rounded-full border border-purple-500/40 bg-purple-500/15 px-5 py-2.5 font-display text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all hover:bg-purple-500 hover:text-white disabled:opacity-40"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-purple-500/40 bg-purple-500/15 px-5 py-2.5 font-display text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all hover:bg-purple-500 hover:text-white disabled:opacity-60"
                 >
-                  {generateBracketMutation.isPending ? td.generatingBracket : td.generateBracket}
+                  {generateBracketMutation.isPending ? (
+                    <>
+                      <span
+                        className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-purple-200/30 border-t-purple-200 motion-reduce:animate-none"
+                        aria-hidden="true"
+                      />
+                      {td.generatingBracket}
+                    </>
+                  ) : (
+                    td.generateBracket
+                  )}
                 </button>
                 <span className="max-w-xs text-right text-[11px] text-ink-faint">
                   {slotsFull
