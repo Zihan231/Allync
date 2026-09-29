@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { BracketIcon, TrophyIcon, UsersIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
@@ -9,21 +10,36 @@ import type { Fixture } from "@/lib/api/tournaments";
 import { GroupStage } from "./GroupStage";
 import { KnockoutBracket } from "./KnockoutBracket";
 import { MatchDetailModal } from "./MatchDetailModal";
+import { ReviewGameModal } from "./ReviewGameModal";
+import { ReviewQueue } from "./ReviewQueue";
 
 /** The tournament's Fixtures tab: group tables + fixtures, then the knockout tree. */
 export function TournamentFixtures({
   tournamentId,
   entrantCount,
   myParticipantId,
+  viewerUserId,
+  officialParticipantId,
+  isReviewer = false,
+  onResultSubmitted,
 }: {
   tournamentId: string;
   entrantCount: number;
   myParticipantId?: string | null;
+  viewerUserId?: string | null;
+  /** The viewer's club entry when they may submit results for it (President / GS / Manager). */
+  officialParticipantId?: string | null;
+  /** Tournament creator, community President / VP or Head of Discipline. */
+  isReviewer?: boolean;
+  onResultSubmitted?: (message: string) => void;
 }) {
   const { t } = useLanguage();
   const f = t.dashboard.fixtures;
   const { data: structure, isLoading } = useTournamentStructure(tournamentId);
-  const [openMatchId, setOpenMatchId] = useState<string | null>(null);
+  // Notification links open a fixture directly (?match=<id>).
+  const searchParams = useSearchParams();
+  const [openMatchId, setOpenMatchId] = useState<string | null>(() => searchParams.get("match"));
+  const [reviewGameId, setReviewGameId] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -60,6 +76,8 @@ export function TournamentFixtures({
         {summary}
       </div>
 
+      {isReviewer ? <ReviewQueue tournamentId={tournamentId} onReview={setReviewGameId} /> : null}
+
       {structure.groups.length ? (
         <section>
           <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-black text-ink">
@@ -89,7 +107,32 @@ export function TournamentFixtures({
       </section>
 
       {openMatch ? (
-        <MatchDetailModal match={openMatch} isCvC={structure.isCvC} onClose={() => setOpenMatchId(null)} />
+        <MatchDetailModal
+          match={openMatch}
+          isCvC={structure.isCvC}
+          tournamentId={tournamentId}
+          viewerUserId={viewerUserId}
+          officialParticipantId={officialParticipantId}
+          onClose={() => setOpenMatchId(null)}
+          onSubmitted={onResultSubmitted}
+          onReviewGame={
+            isReviewer
+              ? (gameId) => {
+                  setOpenMatchId(null);
+                  setReviewGameId(gameId);
+                }
+              : undefined
+          }
+        />
+      ) : null}
+
+      {reviewGameId ? (
+        <ReviewGameModal
+          tournamentId={tournamentId}
+          gameId={reviewGameId}
+          onClose={() => setReviewGameId(null)}
+          onReviewed={(message) => onResultSubmitted?.(message)}
+        />
       ) : null}
     </div>
   );

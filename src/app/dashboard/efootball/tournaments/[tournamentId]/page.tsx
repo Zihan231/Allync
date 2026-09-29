@@ -17,6 +17,7 @@ import {
 import { EditTournamentModal } from "@/components/dashboard/EditTournamentModal";
 import { TeamSubmissionModal } from "@/components/dashboard/TeamSubmissionModal";
 import { TournamentParticipantCard } from "@/components/dashboard/TournamentParticipantCard";
+import { TournamentFixtures } from "@/components/dashboard/fixtures/TournamentFixtures";
 import { ParticipantLineupModal } from "@/components/dashboard/ParticipantLineupModal";
 import { Avatar } from "@/components/common/Avatar";
 import { TeamSubmissionForm } from "@/components/dashboard/TeamSubmissionForm";
@@ -405,16 +406,24 @@ export function TournamentDetailView({
 
   // Handle Generate Bracket
   async function handleGenerateBracket() {
+    const confirmed = await confirm(t.dashboard.fixtures.generateConfirm, {
+      title: t.dashboard.fixtures.generateConfirmTitle,
+      variant: "warning",
+      confirmLabel: td.generateBracket,
+      cancelLabel: tm.cancel,
+    });
+    if (!confirmed) return;
+
     setActionError("");
     setActionSuccess("");
     try {
       await generateBracketMutation.mutateAsync();
       setActionSuccess(td.toastBracketGenerated);
+      setActiveTab("bracket");
       refetch();
-    } catch (err: any) {
-      setActionError(
-        err?.response?.data?.message || err?.message || td.errBracket,
-      );
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setActionError(message || (err as Error)?.message || td.errBracket);
     }
   }
 
@@ -914,21 +923,14 @@ export function TournamentDetailView({
             )}
 
             {/* Organizer Generate Bracket Button */}
-            {isOrganizer && (
+            {isOrganizer && !tournament.format && (
               <button
                 onClick={handleGenerateBracket}
-                disabled={
-                  generateBracketMutation.isPending ||
-                  !tournament.participants ||
-                  tournament.participants.length < 2
-                }
+                title={participantsCount < 4 ? t.dashboard.fixtures.needFour : undefined}
+                disabled={generateBracketMutation.isPending || participantsCount < 4}
                 className="rounded-full border border-purple-500/40 bg-purple-500/15 px-5 py-2.5 font-display text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all hover:bg-purple-500 hover:text-white disabled:opacity-40"
               >
-                {generateBracketMutation.isPending
-                  ? td.generatingBracket
-                  : tournament.bracket
-                    ? td.regenerateBracket
-                    : td.generateBracket}
+                {generateBracketMutation.isPending ? td.generatingBracket : td.generateBracket}
               </button>
             )}
           </div>
@@ -982,102 +984,21 @@ export function TournamentDetailView({
         )}
       </div>
 
-      {/* TAB CONTENT: BRACKET */}
+      {/* TAB CONTENT: FIXTURES (groups + knockout) */}
       {activeTab === "bracket" && (
         <div className="mt-8">
-          {tournament.bracket?.rounds && tournament.bracket.rounds.length > 0 ? (
-            <div className="overflow-x-auto pb-6">
-              <div className="flex min-w-max gap-8">
-                {tournament.bracket.rounds.map((round: any) => (
-                  <div key={round.round} className="flex w-72 flex-col gap-4">
-                    {/* Round Header Badge */}
-                    <div className="flex items-center justify-between border-b border-surface-line pb-2.5">
-                      <span className="font-mono text-xs font-black uppercase tracking-wider text-accent-ink">
-                        {round.roundName}
-                      </span>
-                      <span className="rounded-full bg-surface-line px-2 py-0.5 font-mono text-[10px] text-ink-faint">
-                        {round.matches.length} {round.matches.length === 1 ? td.match : td.matches}
-                      </span>
-                    </div>
-
-                    {/* Round Matches */}
-                    <div className="flex flex-1 flex-col justify-around gap-4">
-                      {round.matches.map((m: any) => (
-                        <div
-                          key={m.id}
-                          className="group relative overflow-hidden rounded-2xl border border-surface-line bg-gradient-to-b from-surface/90 to-surface-raised/90 p-4 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-accent/40 hover:shadow-[0_8px_25px_-8px_rgba(217,165,68,0.25)]"
-                        >
-                          {/* Participant A */}
-                          <div className="flex items-center justify-between py-1.5">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-surface-line font-mono text-[10px] font-bold text-ink-soft">
-                                {m.participantA?.name?.slice(0, 2).toUpperCase() || "—"}
-                              </span>
-                              <span
-                                className={`truncate text-xs font-semibold ${
-                                  m.participantA
-                                    ? m.winnerId === m.participantA.id
-                                      ? "text-accent-ink font-bold"
-                                      : "text-ink"
-                                    : "text-ink-faint"
-                                }`}
-                              >
-                                {m.participantA?.name || td.tbdBye}
-                              </span>
-                            </div>
-                            {m.scoreA !== null ? (
-                              <span className="font-mono text-xs font-black text-accent-ink">
-                                {m.scoreA}
-                              </span>
-                            ) : null}
-                          </div>
-
-                          <div className="my-1.5 h-px bg-surface-line/60" />
-
-                          {/* Participant B */}
-                          <div className="flex items-center justify-between py-1.5">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-surface-line font-mono text-[10px] font-bold text-ink-soft">
-                                {m.participantB?.name?.slice(0, 2).toUpperCase() || "—"}
-                              </span>
-                              <span
-                                className={`truncate text-xs font-semibold ${
-                                  m.participantB
-                                    ? m.winnerId === m.participantB.id
-                                      ? "text-accent-ink font-bold"
-                                      : "text-ink"
-                                    : "text-ink-faint"
-                                }`}
-                              >
-                                {m.participantB?.name || td.tbdBye}
-                              </span>
-                            </div>
-                            {m.scoreB !== null ? (
-                              <span className="font-mono text-xs font-black text-accent-ink">
-                                {m.scoreB}
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="relative overflow-hidden rounded-3xl border border-surface-line bg-gradient-to-b from-surface/60 to-surface/30 p-12 text-center backdrop-blur-sm">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-accent-ink shadow-[0_0_20px_rgba(217,165,68,0.2)]">
-                <BracketIcon className="h-7 w-7" />
-              </div>
-              <h3 className="mt-4 font-display text-base font-bold text-white">{td.bracketEmptyTitle}</h3>
-              <p className="mx-auto mt-1.5 max-w-md text-xs text-ink-soft leading-relaxed">
-                {isSubmissionOpen
-                  ? td.bracketEmptyOpen
-                  : td.bracketEmptyClosed}
-              </p>
-            </div>
-          )}
+          <TournamentFixtures
+            tournamentId={tournament.id}
+            entrantCount={participantsCount}
+            myParticipantId={myParticipation?.id ?? null}
+            viewerUserId={user?.id ?? null}
+            officialParticipantId={isCvC && canSubmitLineup ? myParticipation?.id ?? null : null}
+            isReviewer={Boolean(isOrganizer || hostingCommunityRole === "Head of Discipline")}
+            onResultSubmitted={(message) => {
+              setActionError("");
+              setActionSuccess(message);
+            }}
+          />
         </div>
       )}
 

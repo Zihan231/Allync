@@ -7,6 +7,10 @@ import {
   submitTournamentLineup,
   generateTournamentBracket,
   getTournamentStructure,
+  submitGameResult,
+  getReviewQueue,
+  getGameForReview,
+  reviewGame,
   updateTournament,
   deleteTournament,
   type BackendTournament,
@@ -17,6 +21,11 @@ import {
   type UpdateTournamentPayload,
   type JoinTournamentPayload,
   type TournamentStructure,
+  type GameResultInput,
+  type GameSubmission,
+  type ReviewGame,
+  type ReviewDecision,
+  type ReviewResult,
 } from "../tournaments";
 
 export const tournamentKeys = {
@@ -24,6 +33,8 @@ export const tournamentKeys = {
   list: (params?: TournamentQueryParams) => ["tournaments", "list", params] as const,
   detail: (id: string) => ["tournaments", "detail", id] as const,
   structure: (id: string) => ["tournaments", "structure", id] as const,
+  reviewQueue: (id: string) => ["tournaments", "review-queue", id] as const,
+  reviewGame: (id: string, gameId: string) => ["tournaments", "review-game", id, gameId] as const,
 };
 
 /**
@@ -137,6 +148,53 @@ export function useDeleteTournament(tournamentId: string) {
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: tournamentKeys.detail(tournamentId) });
       queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
+    },
+  });
+}
+
+export function useSubmitGameResult(tournamentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation<
+    GameSubmission,
+    Error,
+    { gameId: string; input: GameResultInput; onProgress?: (percent: number) => void }
+  >({
+    mutationFn: ({ gameId, input, onProgress }) => submitGameResult(tournamentId, gameId, input, onProgress),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tournamentKeys.structure(tournamentId) });
+    },
+  });
+}
+
+/** Officials only (the API answers 403 for everyone else, so gate with `enabled`). */
+export function useReviewQueue(tournamentId: string, enabled: boolean) {
+  return useQuery<ReviewGame[]>({
+    queryKey: tournamentKeys.reviewQueue(tournamentId),
+    queryFn: () => getReviewQueue(tournamentId),
+    enabled: enabled && Boolean(tournamentId),
+    staleTime: 1000 * 15,
+    retry: false,
+  });
+}
+
+export function useGameReview(tournamentId: string, gameId: string | null) {
+  return useQuery<ReviewGame>({
+    queryKey: tournamentKeys.reviewGame(tournamentId, gameId ?? ""),
+    queryFn: () => getGameForReview(tournamentId, gameId!),
+    enabled: Boolean(tournamentId && gameId),
+    retry: false,
+  });
+}
+
+export function useReviewGame(tournamentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation<ReviewResult, Error, { gameId: string; decision: ReviewDecision }>({
+    mutationFn: ({ gameId, decision }) => reviewGame(tournamentId, gameId, decision),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tournamentKeys.structure(tournamentId) });
+      queryClient.invalidateQueries({ queryKey: tournamentKeys.reviewQueue(tournamentId) });
+      queryClient.invalidateQueries({ queryKey: tournamentKeys.detail(tournamentId) });
+      queryClient.invalidateQueries({ queryKey: ["tournaments", "review-game", tournamentId] });
     },
   });
 }

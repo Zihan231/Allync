@@ -273,6 +273,10 @@ export interface FixtureGame {
   goalsA: number | null;
   goalsB: number | null;
   status: FixtureGameStatus;
+  /** Sides that have uploaded evidence for this game. */
+  submittedSides: Array<"A" | "B">;
+  /** Official's note when a submission was rejected. */
+  reviewNote: string | null;
 }
 
 export interface Fixture {
@@ -324,6 +328,97 @@ export interface TournamentStructure {
 
 export async function getTournamentStructure(tournamentId: string): Promise<TournamentStructure> {
   const res = await api.get<TournamentStructure>(`/tournaments/${tournamentId}/structure`);
+  return res.data;
+}
+
+export interface GameSubmission {
+  id: string;
+  side: "A" | "B";
+  goalsA: number;
+  goalsB: number;
+  screenshotUrls: string[];
+  videoUrl: string | null;
+  submittedAt: string;
+}
+
+export interface GameResultInput {
+  goalsA: number;
+  goalsB: number;
+  /** Omit on a resubmission to keep the earlier evidence. */
+  screenshots: File[];
+  video: File | null;
+}
+
+/** Uploads one side's score + evidence (screenshots, video) for a game. */
+export async function submitGameResult(
+  tournamentId: string,
+  gameId: string,
+  input: GameResultInput,
+  onProgress?: (percent: number) => void,
+): Promise<GameSubmission> {
+  const form = new FormData();
+  form.append("goalsA", String(input.goalsA));
+  form.append("goalsB", String(input.goalsB));
+  input.screenshots.forEach((file) => form.append("screenshots", file));
+  if (input.video) form.append("video", input.video);
+
+  const res = await api.post<GameSubmission>(`/tournaments/${tournamentId}/games/${gameId}/submission`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+    timeout: 0,
+    onUploadProgress: (event) => {
+      if (event.total) onProgress?.(Math.round((event.loaded * 100) / event.total));
+    },
+  });
+  return res.data;
+}
+
+export interface ReviewGame {
+  gameId: string;
+  matchId: string;
+  stage: "group" | "knockout";
+  groupLabel: string | null;
+  roundName: string;
+  slot: number;
+  isDecider: boolean;
+  status: FixtureGameStatus;
+  entrantA: string;
+  entrantB: string;
+  playerA: { userId: string | null; name: string; dpUrl: string | null };
+  playerB: { userId: string | null; name: string; dpUrl: string | null };
+  goalsA: number | null;
+  goalsB: number | null;
+  reviewNote: string | null;
+  submissions: GameSubmission[];
+}
+
+export interface ReviewDecision {
+  action: "approve" | "reject";
+  goalsA?: number;
+  goalsB?: number;
+  note?: string;
+  /** Knockout fixture that ends level: winner of the decider. */
+  deciderWinner?: "A" | "B";
+}
+
+export interface ReviewResult {
+  game: ReviewGame;
+  /** needs_decider: the knockout fixture is level — approve again with a decider winner. */
+  fixture: "pending" | "needs_decider" | "completed";
+}
+
+/** Officials only: games with evidence waiting for review. */
+export async function getReviewQueue(tournamentId: string): Promise<ReviewGame[]> {
+  const res = await api.get<ReviewGame[]>(`/tournaments/${tournamentId}/review-queue`);
+  return res.data;
+}
+
+export async function getGameForReview(tournamentId: string, gameId: string): Promise<ReviewGame> {
+  const res = await api.get<ReviewGame>(`/tournaments/${tournamentId}/games/${gameId}/review`);
+  return res.data;
+}
+
+export async function reviewGame(tournamentId: string, gameId: string, decision: ReviewDecision): Promise<ReviewResult> {
+  const res = await api.post<ReviewResult>(`/tournaments/${tournamentId}/games/${gameId}/review`, decision);
   return res.data;
 }
 

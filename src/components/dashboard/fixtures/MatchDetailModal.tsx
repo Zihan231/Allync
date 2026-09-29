@@ -1,34 +1,64 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Avatar } from "@/components/common/Avatar";
 import { CloseIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
-import type { Fixture } from "@/lib/api/tournaments";
+import type { Fixture, FixtureGame } from "@/lib/api/tournaments";
+import { SubmitResultModal } from "./SubmitResultModal";
 import { EntrantBadge } from "./EntrantBadge";
 import { FIXTURE_STATUS_CLASSES, GAME_STATUS_CLASSES, fixtureStatusLabel, gameStatusLabel, roundLabel } from "./labels";
 
-/** A fixture with every 1v1 game inside it. Mount only while open. */
+/**
+ * A fixture with every 1v1 game inside it. The viewer's own games (as the
+ * player, or as an official of that side's club) get a Submit result action.
+ * Mount only while open.
+ */
 export function MatchDetailModal({
   match,
   isCvC,
+  tournamentId,
+  viewerUserId,
+  officialParticipantId,
   onClose,
+  onSubmitted,
+  onReviewGame,
 }: {
   match: Fixture;
   isCvC: boolean;
+  tournamentId: string;
+  viewerUserId?: string | null;
+  /** Participant (club) the viewer may submit for as a club official. */
+  officialParticipantId?: string | null;
   onClose: () => void;
+  onSubmitted?: (message: string) => void;
+  /** Officials: open the review screen for a game (also used to record forfeits). */
+  onReviewGame?: (gameId: string) => void;
 }) {
   const { t } = useLanguage();
   const f = t.dashboard.fixtures;
+  const r = t.dashboard.results;
+  const [submittingGame, setSubmittingGame] = useState<{ game: FixtureGame; resubmit: boolean } | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      // Escape belongs to the submit popup while it is open.
+      if (e.key === "Escape" && !submittingGame) onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, submittingGame]);
+
+  const fixtureOpen = match.status === "scheduled" || match.status === "in_review";
+  const sideFor = (game: FixtureGame): "A" | "B" | null => {
+    if (!fixtureOpen || game.status === "approved") return null;
+    if (viewerUserId && game.playerA.userId === viewerUserId) return "A";
+    if (viewerUserId && game.playerB.userId === viewerUserId) return "B";
+    if (officialParticipantId && match.participantA?.participantId === officialParticipantId) return "A";
+    if (officialParticipantId && match.participantB?.participantId === officialParticipantId) return "B";
+    return null;
+  };
 
   const heading = match.groupLabel
     ? `${format(f.group, { label: match.groupLabel })} · ${roundLabel(match.roundName, t)}`
@@ -91,11 +121,18 @@ export function MatchDetailModal({
           <div className="border-t border-surface-line px-6 py-5">
             <h4 className="mb-3 font-mono text-[11px] font-bold uppercase tracking-wider text-ink-soft">{f.gamesTitle}</h4>
             <ol className="space-y-2">
-              {match.games.map((game) => (
+              {match.games.map((game) => {
+                const mySide = sideFor(game);
+                const iSubmitted = mySide ? game.submittedSides.includes(mySide) : false;
+                const opponentSubmitted = mySide ? game.submittedSides.some((side) => side !== mySide) : false;
+                return (
                 <li
                   key={game.id}
-                  className="grid grid-cols-[auto_1fr_auto_1fr] items-center gap-3 rounded-xl border border-surface-line bg-surface/60 px-3 py-2"
+                  className={`rounded-xl border px-3 py-2 ${
+                    mySide ? "border-accent/50 bg-accent-soft/30" : "border-surface-line bg-surface/60"
+                  }`}
                 >
+                  <div className="grid grid-cols-[auto_1fr_auto_1fr] items-center gap-3">
                   <span className="w-12 font-mono text-[10px] text-ink-faint">
                     {game.isDecider ? f.decider : format(f.game, { number: game.slot })}
                   </span>
@@ -115,12 +152,60 @@ export function MatchDetailModal({
                     <span className="truncate text-right text-xs font-semibold text-ink">{game.playerB.name}</span>
                     <Avatar dpUrl={game.playerB.dpUrl} name={game.playerB.name} size="sm" mode="static" />
                   </span>
+                  </div>
+
+                  {onReviewGame && fixtureOpen && game.status !== "approved" ? (
+                    <div className="mt-2 flex items-center justify-end border-t border-surface-line/70 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => onReviewGame(game.id)}
+                        className="rounded-full border border-warning/50 bg-warning-soft px-4 py-1.5 text-xs font-bold text-warning-ink transition-colors hover:bg-warning hover:text-bg"
+                      >
+                        {t.dashboard.review.review}
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {mySide ? (
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-surface-line/70 pt-2">
+                      <div className="space-y-0.5 text-[11px]">
+                        {game.status === "rejected" ? (
+                          <p className="font-semibold text-danger-ink">
+                            {game.reviewNote ? format(r.rejectedNote, { note: game.reviewNote }) : r.rejectedNoNote}
+                          </p>
+                        ) : iSubmitted ? (
+                          <p className="font-semibold text-warning-ink">{r.submittedAwaiting}</p>
+                        ) : (
+                          <p className="font-semibold text-accent-ink">{r.yourGame}</p>
+                        )}
+                        {opponentSubmitted ? <p className="text-ink-faint">{r.opponentSubmitted}</p> : null}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSubmittingGame({ game, resubmit: iSubmitted })}
+                        className="rounded-full bg-accent px-4 py-1.5 font-display text-xs font-bold text-bg transition-transform hover:-translate-y-0.5"
+                      >
+                        {iSubmitted || game.status === "rejected" ? r.resubmit : r.submit}
+                      </button>
+                    </div>
+                  ) : null}
                 </li>
-              ))}
+                );
+              })}
             </ol>
           </div>
         ) : null}
       </div>
+
+      {submittingGame ? (
+        <SubmitResultModal
+          tournamentId={tournamentId}
+          game={submittingGame.game}
+          isResubmission={submittingGame.resubmit}
+          onClose={() => setSubmittingGame(null)}
+          onSubmitted={(message) => onSubmitted?.(message)}
+        />
+      ) : null}
     </div>
   );
 }
