@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CloseIcon, UsersIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
-import { useJoinTournament, useSubmitTournamentLineup } from "@/lib/api/hooks/useTournaments";
+import { useClubCommitments, useJoinTournament, useSubmitTournamentLineup } from "@/lib/api/hooks/useTournaments";
 import type { ClubMemberProfile, Team } from "@/lib/api/teams";
 import type { BackendTournament, SubmitLineupPayload, TournamentParticipant } from "@/lib/api/tournaments";
 import { TeamSubmissionForm } from "./TeamSubmissionForm";
@@ -45,6 +45,12 @@ export function TeamSubmissionModal({
   const lineupMutation = useSubmitTournamentLineup(tournament.id);
   const isPending = joinMutation.isPending || lineupMutation.isPending;
   const [error, setError] = useState("");
+  // Players already in another active tournament can't be picked.
+  const commitments = useClubCommitments(tournament.id, club.id);
+  const lockedIn = useMemo(
+    () => new Map((commitments.data ?? []).map((c) => [c.profileId, c.tournamentName])),
+    [commitments.data],
+  );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -119,7 +125,7 @@ export function TeamSubmissionModal({
         </div>
 
         <div className="px-6 py-5">
-          {isLoadingSquad ? (
+          {isLoadingSquad || commitments.isLoading ? (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-ink-faint">
               <div className="h-7 w-7 animate-spin rounded-full border-2 border-accent border-t-transparent" />
               <span className="text-xs">{ts.loadingSquad}</span>
@@ -130,6 +136,7 @@ export function TeamSubmissionModal({
               subsCount={tournament.subsCount}
               members={members}
               teams={teams}
+              lockedIn={lockedIn}
               initialLineup={participant?.lineup}
               submitLabel={isEditing ? ts.updateSubmit : ts.registerSubmit}
               submittingLabel={isEditing ? ts.updating : ts.registering}

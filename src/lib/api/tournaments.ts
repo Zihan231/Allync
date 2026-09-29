@@ -239,6 +239,21 @@ export async function joinTournament(
   return res.data;
 }
 
+/** A club member already taking part in another active tournament. */
+export interface PlayerCommitment {
+  profileId: string;
+  tournamentId: string;
+  tournamentName: string;
+}
+
+/** Members of `clubId` who can't be picked because they play in another active tournament. */
+export async function getClubCommitments(tournamentId: string, clubId: string): Promise<PlayerCommitment[]> {
+  const res = await api.get<PlayerCommitment[]>(`/tournaments/${tournamentId}/club-commitments`, {
+    params: { clubId },
+  });
+  return res.data;
+}
+
 export async function submitTournamentLineup(
   tournamentId: string,
   participantId: string,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckIcon, CloseIcon, SearchIcon, ShieldIcon } from "@/components/icons";
+import { CheckIcon, CloseIcon, LockIcon, SearchIcon, ShieldIcon } from "@/components/icons";
 import { Avatar } from "@/components/common/Avatar";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format, roleLabel } from "@/lib/i18n/translations";
@@ -14,12 +14,14 @@ type Role = "starter" | "sub";
  * Picks a tournament team that must match the preset exactly: `startersCount`
  * starters and `subsCount` substitutes, chosen from the club's members.
  * A saved squad (Team A/B…) can be loaded as a starting point and then tweaked.
+ * Players already in another active tournament (`lockedIn`) can't be picked.
  */
 export function TeamSubmissionForm({
   startersCount,
   subsCount,
   members,
   teams,
+  lockedIn,
   initialLineup,
   submitLabel,
   submittingLabel,
@@ -31,6 +33,8 @@ export function TeamSubmissionForm({
   subsCount: number;
   members: ClubMemberProfile[];
   teams: Team[];
+  /** profileId → name of the other active tournament the player is registered in. */
+  lockedIn?: Map<string, string>;
   initialLineup?: { starters: TournamentLineupPlayer[]; substitutes: TournamentLineupPlayer[] } | null;
   submitLabel: string;
   submittingLabel: string;
@@ -58,7 +62,9 @@ export function TeamSubmissionForm({
 
   const startersLeft = Math.max(0, startersCount - starterIds.length);
   const subsLeft = Math.max(0, subsCount - subIds.length);
+  const lockedSelected = [...starterIds, ...subIds].some((id) => lockedIn?.has(id));
   const isComplete = startersLeft === 0 && subsLeft === 0;
+  const canSubmit = isComplete && !lockedSelected;
 
   const roleOf = (id: string): Role | null =>
     starterIds.includes(id) ? "starter" : subIds.includes(id) ? "sub" : null;
@@ -80,15 +86,16 @@ export function TeamSubmissionForm({
   }
 
   function loadTeam(team: Team) {
+    const pickable = (id: string) => memberIds.has(id) && !lockedIn?.has(id);
     const starters = team.members.filter((m) => m.lineupStatus === "Starter").map((m) => m.id);
     const subs = team.members.filter((m) => m.lineupStatus === "Sub").map((m) => m.id);
-    setStarterIds(starters.filter((id) => memberIds.has(id)).slice(0, startersCount));
-    setSubIds(subs.filter((id) => memberIds.has(id)).slice(0, subsCount));
+    setStarterIds(starters.filter(pickable).slice(0, startersCount));
+    setSubIds(subs.filter(pickable).slice(0, subsCount));
     setLoadedTeam({ id: team.id, name: team.name });
   }
 
   function handleSubmit() {
-    if (!isComplete || isSubmitting) return;
+    if (!canSubmit || isSubmitting) return;
     const toPlayer = (id: string): TournamentLineupPlayer => {
       const m = memberById.get(id);
       return {
@@ -107,11 +114,16 @@ export function TeamSubmissionForm({
   }
 
   const query = search.trim().toLowerCase();
-  const visibleMembers = query
+  const lockedCount = members.filter((m) => lockedIn?.has(m.id)).length;
+  // Available players first; locked ones sink to the bottom of the list.
+  const visibleMembers = (query
     ? members.filter(
         (m) => nameOf(m).toLowerCase().includes(query) || (m.gamePosition ?? "").toLowerCase().includes(query),
       )
-    : members;
+    : members
+  )
+    .slice()
+    .sort((a, b) => Number(lockedIn?.has(a.id) ?? false) - Number(lockedIn?.has(b.id) ?? false));
 
   return (
     <div className="space-y-5">
@@ -167,7 +179,14 @@ export function TeamSubmissionForm({
         {/* Player picker */}
         <div className="rounded-2xl border border-surface-line bg-surface/40 p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h4 className="font-display text-sm font-bold text-ink">{ts.pickPlayers}</h4>
+            <h4 className="flex items-center gap-2 font-display text-sm font-bold text-ink">
+              {ts.pickPlayers}
+              {lockedCount ? (
+                <span className="rounded-full bg-warning-soft px-2 py-0.5 font-mono text-[10px] font-bold text-warning-ink">
+                  {format(ts.lockedCount, { count: lockedCount })}
+                </span>
+              ) : null}
+            </h4>
             {members.length > 8 ? (
               <div className="relative sm:w-56">
                 <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint" />
@@ -182,6 +201,13 @@ export function TeamSubmissionForm({
             ) : null}
           </div>
 
+          {lockedCount ? (
+            <p className="mt-3 flex items-start gap-2 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2 text-[11px] leading-relaxed text-warning-ink">
+              <LockIcon className="mt-px h-3.5 w-3.5 shrink-0" />
+              {ts.oneTournamentRule}
+            </p>
+          ) : null}
+
           {members.length === 0 ? (
             <p className="mt-4 rounded-xl border border-dashed border-surface-line py-8 text-center text-xs text-ink-faint">
               {ts.noMembers}
@@ -192,15 +218,20 @@ export function TeamSubmissionForm({
             <ul className="mt-3 max-h-[26rem] space-y-1.5 overflow-y-auto pr-1">
               {visibleMembers.map((member) => {
                 const role = roleOf(member.id);
+                const lockedTournament = lockedIn?.get(member.id);
                 return (
                   <li
                     key={member.id}
                     className={`flex items-center gap-3 rounded-xl border px-3 py-2 transition-colors ${
-                      role === "starter"
-                        ? "border-success/50 bg-success-soft"
-                        : role === "sub"
-                          ? "border-blue/50 bg-blue-soft"
-                          : "border-surface-line bg-bg/40"
+                      lockedTournament && role
+                        ? "border-danger/50 bg-danger-soft"
+                        : lockedTournament
+                          ? "border-surface-line bg-bg/40 opacity-60"
+                          : role === "starter"
+                            ? "border-success/50 bg-success-soft"
+                            : role === "sub"
+                              ? "border-blue/50 bg-blue-soft"
+                              : "border-surface-line bg-bg/40"
                     }`}
                   >
                     <Avatar dpUrl={member.user?.dpUrl} name={nameOf(member)} size="md" mode="static" />
@@ -226,19 +257,25 @@ export function TeamSubmissionForm({
                           <span className="text-ink-soft">{teamNameById.get(member.teamId)}</span>
                         ) : null}
                       </div>
+                      {lockedTournament ? (
+                        <div className="mt-1 flex min-w-0 items-center gap-1 text-[10px] font-bold text-warning-ink">
+                          <LockIcon className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{format(ts.lockedIn, { tournament: lockedTournament })}</span>
+                        </div>
+                      ) : null}
                     </div>
                     <div className="flex shrink-0 overflow-hidden rounded-lg border border-surface-line-strong">
                       <RoleButton
                         label={ts.asStarter}
                         active={role === "starter"}
-                        disabled={role !== "starter" && startersLeft === 0}
+                        disabled={role !== "starter" && (startersLeft === 0 || Boolean(lockedTournament))}
                         activeClass="bg-success text-bg"
                         onClick={() => toggle(member.id, "starter")}
                       />
                       <RoleButton
                         label={ts.asSub}
                         active={role === "sub"}
-                        disabled={role !== "sub" && subsLeft === 0}
+                        disabled={role !== "sub" && (subsLeft === 0 || Boolean(lockedTournament))}
                         activeClass="bg-blue text-bg"
                         onClick={() => toggle(member.id, "sub")}
                       />
@@ -291,13 +328,21 @@ export function TeamSubmissionForm({
       ) : null}
 
       <div className="flex flex-col gap-3 border-t border-surface-line pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className={`text-xs font-semibold ${isComplete ? "text-success-ink" : "text-ink-faint"}`}>
-          {isComplete ? ts.ready : format(ts.needMore, { starters: startersLeft, subs: subsLeft })}
+        <p
+          className={`text-xs font-semibold ${
+            lockedSelected ? "text-danger-ink" : isComplete ? "text-success-ink" : "text-ink-faint"
+          }`}
+        >
+          {lockedSelected
+            ? ts.lockedSelected
+            : isComplete
+              ? ts.ready
+              : format(ts.needMore, { starters: startersLeft, subs: subsLeft })}
         </p>
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!isComplete || isSubmitting}
+          disabled={!canSubmit || isSubmitting}
           className="rounded-full bg-accent px-7 py-3 font-display text-sm font-black text-bg shadow-[0_0_22px_rgba(217,165,68,0.35)] transition-all hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-40 disabled:shadow-none"
         >
           {isSubmitting ? submittingLabel : submitLabel}

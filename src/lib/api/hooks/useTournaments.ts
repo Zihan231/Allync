@@ -5,6 +5,7 @@ import {
   createTournament,
   joinTournament,
   submitTournamentLineup,
+  getClubCommitments,
   generateTournamentBracket,
   getTournamentStructure,
   submitGameResult,
@@ -28,6 +29,7 @@ import {
   type ReviewGame,
   type ReviewDecision,
   type ReviewResult,
+  type PlayerCommitment,
 } from "../tournaments";
 
 export const tournamentKeys = {
@@ -37,6 +39,7 @@ export const tournamentKeys = {
   structure: (id: string) => ["tournaments", "structure", id] as const,
   reviewQueue: (id: string) => ["tournaments", "review-queue", id] as const,
   reviewGame: (id: string, gameId: string) => ["tournaments", "review-game", id, gameId] as const,
+  clubCommitments: (id: string, clubId: string) => ["tournaments", "club-commitments", id, clubId] as const,
 };
 
 /**
@@ -165,6 +168,16 @@ export function useSubmitGameResult(tournamentId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tournamentKeys.structure(tournamentId) });
     },
+  });
+}
+
+/** Club members already playing in another active tournament (locked in the team picker). */
+export function useClubCommitments(tournamentId: string, clubId: string, enabled = true) {
+  return useQuery<PlayerCommitment[]>({
+    queryKey: tournamentKeys.clubCommitments(tournamentId, clubId),
+    queryFn: () => getClubCommitments(tournamentId, clubId),
+    enabled: enabled && Boolean(tournamentId && clubId),
+    staleTime: 1000 * 30,
   });
 }
 
