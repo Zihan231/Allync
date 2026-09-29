@@ -348,6 +348,8 @@ export function TournamentDetailView({
           ? td.tomorrow
           : format(td.inDays, { days: daysUntilStart })
       : td.started;
+  // Once the tournament is live (or over), organizers can no longer edit or delete it.
+  const isLocked = msUntilStart <= 0 || isOngoing || isCompleted || rawStatus === "cancelled";
 
   // Capacity calculations
   const participantsCount = tournament.participants?.length || 0;
@@ -464,17 +466,15 @@ export function TournamentDetailView({
 
           {/* Status Indicator + organizer actions */}
           <div className="flex flex-wrap items-center justify-end gap-2">
-            {isOrganizer ? (
+            {isOrganizer && !isLocked ? (
               <>
-                {!isCompleted ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowEditModal(true)}
-                    className="inline-flex items-center rounded-full border border-accent/40 bg-accent-soft px-3.5 py-1 text-xs font-bold text-accent-ink transition-colors hover:bg-accent hover:text-bg"
-                  >
-                    {tm.edit}
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(true)}
+                  className="inline-flex items-center rounded-full border border-accent/40 bg-accent-soft px-3.5 py-1 text-xs font-bold text-accent-ink transition-colors hover:bg-accent hover:text-bg"
+                >
+                  {tm.edit}
+                </button>
                 <button
                   type="button"
                   onClick={handleDeleteTournament}
@@ -1262,7 +1262,7 @@ export function TournamentDetailView({
         />
       ) : null}
 
-      {isOrganizer && showEditModal ? (
+      {isOrganizer && !isLocked && showEditModal ? (
         <EditTournamentModal
           onClose={() => setShowEditModal(false)}
           onSaved={(message) => {
