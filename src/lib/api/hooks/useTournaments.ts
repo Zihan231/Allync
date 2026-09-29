@@ -11,6 +11,8 @@ import {
   getReviewQueue,
   getGameForReview,
   reviewGame,
+  requestTimeChange,
+  respondTimeChange,
   updateTournament,
   deleteTournament,
   type BackendTournament,
@@ -196,5 +198,21 @@ export function useReviewGame(tournamentId: string) {
       queryClient.invalidateQueries({ queryKey: tournamentKeys.detail(tournamentId) });
       queryClient.invalidateQueries({ queryKey: ["tournaments", "review-game", tournamentId] });
     },
+  });
+}
+
+export function useRequestTimeChange(tournamentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, Error, { gameId: string; proposedStart: string }>({
+    mutationFn: ({ gameId, proposedStart }) => requestTimeChange(tournamentId, gameId, proposedStart),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tournamentKeys.structure(tournamentId) }),
+  });
+}
+
+export function useRespondTimeChange(tournamentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, Error, { requestId: string; accept: boolean }>({
+    mutationFn: ({ requestId, accept }) => respondTimeChange(tournamentId, requestId, accept),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tournamentKeys.structure(tournamentId) }),
   });
 }

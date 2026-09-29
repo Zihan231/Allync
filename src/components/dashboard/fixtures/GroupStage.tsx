@@ -6,6 +6,7 @@ import type { Fixture, TournamentStructure } from "@/lib/api/tournaments";
 import { EntrantBadge } from "./EntrantBadge";
 import { MatchCard } from "./MatchCard";
 import { roundLabel } from "./labels";
+import { useNow } from "./useNow";
 
 /** One card per group: the table (top 2 marked as qualifying) and its fixtures by matchday. */
 export function GroupStage({
@@ -21,6 +22,7 @@ export function GroupStage({
 }) {
   const { t } = useLanguage();
   const f = t.dashboard.fixtures;
+  const now = useNow();
 
   return (
     <div className="grid gap-6 xl:grid-cols-2">
@@ -101,6 +103,7 @@ export function GroupStage({
                           key={match.id}
                           match={match}
                           isCvC={isCvC}
+                          now={now}
                           highlightParticipantId={highlightParticipantId}
                           onOpen={onOpenMatch}
                         />

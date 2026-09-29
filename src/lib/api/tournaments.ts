@@ -124,6 +124,9 @@ export interface BackendTournament {
   bracket: TournamentBracket | null;
   /** Set once fixtures are generated. */
   format?: TournamentFormat | null;
+  /** Daily play hours, minutes after midnight (Bangladesh time); null = 19:00–01:00. */
+  playHoursStart?: number | null;
+  playHoursEnd?: number | null;
   /** Returned by the list endpoint instead of the full participants array. */
   participantCount?: number;
   createdAt: string;
@@ -167,6 +170,8 @@ export interface CreateTournamentPayload {
   startAt: string;
   endAt?: string;
   communityId: string;
+  playHoursStart?: number;
+  playHoursEnd?: number;
 }
 
 export interface SubmitLineupPayload {
@@ -209,6 +214,8 @@ export interface UpdateTournamentPayload {
   prizePoolBdt?: number;
   startAt?: string;
   endAt?: string | null;
+  playHoursStart?: number;
+  playHoursEnd?: number;
 }
 
 export async function updateTournament(
@@ -261,7 +268,21 @@ export interface FixtureGamePlayer {
   dpUrl: string | null;
 }
 
-export type FixtureGameStatus = "pending" | "submitted" | "approved" | "rejected";
+export type FixtureGameStatus =
+  | "pending"
+  | "awaiting_opponent"
+  | "submitted"
+  | "approved"
+  | "rejected"
+  | "walkover"
+  | "forfeited";
+export type FixtureGameResolution = "reviewed" | "official" | "walkover" | "double_forfeit";
+
+export interface PendingTimeRequest {
+  id: string;
+  requestedByUserId: string;
+  proposedStart: string;
+}
 export type FixtureStatus = "scheduled" | "in_review" | "completed" | "bye";
 
 export interface FixtureGame {
@@ -277,6 +298,13 @@ export interface FixtureGame {
   submittedSides: Array<"A" | "B">;
   /** Official's note when a submission was rejected. */
   reviewNote: string | null;
+  resolution: FixtureGameResolution | null;
+  /** 3-hour playing range; evidence upload closes at `evidenceDeadline`. */
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
+  systemScheduledStart: string | null;
+  evidenceDeadline: string | null;
+  pendingTimeRequest: PendingTimeRequest | null;
 }
 
 export interface Fixture {
@@ -294,6 +322,8 @@ export interface Fixture {
   goalsA: number | null;
   goalsB: number | null;
   winnerParticipantId: string | null;
+  /** Neither side uploaded evidence: both lose. */
+  doubleForfeit: boolean;
   games: FixtureGame[];
 }
 
@@ -404,6 +434,18 @@ export interface ReviewResult {
   game: ReviewGame;
   /** needs_decider: the knockout fixture is level — approve again with a decider winner. */
   fixture: "pending" | "needs_decider" | "completed";
+}
+
+/** A player proposes a new start time (same date) for their game. */
+export async function requestTimeChange(tournamentId: string, gameId: string, proposedStart: string) {
+  const res = await api.post(`/tournaments/${tournamentId}/games/${gameId}/time-request`, { proposedStart });
+  return res.data;
+}
+
+/** The opponent accepts or declines a proposed time. */
+export async function respondTimeChange(tournamentId: string, requestId: string, accept: boolean) {
+  const res = await api.post(`/tournaments/${tournamentId}/time-requests/${requestId}/respond`, { accept });
+  return res.data;
 }
 
 /** Officials only: games with evidence waiting for review. */

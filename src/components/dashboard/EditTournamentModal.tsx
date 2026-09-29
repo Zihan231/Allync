@@ -8,6 +8,12 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
 import { useUpdateTournament } from "@/lib/api/hooks/useTournaments";
 import type { BackendTournament, UpdateTournamentPayload } from "@/lib/api/tournaments";
+import {
+  DEFAULT_PLAY_HOURS,
+  minutesToTimeInput,
+  playHoursError,
+  timeInputToMinutes,
+} from "./fixtures/labels";
 
 const LINEUP_CUTOFF_MS = 2 * 60 * 60 * 1000;
 
@@ -49,6 +55,8 @@ export function EditTournamentModal({
   const [isPaid, setIsPaid] = useState(tournament.entryFeeBdt > 0);
   const [entryFee, setEntryFee] = useState(String(tournament.entryFeeBdt || 0));
   const [prizePool, setPrizePool] = useState(String(tournament.prizePoolBdt || 0));
+  const [playStart, setPlayStart] = useState(minutesToTimeInput(tournament.playHoursStart ?? DEFAULT_PLAY_HOURS.start));
+  const [playEnd, setPlayEnd] = useState(minutesToTimeInput(tournament.playHoursEnd ?? DEFAULT_PLAY_HOURS.end));
   const [submitError, setSubmitError] = useState("");
   // Reference time for the 2-hour rule, fixed when the dialog opens.
   const [openedAt] = useState(() => Date.now());
@@ -91,8 +99,15 @@ export function EditTournamentModal({
       ? tm.errEndBeforeStart
       : null;
   const entryFeeError = isPaid && entryFee === "" ? tm.errAmount : null;
+  const ts = t.dashboard.schedule;
+  const fixturesExist = Boolean(tournament.format);
+  const playStartMin = playStart ? timeInputToMinutes(playStart) : NaN;
+  const playEndMin = playEnd ? timeInputToMinutes(playEnd) : NaN;
+  const playHoursProblem =
+    fixturesExist ? null : Number.isNaN(playStartMin) || Number.isNaN(playEndMin) ? ts.errPlayHoursShort : playHoursError(playStartMin, playEndMin, t);
   const prizePoolError = prizePool === "" ? tm.errAmount : null;
-  const firstError = nameError || capacityError || startError || endError || entryFeeError || prizePoolError;
+  const firstError =
+    nameError || capacityError || startError || endError || entryFeeError || prizePoolError || playHoursProblem;
 
   async function handleSave() {
     setSubmitError("");
@@ -103,7 +118,12 @@ export function EditTournamentModal({
 
     const nextEntryFee = isPaid ? Number(entryFee) : 0;
     const nextPrizePool = Number(prizePool);
+    const playHoursChanged =
+      !fixturesExist &&
+      (playStartMin !== (tournament.playHoursStart ?? DEFAULT_PLAY_HOURS.start) ||
+        playEndMin !== (tournament.playHoursEnd ?? DEFAULT_PLAY_HOURS.end));
     const changedFields = [
+      playHoursChanged && ts.playHours.toLowerCase(),
       name.trim() !== tournament.name && tm.fieldName,
       capacityNumber !== tournament.maxParticipants && tm.fieldCapacity,
       startChanged && tm.fieldStart,
@@ -135,6 +155,10 @@ export function EditTournamentModal({
     // Only send the start time when it was changed, so an untouched past-due
     // start isn't re-validated against the 2-hour rule.
     if (startChanged) payload.startAt = new Date(startAt).toISOString();
+    if (playHoursChanged) {
+      payload.playHoursStart = playStartMin;
+      payload.playHoursEnd = playEndMin;
+    }
 
     try {
       await updateMutation.mutateAsync(payload);
@@ -285,6 +309,33 @@ export function EditTournamentModal({
                 {errorText(prizePoolError)}
               </label>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-surface-line bg-bg/40 p-4">
+            <div className="text-xs font-semibold text-ink">{ts.playHours}</div>
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">
+              {fixturesExist ? ts.playHoursLocked : ts.playHoursHint}
+            </p>
+            <div className="mt-3 grid max-w-sm grid-cols-2 gap-3">
+              {[
+                { label: ts.playHoursFrom, value: playStart, set: setPlayStart },
+                { label: ts.playHoursTo, value: playEnd, set: setPlayEnd },
+              ].map((field) => (
+                <label key={field.label} className="block">
+                  <span className="text-xs text-ink-soft">{field.label}</span>
+                  <input
+                    type="time"
+                    step={1800}
+                    value={field.value}
+                    disabled={fixturesExist}
+                    onChange={(e) => field.set(e.target.value)}
+                    aria-invalid={playHoursProblem !== null}
+                    className={`${fieldClass} disabled:opacity-50 ${invalidClass(playHoursProblem)}`}
+                  />
+                </label>
+              ))}
+            </div>
+            {errorText(playHoursProblem)}
           </div>
 
           <p className="text-xs text-ink-faint">{tm.formatLocked}</p>

@@ -19,7 +19,6 @@ export function TournamentFixtures({
   entrantCount,
   myParticipantId,
   viewerUserId,
-  officialParticipantId,
   isReviewer = false,
   onResultSubmitted,
 }: {
@@ -27,8 +26,6 @@ export function TournamentFixtures({
   entrantCount: number;
   myParticipantId?: string | null;
   viewerUserId?: string | null;
-  /** The viewer's club entry when they may submit results for it (President / GS / Manager). */
-  officialParticipantId?: string | null;
   /** Tournament creator, community President / VP or Head of Discipline. */
   isReviewer?: boolean;
   onResultSubmitted?: (message: string) => void;
@@ -39,6 +36,9 @@ export function TournamentFixtures({
   // Notification links open a fixture directly (?match=<id>).
   const searchParams = useSearchParams();
   const [openMatchId, setOpenMatchId] = useState<string | null>(() => searchParams.get("match"));
+  // Timing notifications also point at a game and its timing panel (&game=…&panel=time).
+  const focusGameId = searchParams.get("game");
+  const focusPanel = searchParams.get("panel");
   const [reviewGameId, setReviewGameId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -112,9 +112,10 @@ export function TournamentFixtures({
           isCvC={structure.isCvC}
           tournamentId={tournamentId}
           viewerUserId={viewerUserId}
-          officialParticipantId={officialParticipantId}
+          focusGameId={openMatch.id === searchParams.get("match") ? focusGameId : null}
+          focusPanel={focusPanel}
           onClose={() => setOpenMatchId(null)}
-          onSubmitted={onResultSubmitted}
+          onMessage={onResultSubmitted}
           onReviewGame={
             isReviewer
               ? (gameId) => {

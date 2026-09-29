@@ -6,6 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
+import {
+  DEFAULT_PLAY_HOURS,
+  minutesToTimeInput,
+  playHoursError,
+  timeInputToMinutes,
+} from "@/components/dashboard/fixtures/labels";
 import { useSession } from "@/lib/session/SessionContext";
 import { getCommunities } from "@/lib/api/communities";
 import { useCreateTournament } from "@/lib/api/hooks/useTournaments";
@@ -188,6 +194,11 @@ function CreateTournamentForm() {
   // Schedule
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
+  const [playStart, setPlayStart] = useState(minutesToTimeInput(DEFAULT_PLAY_HOURS.start));
+  const [playEnd, setPlayEnd] = useState(minutesToTimeInput(DEFAULT_PLAY_HOURS.end));
+  const ts = t.dashboard.schedule;
+  const playHoursProblem =
+    playStart && playEnd ? playHoursError(timeInputToMinutes(playStart), timeInputToMinutes(playEnd), t) : ts.errPlayHoursShort;
 
   // Financials
   const [isPaid, setIsPaid] = useState(false);
@@ -292,6 +303,11 @@ function CreateTournamentForm() {
       return;
     }
 
+    if (playHoursProblem) {
+      setErrorMessage(playHoursProblem);
+      return;
+    }
+
     if (participantsError) {
       setErrorMessage(participantsError);
       return;
@@ -311,6 +327,8 @@ function CreateTournamentForm() {
         prizePoolBdt: prizePoolBdt > 0 ? prizePoolBdt : 0,
         startAt: startDate.toISOString(),
         endAt: endAt ? new Date(endAt).toISOString() : undefined,
+        playHoursStart: timeInputToMinutes(playStart),
+        playHoursEnd: timeInputToMinutes(playEnd),
         communityId: effectiveCommunityId,
       });
 
@@ -631,6 +649,39 @@ function CreateTournamentForm() {
                     className={fieldClass}
                   />
                 </label>
+              </div>
+
+              {/* Daily play hours: where the system places each match's 3h range */}
+              <div className="rounded-xl border border-surface-line bg-bg/40 p-4">
+                <div className="text-xs font-semibold text-ink">{ts.playHours}</div>
+                <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">{ts.playHoursHint}</p>
+                <div className="mt-3 grid max-w-sm grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-xs text-ink-soft">{ts.playHoursFrom}</span>
+                    <input
+                      type="time"
+                      step={1800}
+                      value={playStart}
+                      onChange={(e) => setPlayStart(e.target.value)}
+                      aria-invalid={playHoursProblem !== null}
+                      className={`${fieldClass} ${playHoursProblem ? "border-danger focus:border-danger" : ""}`}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-ink-soft">{ts.playHoursTo}</span>
+                    <input
+                      type="time"
+                      step={1800}
+                      value={playEnd}
+                      onChange={(e) => setPlayEnd(e.target.value)}
+                      aria-invalid={playHoursProblem !== null}
+                      className={`${fieldClass} ${playHoursProblem ? "border-danger focus:border-danger" : ""}`}
+                    />
+                  </label>
+                </div>
+                {playHoursProblem ? (
+                  <p className="mt-1.5 text-xs font-semibold text-danger-ink" role="alert">{playHoursProblem}</p>
+                ) : null}
               </div>
 
               {/* Live Cutoff Highlight */}

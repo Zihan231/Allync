@@ -992,7 +992,6 @@ export function TournamentDetailView({
             entrantCount={participantsCount}
             myParticipantId={myParticipation?.id ?? null}
             viewerUserId={user?.id ?? null}
-            officialParticipantId={isCvC && canSubmitLineup ? myParticipation?.id ?? null : null}
             isReviewer={Boolean(isOrganizer || hostingCommunityRole === "Head of Discipline")}
             onResultSubmitted={(message) => {
               setActionError("");
