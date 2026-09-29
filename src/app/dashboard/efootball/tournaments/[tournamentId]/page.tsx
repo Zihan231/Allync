@@ -961,13 +961,19 @@ export function TournamentDetailView({
       </div>
 
       {/* NAVIGATION TABS WITH RADIANT ACCENTS */}
-      <div className="mt-10 flex w-full overflow-hidden border-b border-surface-line">
+      <div
+        className="mt-10 flex w-full gap-1.5 rounded-xl border border-surface-line bg-surface/60 p-1.5 shadow-inner"
+        role="tablist"
+        aria-label={`${td.tabBracket}, ${td.tabParticipants}, ${td.tabLineup}`}
+      >
         <button
           onClick={() => setActiveTab("bracket")}
-          className={`flex min-w-0 flex-1 items-center justify-center gap-1 border-b-2 px-1 py-3 font-display text-[10px] font-bold transition-all sm:flex-none sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-sm ${
+          role="tab"
+          aria-selected={activeTab === "bracket"}
+          className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border px-1 py-2 font-display text-[10px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:gap-2.5 sm:px-6 sm:text-sm ${
             activeTab === "bracket"
-              ? "border-accent text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.4)]"
-              : "border-transparent text-ink-soft hover:text-ink"
+              ? "border-accent bg-accent text-bg shadow-md shadow-accent/20"
+              : "border-surface-line bg-bg-raised text-ink-soft shadow-sm hover:border-accent/40 hover:bg-accent-soft hover:text-accent-ink"
           }`}
         >
           <BracketIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
@@ -976,10 +982,12 @@ export function TournamentDetailView({
 
         <button
           onClick={() => setActiveTab("participants")}
-          className={`flex min-w-0 flex-1 items-center justify-center gap-1 border-b-2 px-1 py-3 font-display text-[10px] font-bold transition-all sm:flex-none sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-sm ${
+          role="tab"
+          aria-selected={activeTab === "participants"}
+          className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border px-1 py-2 font-display text-[10px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:gap-2.5 sm:px-6 sm:text-sm ${
             activeTab === "participants"
-              ? "border-accent text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.4)]"
-              : "border-transparent text-ink-soft hover:text-ink"
+              ? "border-accent bg-accent text-bg shadow-md shadow-accent/20"
+              : "border-surface-line bg-bg-raised text-ink-soft shadow-sm hover:border-accent/40 hover:bg-accent-soft hover:text-accent-ink"
           }`}
         >
           <UsersIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
@@ -992,10 +1000,12 @@ export function TournamentDetailView({
         {isCvC && isRegistered && (
           <button
             onClick={() => setActiveTab("lineup")}
-            className={`flex min-w-0 flex-1 items-center justify-center gap-1 border-b-2 px-1 py-3 font-display text-[10px] font-bold transition-all sm:flex-none sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-sm ${
+            role="tab"
+            aria-selected={activeTab === "lineup"}
+            className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border px-1 py-2 font-display text-[10px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:gap-2.5 sm:px-6 sm:text-sm ${
               activeTab === "lineup"
-                ? "border-accent text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.4)]"
-                : "border-transparent text-ink-soft hover:text-ink"
+                ? "border-accent bg-accent text-bg shadow-md shadow-accent/20"
+                : "border-surface-line bg-bg-raised text-ink-soft shadow-sm hover:border-accent/40 hover:bg-accent-soft hover:text-accent-ink"
             }`}
           >
             <ShieldIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
