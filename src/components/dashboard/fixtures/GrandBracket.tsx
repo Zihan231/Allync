@@ -6,34 +6,36 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Fixture, FixtureEntrant, TournamentStructure } from "@/lib/api/tournaments";
 import { EntrantBadge } from "./EntrantBadge";
 import { fixtureKickoff } from "./MatchCard";
-import { formatMatchDate, formatMatchTime, gamePhase } from "./labels";
+import { formatMatchTime, formatShortDate, gamePhase } from "./labels";
 
 type Round = TournamentStructure["knockout"]["rounds"][number];
 
 /** Layout sizes (px). Compact is used on narrow screens: crest-only boxes, tighter spacing. */
 const REGULAR = {
-  pitch: 56, // vertical space per first-round entrant
-  nameW: 196, // first-round name box
-  nameH: 42,
-  crest: 56, // later-round crest box
-  gap: 72, // horizontal space for connectors between columns
+  pitch: 64, // vertical space per first-round entrant
+  nameW: 208, // first-round name box (crest + name + match date)
+  nameH: 52,
+  crestW: 76, // later-round crest box (crest + match date)
+  crestH: 84,
+  gap: 64, // horizontal space for connectors between columns
   centerW: 220, // trophy column
   titleH: 96,
-  minBodyH: 420,
-  finalist: 72,
-  finalistOffset: 120,
+  minBodyH: 460,
+  finalist: 88,
+  finalistOffset: 132,
 };
 const COMPACT = {
-  pitch: 44,
-  nameW: 40,
-  nameH: 40,
-  crest: 40,
-  gap: 34,
+  pitch: 60,
+  nameW: 50,
+  nameH: 56,
+  crestW: 50,
+  crestH: 56,
+  gap: 30,
   centerW: 116,
   titleH: 64,
-  minBodyH: 260,
-  finalist: 48,
-  finalistOffset: 74,
+  minBodyH: 300,
+  finalist: 60,
+  finalistOffset: 88,
 };
 /** Below this container width the compact layout is used. */
 const COMPACT_BELOW = 900;
@@ -55,9 +57,9 @@ interface Slot {
 
 /**
  * UEFA-style knockout draw: first-round entrants as name boxes on the outside,
- * later rounds as crest boxes converging on the trophy, round pills (with the
- * match date/time) on every junction, and the two finalists above and below
- * the trophy. Left half feeds the top finalist, right half the bottom one.
+ * later rounds as crest boxes converging on the trophy (every box shows its
+ * match date), round pills on every junction, and the two finalists above and
+ * below the trophy. Left half feeds the top finalist, right half the bottom one.
  */
 export function GrandBracket({
   rounds,
@@ -92,7 +94,8 @@ export function GrandBracket({
   const PITCH = G.pitch;
   const NAME_W = G.nameW;
   const NAME_H = G.nameH;
-  const CREST = G.crest;
+  const CREST_W = G.crestW;
+  const CREST_H = G.crestH;
   const GAP = G.gap;
   const CENTER_W = G.centerW;
   const TITLE_H = G.titleH;
@@ -114,8 +117,8 @@ export function GrandBracket({
   const leafOffset = (bodyH - leafCount * PITCH) / 2;
 
   // Column c (0 = outermost) holds the entrants of halfRounds[c].
-  const colX = (c: number) => (c === 0 ? 0 : NAME_W + GAP + (c - 1) * (CREST + GAP));
-  const colW = (c: number) => (c === 0 ? NAME_W : CREST);
+  const colX = (c: number) => (c === 0 ? 0 : NAME_W + GAP + (c - 1) * (CREST_W + GAP));
+  const colW = (c: number) => (c === 0 ? NAME_W : CREST_W);
   const halfW = halfRounds.length ? colX(halfRounds.length - 1) + colW(halfRounds.length - 1) + GAP : 0;
   const totalW = halfW * 2 + CENTER_W;
   const centerX = halfW + CENTER_W / 2;
@@ -144,7 +147,7 @@ export function GrandBracket({
     halfRounds.forEach((round, c) => {
       const ys = colY(c);
       const w = colW(c);
-      const h = c === 0 ? NAME_H : CREST;
+      const h = c === 0 ? NAME_H : CREST_H;
       slotsFor(round, half).forEach((slot, i) => {
         boxes.push({
           x: mirror(colX(c), w, half),
@@ -189,8 +192,29 @@ export function GrandBracket({
   ];
   const championId = final && (final.status === "completed" || final.status === "bye") ? final.winnerParticipantId : null;
   const finalLive = final?.games.some((g) => gamePhase(g, now) === "playing") ?? false;
-  const finalKickoff = final ? fixtureKickoff(final) : null;
   const isMine = (entrant: FixtureEntrant | null) => Boolean(entrant && entrant.participantId === highlightParticipantId);
+
+  /** Match date (and time, when there is room) shown inside each team box. */
+  const matchDate = (match: Fixture, layout: "inline" | "stacked") => {
+    const kickoff = fixtureKickoff(match);
+    if (!kickoff) return null;
+    const date = formatShortDate(kickoff, locale);
+    const time = formatMatchTime(kickoff, locale);
+    if (layout === "inline") {
+      return <span className="block truncate font-mono text-[10px] text-ink-soft">{`${date} · ${time}`}</span>;
+    }
+    return (
+      <span className={`block text-center font-mono leading-tight text-ink-soft ${compact ? "text-[8px]" : "text-[9px]"}`}>
+        {date}
+        {compact ? null : (
+          <>
+            <br />
+            {time}
+          </>
+        )}
+      </span>
+    );
+  };
   const isOut = (slot: Slot) => {
     const m = slot.match;
     if (m.status !== "completed" && m.status !== "bye") return false;
@@ -247,19 +271,27 @@ export function GrandBracket({
               onClick={() => onOpenMatch(box.slot.match)}
               title={box.slot.entrant?.name ?? undefined}
               style={{ left: box.x, top: box.y, width: box.w, height: box.h }}
-              className={`absolute flex items-center gap-2.5 overflow-hidden rounded-md border px-2.5 transition-all hover:z-10 hover:scale-[1.04] hover:border-accent focus-visible:outline-2 focus-visible:outline-accent ${tone} ${
-                box.kind === "crest" ? "justify-center px-0" : box.half === 1 ? "flex-row" : ""
+              className={`absolute flex items-center overflow-hidden rounded-md border transition-all hover:z-10 hover:scale-[1.04] hover:border-accent focus-visible:outline-2 focus-visible:outline-accent ${tone} ${
+                box.kind === "crest" ? "flex-col justify-center gap-0.5 px-0.5" : "gap-2.5 px-2.5"
               } ${out ? "opacity-45 grayscale" : ""} ${mine ? "ring-2 ring-accent shadow-[0_0_16px_-2px_rgba(217,165,68,0.7)]" : ""}`}
             >
               {box.slot.entrant ? (
-                <>
-                  <EntrantBadge entrant={box.slot.entrant} isCvC={isCvC} size={box.kind === "crest" ? "md" : "sm"} />
-                  {box.kind === "name" ? (
-                    <span className="min-w-0 truncate font-display text-sm font-bold uppercase tracking-wide text-ink">
-                      {box.slot.entrant.name}
+                box.kind === "name" ? (
+                  <>
+                    <EntrantBadge entrant={box.slot.entrant} isCvC={isCvC} size="sm" />
+                    <span className="min-w-0 flex-1 text-left">
+                      <span className="block truncate font-display text-sm font-bold uppercase tracking-wide text-ink">
+                        {box.slot.entrant.name}
+                      </span>
+                      {matchDate(box.slot.match, "inline")}
                     </span>
-                  ) : null}
-                </>
+                  </>
+                ) : (
+                  <>
+                    <EntrantBadge entrant={box.slot.entrant} isCvC={isCvC} size={compact ? "sm" : "md"} />
+                    {matchDate(box.slot.match, "stacked")}
+                  </>
+                )
               ) : (
                 <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink-faint">
                   {box.slot.isBye ? t.dashboard.fixtures.bye : t.dashboard.fixtures.tbd}
@@ -269,9 +301,8 @@ export function GrandBracket({
           );
         })}
 
-        {/* Round pills with date/time */}
+        {/* Round pills */}
         {pills.map((pill, i) => {
-          const kickoff = fixtureKickoff(pill.match);
           const live = pill.match.games.some((g) => gamePhase(g, now) === "playing");
           const scored = pill.match.scoreA !== null && pill.match.scoreB !== null;
           return (
@@ -290,11 +321,6 @@ export function GrandBracket({
               >
                 {pill.label}
               </span>
-              {kickoff && !compact ? (
-                <span className="mt-0.5 whitespace-nowrap rounded bg-bg/80 px-1 font-mono text-[9px] text-ink-faint">
-                  {formatMatchDate(kickoff, locale)} · {formatMatchTime(kickoff, locale)}
-                </span>
-              ) : null}
             </button>
           );
         })}
@@ -310,7 +336,7 @@ export function GrandBracket({
               disabled={!final}
               onClick={() => final && onOpenMatch(final)}
               style={{ left: centerX - FINALIST / 2, top: y - FINALIST / 2, width: FINALIST, height: FINALIST }}
-              className={`absolute flex items-center justify-center rounded-lg border-2 transition-transform hover:scale-105 ${
+              className={`absolute flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 transition-transform hover:scale-105 ${
                 champion
                   ? "border-accent bg-accent/30 shadow-[0_0_30px_rgba(217,165,68,0.8)]"
                   : i === 0
@@ -319,7 +345,10 @@ export function GrandBracket({
               } ${loser ? "opacity-45 grayscale" : ""} ${isMine(entrant) ? "ring-2 ring-accent" : ""}`}
             >
               {entrant ? (
-                <EntrantBadge entrant={entrant} isCvC={isCvC} size="md" />
+                <>
+                  <EntrantBadge entrant={entrant} isCvC={isCvC} size={compact ? "sm" : "md"} />
+                  {final ? matchDate(final, "stacked") : null}
+                </>
               ) : (
                 <svg viewBox="0 0 24 24" className="h-9 w-9 text-ink-faint/60" fill="currentColor" aria-hidden="true">
                   <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z" />
@@ -341,11 +370,6 @@ export function GrandBracket({
           >
             {abbreviation("Final")}
           </span>
-          {finalKickoff && !compact ? (
-            <span className="relative mt-0.5 whitespace-nowrap font-mono text-[9px] text-ink-faint">
-              {formatMatchDate(finalKickoff, locale)} · {formatMatchTime(finalKickoff, locale)}
-            </span>
-          ) : null}
           {championId ? (
             <span className="relative mt-1 font-mono text-[10px] font-black uppercase tracking-[0.3em] text-accent">{s.champion}</span>
           ) : null}

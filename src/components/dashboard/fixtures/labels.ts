@@ -67,6 +67,15 @@ export function formatMatchDate(iso: string, locale: Locale): string {
   }).format(new Date(iso));
 }
 
+/** "5 Sep" (Bangladesh time). */
+export function formatShortDate(iso: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    timeZone: TOURNAMENT_TIME_ZONE,
+    day: "numeric",
+    month: "short",
+  }).format(new Date(iso));
+}
+
 export function formatMatchTime(iso: string, locale: Locale): string {
   return new Intl.DateTimeFormat(intlLocale(locale), {
     timeZone: TOURNAMENT_TIME_ZONE,
