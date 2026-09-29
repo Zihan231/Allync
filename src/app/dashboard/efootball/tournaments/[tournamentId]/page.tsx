@@ -347,7 +347,9 @@ export function TournamentDetailView({
       user.club.role === "General Secretary" ||
       user.club.role === "Manager");
 
-  const isSubmissionOpen = !countdown.isPast;
+  // A finished (completed / cancelled) tournament is read-only: no team changes.
+  const isFinished = isCompleted || rawStatus === "cancelled";
+  const isSubmissionOpen = !countdown.isPast && !isFinished;
   // Registered club officials can change their team until the lineup cutoff.
   const canEditTeam = Boolean(isCvC && isRegistered && canSubmitLineup && isSubmissionOpen);
   const ts = t.dashboard.teamSubmission;
@@ -383,7 +385,7 @@ export function TournamentDetailView({
           : format(td.inDays, { days: daysUntilStart })
       : td.started;
   // Once the tournament is live (or over), organizers can no longer edit or delete it.
-  const isLocked = msUntilStart <= 0 || isOngoing || isCompleted || rawStatus === "cancelled";
+  const isLocked = msUntilStart <= 0 || isOngoing || isFinished;
 
   // Capacity calculations
   const participantsCount = tournament.participants?.length || 0;
