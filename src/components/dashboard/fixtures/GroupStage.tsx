@@ -86,25 +86,30 @@ export function GroupStage({
         aria-labelledby={groups.length > 1 ? `group-tab-${activeGroup.label}` : undefined}
         className="w-full overflow-hidden rounded-2xl border border-surface-line bg-surface/50"
       >
-        <header className="flex items-center gap-4 border-b border-surface-line bg-gradient-to-r from-accent/15 to-transparent px-5 py-4 sm:px-6">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent font-display text-lg font-black text-bg">
+        <header className="flex items-center gap-3 border-b border-surface-line bg-gradient-to-r from-accent/15 to-transparent px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-display text-sm font-black text-bg sm:h-11 sm:w-11 sm:rounded-xl sm:text-lg">
             {activeGroup.label}
           </span>
-          <h4 className="font-display text-xl font-black text-ink sm:text-2xl">{activeGroupName}</h4>
+          <h4 className="font-display text-base font-black text-ink sm:text-2xl">{activeGroupName}</h4>
         </header>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm sm:text-base">
-            <thead className="bg-surface-line/30 font-mono text-xs uppercase tracking-wide text-ink-faint">
+        <div className="w-full overflow-hidden">
+          <table className="w-full table-fixed text-left text-[10px] sm:table-auto sm:text-base">
+            <colgroup>
+              <col className="w-[7%] sm:w-auto" />
+              <col className="w-[37%] sm:w-auto" />
+              <col span={6} />
+            </colgroup>
+            <thead className="bg-surface-line/30 font-mono text-[9px] uppercase tracking-normal text-ink-faint sm:text-xs sm:tracking-wide">
               <tr>
-                <th className="px-5 py-3 font-semibold">{f.colRank}</th>
-                <th className="px-4 py-3 font-semibold">{f.colTeam}</th>
-                <th className="px-4 py-3 text-center font-semibold">{f.colPlayed}</th>
-                <th className="px-4 py-3 text-center font-semibold">{f.colWon}</th>
-                <th className="px-4 py-3 text-center font-semibold">{f.colDrawn}</th>
-                <th className="px-4 py-3 text-center font-semibold">{f.colLost}</th>
-                <th className="px-4 py-3 text-center font-semibold">{f.colDiff}</th>
-                <th className="px-5 py-3 text-center font-semibold">{f.colPoints}</th>
+                <th className="px-1 py-2 font-semibold sm:px-5 sm:py-3">{f.colRank}</th>
+                <th className="px-1 py-2 font-semibold sm:px-4 sm:py-3">{f.colTeam}</th>
+                <th className="px-0.5 py-2 text-center font-semibold sm:px-4 sm:py-3">{f.colPlayed}</th>
+                <th className="px-0.5 py-2 text-center font-semibold sm:px-4 sm:py-3">{f.colWon}</th>
+                <th className="px-0.5 py-2 text-center font-semibold sm:px-4 sm:py-3">{f.colDrawn}</th>
+                <th className="px-0.5 py-2 text-center font-semibold sm:px-4 sm:py-3">{f.colLost}</th>
+                <th className="px-0.5 py-2 text-center font-semibold sm:px-4 sm:py-3">{f.colDiff}</th>
+                <th className="px-0.5 py-2 text-center font-semibold sm:px-5 sm:py-3">{f.colPoints}</th>
               </tr>
             </thead>
             <tbody>
@@ -117,15 +122,22 @@ export function GroupStage({
                       row.qualifies ? "shadow-[inset_4px_0_0_var(--success)]" : ""
                     } ${mine ? "bg-accent-soft" : ""}`}
                   >
-                    <td className="px-5 py-3 font-mono text-base font-bold text-ink-soft">{row.rank}</td>
-                    <td className="px-4 py-3">
-                      <span className="flex min-w-0 items-center gap-3">
-                        <EntrantBadge entrant={row.entrant} isCvC={isCvC} size="md" />
-                        <span className={`truncate font-display text-base sm:text-lg ${mine ? "font-black text-accent-ink" : "font-bold text-ink"}`}>
+                    <td className="px-1 py-2 font-mono text-[10px] font-bold text-ink-soft sm:px-5 sm:py-3 sm:text-base">
+                      {row.rank}
+                    </td>
+                    <td className="min-w-0 px-1 py-2 sm:px-4 sm:py-3">
+                      <span className="flex min-w-0 items-center gap-1 sm:gap-3">
+                        <span className="sm:hidden">
+                          <EntrantBadge entrant={row.entrant} isCvC={isCvC} />
+                        </span>
+                        <span className="hidden sm:inline-flex">
+                          <EntrantBadge entrant={row.entrant} isCvC={isCvC} size="md" />
+                        </span>
+                        <span className={`min-w-0 truncate font-display text-[10px] leading-tight sm:text-lg ${mine ? "font-black text-accent-ink" : "font-bold text-ink"}`}>
                           {row.entrant?.name ?? f.tbd}
                         </span>
                         {mine ? (
-                          <span className="shrink-0 rounded-full border border-accent/40 bg-accent px-2 py-1 text-[10px] font-black uppercase tracking-wide text-bg">
+                          <span className="hidden shrink-0 rounded-full border border-accent/40 bg-accent px-2 py-1 text-[10px] font-black uppercase tracking-wide text-bg sm:inline-flex">
                             {f.yourClub}
                           </span>
                         ) : null}
@@ -136,14 +148,16 @@ export function GroupStage({
                         ) : null}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center font-mono text-ink-soft">{row.played}</td>
-                    <td className="px-4 py-3 text-center font-mono text-ink-soft">{row.won}</td>
-                    <td className="px-4 py-3 text-center font-mono text-ink-soft">{row.drawn}</td>
-                    <td className="px-4 py-3 text-center font-mono text-ink-soft">{row.lost}</td>
-                    <td className="px-4 py-3 text-center font-mono text-ink-soft">
+                    <td className="px-0.5 py-2 text-center font-mono text-ink-soft sm:px-4 sm:py-3">{row.played}</td>
+                    <td className="px-0.5 py-2 text-center font-mono text-ink-soft sm:px-4 sm:py-3">{row.won}</td>
+                    <td className="px-0.5 py-2 text-center font-mono text-ink-soft sm:px-4 sm:py-3">{row.drawn}</td>
+                    <td className="px-0.5 py-2 text-center font-mono text-ink-soft sm:px-4 sm:py-3">{row.lost}</td>
+                    <td className="px-0.5 py-2 text-center font-mono text-ink-soft sm:px-4 sm:py-3">
                       {row.scoreDiff > 0 ? `+${row.scoreDiff}` : row.scoreDiff}
                     </td>
-                    <td className="px-5 py-3 text-center font-display text-lg font-black text-ink">{row.points}</td>
+                    <td className="px-0.5 py-2 text-center font-display text-[11px] font-black text-ink sm:px-5 sm:py-3 sm:text-lg">
+                      {row.points}
+                    </td>
                   </tr>
                 );
               })}
