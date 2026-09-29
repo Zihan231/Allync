@@ -8,6 +8,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
 import { useUpdateTournament } from "@/lib/api/hooks/useTournaments";
 import type { BackendTournament, UpdateTournamentPayload } from "@/lib/api/tournaments";
+import { MatchOfficialsPicker } from "./MatchOfficialsPicker";
 import {
   DEFAULT_PLAY_HOURS,
   minutesToTimeInput,
@@ -59,6 +60,7 @@ export function EditTournamentModal({
   const [prizePool, setPrizePool] = useState(String(tournament.prizePoolBdt || 0));
   const [playStart, setPlayStart] = useState(minutesToTimeInput(tournament.playHoursStart ?? DEFAULT_PLAY_HOURS.start));
   const [playEnd, setPlayEnd] = useState(minutesToTimeInput(tournament.playHoursEnd ?? DEFAULT_PLAY_HOURS.end));
+  const [officialIds, setOfficialIds] = useState<string[]>(() => tournament.matchOfficialIds ?? []);
   const [submitError, setSubmitError] = useState("");
   // Reference time for the 2-hour rule, fixed when the dialog opens.
   const [openedAt] = useState(() => Date.now());
@@ -124,8 +126,12 @@ export function EditTournamentModal({
       !fixturesExist &&
       (playStartMin !== (tournament.playHoursStart ?? DEFAULT_PLAY_HOURS.start) ||
         playEndMin !== (tournament.playHoursEnd ?? DEFAULT_PLAY_HOURS.end));
+    const currentOfficials = tournament.matchOfficialIds ?? [];
+    const officialsChanged =
+      officialIds.length !== currentOfficials.length || officialIds.some((id) => !currentOfficials.includes(id));
     const changedFields = [
       playHoursChanged && ts.playHours.toLowerCase(),
+      officialsChanged && t.dashboard.matchOfficials.title.toLowerCase(),
       name.trim() !== tournament.name && tm.fieldName,
       capacityNumber !== tournament.maxParticipants && tm.fieldCapacity,
       startChanged && tm.fieldStart,
@@ -161,6 +167,7 @@ export function EditTournamentModal({
       payload.playHoursStart = playStartMin;
       payload.playHoursEnd = playEndMin;
     }
+    if (officialsChanged) payload.matchOfficialIds = officialIds;
 
     try {
       await updateMutation.mutateAsync(payload);
@@ -338,6 +345,11 @@ export function EditTournamentModal({
               ))}
             </div>
             {errorText(playHoursProblem)}
+          </div>
+
+          <div className="rounded-xl border border-blue/30 bg-blue-soft/30 p-4">
+            <div className="mb-3 text-xs font-semibold text-ink">{t.dashboard.matchOfficials.title}</div>
+            <MatchOfficialsPicker communityId={tournament.communityId} value={officialIds} onChange={setOfficialIds} />
           </div>
 
           <p className="text-xs text-ink-faint">{tm.formatLocked}</p>

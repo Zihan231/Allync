@@ -48,6 +48,7 @@ import {
   LockIcon,
   ShieldIcon,
   FlameIcon,
+  GavelIcon,
 } from "@/components/icons";
 
 type TournamentDetailTab = "bracket" | "participants" | "lineup";
@@ -302,6 +303,17 @@ export function TournamentDetailView({
     isCurrentUserId(tournament.community?.vicePresidentId);
   const canShowJoinAction =
     !isLoadingCommunityMembers && !isHostingCommunityLeader;
+
+  // Evidence reviewers: the community President / Vice President and the match officials.
+  const matchOfficialIds = tournament.matchOfficialIds ?? [];
+  const matchOfficials = communityMembers.filter((member) => matchOfficialIds.includes(member.id));
+  const isMatchOfficial = currentUserIds.some((id) => matchOfficialIds.includes(id));
+  const isReviewer =
+    hostingCommunityRole === "President" ||
+    hostingCommunityRole === "Vice President" ||
+    isCurrentUserId(tournament.community?.presidentId) ||
+    isCurrentUserId(tournament.community?.vicePresidentId) ||
+    isMatchOfficial;
 
   const isCvC = tournament.type === "cvc";
 
@@ -1084,12 +1096,43 @@ export function TournamentDetailView({
       {/* TAB CONTENT: FIXTURES (groups + knockout) */}
       {activeTab === "bracket" && (
         <div className="mt-8">
+          {matchOfficials.length ? (
+            <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-blue/30 bg-blue-soft/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-soft text-blue-ink">
+                  <GavelIcon className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 font-display text-sm font-bold text-ink">
+                    {t.dashboard.matchOfficials.panelTitle}
+                    {isMatchOfficial ? (
+                      <span className="rounded-full bg-blue px-2 py-0.5 text-[10px] font-bold text-bg">
+                        {t.dashboard.matchOfficials.youAreOfficial}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{t.dashboard.matchOfficials.panelBody}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {matchOfficials.map((official) => (
+                  <span
+                    key={official.id}
+                    className="inline-flex items-center gap-2 rounded-full border border-surface-line bg-bg/50 py-1 pl-1 pr-3 text-xs font-semibold text-ink"
+                  >
+                    <Avatar dpUrl={official.dpUrl} name={official.name} size="sm" mode="static" />
+                    {official.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <TournamentFixtures
             tournamentId={tournament.id}
             tournamentName={tournament.name}
             myParticipantId={myParticipation?.id ?? null}
             viewerUserId={user?.id ?? null}
-            isReviewer={Boolean(isOrganizer || hostingCommunityRole === "Head of Discipline")}
+            isReviewer={isReviewer}
             onResultSubmitted={(message) => {
               setActionError("");
               setActionSuccess(message);

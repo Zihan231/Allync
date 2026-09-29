@@ -127,6 +127,8 @@ export interface BackendTournament {
   /** Daily play hours, minutes after midnight (Bangladesh time); null = 19:00–01:00. */
   playHoursStart?: number | null;
   playHoursEnd?: number | null;
+  /** User ids of the match officials, who review evidence with the President / Vice President. */
+  matchOfficialIds?: string[];
   /** Returned by the list endpoint instead of the full participants array. */
   participantCount?: number;
   createdAt: string;
@@ -172,6 +174,7 @@ export interface CreateTournamentPayload {
   communityId: string;
   playHoursStart?: number;
   playHoursEnd?: number;
+  matchOfficialIds?: string[];
 }
 
 export interface SubmitLineupPayload {
@@ -216,6 +219,7 @@ export interface UpdateTournamentPayload {
   endAt?: string | null;
   playHoursStart?: number;
   playHoursEnd?: number;
+  matchOfficialIds?: string[];
 }
 
 export async function updateTournament(

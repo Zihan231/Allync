@@ -19,7 +19,9 @@ import type { BackendCommunity } from "@/lib/api/types";
 import { TOURNAMENT_PRESET_ROSTERS, type TournamentType, type TournamentPreset } from "@/lib/api/tournaments";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EntityGuidelinesPanel } from "@/components/dashboard/EntityGuidelinesPanel";
+import { MatchOfficialsPicker } from "@/components/dashboard/MatchOfficialsPicker";
 import {
+  GavelIcon,
   TrophyIcon,
   UsersIcon,
   CrosshairIcon,
@@ -205,6 +207,9 @@ function CreateTournamentForm() {
   const [entryFeeBdt, setEntryFeeBdt] = useState(500);
   const [prizePoolBdt, setPrizePoolBdt] = useState(5000);
 
+  // Match officials (user ids) belong to one community; switching community starts over.
+  const [officials, setOfficials] = useState<{ communityId: string; ids: string[] }>({ communityId: "", ids: [] });
+
   const [errorMessage, setErrorMessage] = useState("");
 
   // Load communities to determine President / VP roles
@@ -249,6 +254,9 @@ function CreateTournamentForm() {
     }
   }, [eligibleCommunities, communityId, queryCommunityId]);
 
+  const hostCommunityId = communityId || queryCommunityId || eligibleCommunities[0]?.id || user?.community?.id || "";
+  const matchOfficialIds = officials.communityId === hostCommunityId ? officials.ids : [];
+
   // Adjust starters and subs when preset changes
   function handlePresetSelect(selectedPreset: TournamentPreset) {
     setPreset(selectedPreset);
@@ -280,7 +288,7 @@ function CreateTournamentForm() {
     e.preventDefault();
     setErrorMessage("");
 
-    const effectiveCommunityId = communityId || queryCommunityId || eligibleCommunities[0]?.id || user?.community?.id;
+    const effectiveCommunityId = hostCommunityId;
     if (!effectiveCommunityId) {
       setErrorMessage(tc.errNoCommunity);
       return;
@@ -331,6 +339,7 @@ function CreateTournamentForm() {
         endAt: endAt ? new Date(endAt).toISOString() : undefined,
         playHoursStart: timeInputToMinutes(playStart),
         playHoursEnd: timeInputToMinutes(playEnd),
+        matchOfficialIds,
         communityId: effectiveCommunityId,
       });
 
@@ -704,6 +713,15 @@ function CreateTournamentForm() {
                 </div>
               )}
               </div>
+            </FormSection>
+
+            {/* Match officials: review evidence with the President / Vice President */}
+            <FormSection tone="blue" icon={GavelIcon} title={t.dashboard.matchOfficials.title}>
+              <MatchOfficialsPicker
+                communityId={hostCommunityId}
+                value={matchOfficialIds}
+                onChange={(ids) => setOfficials({ communityId: hostCommunityId, ids })}
+              />
             </FormSection>
 
             {/* Entry Fee & Prize Pool */}
