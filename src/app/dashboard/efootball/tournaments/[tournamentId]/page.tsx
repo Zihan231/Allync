@@ -13,6 +13,7 @@ import {
   useSubmitTournamentLineup,
   useGenerateTournamentBracket,
   useDeleteTournament,
+  useTournamentStructure,
 } from "@/lib/api/hooks/useTournaments";
 import { EditTournamentModal } from "@/components/dashboard/EditTournamentModal";
 import { TeamSubmissionModal } from "@/components/dashboard/TeamSubmissionModal";
@@ -106,6 +107,7 @@ export function TournamentDetailView({
   }
 
   const { data: tournament, isLoading, refetch } = useTournament(tournamentId);
+  const { data: tournamentStructure } = useTournamentStructure(tournamentId);
   const { data: communityMembers = [], isLoading: isLoadingCommunityMembers } =
     useCommunityMembers(tournament?.communityId ?? "");
   const joinMutation = useJoinTournament(tournamentId);
@@ -353,6 +355,15 @@ export function TournamentDetailView({
 
   // Capacity calculations
   const participantsCount = tournament.participants?.length || 0;
+  const tournamentFormatSummary = !tournamentStructure?.format
+    ? null
+    : tournamentStructure.format === "knockout"
+      ? format(t.dashboard.fixtures.formatKnockout, { count: participantsCount })
+      : format(t.dashboard.fixtures.formatGroups, {
+          count: participantsCount,
+          groups: tournamentStructure.groups.length,
+          size: tournamentStructure.knockout.size,
+        });
   // Organizers may generate early once every slot is filled; otherwise it happens 2h before the start.
   const slotsFull = participantsCount >= (tournament.maxParticipants || Infinity);
   const autoGenerateLabel = new Date(new Date(tournament.startAt).getTime() - 2 * 60 * 60 * 1000).toLocaleString(dateLocale, {
@@ -960,9 +971,16 @@ export function TournamentDetailView({
         </div>
       </div>
 
+      {tournamentFormatSummary ? (
+        <div className="mt-10 flex items-center gap-2.5 rounded-xl border border-accent/30 bg-accent-soft/40 px-4 py-3 text-xs font-semibold text-accent-ink">
+          <TrophyIcon className="h-4 w-4 shrink-0" />
+          {tournamentFormatSummary}
+        </div>
+      ) : null}
+
       {/* NAVIGATION TABS WITH RADIANT ACCENTS */}
       <div
-        className="mt-10 flex w-full gap-1.5 rounded-xl border border-surface-line bg-surface/60 p-1.5 shadow-inner"
+        className={`${tournamentFormatSummary ? "mt-3" : "mt-10"} flex w-full gap-1.5 rounded-xl border border-surface-line bg-surface/60 p-1.5 shadow-inner`}
         role="tablist"
         aria-label={`${td.tabBracket}, ${td.tabParticipants}, ${td.tabLineup}`}
       >
@@ -1023,7 +1041,6 @@ export function TournamentDetailView({
           <TournamentFixtures
             tournamentId={tournament.id}
             tournamentName={tournament.name}
-            entrantCount={participantsCount}
             myParticipantId={myParticipation?.id ?? null}
             viewerUserId={user?.id ?? null}
             isReviewer={Boolean(isOrganizer || hostingCommunityRole === "Head of Discipline")}

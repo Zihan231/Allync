@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BracketIcon, TrophyIcon, UsersIcon } from "@/components/icons";
+import { BracketIcon, UsersIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { format } from "@/lib/i18n/translations";
 import { useTournamentStructure } from "@/lib/api/hooks/useTournaments";
 import type { Fixture } from "@/lib/api/tournaments";
 import { GroupStage } from "./GroupStage";
@@ -17,7 +16,6 @@ import { ReviewQueue } from "./ReviewQueue";
 export function TournamentFixtures({
   tournamentId,
   tournamentName,
-  entrantCount,
   myParticipantId,
   viewerUserId,
   isReviewer = false,
@@ -25,7 +23,6 @@ export function TournamentFixtures({
 }: {
   tournamentId: string;
   tournamentName?: string;
-  entrantCount: number;
   myParticipantId?: string | null;
   viewerUserId?: string | null;
   /** Tournament creator, community President / VP or Head of Discipline. */
@@ -66,18 +63,8 @@ export function TournamentFixtures({
 
   const allMatches = [...structure.groups.flatMap((g) => g.matches), ...structure.knockout.rounds.flatMap((r) => r.matches)];
   const openMatch: Fixture | undefined = allMatches.find((m) => m.id === openMatchId);
-  const summary =
-    structure.format === "knockout"
-      ? format(f.formatKnockout, { count: entrantCount })
-      : format(f.formatGroups, { count: entrantCount, groups: structure.groups.length, size: structure.knockout.size });
-
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-2.5 rounded-xl border border-accent/30 bg-accent-soft/40 px-4 py-3 text-xs font-semibold text-accent-ink">
-        <TrophyIcon className="h-4 w-4 shrink-0" />
-        {summary}
-      </div>
-
       {isReviewer ? <ReviewQueue tournamentId={tournamentId} onReview={setReviewGameId} /> : null}
 
       {structure.groups.length ? (
