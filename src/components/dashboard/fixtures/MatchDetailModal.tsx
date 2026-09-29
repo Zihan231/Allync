@@ -137,7 +137,14 @@ export function MatchDetailModal({
                   focused={game.id === focusGameId}
                   openTiming={game.id === focusGameId && focusPanel === "time"}
                   onUpload={(resubmit) => setSubmittingGame({ game, resubmit })}
-                  onReview={onReviewGame && fixtureOpen ? () => onReviewGame(game.id) : undefined}
+                  onReview={
+                    onReviewGame &&
+                    fixtureOpen &&
+                    game.evidenceDeadline !== null &&
+                    now > new Date(game.evidenceDeadline).getTime()
+                      ? () => onReviewGame(game.id)
+                      : undefined
+                  }
                   onMessage={onMessage}
                 />
               ))}
