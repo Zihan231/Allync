@@ -131,19 +131,29 @@ export function TeamSubmissionModal({
               <span className="text-xs">{ts.loadingSquad}</span>
             </div>
           ) : (
-            <TeamSubmissionForm
-              startersCount={tournament.startersCount}
-              subsCount={tournament.subsCount}
-              members={members}
-              teams={teams}
-              lockedIn={lockedIn}
-              initialLineup={participant?.lineup}
-              submitLabel={isEditing ? ts.updateSubmit : ts.registerSubmit}
-              submittingLabel={isEditing ? ts.updating : ts.registering}
-              isSubmitting={isPending}
-              error={error}
-              onSubmit={handleSubmit}
-            />
+            <>
+              {commitments.isError ? (
+                <div
+                  className="mb-4 rounded-xl border border-warning/40 bg-warning-soft p-3 text-xs font-semibold text-warning-ink"
+                  role="alert"
+                >
+                  {ts.lockCheckFailed}
+                </div>
+              ) : null}
+              <TeamSubmissionForm
+                startersCount={tournament.startersCount}
+                subsCount={tournament.subsCount}
+                members={members}
+                teams={teams}
+                lockedIn={lockedIn}
+                initialLineup={participant?.lineup}
+                submitLabel={isEditing ? ts.updateSubmit : ts.registerSubmit}
+                submittingLabel={isEditing ? ts.updating : ts.registering}
+                isSubmitting={isPending}
+                error={error}
+                onSubmit={handleSubmit}
+              />
+            </>
           )}
         </div>
       </div>
