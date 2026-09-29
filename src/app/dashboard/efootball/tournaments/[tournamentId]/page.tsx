@@ -348,6 +348,15 @@ export function TournamentDetailView({
 
   // Capacity calculations
   const participantsCount = tournament.participants?.length || 0;
+  // Organizers may generate early once every slot is filled; otherwise it happens 2h before the start.
+  const slotsFull = participantsCount >= (tournament.maxParticipants || Infinity);
+  const autoGenerateLabel = new Date(new Date(tournament.startAt).getTime() - 2 * 60 * 60 * 1000).toLocaleString(dateLocale, {
+    timeZone: "Asia/Dhaka",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
   const capacityPercent = Math.min(100, Math.round((participantsCount / (tournament.maxParticipants || 16)) * 100));
 
   // PvP registration. CvC clubs register through RegisterClubModal with their team.
@@ -924,14 +933,25 @@ export function TournamentDetailView({
 
             {/* Organizer Generate Bracket Button */}
             {isOrganizer && !tournament.format && (
-              <button
-                onClick={handleGenerateBracket}
-                title={participantsCount < 4 ? t.dashboard.fixtures.needFour : undefined}
-                disabled={generateBracketMutation.isPending || participantsCount < 4}
-                className="rounded-full border border-purple-500/40 bg-purple-500/15 px-5 py-2.5 font-display text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all hover:bg-purple-500 hover:text-white disabled:opacity-40"
-              >
-                {generateBracketMutation.isPending ? td.generatingBracket : td.generateBracket}
-              </button>
+              <div className="flex flex-col items-end gap-1">
+                <button
+                  onClick={handleGenerateBracket}
+                  title={slotsFull ? undefined : format(t.dashboard.fixtures.earlyNeedsFull, { count: tournament.maxParticipants })}
+                  disabled={generateBracketMutation.isPending || !slotsFull}
+                  className="rounded-full border border-purple-500/40 bg-purple-500/15 px-5 py-2.5 font-display text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all hover:bg-purple-500 hover:text-white disabled:opacity-40"
+                >
+                  {generateBracketMutation.isPending ? td.generatingBracket : td.generateBracket}
+                </button>
+                <span className="max-w-xs text-right text-[11px] text-ink-faint">
+                  {slotsFull
+                    ? t.dashboard.fixtures.earlyReady
+                    : format(t.dashboard.fixtures.autoGenerateAt, {
+                        filled: participantsCount,
+                        count: tournament.maxParticipants,
+                        date: autoGenerateLabel,
+                      })}
+                </span>
+              </div>
             )}
           </div>
         </div>

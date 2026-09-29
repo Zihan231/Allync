@@ -931,6 +931,9 @@ export const translations = {
         generateConfirmTitle: "Generate fixtures?",
         generateConfirm: "Fixtures are created from everyone registered right now: up to 8 entrants play a straight knockout, more are drawn into groups. This can't be undone, and entrants will be notified.",
         needFour: "At least 4 entrants are needed to generate fixtures.",
+        earlyNeedsFull: "Early generation unlocks when all {count} slots are filled.",
+        earlyReady: "All slots are filled — you can generate the bracket now.",
+        autoGenerateAt: "{filled}/{count} slots filled. The bracket generates automatically on {date} (2h before start), or early once every slot is filled.",
       },
       results: {
 
@@ -2589,6 +2592,9 @@ export const translations = {
         generateConfirmTitle: "ফিক্সচার তৈরি করবেন?",
         generateConfirm: "এখন যারা রেজিস্টার করেছে তাদের নিয়ে ফিক্সচার তৈরি হবে: ৮ জন পর্যন্ত হলে সরাসরি নকআউট, বেশি হলে গ্রুপে ভাগ করা হবে। এটি আর ফেরানো যাবে না এবং অংশগ্রহণকারীদের জানানো হবে।",
         needFour: "ফিক্সচার তৈরি করতে কমপক্ষে ৪ জন অংশগ্রহণকারী লাগবে।",
+        earlyNeedsFull: "সব {count}টি স্লট পূর্ণ হলে আগেভাগে তৈরি করা যাবে।",
+        earlyReady: "সব স্লট পূর্ণ — এখনই ব্র্যাকেট তৈরি করতে পারেন।",
+        autoGenerateAt: "{count}টির মধ্যে {filled}টি স্লট পূর্ণ। {date}-এ (শুরুর ২ ঘণ্টা আগে) ব্র্যাকেট স্বয়ংক্রিয়ভাবে তৈরি হবে, অথবা সব স্লট পূর্ণ হলে আগেই তৈরি করা যাবে।",
       },
       results: {
 
