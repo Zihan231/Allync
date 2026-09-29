@@ -36,7 +36,7 @@ export function GroupStage({
   return (
     <div className="space-y-4">
       {groups.length > 1 ? (
-        <div className="rounded-2xl border border-surface-line bg-surface/60 p-2 shadow-sm">
+        <div className="rounded-2xl border border-surface-line bg-surface/60 p-2 shadow-sm sm:w-fit sm:max-w-full sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
           <label className="sr-only" htmlFor="group-stage-selector">
             {f.groupStage}
           </label>
@@ -53,7 +53,11 @@ export function GroupStage({
             ))}
           </select>
 
-          <div className="hidden gap-2 sm:flex" role="tablist" aria-label={f.groupStage}>
+          <div
+            className="hidden max-w-full flex-wrap gap-1 rounded-full border border-surface-line bg-surface/50 p-1 sm:inline-flex"
+            role="tablist"
+            aria-label={f.groupStage}
+          >
             {groups.map((group) => {
               const active = group.label === activeGroup.label;
               return (
@@ -65,12 +69,13 @@ export function GroupStage({
                   aria-selected={active}
                   aria-controls={`group-panel-${group.label}`}
                   onClick={() => setSelectedGroupLabel(group.label)}
-                  className={`min-h-11 flex-1 rounded-xl px-5 py-2.5 font-display text-base font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${
+                  className={`flex min-h-10 min-w-28 items-center justify-center rounded-full border px-5 py-2 font-display text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${
                     active
-                      ? "bg-accent text-bg shadow-md"
-                      : "text-ink-soft hover:bg-accent-soft hover:text-accent-ink"
+                      ? "border-accent/40 bg-accent-soft text-accent-ink"
+                      : "border-transparent text-ink-soft hover:border-surface-line hover:bg-bg-raised hover:text-ink"
                   }`}
                 >
+                  <span className={`mr-2 h-1.5 w-1.5 rounded-full ${active ? "bg-accent" : "bg-transparent"}`} />
                   {format(f.group, { label: group.label })}
                 </button>
               );
