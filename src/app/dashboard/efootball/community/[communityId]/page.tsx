@@ -331,12 +331,24 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
     }
   };
 
-  const tabs: { key: Tab; label: string }[] = [
+  const tabs: { key: Tab; label: string; count?: number | null }[] = [
     { key: "overview", label: t.dashboard.community.tabOverview },
-    { key: "members", label: t.dashboard.community.tabMembers },
-    { key: "clubs", label: t.dashboard.community.tabClubs },
+    {
+      key: "members",
+      label: t.dashboard.community.tabMembers,
+      count: community?.memberCount ?? allMembers.length,
+    },
+    {
+      key: "clubs",
+      label: t.dashboard.community.tabClubs,
+      count: community?.clubCount ?? memberClubs.length,
+    },
     { key: "rankings", label: t.dashboard.community.tabRankings },
-    { key: "tournaments", label: t.dashboard.community.tabTournaments },
+    {
+      key: "tournaments",
+      label: t.dashboard.community.tabTournaments,
+      count: isLoadingTournaments ? null : communityTournaments.length,
+    },
   ];
 
   const isLoading = (isRemoteLoading && !community) || (!community && !synced);
@@ -677,11 +689,22 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
             key={tb.key}
             type="button"
             onClick={() => setTab(tb.key)}
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+            className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
               tab === tb.key ? "border-accent bg-accent-soft text-accent-ink" : "border-surface-line-strong text-ink-soft hover:text-ink"
             }`}
           >
-            {tb.label}
+            <span>{tb.label}</span>
+            {tb.count !== undefined ? (
+              <span
+                className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-[10px] font-bold ${
+                  tab === tb.key ? "bg-accent text-bg" : "bg-surface-line text-ink-faint"
+                }`}
+                aria-label={tb.count === null ? undefined : String(tb.count)}
+                aria-hidden={tb.count === null}
+              >
+                {tb.count === null ? "…" : tb.count.toLocaleString()}
+              </span>
+            ) : null}
           </button>
         ))}
       </div>

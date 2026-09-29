@@ -153,6 +153,8 @@ export function useCommunity(communityId: string) {
         points: bc.points ?? 0,
         joinPolicy: (bc.joinPolicy || "instant") as Community["joinPolicy"],
         memberClubIds: bc.memberClubIds || [],
+        memberCount: bc.memberCount ?? 0,
+        clubCount: bc.clubCount ?? bc.memberClubIds?.length ?? 0,
         freeAgentCount: bc.freeAgentCount ?? 0,
         tournamentIds: [],
         color: bc.color || "#4c8dff",

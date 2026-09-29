@@ -136,6 +136,8 @@ export type Community = {
   points: number;
   joinPolicy: JoinPolicy;
   memberClubIds: string[];
+  memberCount?: number;
+  clubCount?: number;
   freeAgentCount: number;
   tournamentIds: string[];
   color: string;
