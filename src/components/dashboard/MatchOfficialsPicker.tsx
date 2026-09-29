@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Avatar } from "@/components/common/Avatar";
-import { CloseIcon, PlusIcon, SearchIcon, ShieldIcon } from "@/components/icons";
+import { CheckIcon, ChevronDownIcon, CloseIcon, PlusIcon, SearchIcon, ShieldIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format, roleLabel } from "@/lib/i18n/translations";
 import { useCommunityMembers } from "@/lib/api/hooks/useCommunities";
@@ -11,6 +11,8 @@ import type { BackendCommunityMember } from "@/lib/api/types";
 /** Mirrors the backend limit on match officials per tournament. */
 export const MAX_MATCH_OFFICIALS = 10;
 const LEADER_ROLES = ["President", "Vice President"];
+/** Community roles that may be appointed as match officials (mirrors the backend). */
+const OFFICIAL_ROLES = ["Team Manager", "Head of Discipline", "Scout"];
 
 /**
  * Picks the tournament's match officials: community members who review match
@@ -37,12 +39,11 @@ export function MatchOfficialsPicker({
   const selected = value.map((id) => byId.get(id)).filter((m): m is BackendCommunityMember => Boolean(m));
   const full = value.length >= MAX_MATCH_OFFICIALS;
 
-  // Everyone who can be picked (not the President / VP), filtered by the search.
+  // Community officials who can be picked, filtered by the search.
   const query = search.trim().toLowerCase();
-  const options = members.filter(
-    (m) =>
-      !LEADER_ROLES.includes(m.communityRole) &&
-      (!query || m.name.toLowerCase().includes(query) || (m.clubName ?? "").toLowerCase().includes(query)),
+  const eligible = members.filter((m) => OFFICIAL_ROLES.includes(m.communityRole));
+  const options = eligible.filter(
+    (m) => !query || m.name.toLowerCase().includes(query) || (m.clubName ?? "").toLowerCase().includes(query),
   );
 
   const toggle = (id: string) => {
@@ -116,42 +117,97 @@ export function MatchOfficialsPicker({
         )}
       </div>
 
-      {/* Search community members */}
-      <div className="relative">
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint" />
-        <input
-          type="search"
-          value={search}
-          disabled={full || isLoading}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={full ? mo.limitReached : isLoading ? mo.loading : mo.searchPlaceholder}
-          className="w-full rounded-xl border border-surface-line bg-bg py-2.5 pl-9 pr-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-blue disabled:opacity-50"
-        />
-        {query ? (
-          <ul className="absolute inset-x-0 top-full z-20 mt-1 max-h-72 overflow-y-auto rounded-xl border border-surface-line-strong bg-bg-raised p-1 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.8)]">
-            {results.length ? (
-              results.map((m) => (
-                <li key={m.id}>
-                  <button
-                    type="button"
-                    onClick={() => add(m.id)}
-                    className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-surface-line/60"
-                  >
-                    <Avatar dpUrl={m.dpUrl} name={m.name} size="sm" mode="static" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-ink">{m.name}</span>
-                      <span className="block truncate text-[11px] text-ink-faint">
-                        {[m.clubName, roleLabel(m.communityRole, t)].filter(Boolean).join(" · ")}
-                      </span>
-                    </span>
-                    <PlusIcon className="h-4 w-4 shrink-0 text-blue-ink" />
-                  </button>
+      {/* Member dropdown: opens in the page flow (not floating), so parent sections never clip it */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          disabled={isLoading}
+          aria-expanded={open}
+          className={`flex w-full items-center justify-between gap-3 rounded-xl border bg-bg px-3.5 py-2.5 text-left text-sm transition-colors disabled:opacity-50 ${
+            open ? "border-blue" : "border-surface-line hover:border-surface-line-strong"
+          }`}
+        >
+          <span className="flex items-center gap-2 text-ink-soft">
+            <PlusIcon className="h-4 w-4 text-blue-ink" />
+            {isLoading ? mo.loading : mo.selectMembers}
+          </span>
+          <ChevronDownIcon className={`h-4 w-4 text-ink-faint transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+
+        {open ? (
+          <div className="mt-2 overflow-hidden rounded-xl border border-surface-line-strong bg-bg-raised">
+            <div className="relative border-b border-surface-line p-2">
+              <SearchIcon className="pointer-events-none absolute left-5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint" />
+              <input
+                type="search"
+                value={search}
+                autoFocus
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={mo.searchPlaceholder}
+                className="w-full rounded-lg border border-surface-line bg-bg py-2 pl-9 pr-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-blue"
+              />
+            </div>
+            {full ? (
+              <p className="border-b border-surface-line bg-warning-soft px-3 py-2 text-[11px] font-semibold text-warning-ink">
+                {mo.limitReached} ({MAX_MATCH_OFFICIALS})
+              </p>
+            ) : null}
+            <ul className="max-h-64 overflow-y-auto p-1">
+              {options.length ? (
+                options.map((m) => {
+                  const picked = value.includes(m.id);
+                  return (
+                    <li key={m.id}>
+                      <button
+                        type="button"
+                        onClick={() => toggle(m.id)}
+                        disabled={!picked && full}
+                        aria-pressed={picked}
+                        className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors disabled:opacity-40 ${
+                          picked ? "bg-blue-soft" : "hover:bg-surface-line/60"
+                        }`}
+                      >
+                        <Avatar dpUrl={m.dpUrl} name={m.name} size="sm" mode="static" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold text-ink">{m.name}</span>
+                          <span className="block truncate text-[11px] text-ink-faint">
+                            {[m.clubName, roleLabel(m.communityRole, t)].filter(Boolean).join(" · ")}
+                          </span>
+                        </span>
+                        <span
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                            picked ? "border-blue bg-blue text-bg" : "border-surface-line-strong"
+                          }`}
+                        >
+                          {picked ? <CheckIcon className="h-3.5 w-3.5" /> : null}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })
+              ) : (
+                <li className="px-3 py-4 text-center text-xs text-ink-faint">
+                  {eligible.length ? mo.noResults : mo.noOfficials}
                 </li>
-              ))
-            ) : (
-              <li className="px-3 py-3 text-center text-xs text-ink-faint">{mo.noResults}</li>
-            )}
-          </ul>
+              )}
+            </ul>
+            <div className="flex items-center justify-between border-t border-surface-line px-3 py-2">
+              <span className="font-mono text-[11px] text-ink-faint">
+                {value.length}/{MAX_MATCH_OFFICIALS}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setSearch("");
+                }}
+                className="rounded-full bg-blue px-4 py-1.5 text-xs font-bold text-bg transition-opacity hover:opacity-90"
+              >
+                {mo.done}
+              </button>
+            </div>
+          </div>
         ) : null}
       </div>
     </div>

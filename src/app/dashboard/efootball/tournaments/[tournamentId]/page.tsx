@@ -306,8 +306,13 @@ export function TournamentDetailView({
 
   // Evidence reviewers: the community President / Vice President and the match officials.
   const matchOfficialIds = tournament.matchOfficialIds ?? [];
-  const matchOfficials = communityMembers.filter((member) => matchOfficialIds.includes(member.id));
-  const isMatchOfficial = currentUserIds.some((id) => matchOfficialIds.includes(id));
+  // Only officials who still hold an official role count (mirrors the backend).
+  const matchOfficials = communityMembers.filter(
+    (member) =>
+      matchOfficialIds.includes(member.id) &&
+      ["Team Manager", "Head of Discipline", "Scout"].includes(member.communityRole),
+  );
+  const isMatchOfficial = matchOfficials.some((member) => isCurrentUserId(member.id));
   const isReviewer =
     hostingCommunityRole === "President" ||
     hostingCommunityRole === "Vice President" ||
