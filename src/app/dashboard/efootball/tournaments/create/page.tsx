@@ -292,7 +292,9 @@ function CreateTournamentForm() {
     }
 
     const startDate = new Date(startAt);
-    if (startDate.getTime() <= Date.now() + 2 * 60 * 60 * 1000) {
+    // TEMP (testing auto bracket generation): start times < 2h away are allowed. Set back to true.
+    const enforceStartLead = false;
+    if (enforceStartLead && startDate.getTime() <= Date.now() + 2 * 60 * 60 * 1000) {
       setErrorMessage(tc.errStartTooSoon);
       return;
     }

@@ -16,6 +16,8 @@ import {
 } from "./fixtures/labels";
 
 const LINEUP_CUTOFF_MS = 2 * 60 * 60 * 1000;
+// TEMP (testing auto bracket generation): allow start times < 2h away. Set back to true.
+const ENFORCE_START_LEAD = false;
 
 const fieldClass =
   "mt-1.5 w-full rounded-xl border border-surface-line bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all [color-scheme:dark]";
@@ -91,7 +93,7 @@ export function EditTournamentModal({
               : null;
   const startError = !startAt
     ? tc.errNoStart
-    : startChanged && new Date(startAt).getTime() <= openedAt + LINEUP_CUTOFF_MS
+    : ENFORCE_START_LEAD && startChanged && new Date(startAt).getTime() <= openedAt + LINEUP_CUTOFF_MS
       ? tc.errStartTooSoon
       : null;
   const endError =
