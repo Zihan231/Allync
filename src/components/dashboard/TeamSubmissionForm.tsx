@@ -176,8 +176,8 @@ export function TeamSubmissionForm({
       ) : null}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
-        {/* Player picker */}
-        <div className="rounded-2xl border border-surface-line bg-surface/40 p-4">
+        {/* Player picker: on wide screens the list stretches to the lineup column's height */}
+        <div className="flex flex-col rounded-2xl border border-surface-line bg-surface/40 p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h4 className="flex items-center gap-2 font-display text-sm font-bold text-ink">
               {ts.pickPlayers}
@@ -215,75 +215,77 @@ export function TeamSubmissionForm({
           ) : visibleMembers.length === 0 ? (
             <p className="mt-4 py-8 text-center text-xs text-ink-faint">{ts.noMatch}</p>
           ) : (
-            <ul className="mt-3 max-h-[26rem] space-y-1.5 overflow-y-auto pr-1">
-              {visibleMembers.map((member) => {
-                const role = roleOf(member.id);
-                const lockedTournament = lockedIn?.get(member.id);
-                return (
-                  <li
-                    key={member.id}
-                    className={`flex items-center gap-3 rounded-xl border px-3 py-2 transition-colors ${
-                      lockedTournament && role
-                        ? "border-danger/50 bg-danger-soft"
-                        : lockedTournament
-                          ? "border-surface-line bg-bg/40 opacity-60"
-                          : role === "starter"
-                            ? "border-success/50 bg-success-soft"
-                            : role === "sub"
-                              ? "border-blue/50 bg-blue-soft"
-                              : "border-surface-line bg-bg/40"
-                    }`}
-                  >
-                    <Avatar dpUrl={member.user?.dpUrl} name={nameOf(member)} size="md" mode="static" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <span className="truncate text-sm font-semibold text-ink">{nameOf(member)}</span>
-                        {member.clubRole && member.clubRole !== "Player" ? (
-                          <span className="shrink-0 rounded-full bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-accent-ink">
-                            {roleLabel(member.clubRole, t)}
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px] text-ink-faint">
-                        {member.gamePosition ? (
-                          <span className="rounded bg-bg-raised px-1.5 py-px font-bold text-accent-ink">{member.gamePosition}</span>
-                        ) : null}
-                        {member.user?.inGameId ? (
-                          <span data-latin-digits>{format(ts.ign, { id: member.user.inGameId })}</span>
-                        ) : null}
-                        <span>{format(ts.points, { points: member.points ?? 0 })}</span>
-                        {member.shirtNumber != null ? <span>{format(ts.shirt, { number: member.shirtNumber })}</span> : null}
-                        {member.teamId && teamNameById.get(member.teamId) ? (
-                          <span className="text-ink-soft">{teamNameById.get(member.teamId)}</span>
-                        ) : null}
-                      </div>
-                      {lockedTournament ? (
-                        <div className="mt-1 flex min-w-0 items-center gap-1 text-[10px] font-bold text-warning-ink">
-                          <LockIcon className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{format(ts.lockedIn, { tournament: lockedTournament })}</span>
+            <div className="relative mt-3 lg:min-h-[26rem] lg:flex-1">
+              <ul className="max-h-[26rem] space-y-1.5 overflow-y-auto pr-1 lg:absolute lg:inset-0 lg:max-h-none">
+                {visibleMembers.map((member) => {
+                  const role = roleOf(member.id);
+                  const lockedTournament = lockedIn?.get(member.id);
+                  return (
+                    <li
+                      key={member.id}
+                      className={`flex items-center gap-3 rounded-xl border px-3 py-2 transition-colors ${
+                        lockedTournament && role
+                          ? "border-danger/50 bg-danger-soft"
+                          : lockedTournament
+                            ? "border-surface-line bg-bg/40 opacity-60"
+                            : role === "starter"
+                              ? "border-success/50 bg-success-soft"
+                              : role === "sub"
+                                ? "border-blue/50 bg-blue-soft"
+                                : "border-surface-line bg-bg/40"
+                      }`}
+                    >
+                      <Avatar dpUrl={member.user?.dpUrl} name={nameOf(member)} size="md" mode="static" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <span className="truncate text-sm font-semibold text-ink">{nameOf(member)}</span>
+                          {member.clubRole && member.clubRole !== "Player" ? (
+                            <span className="shrink-0 rounded-full bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-accent-ink">
+                              {roleLabel(member.clubRole, t)}
+                            </span>
+                          ) : null}
                         </div>
-                      ) : null}
-                    </div>
-                    <div className="flex shrink-0 overflow-hidden rounded-lg border border-surface-line-strong">
-                      <RoleButton
-                        label={ts.asStarter}
-                        active={role === "starter"}
-                        disabled={role !== "starter" && (startersLeft === 0 || Boolean(lockedTournament))}
-                        activeClass="bg-success text-bg"
-                        onClick={() => toggle(member.id, "starter")}
-                      />
-                      <RoleButton
-                        label={ts.asSub}
-                        active={role === "sub"}
-                        disabled={role !== "sub" && (subsLeft === 0 || Boolean(lockedTournament))}
-                        activeClass="bg-blue text-bg"
-                        onClick={() => toggle(member.id, "sub")}
-                      />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px] text-ink-faint">
+                          {member.gamePosition ? (
+                            <span className="rounded bg-bg-raised px-1.5 py-px font-bold text-accent-ink">{member.gamePosition}</span>
+                          ) : null}
+                          {member.user?.inGameId ? (
+                            <span data-latin-digits>{format(ts.ign, { id: member.user.inGameId })}</span>
+                          ) : null}
+                          <span>{format(ts.points, { points: member.points ?? 0 })}</span>
+                          {member.shirtNumber != null ? <span>{format(ts.shirt, { number: member.shirtNumber })}</span> : null}
+                          {member.teamId && teamNameById.get(member.teamId) ? (
+                            <span className="text-ink-soft">{teamNameById.get(member.teamId)}</span>
+                          ) : null}
+                        </div>
+                        {lockedTournament ? (
+                          <div className="mt-1 flex min-w-0 items-center gap-1 text-[10px] font-bold text-warning-ink">
+                            <LockIcon className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{format(ts.lockedIn, { tournament: lockedTournament })}</span>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="flex shrink-0 overflow-hidden rounded-lg border border-surface-line-strong">
+                        <RoleButton
+                          label={ts.asStarter}
+                          active={role === "starter"}
+                          disabled={role !== "starter" && (startersLeft === 0 || Boolean(lockedTournament))}
+                          activeClass="bg-success text-bg"
+                          onClick={() => toggle(member.id, "starter")}
+                        />
+                        <RoleButton
+                          label={ts.asSub}
+                          active={role === "sub"}
+                          disabled={role !== "sub" && (subsLeft === 0 || Boolean(lockedTournament))}
+                          activeClass="bg-blue text-bg"
+                          onClick={() => toggle(member.id, "sub")}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )}
         </div>
 
