@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { TrophyIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Fixture, FixtureEntrant, TournamentStructure } from "@/lib/api/tournaments";
@@ -9,16 +10,33 @@ import { formatMatchDate, formatMatchTime, gamePhase } from "./labels";
 
 type Round = TournamentStructure["knockout"]["rounds"][number];
 
-// Geometry (px)
-const PITCH = 56; // vertical space per first-round entrant
-const NAME_W = 196; // first-round name box
-const NAME_H = 42;
-const CREST = 56; // later-round crest box
-const GAP = 72; // horizontal space for connectors between columns
-const CENTER_W = 220; // trophy column
-const TITLE_H = 96;
-const MIN_BODY_H = 420;
-const FINALIST = 72;
+/** Layout sizes (px). Compact is used on narrow screens: crest-only boxes, tighter spacing. */
+const REGULAR = {
+  pitch: 56, // vertical space per first-round entrant
+  nameW: 196, // first-round name box
+  nameH: 42,
+  crest: 56, // later-round crest box
+  gap: 72, // horizontal space for connectors between columns
+  centerW: 220, // trophy column
+  titleH: 96,
+  minBodyH: 420,
+  finalist: 72,
+  finalistOffset: 120,
+};
+const COMPACT = {
+  pitch: 44,
+  nameW: 40,
+  nameH: 40,
+  crest: 40,
+  gap: 34,
+  centerW: 116,
+  titleH: 64,
+  minBodyH: 260,
+  finalist: 48,
+  finalistOffset: 74,
+};
+/** Below this container width the compact layout is used. */
+const COMPACT_BELOW = 900;
 
 /** "Round of 16" → "R16", "Quarter-final" → "QF", "Semi-final" → "SF", "Final" → "F". */
 function abbreviation(name: string): string {
@@ -58,6 +76,28 @@ export function GrandBracket({
 }) {
   const { t, locale } = useLanguage();
   const s = t.dashboard.schedule;
+
+  // Measure the available width: pick the layout and scale the drawing to fit.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setContainerWidth(entry.contentRect.width));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const compact = containerWidth !== null && containerWidth < COMPACT_BELOW;
+  const G = compact ? COMPACT : REGULAR;
+  const PITCH = G.pitch;
+  const NAME_W = G.nameW;
+  const NAME_H = G.nameH;
+  const CREST = G.crest;
+  const GAP = G.gap;
+  const CENTER_W = G.centerW;
+  const TITLE_H = G.titleH;
+  const MIN_BODY_H = G.minBodyH;
+  const FINALIST = G.finalist;
 
   const ordered = [...rounds].sort((a, b) => a.round - b.round);
   const final = ordered[ordered.length - 1].matches[0];
@@ -106,7 +146,15 @@ export function GrandBracket({
       const w = colW(c);
       const h = c === 0 ? NAME_H : CREST;
       slotsFor(round, half).forEach((slot, i) => {
-        boxes.push({ x: mirror(colX(c), w, half), y: ys[i] - h / 2, w, h, slot, kind: c === 0 ? "name" : "crest", half });
+        boxes.push({
+          x: mirror(colX(c), w, half),
+          y: ys[i] - h / 2,
+          w,
+          h,
+          slot,
+          kind: c === 0 && !compact ? "name" : "crest",
+          half,
+        });
       });
 
       // Junction of each pair → next column box (or the finalist for the last half-round).
@@ -125,7 +173,7 @@ export function GrandBracket({
           lines.push({ d: `M ${junctionX} ${yMid} H ${target}`, live });
         } else {
           // Last half-round (semi-final): run to the finalist box above / below the trophy.
-          const finalistY = half === 0 ? centerY - 120 : centerY + 120;
+          const finalistY = half === 0 ? centerY - G.finalistOffset : centerY + G.finalistOffset;
           const finalistEdge = half === 0 ? centerX - FINALIST / 2 : centerX + FINALIST / 2;
           const elbowX = half === 0 ? finalistEdge - 24 : finalistEdge + 24;
           lines.push({ d: `M ${junctionX} ${yMid} H ${elbowX} V ${finalistY} H ${finalistEdge}`, live });
@@ -136,8 +184,8 @@ export function GrandBracket({
   }
 
   const finalists: Array<{ entrant: FixtureEntrant | null; y: number }> = [
-    { entrant: final?.participantA ?? null, y: centerY - 120 },
-    { entrant: final?.participantB ?? null, y: centerY + 120 },
+    { entrant: final?.participantA ?? null, y: centerY - G.finalistOffset },
+    { entrant: final?.participantB ?? null, y: centerY + G.finalistOffset },
   ];
   const championId = final && (final.status === "completed" || final.status === "bye") ? final.winnerParticipantId : null;
   const finalLive = final?.games.some((g) => gamePhase(g, now) === "playing") ?? false;
@@ -149,17 +197,32 @@ export function GrandBracket({
     return !slot.entrant || (m.winnerParticipantId !== slot.entrant.participantId);
   };
 
+  const totalH = TITLE_H + bodyH + 24;
+  const scale = containerWidth ? Math.min(1, containerWidth / totalW) : 1;
+  const offsetX = containerWidth && scale === 1 ? (containerWidth - totalW) / 2 : 0;
+
   return (
-    <div className="overflow-x-auto rounded-3xl border border-blue/25 bg-[radial-gradient(ellipse_at_center,rgba(76,141,255,0.18),transparent_65%)]">
-      <div className="relative mx-auto" style={{ width: totalW, height: TITLE_H + bodyH + 24 }}>
+    <div
+      ref={containerRef}
+      className="overflow-hidden rounded-3xl border border-blue/25 bg-[radial-gradient(ellipse_at_center,rgba(76,141,255,0.18),transparent_65%)]"
+      style={{ height: totalH * scale }}
+    >
+      <div
+        className="relative origin-top-left"
+        style={{ width: totalW, height: totalH, transform: `translate(${offsetX}px, 0) scale(${scale})` }}
+      >
         {/* Title */}
-        <div className="absolute inset-x-0 top-5 text-center">
-          <div className="font-mono text-[11px] font-bold uppercase tracking-[0.4em] text-ink-soft">{s.roadToFinal}</div>
-          <div className="mt-1 font-display text-3xl font-black uppercase tracking-wide text-ink">{title ?? s.grandFinal}</div>
+        <div className={`absolute inset-x-0 text-center ${compact ? "top-3" : "top-5"}`}>
+          <div className={`font-mono font-bold uppercase text-ink-soft ${compact ? "text-[9px] tracking-[0.3em]" : "text-[11px] tracking-[0.4em]"}`}>
+            {s.roadToFinal}
+          </div>
+          <div className={`mt-1 truncate px-4 font-display font-black uppercase tracking-wide text-ink ${compact ? "text-lg" : "text-3xl"}`}>
+            {title ?? s.grandFinal}
+          </div>
         </div>
 
         {/* Connectors */}
-        <svg className="pointer-events-none absolute inset-0" width={totalW} height={TITLE_H + bodyH + 24} aria-hidden="true">
+        <svg className="pointer-events-none absolute inset-0" width={totalW} height={totalH} aria-hidden="true">
           {lines.map((line, i) => (
             <path
               key={i}
@@ -227,7 +290,7 @@ export function GrandBracket({
               >
                 {pill.label}
               </span>
-              {kickoff ? (
+              {kickoff && !compact ? (
                 <span className="mt-0.5 whitespace-nowrap rounded bg-bg/80 px-1 font-mono text-[9px] text-ink-faint">
                   {formatMatchDate(kickoff, locale)} · {formatMatchTime(kickoff, locale)}
                 </span>
@@ -268,7 +331,9 @@ export function GrandBracket({
 
         <div className="absolute flex flex-col items-center" style={{ left: centerX, top: centerY, transform: "translate(-50%, -50%)" }}>
           <span aria-hidden="true" className="absolute -inset-8 rounded-full bg-accent/20 blur-2xl motion-safe:animate-pulse" />
-          <TrophyIcon className="relative h-24 w-24 text-accent drop-shadow-[0_0_25px_rgba(217,165,68,0.7)]" />
+          <TrophyIcon
+            className={`relative text-accent drop-shadow-[0_0_25px_rgba(217,165,68,0.7)] ${compact ? "h-12 w-12" : "h-24 w-24"}`}
+          />
           <span
             className={`relative mt-1 rounded-md border px-2 py-0.5 font-mono text-[11px] font-black ${
               finalLive ? "border-danger bg-danger text-white" : "border-accent/60 bg-bg-raised text-accent"
@@ -276,7 +341,7 @@ export function GrandBracket({
           >
             {abbreviation("Final")}
           </span>
-          {finalKickoff ? (
+          {finalKickoff && !compact ? (
             <span className="relative mt-0.5 whitespace-nowrap font-mono text-[9px] text-ink-faint">
               {formatMatchDate(finalKickoff, locale)} · {formatMatchTime(finalKickoff, locale)}
             </span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { BracketIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
@@ -14,8 +15,8 @@ type Round = TournamentStructure["knockout"]["rounds"][number];
 
 /**
  * Grand knockout bracket: the two halves of the draw converge on a centre
- * Final with the trophy (and the champion once decided). On small screens the
- * rounds stack vertically.
+ * Final with the trophy (and the champion once decided). Small screens default
+ * to a stacked list of rounds, with a toggle to the (sideways-scrolling) bracket.
  */
 export function KnockoutBracket({
   knockout,
@@ -34,6 +35,7 @@ export function KnockoutBracket({
   const { t, locale } = useLanguage();
   const f = t.dashboard.fixtures;
   const now = useNow();
+  const [mobileView, setMobileView] = useState<"list" | "bracket">("list");
 
   if (knockout.pending || knockout.rounds.length === 0) {
     return (
@@ -63,10 +65,33 @@ export function KnockoutBracket({
     />
   );
 
+  const s = t.dashboard.schedule;
+
   return (
     <>
-      {/* Desktop: UEFA-style draw converging on the trophy */}
-      <div className="hidden lg:block">
+      {/* Small screens: switch between the round list and the bracket */}
+      <div className="mb-4 flex items-center justify-between gap-3 lg:hidden">
+        <div role="tablist" aria-label={s.viewBracket} className="inline-flex rounded-xl border border-surface-line bg-surface/60 p-1">
+          {(["list", "bracket"] as const).map((view) => (
+            <button
+              key={view}
+              type="button"
+              role="tab"
+              aria-selected={mobileView === view}
+              onClick={() => setMobileView(view)}
+              className={`rounded-lg px-4 py-1.5 text-xs font-bold transition-colors ${
+                mobileView === view ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
+              }`}
+            >
+              {view === "list" ? s.viewList : s.viewBracket}
+            </button>
+          ))}
+        </div>
+        {mobileView === "bracket" ? <span className="text-[11px] text-ink-faint">{s.swipeHint}</span> : null}
+      </div>
+
+      {/* UEFA-style draw converging on the trophy (always on desktop) */}
+      <div className={mobileView === "bracket" ? "block" : "hidden lg:block"}>
         <GrandBracket
           rounds={rounds}
           title={title}
@@ -77,8 +102,8 @@ export function KnockoutBracket({
         />
       </div>
 
-      {/* Mobile: rounds stacked */}
-      <div className="space-y-6 lg:hidden">
+      {/* Small screens: rounds stacked */}
+      <div className={mobileView === "list" ? "space-y-6 lg:hidden" : "hidden"}>
         {rounds.map((round) => (
           <section key={round.round}>
             <div className="mb-2 flex items-center justify-between border-b border-surface-line pb-2">
