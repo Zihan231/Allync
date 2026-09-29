@@ -54,17 +54,31 @@ export function MatchCard({
   const side = (entrant: FixtureEntrant | null, score: number | null) => {
     const isWinner = decided && entrant && match.winnerParticipantId === entrant.participantId;
     const isLoser = decided && entrant && (match.winnerParticipantId || match.doubleForfeit) && !isWinner;
+    const isMine = Boolean(entrant && highlightParticipantId && entrant.participantId === highlightParticipantId);
     return (
-      <div className={`flex items-center gap-2.5 py-1 ${isLoser ? "opacity-50" : ""}`}>
+      <div
+        className={`flex items-center gap-2.5 rounded-lg px-2 py-1.5 ${isLoser ? "opacity-60" : ""} ${
+          isMine ? "bg-accent-soft ring-1 ring-inset ring-accent/40" : ""
+        }`}
+      >
         <EntrantBadge entrant={entrant} isCvC={isCvC} size={size === "lg" ? "md" : "sm"} />
         <span
           className={`min-w-0 flex-1 truncate ${size === "lg" ? "text-sm" : "text-xs"} ${
-            entrant ? (isWinner ? "font-bold text-accent-ink" : "font-semibold text-ink") : "text-ink-faint"
+            entrant
+              ? isMine || isWinner
+                ? "font-black text-accent-ink"
+                : "font-semibold text-ink"
+              : "text-ink-faint"
           }`}
         >
           {entrant?.name ?? (match.status === "bye" ? f.bye : f.tbd)}
         </span>
-        <span className={`w-6 text-right font-mono font-black ${size === "lg" ? "text-lg" : "text-sm"} ${isWinner ? "text-accent-ink" : "text-ink-soft"}`}>
+        {isMine ? (
+          <span className="shrink-0 rounded-full border border-accent/40 bg-accent px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide text-bg">
+            {f.yourClub}
+          </span>
+        ) : null}
+        <span className={`w-6 text-right font-mono font-black ${size === "lg" ? "text-lg" : "text-sm"} ${isMine || isWinner ? "text-accent-ink" : "text-ink-soft"}`}>
           {score ?? (match.status === "bye" ? "" : "–")}
         </span>
       </div>

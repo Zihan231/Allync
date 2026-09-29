@@ -121,9 +121,14 @@ export function GroupStage({
                     <td className="px-4 py-3">
                       <span className="flex min-w-0 items-center gap-3">
                         <EntrantBadge entrant={row.entrant} isCvC={isCvC} size="md" />
-                        <span className="truncate font-display text-base font-bold text-ink sm:text-lg">
+                        <span className={`truncate font-display text-base sm:text-lg ${mine ? "font-black text-accent-ink" : "font-bold text-ink"}`}>
                           {row.entrant?.name ?? f.tbd}
                         </span>
+                        {mine ? (
+                          <span className="shrink-0 rounded-full border border-accent/40 bg-accent px-2 py-1 text-[10px] font-black uppercase tracking-wide text-bg">
+                            {f.yourClub}
+                          </span>
+                        ) : null}
                         {row.qualifies ? (
                           <span className="hidden shrink-0 rounded-full bg-success-soft px-2 py-1 text-[10px] font-bold uppercase text-success-ink sm:inline">
                             {f.qualifies}
