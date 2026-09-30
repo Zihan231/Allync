@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+
 export function Pagination({
   page,
   pageCount,
@@ -9,6 +11,7 @@ export function Pagination({
   pageCount: number;
   onPageChange: (page: number) => void;
 }) {
+  const { t } = useLanguage();
   if (pageCount <= 1) return null;
 
   const pages = new Set<number>([1, pageCount, page, page - 1, page + 1]);
@@ -30,7 +33,7 @@ export function Pagination({
         onClick={() => onPageChange(page - 1)}
         className="rounded-lg border border-surface-line-strong px-3 py-1.5 text-sm text-ink-soft transition-colors hover:text-ink disabled:opacity-40 disabled:hover:text-ink-soft"
       >
-        Prev
+        {t.dashboard.pagination.prev}
       </button>
       {items.map((it, i) =>
         it === "gap" ? (
@@ -56,7 +59,7 @@ export function Pagination({
         onClick={() => onPageChange(page + 1)}
         className="rounded-lg border border-surface-line-strong px-3 py-1.5 text-sm text-ink-soft transition-colors hover:text-ink disabled:opacity-40 disabled:hover:text-ink-soft"
       >
-        Next
+        {t.dashboard.pagination.next}
       </button>
     </div>
   );

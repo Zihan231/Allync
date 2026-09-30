@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format, formatNodes } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { useTournaments } from "@/lib/api/hooks/useTournaments";
 import type { BackendTournament, TournamentType } from "@/lib/api/tournaments";
@@ -97,6 +98,7 @@ export default function TournamentsPage() {
 
 function TournamentsContent() {
   const { t } = useLanguage();
+  const m = t.dashboard.myTournaments;
   const { user, isLoading: isSessionLoading } = useSession();
   const [activeTab, setActiveTab] = useUrlTab(TOURNAMENT_TABS, "cvc");
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
@@ -186,43 +188,34 @@ function TournamentsContent() {
     <div className="relative">
       <div className="glow-gold pointer-events-none absolute left-1/2 top-0 -z-10 h-[420px] w-[600px] -translate-x-1/2 blur-[100px] opacity-30" />
 
-      <PageHeader
-        eyebrow="Your eFootball Competitions"
-        title={t.dashboard.shell.navMyTournaments || "My Tournaments"}
-      />
+      <PageHeader eyebrow={m.eyebrow} title={t.dashboard.shell.navMyTournaments} />
 
       {/* Stats row (active tab) */}
       <div className={`mt-8 grid gap-4 sm:grid-cols-2 ${hostsTournaments ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
-        {hostsTournaments ? (
-          <StatTile label="Hosted by Your Community" value={String(stats.hosted)} icon={ShieldIcon} />
-        ) : null}
-        <StatTile label={t.dashboard.tournaments.liveNowLabel || "Live Now"} value={String(stats.live)} icon={FlameIcon} />
+        {hostsTournaments ? <StatTile label={m.statHosted} value={String(stats.hosted)} icon={ShieldIcon} /> : null}
+        <StatTile label={t.dashboard.tournaments.liveNowLabel} value={String(stats.live)} icon={FlameIcon} />
+        <StatTile label={t.dashboard.tournaments.openForEntryLabel} value={String(stats.open)} icon={TrophyIcon} />
+        <StatTile label={m.statCompleted} value={String(stats.completed)} icon={CheckIcon} />
         <StatTile
-          label={t.dashboard.tournaments.openForEntryLabel || "Open for Entry"}
-          value={String(stats.open)}
-          icon={TrophyIcon}
-        />
-        <StatTile label="Completed" value={String(stats.completed)} icon={CheckIcon} />
-        <StatTile
-          label={t.dashboard.tournaments.totalPrizePoolLabel || "Total Prize Pool"}
+          label={t.dashboard.tournaments.totalPrizePoolLabel}
           value={`৳ ${stats.prizePool.toLocaleString()}`}
           icon={WalletIcon}
         />
       </div>
 
       {/* Top Tabs: Club Tournaments (CvC) vs Player Tournaments (PvP) */}
-      <div className="mt-8 flex border-b border-surface-line">
+      <div className="mt-8 flex overflow-x-auto border-b border-surface-line">
         {(
           [
-            ["cvc", "My Club Tournaments (CvC)", UsersIcon],
-            ["pvp", "My Player Tournaments (PvP)", CrosshairIcon],
+            ["cvc", m.tabCvc, UsersIcon],
+            ["pvp", m.tabPvp, CrosshairIcon],
           ] as const
         ).map(([tab, label, Icon]) => (
           <button
             key={tab}
             type="button"
             onClick={() => handleTabChange(tab)}
-            className={`flex items-center gap-2 border-b-2 px-6 py-3 font-display text-sm font-semibold transition-colors ${
+            className={`flex shrink-0 items-center gap-2 border-b-2 px-6 py-3 font-display text-sm font-semibold transition-colors ${
               activeTab === tab ? "border-accent text-accent-ink" : "border-transparent text-ink-soft hover:text-ink"
             }`}
           >
@@ -242,16 +235,16 @@ function TournamentsContent() {
       {/* Status (upcoming / live / history) and — for hosts — hosted vs joined */}
       <div className="mt-6 flex flex-wrap items-center gap-2">
         {optionGroup("status", [
-          ["all", "All"],
-          ["upcoming", "Upcoming"],
-          ["live", "Live"],
-          ["completed", "Completed"],
+          ["all", m.statusAll],
+          ["upcoming", m.statusUpcoming],
+          ["live", m.statusLive],
+          ["completed", m.statusCompleted],
         ])}
         {hostsTournaments
           ? optionGroup("relation", [
-              ["all", "Everything"],
-              ["hosted", "Hosted by us"],
-              ["joined", "Joined"],
+              ["all", m.relationAll],
+              ["hosted", m.relationHosted],
+              ["joined", m.relationJoined],
             ])
           : null}
       </div>
@@ -264,14 +257,14 @@ function TournamentsContent() {
             type="text"
             value={filters.search}
             onChange={(e) => updateFilter("search", e.target.value)}
-            placeholder="Search by tournament or community name..."
+            placeholder={m.searchPlaceholder}
             className="w-full rounded-xl border border-surface-line bg-surface/60 py-2 pl-10 pr-9 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
           />
           {filters.search ? (
             <button
               type="button"
               onClick={() => updateFilter("search", "")}
-              aria-label="Clear search"
+              aria-label={m.clearSearch}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-ink-faint hover:text-ink"
             >
               <CloseIcon className="h-3.5 w-3.5" />
@@ -281,14 +274,14 @@ function TournamentsContent() {
 
         <div className="flex flex-wrap items-center gap-2">
           {optionGroup("fee", [
-            ["all", "All Fees"],
-            ["free", "Free Entry"],
-            ["paid", "Paid Entry"],
+            ["all", m.feeAll],
+            ["free", m.feeFree],
+            ["paid", m.feePaid],
           ])}
           {optionGroup("prize", [
-            ["all", "All Prizes"],
-            ["with_prize", "With Prize"],
-            ["friendly", "Friendly"],
+            ["all", m.prizeAll],
+            ["with_prize", m.prizeWith],
+            ["friendly", m.prizeFriendly],
           ])}
           <select
             value={sort}
@@ -296,12 +289,12 @@ function TournamentsContent() {
               setSort(e.target.value as SortKey);
               setPage(1);
             }}
-            aria-label="Sort tournaments"
+            aria-label={m.sortLabel}
             className="rounded-lg border border-surface-line bg-surface px-3 py-1.5 text-xs text-ink-soft outline-none focus:border-accent [color-scheme:dark]"
           >
-            <option value="status">Live &amp; upcoming first</option>
-            <option value="recent">Most recent</option>
-            <option value="prize">Highest prize pool</option>
+            <option value="status">{m.sortStatus}</option>
+            <option value="recent">{m.sortRecent}</option>
+            <option value="prize">{m.sortPrize}</option>
           </select>
         </div>
       </div>
@@ -309,7 +302,10 @@ function TournamentsContent() {
       {/* Result summary */}
       <div className="mt-4 flex items-center justify-between gap-3 text-xs text-ink-faint">
         <span>
-          Showing <strong className="text-ink">{filtered.length}</strong> of {tabTournaments.length}
+          {formatNodes(m.showing, {
+            shown: <strong className="text-ink">{filtered.length}</strong>,
+            total: tabTournaments.length,
+          })}
         </span>
         {activeFilterCount ? (
           <button
@@ -318,7 +314,7 @@ function TournamentsContent() {
             className="inline-flex items-center gap-1.5 rounded-full border border-surface-line-strong px-3 py-1 font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
           >
             <CloseIcon className="h-3 w-3" />
-            Clear filters ({activeFilterCount})
+            {format(m.clearFilters, { count: activeFilterCount })}
           </button>
         ) : null}
       </div>
@@ -345,12 +341,8 @@ function TournamentsContent() {
         ) : (
           <EmptyState
             icon={TrophyIcon}
-            title={activeTab === "cvc" ? "No Club Tournaments" : "No Player Tournaments"}
-            body={
-              activeFilterCount
-                ? "No tournaments match these filters. Try clearing them."
-                : "Tournaments you join — or that your community hosts — will appear here."
-            }
+            title={activeTab === "cvc" ? m.emptyCvc : m.emptyPvp}
+            body={activeFilterCount ? m.emptyFiltered : m.emptyBody}
           />
         )}
       </div>

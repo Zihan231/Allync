@@ -17,7 +17,9 @@ export function TournamentCard({
   tournament: Tournament | BackendTournament | any;
   href: string;
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const tc = t.dashboard.tournamentCard;
+  const dateLocale = locale === "bn" ? "bn-BD" : "en-US";
 
   // Normalize format
   const rawFormat = (tournament.type || tournament.format || "pvp").toLowerCase();
@@ -31,12 +33,12 @@ export function TournamentCard({
 
   // Format label
   let formatBadgeText = "PvP · 1 v 1";
-  let startersLabel = "1 v 1 Knockout";
+  let startersLabel = tc.rosterPvp;
   if (isCvC) {
     const starters = tournament.startersCount || 12;
     const subs = tournament.subsCount ?? 0;
     formatBadgeText = `CvC · ${starters} v ${starters}`;
-    startersLabel = `${starters} Starters · ${subs} Subs`;
+    startersLabel = format(tc.rosterCvc, { starters, subs });
   }
 
   // Lineup cutoff countdown (CvC, while registration is open). Older data may
@@ -56,7 +58,7 @@ export function TournamentCard({
 
   // Host Name
   const hostName =
-    tournament.community?.name || tournament.organizerName || "eFootball Community";
+    tournament.community?.name || tournament.organizerName || tc.defaultHost;
 
   // Entrants and capacity
   const entrantsCount =
@@ -66,8 +68,8 @@ export function TournamentCard({
 
   // Dates
   const startAt = tournament.startAt ? new Date(tournament.startAt) : new Date();
-  const startDateStr = startAt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  const startTimeStr = startAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const startDateStr = startAt.toLocaleDateString(dateLocale, { month: "short", day: "numeric" });
+  const startTimeStr = startAt.toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit" });
 
   // Financials
   const isPaid = Boolean(tournament.isPaid || (tournament.entryFeeBdt && tournament.entryFeeBdt > 0));
@@ -114,20 +116,20 @@ export function TournamentCard({
           {isLive ? (
             <span className="flex items-center gap-1.5 rounded-full border border-rose-400/60 bg-rose-950/85 px-3 py-1 text-[11px] font-bold text-rose-100 backdrop-blur-md shadow-[0_0_14px_rgba(244,63,94,0.35)]">
               <span className="h-2 w-2 rounded-full bg-rose-400 animate-pulse shadow-[0_0_8px_#f43f5e]" />
-              <span className="tracking-wide">Live Now</span>
+              <span className="tracking-wide">{tc.live}</span>
             </span>
           ) : isOpen ? (
             <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/60 bg-emerald-950/85 px-3 py-1 text-[11px] font-bold text-emerald-200 backdrop-blur-md shadow-[0_0_14px_rgba(52,211,153,0.35)]">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
-              <span className="tracking-wide">Registration Open</span>
+              <span className="tracking-wide">{tc.registrationOpen}</span>
             </span>
           ) : isCompleted ? (
             <span className="rounded-full border border-surface-line bg-black/60 px-3 py-1 font-mono text-[11px] text-ink-soft backdrop-blur-md font-semibold">
-              Completed
+              {tc.completed}
             </span>
           ) : (
             <span className="rounded-full border border-surface-line bg-black/60 px-3 py-1 font-mono text-[11px] text-ink-soft backdrop-blur-md font-semibold">
-              Registration Closed
+              {tc.registrationClosed}
             </span>
           )}
         </div>
@@ -158,11 +160,11 @@ export function TournamentCard({
           {prizePool > 0 ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 px-3.5 py-1 font-display text-xs font-black text-black shadow-[0_0_20px_rgba(217,165,68,0.6)]">
               <TrophyIcon className="h-3.5 w-3.5 text-black" />
-              <span>৳{prizePool.toLocaleString()} Prize</span>
+              <span>{format(tc.prize, { amount: prizePool.toLocaleString() })}</span>
             </span>
           ) : (
             <span className="inline-flex items-center gap-1 rounded-full border border-surface-line-strong bg-black/70 px-3 py-0.5 font-mono text-[10px] font-bold text-ink-soft backdrop-blur-md">
-              Friendly Cup
+              {tc.friendlyCup}
             </span>
           )}
         </div>
@@ -179,12 +181,12 @@ export function TournamentCard({
             <span className="truncate">{hostName}</span>
             {tournament.hostedByMe ? (
               <span className="shrink-0 rounded-full border border-blue/40 bg-blue-soft px-2 py-0.5 text-[10px] font-bold text-blue-ink">
-                Hosting
+                {tc.hosting}
               </span>
             ) : null}
             {tournament.joinedByMe ? (
               <span className="shrink-0 rounded-full border border-success/40 bg-success-soft px-2 py-0.5 text-[10px] font-bold text-success-ink">
-                Joined
+                {tc.joined}
               </span>
             ) : null}
           </p>
@@ -196,7 +198,7 @@ export function TournamentCard({
             <TrophyIcon className="h-4 w-4 shrink-0 text-accent" />
             <Avatar dpUrl={tournament.champion.dpUrl} name={tournament.champion.name} size="sm" mode="static" />
             <div className="min-w-0">
-              <div className="font-mono text-[9px] font-black uppercase tracking-[0.2em] text-accent">Champion</div>
+              <div className="font-mono text-[9px] font-black uppercase tracking-[0.2em] text-accent">{tc.champion}</div>
               <div className="truncate font-display text-sm font-black text-ink">{tournament.champion.name}</div>
             </div>
           </div>
@@ -208,12 +210,12 @@ export function TournamentCard({
           {isPaid ? (
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/80 bg-amber-950/70 px-3 py-1 font-mono text-xs font-bold text-amber-100 shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-              <span>৳{entryFee.toLocaleString()} Entry Fee</span>
+              <span>{format(tc.entryFee, { amount: entryFee.toLocaleString() })}</span>
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/80 bg-emerald-950/70 px-3 py-1 font-mono text-xs font-bold text-emerald-100 shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
-              <span>Free Entry</span>
+              <span>{tc.freeEntry}</span>
             </span>
           )}
 
@@ -230,7 +232,7 @@ export function TournamentCard({
             <div className="space-y-1">
               <div className="flex items-baseline gap-1 font-mono text-xs">
                 <span className="font-bold text-white">{entrantsCount}</span>
-                <span className="text-ink-soft">/ {maxCapacity} Registered</span>
+                <span className="text-ink-soft">{format(tc.registered, { max: maxCapacity })}</span>
               </div>
               {/* Sleek Mini Progress Bar */}
               <div className="h-1.5 w-24 overflow-hidden rounded-full bg-surface-line">
@@ -245,7 +247,7 @@ export function TournamentCard({
             <div className="text-right">
               <div className="flex items-center justify-end gap-1 font-mono text-[10px] text-ink-faint font-semibold uppercase tracking-wider">
                 <CalendarIcon className="h-3 w-3 text-accent" />
-                <span>Starts</span>
+                <span>{tc.starts}</span>
               </div>
               <div className="font-display text-xs font-bold text-white">
                 {startDateStr}{" "}
