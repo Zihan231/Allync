@@ -359,7 +359,8 @@ function LeadershipEditor({
   const { change, pending } = useRoleChange(communityId, onSaved);
   const president = members.find((m) => m.communityRole === "President");
   const vp = members.find((m) => m.communityRole === "Vice President");
-  const candidates = members.filter((m) => m.communityRole !== "President").sort(byName);
+  // Leaders can't be in a club, so only members outside clubs can be Vice President.
+  const candidates = members.filter((m) => m.communityRole !== "President" && !m.clubId).sort(byName);
 
   function pick(profileId: string) {
     if (profileId) void change(profileId, "Vice President", "Vice President");
@@ -392,14 +393,11 @@ function LeadershipEditor({
           >
             <option value="">{cs.vacant}</option>
             {candidates.map((m) => (
-              // Leaders can't be in a club, so club members are listed but can't be picked.
-              <option key={m.profileId} value={m.profileId} disabled={Boolean(m.clubId)}>
+              <option key={m.profileId} value={m.profileId}>
                 {m.name}
-                {m.clubId
-                  ? ` (${cs.inClub}${m.clubName ? `: ${m.clubName}` : ""})`
-                  : m.communityRole !== "Member" && m.communityRole !== "Vice President"
-                    ? ` (${roleLabel(m.communityRole, t)})`
-                    : ""}
+                {m.communityRole !== "Member" && m.communityRole !== "Vice President"
+                  ? ` (${roleLabel(m.communityRole, t)})`
+                  : ""}
               </option>
             ))}
           </select>
