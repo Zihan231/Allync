@@ -19,10 +19,22 @@ import {
   UsersIcon,
   CrosshairIcon,
   SearchIcon,
+  ShieldIcon,
+  CheckIcon,
 } from "@/components/icons";
 
 const PAGE_SIZE = 9;
 const TOURNAMENT_TABS: readonly TournamentType[] = ["cvc", "pvp"];
+
+type StatusFilter = "all" | "upcoming" | "live" | "completed";
+
+/** Upcoming (registration / pre-start), live, or history (completed / cancelled). */
+function statusGroup(status: string | undefined): Exclude<StatusFilter, "all"> {
+  const s = (status ?? "").toLowerCase();
+  if (s === "ongoing" || s === "live") return "live";
+  if (s === "completed" || s === "cancelled") return "completed";
+  return "upcoming";
+}
 
 export default function TournamentsPage() {
   return (
@@ -40,17 +52,37 @@ function TournamentsContent() {
   const [feeFilter, setFeeFilter] = useState<"all" | "free" | "paid">("all");
   const [prizeFilter, setPrizeFilter] = useState<"all" | "with_prize" | "friendly">("all");
   const [sortBy, setSortBy] = useState<"startAt" | "prizePoolBdt">("startAt");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [relationFilter, setRelationFilter] = useState<"all" | "hosted" | "joined">("all");
   const [page, setPage] = useState(1);
 
-  // Only tournaments the user (or their club) entered — filtered on the server.
-  const { data: joinedTournaments = [], isLoading } = useTournaments(
-    { type: activeTab, sortBy, joined: true },
+  // The user's tournaments, filtered on the server: ones they (or their club) entered, plus —
+  // for community Presidents / Vice Presidents — every tournament their community hosts.
+  const { data: scopedTournaments, isLoading } = useTournaments(
+    { type: activeTab, sortBy, scope: "mine" },
     isSessionLoading ? null : user?.id,
   );
+  // Guard: keep only rows the server marked as the viewer's, so a server that ignores
+  // `scope` (e.g. an outdated build) can't list everyone's tournaments here.
+  const joinedTournaments = useMemo(
+    () => (scopedTournaments ?? []).filter((tour) => tour.hostedByMe || tour.joinedByMe),
+    [scopedTournaments],
+  );
+  const hostsTournaments = joinedTournaments.some((tour) => tour.hostedByMe);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<StatusFilter, number> = { all: joinedTournaments.length, upcoming: 0, live: 0, completed: 0 };
+    for (const tour of joinedTournaments) counts[statusGroup(tour.status)]++;
+    return counts;
+  }, [joinedTournaments]);
 
   // Client-side search and filters
   const filtered = useMemo(() => {
-    return joinedTournaments.filter((tour) => {
+    const matches = joinedTournaments.filter((tour) => {
+      if (statusFilter !== "all" && statusGroup(tour.status) !== statusFilter) return false;
+      if (relationFilter === "hosted" && !tour.hostedByMe) return false;
+      if (relationFilter === "joined" && !tour.joinedByMe) return false;
+
       // Search
       if (search.trim()) {
         const query = search.toLowerCase();
@@ -77,7 +109,17 @@ function TournamentsContent() {
 
       return true;
     });
-  }, [joinedTournaments, search, feeFilter, prizeFilter]);
+    if (sortBy !== "startAt") return matches;
+    // Live first, then upcoming (soonest first), then history (most recent first).
+    const rank = { live: 0, upcoming: 1, completed: 2 } as const;
+    return [...matches].sort((a, b) => {
+      const ga = statusGroup(a.status);
+      const gb = statusGroup(b.status);
+      if (ga !== gb) return rank[ga] - rank[gb];
+      const diff = new Date(a.startAt).getTime() - new Date(b.startAt).getTime();
+      return ga === "completed" ? -diff : diff;
+    });
+  }, [joinedTournaments, search, feeFilter, prizeFilter, statusFilter, relationFilter, sortBy]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -94,13 +136,17 @@ function TournamentsContent() {
       (sum, tour) => sum + (tour.prizePoolBdt || 0),
       0,
     );
-    return { liveCount, openCount, totalPrizePool };
+    const hostedCount = joinedTournaments.filter((tour) => tour.hostedByMe).length;
+    return { liveCount, openCount, totalPrizePool, hostedCount };
   }, [joinedTournaments]);
 
   function handleTabChange(tab: TournamentType) {
     setActiveTab(tab);
     setPage(1);
   }
+
+  const pill = (active: boolean) =>
+    `rounded-md px-2.5 py-1 font-medium transition-colors ${active ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"}`;
 
   return (
     <div className="relative">
@@ -112,7 +158,10 @@ function TournamentsContent() {
       />
 
       {/* Stats row */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className={`mt-8 grid gap-4 sm:grid-cols-2 ${hostsTournaments ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+        {hostsTournaments ? (
+          <StatTile label="Hosted by Your Community" value={String(stats.hostedCount)} icon={ShieldIcon} />
+        ) : null}
         <StatTile
           label={t.dashboard.tournaments.liveNowLabel || "Live Now"}
           value={String(stats.liveCount)}
@@ -123,6 +172,7 @@ function TournamentsContent() {
           value={String(stats.openCount)}
           icon={TrophyIcon}
         />
+        <StatTile label="Completed" value={String(statusCounts.completed)} icon={CheckIcon} />
         <StatTile
           label={t.dashboard.tournaments.totalPrizePoolLabel || "Total Prize Pool"}
           value={`৳ ${stats.totalPrizePool.toLocaleString()}`}
@@ -171,8 +221,55 @@ function TournamentsContent() {
         </button>
       </div>
 
+      {/* Status (upcoming / live / history) and — for hosts — hosted vs joined */}
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <div className="flex items-center rounded-lg border border-surface-line bg-surface/50 p-1 text-xs">
+          {(
+            [
+              ["all", "All"],
+              ["upcoming", "Upcoming"],
+              ["live", "Live"],
+              ["completed", "Completed"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => {
+                setStatusFilter(key);
+                setPage(1);
+              }}
+              className={pill(statusFilter === key)}
+            >
+              {label} <span className="opacity-70">({statusCounts[key]})</span>
+            </button>
+          ))}
+        </div>
+        {hostsTournaments ? (
+          <div className="flex items-center rounded-lg border border-surface-line bg-surface/50 p-1 text-xs">
+            {(
+              [
+                ["all", "Everything"],
+                ["hosted", "Hosted by us"],
+                ["joined", "Joined"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => {
+                  setRelationFilter(key);
+                  setPage(1);
+                }}
+                className={pill(relationFilter === key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
       {/* Filter and Search Bar */}
-      <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
@@ -284,11 +381,11 @@ function TournamentsContent() {
         ) : (
           <EmptyState
             icon={TrophyIcon}
-            title={activeTab === "cvc" ? "No Joined Club Tournaments" : "No Joined Player Tournaments"}
+            title={activeTab === "cvc" ? "No Club Tournaments" : "No Player Tournaments"}
             body={
-              search || feeFilter !== "all" || prizeFilter !== "all"
+              search || feeFilter !== "all" || prizeFilter !== "all" || statusFilter !== "all" || relationFilter !== "all"
                 ? "Try clearing your search query or filters."
-                : "Join a tournament from its community page and it will appear here."
+                : "Tournaments you join — or that your community hosts — will appear here."
             }
           />
         )}

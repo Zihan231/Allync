@@ -131,6 +131,12 @@ export interface BackendTournament {
   matchOfficialIds?: string[];
   /** Returned by the list endpoint instead of the full participants array. */
   participantCount?: number;
+  /** List endpoint: winner of a completed tournament. */
+  champion?: { name: string; dpUrl: string | null } | null;
+  /** List endpoint: the viewer (or their club) entered it. */
+  joinedByMe?: boolean;
+  /** List endpoint: the viewer's community hosts it (they're President / VP) or they created it. */
+  hostedByMe?: boolean;
   createdAt: string;
   updatedAt: string;
   community?: {
@@ -157,6 +163,8 @@ export interface TournamentQueryParams {
   sortOrder?: "ASC" | "DESC";
   /** Only tournaments the signed-in user (or their club) has entered. */
   joined?: boolean;
+  /** The signed-in user's tournaments: entered, hosted by their community (President / VP), or either. */
+  scope?: "joined" | "hosted" | "mine";
 }
 
 export interface CreateTournamentPayload {

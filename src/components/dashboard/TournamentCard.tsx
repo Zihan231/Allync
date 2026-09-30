@@ -5,6 +5,7 @@ import { useCountdown } from "@/lib/hooks/useCountdown";
 import type { Tournament } from "@/lib/mock/types";
 import type { BackendTournament } from "@/lib/api/tournaments";
 import { TrophyIcon, UsersIcon, CrosshairIcon, CalendarIcon, ClockIcon } from "../icons";
+import { Avatar } from "../common/Avatar";
 
 const LINEUP_CUTOFF_MS = 2 * 60 * 60 * 1000;
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -175,9 +176,31 @@ export function TournamentCard({
           </h3>
           <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-soft truncate font-medium">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            <span>{hostName}</span>
+            <span className="truncate">{hostName}</span>
+            {tournament.hostedByMe ? (
+              <span className="shrink-0 rounded-full border border-blue/40 bg-blue-soft px-2 py-0.5 text-[10px] font-bold text-blue-ink">
+                Hosting
+              </span>
+            ) : null}
+            {tournament.joinedByMe ? (
+              <span className="shrink-0 rounded-full border border-success/40 bg-success-soft px-2 py-0.5 text-[10px] font-bold text-success-ink">
+                Joined
+              </span>
+            ) : null}
           </p>
         </div>
+
+        {/* Result of a finished tournament */}
+        {isCompleted && tournament.champion ? (
+          <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-accent/50 bg-gradient-to-r from-accent/20 via-accent/10 to-transparent px-3 py-2">
+            <TrophyIcon className="h-4 w-4 shrink-0 text-accent" />
+            <Avatar dpUrl={tournament.champion.dpUrl} name={tournament.champion.name} size="sm" mode="static" />
+            <div className="min-w-0">
+              <div className="font-mono text-[9px] font-black uppercase tracking-[0.2em] text-accent">Champion</div>
+              <div className="truncate font-display text-sm font-black text-ink">{tournament.champion.name}</div>
+            </div>
+          </div>
+        ) : null}
 
         {/* Feature Pills */}
         <div className="mt-3.5 flex flex-wrap items-center gap-2">
