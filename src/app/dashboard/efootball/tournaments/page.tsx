@@ -90,33 +90,33 @@ function sortTournaments(list: BackendTournament[], sort: SortKey): BackendTourn
 // Theme tokens only (see globals.css). Full class strings so Tailwind picks them up.
 const STAT_TONES = {
   blue: {
-    card: "border-blue/35 from-blue/15",
-    edge: "via-blue",
-    icon: "bg-blue text-bg shadow-[0_0_18px_-2px_rgba(76,141,255,0.6)]",
+    card: "border-blue/30 from-blue/[0.12]",
+    bar: "bg-blue",
+    icon: "bg-blue text-bg shadow-[0_6px_18px_-6px_rgba(76,141,255,0.8)]",
     value: "text-blue-ink",
   },
   danger: {
-    card: "border-danger/35 from-danger/15",
-    edge: "via-danger",
-    icon: "bg-danger text-white shadow-[0_0_18px_-2px_rgba(244,63,94,0.6)]",
+    card: "border-danger/30 from-danger/[0.12]",
+    bar: "bg-danger",
+    icon: "bg-danger text-white shadow-[0_6px_18px_-6px_rgba(244,63,94,0.8)]",
     value: "text-danger-ink",
   },
   success: {
-    card: "border-success/35 from-success/15",
-    edge: "via-success",
-    icon: "bg-success text-bg shadow-[0_0_18px_-2px_rgba(52,211,153,0.55)]",
+    card: "border-success/30 from-success/[0.12]",
+    bar: "bg-success",
+    icon: "bg-success text-bg shadow-[0_6px_18px_-6px_rgba(52,211,153,0.75)]",
     value: "text-success-ink",
   },
   neutral: {
-    card: "border-surface-line-strong from-surface-line/40",
-    edge: "via-ink-soft",
-    icon: "bg-surface-line text-ink",
+    card: "border-surface-line-strong from-ink-soft/[0.08]",
+    bar: "bg-ink-soft",
+    icon: "bg-surface-line-strong text-ink",
     value: "text-ink",
   },
   accent: {
-    card: "border-accent/45 from-accent/20",
-    edge: "via-accent",
-    icon: "bg-accent text-bg shadow-[0_0_18px_-2px_rgba(217,165,68,0.65)]",
+    card: "border-accent/35 from-accent/[0.14]",
+    bar: "bg-accent",
+    icon: "bg-accent text-bg shadow-[0_6px_18px_-6px_rgba(217,165,68,0.85)]",
     value: "text-accent-ink",
   },
 } as const;
@@ -140,24 +140,28 @@ function StatCard({
   const styles = STAT_TONES[tone];
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br to-transparent p-4 sm:p-5 ${styles.card} ${
+      className={`relative flex min-w-0 items-center justify-between gap-3 overflow-hidden rounded-2xl border bg-gradient-to-r to-surface/40 py-3.5 pl-5 pr-4 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.9)] ${styles.card} ${
         wide ? "col-span-2 lg:col-span-1" : ""
       }`}
     >
-      <span aria-hidden className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent ${styles.edge} to-transparent`} />
-      <div className="flex items-start justify-between gap-3">
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${styles.icon}`}>
-          <Icon className="h-5 w-5" />
-        </span>
-        {pulse ? (
-          <span className="relative mt-1 flex h-2.5 w-2.5">
-            <span className="absolute inset-0 animate-ping rounded-full bg-danger/70" />
-            <span className="relative h-2.5 w-2.5 rounded-full bg-danger" />
-          </span>
-        ) : null}
+      <span aria-hidden className={`absolute inset-y-3 left-0 w-1 rounded-r-full ${styles.bar}`} />
+      <div className="min-w-0">
+        <div className="truncate font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink-faint" title={label}>
+          {label}
+        </div>
+        <div className={`mt-1.5 flex items-center gap-2 font-display text-2xl font-black leading-none ${styles.value}`}>
+          <span className="truncate">{value}</span>
+          {pulse ? (
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute inset-0 animate-ping rounded-full bg-danger/70" />
+              <span className="relative h-2 w-2 rounded-full bg-danger" />
+            </span>
+          ) : null}
+        </div>
       </div>
-      <div className={`mt-4 font-display text-2xl font-black leading-none sm:text-3xl ${styles.value}`}>{value}</div>
-      <div className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</div>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${styles.icon}`}>
+        <Icon className="h-5 w-5" />
+      </span>
     </div>
   );
 }
