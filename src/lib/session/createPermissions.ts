@@ -33,6 +33,21 @@ export function clubCreateBlockReason(user: MockUser, t: TranslationDict): Creat
   return null;
 }
 
+/**
+ * Why a community leader can't join a club, or null (mirrors ClubsService.join).
+ * Being in another club is handled separately on the club page.
+ */
+export function clubJoinBlockReason(user: MockUser, t: TranslationDict): string | null {
+  if (user.community?.role !== "President" && user.community?.role !== "Vice President") return null;
+  return format(t.dashboard.createBlock.communityLeaderNoJoinFull, {
+    role:
+      user.community.role === "President"
+        ? t.dashboard.community.presidentLabel
+        : t.dashboard.community.vicePresidentLabel,
+    name: user.community.name,
+  });
+}
+
 /** Why this user can't create a community, or null if they can. */
 export function communityCreateBlockReason(user: MockUser, t: TranslationDict): CreateBlock | null {
   const cb = t.dashboard.createBlock;

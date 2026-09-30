@@ -4,6 +4,7 @@ import { Suspense, use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
+import { clubJoinBlockReason } from "@/lib/session/createPermissions";
 import { joinClubRequest, getMyClubRequest } from "@/lib/api/clubs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMockClubs, useMockPeople, useMockJoinRequests, addPendingJoinRequest,
@@ -34,7 +35,7 @@ import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
 import { ClubLatestTournaments } from "@/components/dashboard/ClubLatestTournaments";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useLeaveClub } from "@/lib/api/hooks/useClubs";
-import { UsersIcon, TrophyIcon, FacebookIcon, SettingsIcon } from "@/components/icons";
+import { UsersIcon, TrophyIcon, FacebookIcon, SettingsIcon, LockIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/lib/useToast";
 import { ToastContainer } from "@/components/common/Toast";
@@ -166,6 +167,7 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
   const canManageTeams = isMine && (user.club?.role === "President" || user.club?.role === "Manager" || currentUserPerson?.clubRole === "President" || currentUserPerson?.clubRole === "Manager");
   const isManager = isMine && (user.club?.role === "Manager" || currentUserPerson?.clubRole === "Manager");
   const hasOtherClub = !!user.club && !isMine;
+  const joinBlockedReason = isMine ? null : clubJoinBlockReason(user, t);
 
   const hasPendingRequest =
     !isMine &&
@@ -181,7 +183,7 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
       ));
 
   const handleJoin = async () => {
-    if (!club || hasOtherClub || hasPendingRequest || isJoining) return;
+    if (!club || hasOtherClub || hasPendingRequest || joinBlockedReason || isJoining) return;
     setJustLeft(false);
     setIsJoining(true);
 
@@ -366,9 +368,11 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
           ) : (
             <button
               onClick={handleJoin}
-              disabled={hasOtherClub || hasPendingRequest}
-              className="rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg disabled:opacity-40"
+              disabled={hasOtherClub || hasPendingRequest || !!joinBlockedReason}
+              title={joinBlockedReason ?? undefined}
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg disabled:cursor-not-allowed disabled:opacity-40"
             >
+              {joinBlockedReason && !hasOtherClub ? <LockIcon className="h-3.5 w-3.5" /> : null}
               {club.joinPolicy === "instant" ? t.dashboard.clubs.joinButton : t.dashboard.clubs.requestToJoinButton}
             </button>
           )}
@@ -377,6 +381,11 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
 
       {hasPendingRequest ? (
         <p className="mt-3 font-mono text-xs text-warning-ink">{t.dashboard.clubs.pendingRequestNotice}</p>
+      ) : joinBlockedReason && !hasOtherClub ? (
+        <p className="mt-3 flex items-start gap-1.5 font-mono text-xs text-warning-ink">
+          <LockIcon className="mt-px h-3.5 w-3.5 shrink-0" />
+          <span>{joinBlockedReason}</span>
+        </p>
       ) : null}
 
       {club.motto ? (
