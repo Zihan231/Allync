@@ -880,6 +880,10 @@ export const translations = {
         clubHostedEmpty: "This club hasn't hosted a tournament yet.",
         clubEnteredTitle: "Entered by this club",
         clubCreate: "Create club tournament",
+        clubLatestTitle: "Latest tournaments",
+        clubViewAll: "View all tournaments",
+        clubBadgeHosted: "Hosted",
+        clubBadgeEntered: "Entered",
       },
       pagination: {
         prev: "Prev",
@@ -2724,6 +2728,10 @@ export const translations = {
         clubHostedEmpty: "এই ক্লাব এখনো কোনো টুর্নামেন্ট আয়োজন করেনি।",
         clubEnteredTitle: "এই ক্লাব যেসব টুর্নামেন্টে অংশ নিয়েছে",
         clubCreate: "ক্লাব টুর্নামেন্ট তৈরি করুন",
+        clubLatestTitle: "সাম্প্রতিক টুর্নামেন্ট",
+        clubViewAll: "সব টুর্নামেন্ট দেখুন",
+        clubBadgeHosted: "আয়োজক",
+        clubBadgeEntered: "অংশগ্রহণকারী",
       },
       pagination: {
         prev: "আগের",

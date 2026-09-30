@@ -32,6 +32,7 @@ import { ClubMatchStatsTab } from "@/components/dashboard/ClubMatchStatsTab";
 import { ClubTeamUpTab } from "@/components/dashboard/ClubTeamUpTab";
 import { ClubTeamsTab } from "@/components/dashboard/ClubTeamsTab";
 import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
+import { ClubLatestTournaments } from "@/components/dashboard/ClubLatestTournaments";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { ChangeManagerModal } from "@/components/dashboard/ChangeManagerModal";
 import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
@@ -455,14 +456,8 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
       ) : null}
 
       <div className="mt-6">
-        <ClubMetaGrid club={club} members={members} />
+        <ClubLatestTournaments clubId={club.id} onViewAll={() => setTab("tournaments")} />
       </div>
-
-      {leftoverStaff.length ? (
-        <div className="mt-5">
-          <StaffRow people={leftoverStaff} />
-        </div>
-      ) : null}
 
       {communities.length ? (
         <div className="mt-6">
@@ -499,7 +494,14 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
       </div>
 
       <div className="mt-5">
-        {tab === "overview" ? <ClubOverviewTab club={club} members={members} insights={insights} /> : null}
+        {tab === "overview" ? (
+          <div className="space-y-6">
+            {/* Club officials and key numbers */}
+            <ClubMetaGrid club={club} members={members} />
+            {leftoverStaff.length ? <StaffRow people={leftoverStaff} /> : null}
+            <ClubOverviewTab club={club} members={members} insights={insights} />
+          </div>
+        ) : null}
         {tab === "fixtures" ? <ClubFixturesTab club={club} members={members} /> : null}
         {tab === "squad" ? (
           <ClubSquadTab club={club} members={members} contractDaysById={insights.contractDaysById} />
