@@ -330,7 +330,7 @@ function RoleLabel({ role, accent }: { role: string; accent?: boolean }) {
   const { t } = useLanguage();
   return (
     <span
-      className={`w-40 shrink-0 font-mono text-[11px] font-bold uppercase tracking-wider ${
+      className={`block w-40 shrink-0 font-mono text-[11px] font-bold uppercase tracking-wider ${
         accent ? "text-accent-ink" : "text-ink-soft"
       }`}
     >
@@ -436,9 +436,10 @@ function OfficialsEditor({
         const holders = members.filter((m) => m.communityRole === role).sort(byName);
         return (
           <div key={role} className="flex flex-col gap-2.5 px-3.5 py-3 sm:flex-row sm:items-start">
-            <span className="pt-2">
+            {/* Centred on the first line: the 40px chips or "Nobody yet". */}
+            <div className="shrink-0 sm:flex sm:h-10 sm:items-center">
               <RoleLabel role={role} />
-            </span>
+            </div>
             <div className="min-w-0 flex-1 space-y-2.5">
               {holders.length ? (
                 <div className="flex flex-wrap gap-2">
@@ -464,7 +465,7 @@ function OfficialsEditor({
                   ))}
                 </div>
               ) : (
-                <p className="pt-2 text-xs text-ink-faint">{cs.none}</p>
+                <p className="flex h-10 items-center text-xs text-ink-faint">{cs.none}</p>
               )}
               {canEdit ? (
                 <div className="flex items-center gap-3">
