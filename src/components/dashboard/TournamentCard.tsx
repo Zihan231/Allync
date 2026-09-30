@@ -13,9 +13,12 @@ const pad = (n: number) => String(n).padStart(2, "0");
 export function TournamentCard({
   tournament,
   href,
+  showRelation = true,
 }: {
   tournament: Tournament | BackendTournament | any;
   href: string;
+  /** Show the viewer's "Hosting" / "Joined" tags (hide where the page is about someone else, e.g. a club). */
+  showRelation?: boolean;
 }) {
   const { t, locale } = useLanguage();
   const tc = t.dashboard.tournamentCard;
@@ -30,6 +33,8 @@ export function TournamentCard({
   const isLive = rawStatus === "live" || rawStatus === "ongoing";
   const isOpen = rawStatus === "open" || rawStatus === "registration_open";
   const isCompleted = rawStatus === "completed";
+  // Bracket generated, not started yet.
+  const isFixturesOut = rawStatus === "submission_phase";
 
   // Format label
   let formatBadgeText = "PvP · 1 v 1";
@@ -127,6 +132,11 @@ export function TournamentCard({
             <span className="rounded-full border border-surface-line bg-black/60 px-3 py-1 font-mono text-[11px] text-ink-soft backdrop-blur-md font-semibold">
               {tc.completed}
             </span>
+          ) : isFixturesOut ? (
+            <span className="flex items-center gap-1.5 rounded-full border border-amber-400/60 bg-amber-950/85 px-3 py-1 text-[11px] font-bold text-amber-200 backdrop-blur-md">
+              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              <span className="tracking-wide">{tc.fixturesOut}</span>
+            </span>
           ) : (
             <span className="rounded-full border border-surface-line bg-black/60 px-3 py-1 font-mono text-[11px] text-ink-soft backdrop-blur-md font-semibold">
               {tc.registrationClosed}
@@ -179,12 +189,12 @@ export function TournamentCard({
           <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-soft truncate font-medium">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
             <span className="truncate">{hostName}</span>
-            {tournament.hostedByMe ? (
+            {showRelation && tournament.hostedByMe ? (
               <span className="shrink-0 rounded-full border border-blue/40 bg-blue-soft px-2 py-0.5 text-[10px] font-bold text-blue-ink">
                 {tc.hosting}
               </span>
             ) : null}
-            {tournament.joinedByMe ? (
+            {showRelation && tournament.joinedByMe ? (
               <span className="shrink-0 rounded-full border border-success/40 bg-success-soft px-2 py-0.5 text-[10px] font-bold text-success-ink">
                 {tc.joined}
               </span>

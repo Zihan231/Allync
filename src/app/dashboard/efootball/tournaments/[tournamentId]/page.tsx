@@ -451,7 +451,21 @@ export function TournamentDetailView({
           : format(td.inDays, { days: daysUntilStart })
       : td.started;
   // Once the tournament is live (or over), organizers can no longer edit or delete it.
-  const isLocked = msUntilStart <= 0 || isOngoing || isFinished;
+  // Locked once fixtures are out, once it starts, or once it's over (mirrors the backend).
+  const isLocked = Boolean(tournament.format) || msUntilStart <= 0 || isOngoing || isFinished;
+
+  // Header status: live, open, fixtures out (not started yet), registration closed, or over.
+  const statusBadge = isOngoing
+    ? { label: td.statusLive, dot: "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]", text: "text-rose-400" }
+    : isRegistrationOpen
+      ? { label: td.statusOpen, dot: "bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]", text: "text-emerald-400" }
+      : rawStatus === "submission_phase"
+        ? { label: td.statusFixturesOut, dot: "bg-amber-400", text: "text-amber-300" }
+        : rawStatus === "registration_closed"
+          ? { label: td.statusClosed, dot: "bg-slate-400", text: "text-ink-soft" }
+          : rawStatus === "cancelled"
+            ? { label: td.statusCancelled, dot: "bg-slate-500", text: "text-ink-faint" }
+            : { label: td.statusCompleted, dot: "bg-slate-400", text: "text-ink-soft" };
 
   // Capacity calculations
   const participantsCount = tournament.participants?.length || 0;
@@ -599,32 +613,8 @@ export function TournamentDetailView({
               </>
             ) : null}
             <div className="flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface-raised px-3.5 py-1 text-xs font-bold">
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  tournament.status === "ongoing"
-                    ? "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]"
-                    : tournament.status === "open"
-                      ? "bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"
-                      : "bg-slate-400"
-                }`}
-              />
-              <span
-                className={`${
-                  tournament.status === "ongoing"
-                    ? "text-rose-400"
-                    : tournament.status === "open"
-                      ? "text-emerald-400"
-                      : "text-ink-soft"
-                }`}
-              >
-                {tournament.status === "ongoing"
-                  ? td.statusLive
-                  : tournament.status === "open"
-                    ? td.statusOpen
-                    : tournament.status === "registration_closed"
-                      ? td.statusClosed
-                      : td.statusCompleted}
-              </span>
+              <span className={`h-2 w-2 rounded-full ${statusBadge.dot}`} />
+              <span className={statusBadge.text}>{statusBadge.label}</span>
             </div>
           </div>
         </div>

@@ -130,7 +130,7 @@ function GroupedTournaments({ tournaments }: { tournaments: BackendTournament[] 
               <SectionHeading tone={GROUP_TONE[group]}>{groupLabel[group]}</SectionHeading>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map((tour) => (
-                  <TournamentCard key={tour.id} tournament={tour} href={tournamentHref(tour)} />
+                  <TournamentCard key={tour.id} tournament={tour} href={tournamentHref(tour)} showRelation={false} />
                 ))}
               </div>
             </div>
