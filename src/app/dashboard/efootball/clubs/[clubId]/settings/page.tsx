@@ -1,8 +1,10 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { Suspense, use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUrlTab } from "@/lib/navigation/useUrlTab";
+import type { JoinPolicy } from "@/lib/mock/types";
+import { EntityEditForm } from "@/components/dashboard/EntityEditForm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format, roleLabel } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
@@ -13,6 +15,7 @@ import {
   useClub,
   useDeleteClub,
   useSetClubMatchOfficials,
+  useUpdateClub,
 } from "@/lib/api/hooks/useClubs";
 import { useClubMembers } from "@/lib/api/hooks/useTeams";
 import type { ClubMemberProfile } from "@/lib/api/teams";
@@ -26,7 +29,6 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
 import {
-  ArrowRightIcon,
   CheckIcon,
   ChevronDownIcon,
   CloseIcon,
@@ -45,14 +47,30 @@ const errorMessage = (err: unknown) => {
   return Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
 };
 
-/** Club Settings (President / General Secretary): details, positions, match-official nominees, danger zone. */
+const SETTINGS_TABS = ["details", "positions"] as const;
+
+/**
+ * Club Settings (President / General Secretary), in two tabs: club details (with
+ * the danger zone), and positions & match-official nominees.
+ */
 export default function ClubSettingsPage({ params }: { params: Promise<{ clubId: string }> }) {
+  // The tab lives in the URL (?tab=), which needs a Suspense boundary.
+  return (
+    <Suspense fallback={<AppLoader />}>
+      <ClubSettingsContent params={params} />
+    </Suspense>
+  );
+}
+
+function ClubSettingsContent({ params }: { params: Promise<{ clubId: string }> }) {
   const { clubId } = use(params);
   const { t } = useLanguage();
   const cs = t.dashboard.clubSettings;
   const router = useRouter();
+  const [tab, setTab] = useUrlTab(SETTINGS_TABS, "details");
   const { user, isLoading: isSessionLoading, setClub } = useSession();
   const { data: club, isLoading: isClubLoading } = useClub(clubId);
+  const updateClub = useUpdateClub(clubId);
   const { data: members = [], isLoading: isMembersLoading } = useClubMembers(clubId);
   const { toasts, toast, dismiss } = useToast();
   const { confirm, confirmProps } = useConfirm();
@@ -104,40 +122,63 @@ export default function ClubSettingsPage({ params }: { params: Promise<{ clubId:
     <div className="mx-auto max-w-4xl">
       <PageHeader eyebrow={cs.eyebrow} title={club.name} backHref={`/dashboard/efootball/clubs/${clubId}`} />
 
-      <div className="mt-8 space-y-6">
+      {/* Tabs: club details (and the danger zone) | positions & match officials */}
+      <div className="mt-6 flex border-b border-surface-line" role="tablist">
+        {(
+          [
+            ["details", cs.tabDetails, SettingsIcon],
+            ["positions", cs.tabPositions, UsersIcon],
+          ] as const
+        ).map(([key, label, Icon]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={`-mb-px flex items-center gap-2 border-b-2 px-5 py-3 font-display text-sm font-semibold transition-colors ${
+              tab === key ? "border-accent text-accent-ink" : "border-transparent text-ink-soft hover:text-ink"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "details" ? (
+      <div className="mt-6 space-y-6">
         {/* Club details */}
         <SettingsCard icon={SettingsIcon} title={cs.detailsTitle} body={cs.detailsBody}>
-          <Link
-            href={`/dashboard/efootball/clubs/${clubId}/edit`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent-soft px-4 py-2 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent hover:text-bg"
-          >
-            {cs.detailsEdit}
-            <ArrowRightIcon className="h-4 w-4" />
-          </Link>
-        </SettingsCard>
-
-        {/* Positions */}
-        <SettingsCard icon={UsersIcon} title={cs.positionsTitle} body={cs.positionsBody}>
-          {isMembersLoading ? (
-            <Spinner />
-          ) : (
-            <PositionsEditor clubId={clubId} members={members} onSaved={toast} />
-          )}
-        </SettingsCard>
-
-        {/* Match-official nominees */}
-        <SettingsCard icon={GavelIcon} title={cs.officialsTitle} body={cs.officialsBody}>
-          {isMembersLoading ? (
-            <Spinner />
-          ) : (
-            <NomineesEditor
-              key={(club.matchOfficialIds ?? []).join(",")}
-              clubId={clubId}
-              members={members}
-              initial={club.matchOfficialIds ?? []}
-              onSaved={toast}
-            />
-          )}
+          <EntityEditForm
+            key={club.updatedAt}
+            nameLabel={t.dashboard.clubs.createNameLabel}
+            descriptionLabel={t.dashboard.clubs.descriptionLabel}
+            submitLabel={updateClub.isPending ? cs.detailsSaving : cs.detailsSave}
+            initialName={club.name}
+            initialDescription={club.description ?? ""}
+            initialDpUrl={club.dpUrl}
+            initialCoverUrl={club.coverUrl}
+            initialJoinPolicy={club.joinPolicy as JoinPolicy}
+            showLocation
+            locationLabel={cs.detailsLocation}
+            initialLocation={club.location ?? ""}
+            onSubmit={async (values) => {
+              try {
+                await updateClub.mutateAsync({
+                  name: values.name,
+                  description: values.description,
+                  dpUrl: values.dpUrl,
+                  coverUrl: values.coverUrl,
+                  joinPolicy: values.joinPolicy,
+                  location: values.location,
+                });
+                toast(cs.detailsSaved, "success");
+              } catch (err) {
+                toast(errorMessage(err) || cs.detailsError, "error");
+              }
+            }}
+          />
         </SettingsCard>
 
         {/* Danger zone */}
@@ -168,6 +209,29 @@ export default function ClubSettingsPage({ params }: { params: Promise<{ clubId:
           </div>
         </section>
       </div>
+      ) : (
+        <div className="mt-6 space-y-6">
+          {/* Positions */}
+          <SettingsCard icon={UsersIcon} title={cs.positionsTitle} body={cs.positionsBody}>
+            {isMembersLoading ? <Spinner /> : <PositionsEditor clubId={clubId} members={members} onSaved={toast} />}
+          </SettingsCard>
+
+          {/* Match-official nominees */}
+          <SettingsCard icon={GavelIcon} title={cs.officialsTitle} body={cs.officialsBody}>
+            {isMembersLoading ? (
+              <Spinner />
+            ) : (
+              <NomineesEditor
+                key={(club.matchOfficialIds ?? []).join(",")}
+                clubId={clubId}
+                members={members}
+                initial={club.matchOfficialIds ?? []}
+                onSaved={toast}
+              />
+            )}
+          </SettingsCard>
+        </div>
+      )}
 
       <TransferAuthorityModal
         open={showTransfer}
