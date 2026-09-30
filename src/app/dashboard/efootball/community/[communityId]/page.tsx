@@ -31,11 +31,10 @@ import { CommunityClubsTab } from "@/components/dashboard/CommunityClubsTab";
 import { CommunityRankingsTab } from "@/components/dashboard/CommunityRankingsTab";
 import { CommunityTournamentsTab } from "@/components/dashboard/CommunityTournamentsTab";
 import { EmptyState } from "@/components/dashboard/EmptyState";
-import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
 import { JoinAsClubModal } from "@/components/dashboard/JoinAsClubModal";
 import { WithdrawClubModal } from "@/components/dashboard/WithdrawClubModal";
 import { AppLoader } from "@/components/common/AppLoader";
-import { ShieldIcon, UsersIcon, FacebookIcon, SwapIcon, ClockIcon, TrophyIcon, PlusIcon } from "@/components/icons";
+import { ShieldIcon, UsersIcon, FacebookIcon, ClockIcon, TrophyIcon, PlusIcon, SettingsIcon } from "@/components/icons";
 import { TournamentCard } from "@/components/dashboard/TournamentCard";
 import { TournamentCardSkeleton } from "@/components/dashboard/TournamentCardSkeleton";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -85,7 +84,6 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
   const { data: realTournaments = [], isLoading: isLoadingTournaments } = useTournaments({ communityId });
   const joinRequests = useMockJoinRequests();
   const [tab, setTab] = useUrlTab(COMMUNITY_TABS, "overview");
-  const [showTransferAuthorityModal, setShowTransferAuthorityModal] = useState(false);
   const [showJoinAsClubModal, setShowJoinAsClubModal] = useState(false);
   const [showWithdrawClubModal, setShowWithdrawClubModal] = useState(false);
   const removeClubMutation = useRemoveClubFromCommunity(communityId);
@@ -435,23 +433,13 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
             </a>
           ) : null}
 
-          {canManage ? (
-            <>
-              <Link
-                href={`/dashboard/efootball/community/${community.id}/edit`}
-                className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink"
-              >
-                {t.dashboard.community.editButton}
-              </Link>
-              {community.joinPolicy === "approval" ? (
-                <Link
-                  href={`/dashboard/efootball/community/${community.id}/requests`}
-                  className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink"
-                >
-                  {t.dashboard.clubs.requestsQueueTitle}
-                </Link>
-              ) : null}
-            </>
+          {canManage && community.joinPolicy === "approval" ? (
+            <Link
+              href={`/dashboard/efootball/community/${community.id}/requests`}
+              className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink"
+            >
+              {t.dashboard.clubs.requestsQueueTitle}
+            </Link>
           ) : null}
           {/* Club Actions */}
           {isClubInCommunity && isClubLeader ? (
@@ -498,14 +486,14 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
           {/* Individual Member Actions */}
           {isMine ? (
             canHandoverAuthority ? (
-              <button
-                type="button"
-                onClick={() => setShowTransferAuthorityModal(true)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-5 py-2 text-sm font-semibold text-warning-ink transition-colors hover:bg-warning/20 shadow-sm"
+              // Details, positions, authority transfer and deletion live in Settings.
+              <Link
+                href={`/dashboard/efootball/community/${community.id}/settings`}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-surface-line-strong px-5 py-2 text-sm font-semibold text-ink transition-colors hover:border-accent hover:text-accent-ink"
               >
-                <SwapIcon className="h-4 w-4" />
-                {t.dashboard.communityDetail.transferAuthority}
-              </button>
+                <SettingsIcon className="h-4 w-4" />
+                {t.dashboard.communitySettings.button}
+              </Link>
             ) : isClubInCommunity ? (
               /* Club members cannot leave the community individually unless the club leaves */
               null
@@ -733,15 +721,6 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
           />
         ) : null}
       </div>
-      <TransferAuthorityModal
-        open={showTransferAuthorityModal}
-        onClose={() => setShowTransferAuthorityModal(false)}
-        entityType="community"
-        entityId={community?.id ?? ""}
-        entityName={community?.name ?? ""}
-        members={allMembers}
-        onSuccess={() => toast(t.dashboard.communityDetail.toastAuthorityTransferred, "success")}
-      />
 
       {community && userClubDetails && isClubLeader && (
         <JoinAsClubModal

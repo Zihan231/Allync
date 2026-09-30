@@ -106,6 +106,18 @@ export async function reviewCommunityRequestRequest(
   return res.data;
 }
 
+/** Community positions the President can hand out in Settings; `Member` clears one. */
+export const ASSIGNABLE_COMMUNITY_ROLES = ["Vice President", "Team Manager", "Head of Discipline", "Scout"] as const;
+export type CommunityPosition = (typeof ASSIGNABLE_COMMUNITY_ROLES)[number] | "Member";
+
+export async function assignCommunityRoleRequest(
+  communityId: string,
+  payload: { targetProfileId: string; role: CommunityPosition },
+): Promise<any> {
+  const res = await api.patch(`/communities/${communityId}/roles`, payload);
+  return res.data;
+}
+
 export async function transferCommunityPresidentRequest(
   communityId: string,
   payload: { targetUserId?: string; targetProfileId?: string },

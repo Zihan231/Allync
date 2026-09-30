@@ -9,6 +9,8 @@ import {
   joinCommunityRequest,
   leaveCommunityRequest,
   transferCommunityPresidentRequest,
+  assignCommunityRoleRequest,
+  type CommunityPosition,
   addClubToCommunityRequest,
   removeClubFromCommunityRequest,
 } from "@/lib/api/communities";
@@ -189,6 +191,18 @@ export function useTransferCommunityPresident(communityId: string) {
       queryClient.invalidateQueries({ queryKey: communityKeys.detail(communityId) });
       queryClient.invalidateQueries({ queryKey: communityKeys.members(communityId) });
       queryClient.invalidateQueries({ queryKey: communityKeys.all });
+    },
+  });
+}
+
+export function useAssignCommunityRole(communityId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { targetProfileId: string; role: CommunityPosition }) =>
+      assignCommunityRoleRequest(communityId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.members(communityId) });
+      queryClient.invalidateQueries({ queryKey: communityKeys.detail(communityId) });
     },
   });
 }
