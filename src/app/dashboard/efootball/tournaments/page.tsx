@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState, type ComponentType } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format, formatNodes } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
@@ -9,7 +9,6 @@ import type { BackendTournament, TournamentType } from "@/lib/api/tournaments";
 import { useUrlTab } from "@/lib/navigation/useUrlTab";
 import { AppLoader } from "@/components/common/AppLoader";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { StatTile } from "@/components/dashboard/StatTile";
 import { TournamentCard } from "@/components/dashboard/TournamentCard";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { Pagination } from "@/components/dashboard/Pagination";
@@ -86,6 +85,81 @@ function sortTournaments(list: BackendTournament[], sort: SortKey): BackendTourn
     if (ga !== gb) return STATUS_RANK[ga] - STATUS_RANK[gb];
     return ga === "completed" ? startMs(b) - startMs(a) : startMs(a) - startMs(b);
   });
+}
+
+// Theme tokens only (see globals.css). Full class strings so Tailwind picks them up.
+const STAT_TONES = {
+  blue: {
+    card: "border-blue/35 from-blue/15",
+    edge: "via-blue",
+    icon: "bg-blue text-bg shadow-[0_0_18px_-2px_rgba(76,141,255,0.6)]",
+    value: "text-blue-ink",
+  },
+  danger: {
+    card: "border-danger/35 from-danger/15",
+    edge: "via-danger",
+    icon: "bg-danger text-white shadow-[0_0_18px_-2px_rgba(244,63,94,0.6)]",
+    value: "text-danger-ink",
+  },
+  success: {
+    card: "border-success/35 from-success/15",
+    edge: "via-success",
+    icon: "bg-success text-bg shadow-[0_0_18px_-2px_rgba(52,211,153,0.55)]",
+    value: "text-success-ink",
+  },
+  neutral: {
+    card: "border-surface-line-strong from-surface-line/40",
+    edge: "via-ink-soft",
+    icon: "bg-surface-line text-ink",
+    value: "text-ink",
+  },
+  accent: {
+    card: "border-accent/45 from-accent/20",
+    edge: "via-accent",
+    icon: "bg-accent text-bg shadow-[0_0_18px_-2px_rgba(217,165,68,0.65)]",
+    value: "text-accent-ink",
+  },
+} as const;
+
+function StatCard({
+  tone,
+  label,
+  value,
+  icon: Icon,
+  pulse = false,
+  wide = false,
+}: {
+  tone: keyof typeof STAT_TONES;
+  label: string;
+  value: string;
+  icon: ComponentType<{ className?: string }>;
+  pulse?: boolean;
+  /** Spans the full row on the two-column (small screen) layout. */
+  wide?: boolean;
+}) {
+  const styles = STAT_TONES[tone];
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br to-transparent p-4 sm:p-5 ${styles.card} ${
+        wide ? "col-span-2 lg:col-span-1" : ""
+      }`}
+    >
+      <span aria-hidden className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent ${styles.edge} to-transparent`} />
+      <div className="flex items-start justify-between gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${styles.icon}`}>
+          <Icon className="h-5 w-5" />
+        </span>
+        {pulse ? (
+          <span className="relative mt-1 flex h-2.5 w-2.5">
+            <span className="absolute inset-0 animate-ping rounded-full bg-danger/70" />
+            <span className="relative h-2.5 w-2.5 rounded-full bg-danger" />
+          </span>
+        ) : null}
+      </div>
+      <div className={`mt-4 font-display text-2xl font-black leading-none sm:text-3xl ${styles.value}`}>{value}</div>
+      <div className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-soft">{label}</div>
+    </div>
+  );
 }
 
 export default function TournamentsPage() {
@@ -190,16 +264,26 @@ function TournamentsContent() {
 
       <PageHeader eyebrow={m.eyebrow} title={t.dashboard.shell.navMyTournaments} />
 
-      {/* Stats row (active tab) */}
-      <div className={`mt-8 grid gap-4 sm:grid-cols-2 ${hostsTournaments ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
-        {hostsTournaments ? <StatTile label={m.statHosted} value={String(stats.hosted)} icon={ShieldIcon} /> : null}
-        <StatTile label={t.dashboard.tournaments.liveNowLabel} value={String(stats.live)} icon={FlameIcon} />
-        <StatTile label={t.dashboard.tournaments.openForEntryLabel} value={String(stats.open)} icon={TrophyIcon} />
-        <StatTile label={m.statCompleted} value={String(stats.completed)} icon={CheckIcon} />
-        <StatTile
+      {/* Stats row (active tab): each stat has its own colour so they read at a glance */}
+      <div className={`mt-8 grid grid-cols-2 gap-3 sm:gap-4 ${hostsTournaments ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+        {hostsTournaments ? (
+          <StatCard tone="blue" label={m.statHosted} value={String(stats.hosted)} icon={ShieldIcon} />
+        ) : null}
+        <StatCard
+          tone="danger"
+          label={t.dashboard.tournaments.liveNowLabel}
+          value={String(stats.live)}
+          icon={FlameIcon}
+          pulse={stats.live > 0}
+        />
+        <StatCard tone="success" label={t.dashboard.tournaments.openForEntryLabel} value={String(stats.open)} icon={TrophyIcon} />
+        <StatCard tone="neutral" label={m.statCompleted} value={String(stats.completed)} icon={CheckIcon} />
+        <StatCard
+          tone="accent"
           label={t.dashboard.tournaments.totalPrizePoolLabel}
           value={`৳ ${stats.prizePool.toLocaleString()}`}
           icon={WalletIcon}
+          wide
         />
       </div>
 
