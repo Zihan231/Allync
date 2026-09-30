@@ -4,7 +4,7 @@ import { Suspense, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useTournaments } from "@/lib/api/hooks/useTournaments";
-import type { TournamentType } from "@/lib/api/tournaments";
+import type { BackendTournament, TournamentType } from "@/lib/api/tournaments";
 import { useUrlTab } from "@/lib/navigation/useUrlTab";
 import { AppLoader } from "@/components/common/AppLoader";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -21,12 +21,27 @@ import {
   SearchIcon,
   ShieldIcon,
   CheckIcon,
+  CloseIcon,
 } from "@/components/icons";
 
 const PAGE_SIZE = 9;
 const TOURNAMENT_TABS: readonly TournamentType[] = ["cvc", "pvp"];
 
 type StatusFilter = "all" | "upcoming" | "live" | "completed";
+type RelationFilter = "all" | "hosted" | "joined";
+type FeeFilter = "all" | "free" | "paid";
+type PrizeFilter = "all" | "with_prize" | "friendly";
+type SortKey = "status" | "recent" | "prize";
+
+interface Filters {
+  search: string;
+  status: StatusFilter;
+  relation: RelationFilter;
+  fee: FeeFilter;
+  prize: PrizeFilter;
+}
+
+const DEFAULT_FILTERS: Filters = { search: "", status: "all", relation: "all", fee: "all", prize: "all" };
 
 /** Upcoming (registration / pre-start), live, or history (completed / cancelled). */
 function statusGroup(status: string | undefined): Exclude<StatusFilter, "all"> {
@@ -34,6 +49,42 @@ function statusGroup(status: string | undefined): Exclude<StatusFilter, "all"> {
   if (s === "ongoing" || s === "live") return "live";
   if (s === "completed" || s === "cancelled") return "completed";
   return "upcoming";
+}
+
+const isPaid = (tour: BackendTournament) => (tour.entryFeeBdt ?? 0) > 0;
+const hasPrize = (tour: BackendTournament) => (tour.prizePoolBdt ?? 0) > 0;
+const startMs = (tour: BackendTournament) => new Date(tour.startAt).getTime() || 0;
+
+/** Does `tour` pass every filter, except the one named in `skip` (used for per-option counts)? */
+function matches(tour: BackendTournament, f: Filters, skip?: keyof Filters): boolean {
+  if (skip !== "status" && f.status !== "all" && statusGroup(tour.status) !== f.status) return false;
+  if (skip !== "relation" && f.relation === "hosted" && !tour.hostedByMe) return false;
+  if (skip !== "relation" && f.relation === "joined" && !tour.joinedByMe) return false;
+  if (skip !== "fee" && f.fee === "free" && isPaid(tour)) return false;
+  if (skip !== "fee" && f.fee === "paid" && !isPaid(tour)) return false;
+  if (skip !== "prize" && f.prize === "with_prize" && !hasPrize(tour)) return false;
+  if (skip !== "prize" && f.prize === "friendly" && hasPrize(tour)) return false;
+  const query = f.search.trim().toLowerCase();
+  if (skip !== "search" && query) {
+    const inName = tour.name?.toLowerCase().includes(query);
+    const inCommunity = tour.community?.name?.toLowerCase().includes(query);
+    if (!inName && !inCommunity) return false;
+  }
+  return true;
+}
+
+const STATUS_RANK = { live: 0, upcoming: 1, completed: 2 } as const;
+
+function sortTournaments(list: BackendTournament[], sort: SortKey): BackendTournament[] {
+  return [...list].sort((a, b) => {
+    if (sort === "prize") return (b.prizePoolBdt ?? 0) - (a.prizePoolBdt ?? 0) || startMs(b) - startMs(a);
+    if (sort === "recent") return startMs(b) - startMs(a);
+    // Live first, then upcoming (soonest first), then history (most recent first).
+    const ga = statusGroup(a.status);
+    const gb = statusGroup(b.status);
+    if (ga !== gb) return STATUS_RANK[ga] - STATUS_RANK[gb];
+    return ga === "completed" ? startMs(b) - startMs(a) : startMs(a) - startMs(b);
+  });
 }
 
 export default function TournamentsPage() {
@@ -48,97 +99,69 @@ function TournamentsContent() {
   const { t } = useLanguage();
   const { user, isLoading: isSessionLoading } = useSession();
   const [activeTab, setActiveTab] = useUrlTab(TOURNAMENT_TABS, "cvc");
-  const [search, setSearch] = useState("");
-  const [feeFilter, setFeeFilter] = useState<"all" | "free" | "paid">("all");
-  const [prizeFilter, setPrizeFilter] = useState<"all" | "with_prize" | "friendly">("all");
-  const [sortBy, setSortBy] = useState<"startAt" | "prizePoolBdt">("startAt");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [relationFilter, setRelationFilter] = useState<"all" | "hosted" | "joined">("all");
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [sort, setSort] = useState<SortKey>("status");
   const [page, setPage] = useState(1);
 
-  // The user's tournaments, filtered on the server: ones they (or their club) entered, plus —
-  // for community Presidents / Vice Presidents — every tournament their community hosts.
+  // The user's tournaments (both types), filtered on the server: ones they (or their club)
+  // entered, plus — for community Presidents / Vice Presidents — every tournament their
+  // community hosts.
   const { data: scopedTournaments, isLoading } = useTournaments(
-    { type: activeTab, sortBy, scope: "mine" },
+    { scope: "mine" },
     isSessionLoading ? null : user?.id,
   );
   // Guard: keep only rows the server marked as the viewer's, so a server that ignores
   // `scope` (e.g. an outdated build) can't list everyone's tournaments here.
-  const joinedTournaments = useMemo(
+  const myTournaments = useMemo(
     () => (scopedTournaments ?? []).filter((tour) => tour.hostedByMe || tour.joinedByMe),
     [scopedTournaments],
   );
-  const hostsTournaments = joinedTournaments.some((tour) => tour.hostedByMe);
+  const typeCounts = {
+    cvc: myTournaments.filter((tour) => tour.type === "cvc").length,
+    pvp: myTournaments.filter((tour) => tour.type === "pvp").length,
+  };
+  const tabTournaments = useMemo(
+    () => myTournaments.filter((tour) => tour.type === activeTab),
+    [myTournaments, activeTab],
+  );
+  const hostsTournaments = myTournaments.some((tour) => tour.hostedByMe);
 
-  const statusCounts = useMemo(() => {
-    const counts: Record<StatusFilter, number> = { all: joinedTournaments.length, upcoming: 0, live: 0, completed: 0 };
-    for (const tour of joinedTournaments) counts[statusGroup(tour.status)]++;
-    return counts;
-  }, [joinedTournaments]);
+  const filtered = useMemo(
+    () => sortTournaments(tabTournaments.filter((tour) => matches(tour, filters)), sort),
+    [tabTournaments, filters, sort],
+  );
 
-  // Client-side search and filters
-  const filtered = useMemo(() => {
-    const matches = joinedTournaments.filter((tour) => {
-      if (statusFilter !== "all" && statusGroup(tour.status) !== statusFilter) return false;
-      if (relationFilter === "hosted" && !tour.hostedByMe) return false;
-      if (relationFilter === "joined" && !tour.joinedByMe) return false;
-
-      // Search
-      if (search.trim()) {
-        const query = search.toLowerCase();
-        const matchName = tour.name?.toLowerCase().includes(query);
-        const matchComm = tour.community?.name?.toLowerCase().includes(query);
-        if (!matchName && !matchComm) return false;
-      }
-
-      // Fee filter
-      if (feeFilter === "free" && (tour.isPaid || (tour.entryFeeBdt && tour.entryFeeBdt > 0))) {
-        return false;
-      }
-      if (feeFilter === "paid" && (!tour.isPaid && (!tour.entryFeeBdt || tour.entryFeeBdt <= 0))) {
-        return false;
-      }
-
-      // Prize filter
-      if (prizeFilter === "with_prize" && (!tour.prizePoolBdt || tour.prizePoolBdt <= 0)) {
-        return false;
-      }
-      if (prizeFilter === "friendly" && tour.prizePoolBdt && tour.prizePoolBdt > 0) {
-        return false;
-      }
-
-      return true;
-    });
-    if (sortBy !== "startAt") return matches;
-    // Live first, then upcoming (soonest first), then history (most recent first).
-    const rank = { live: 0, upcoming: 1, completed: 2 } as const;
-    return [...matches].sort((a, b) => {
-      const ga = statusGroup(a.status);
-      const gb = statusGroup(b.status);
-      if (ga !== gb) return rank[ga] - rank[gb];
-      const diff = new Date(a.startAt).getTime() - new Date(b.startAt).getTime();
-      return ga === "completed" ? -diff : diff;
-    });
-  }, [joinedTournaments, search, feeFilter, prizeFilter, statusFilter, relationFilter, sortBy]);
+  // Each option's count applies every other active filter, so it's what clicking it shows.
+  const countFor = <K extends keyof Filters>(key: K, value: Filters[K]) =>
+    tabTournaments.filter((tour) => matches(tour, { ...filters, [key]: value }, undefined)).length;
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const currentPage = Math.min(page, pageCount);
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  // Stats calculation across the current active tab
-  const stats = useMemo(() => {
-    const liveCount = joinedTournaments.filter(
-      (tour) => tour.status === "ongoing" || tour.status === "live",
-    ).length;
-    const openCount = joinedTournaments.filter(
-      (tour) => tour.status === "open" || tour.status === "registration_open",
-    ).length;
-    const totalPrizePool = joinedTournaments.reduce(
-      (sum, tour) => sum + (tour.prizePoolBdt || 0),
-      0,
-    );
-    const hostedCount = joinedTournaments.filter((tour) => tour.hostedByMe).length;
-    return { liveCount, openCount, totalPrizePool, hostedCount };
-  }, [joinedTournaments]);
+  // Overview of the active tab (independent of the filters below).
+  const stats = useMemo(
+    () => ({
+      hosted: tabTournaments.filter((tour) => tour.hostedByMe).length,
+      live: tabTournaments.filter((tour) => statusGroup(tour.status) === "live").length,
+      open: tabTournaments.filter((tour) => tour.status === "open" || tour.status === "registration_open").length,
+      completed: tabTournaments.filter((tour) => statusGroup(tour.status) === "completed").length,
+      prizePool: tabTournaments.reduce((sum, tour) => sum + (tour.prizePoolBdt ?? 0), 0),
+    }),
+    [tabTournaments],
+  );
+
+  function updateFilter<K extends keyof Filters>(key: K, value: Filters[K]) {
+    setFilters((current) => ({ ...current, [key]: value }));
+    setPage(1);
+  }
+  const activeFilterCount = (Object.keys(DEFAULT_FILTERS) as Array<keyof Filters>).filter(
+    (key) => filters[key].trim() !== DEFAULT_FILTERS[key],
+  ).length;
+  function clearFilters() {
+    setFilters(DEFAULT_FILTERS);
+    setPage(1);
+  }
 
   function handleTabChange(tab: TournamentType) {
     setActiveTab(tab);
@@ -147,6 +170,17 @@ function TournamentsContent() {
 
   const pill = (active: boolean) =>
     `rounded-md px-2.5 py-1 font-medium transition-colors ${active ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"}`;
+  const group = "flex flex-wrap items-center rounded-lg border border-surface-line bg-surface/50 p-1 text-xs";
+
+  const optionGroup = <K extends keyof Filters>(key: K, options: ReadonlyArray<readonly [Filters[K], string]>) => (
+    <div className={group}>
+      {options.map(([value, label]) => (
+        <button key={String(value)} type="button" onClick={() => updateFilter(key, value)} className={pill(filters[key] === value)}>
+          {label} <span className="opacity-70">({countFor(key, value)})</span>
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="relative">
@@ -157,206 +191,140 @@ function TournamentsContent() {
         title={t.dashboard.shell.navMyTournaments || "My Tournaments"}
       />
 
-      {/* Stats row */}
+      {/* Stats row (active tab) */}
       <div className={`mt-8 grid gap-4 sm:grid-cols-2 ${hostsTournaments ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
         {hostsTournaments ? (
-          <StatTile label="Hosted by Your Community" value={String(stats.hostedCount)} icon={ShieldIcon} />
+          <StatTile label="Hosted by Your Community" value={String(stats.hosted)} icon={ShieldIcon} />
         ) : null}
-        <StatTile
-          label={t.dashboard.tournaments.liveNowLabel || "Live Now"}
-          value={String(stats.liveCount)}
-          icon={FlameIcon}
-        />
+        <StatTile label={t.dashboard.tournaments.liveNowLabel || "Live Now"} value={String(stats.live)} icon={FlameIcon} />
         <StatTile
           label={t.dashboard.tournaments.openForEntryLabel || "Open for Entry"}
-          value={String(stats.openCount)}
+          value={String(stats.open)}
           icon={TrophyIcon}
         />
-        <StatTile label="Completed" value={String(statusCounts.completed)} icon={CheckIcon} />
+        <StatTile label="Completed" value={String(stats.completed)} icon={CheckIcon} />
         <StatTile
           label={t.dashboard.tournaments.totalPrizePoolLabel || "Total Prize Pool"}
-          value={`৳ ${stats.totalPrizePool.toLocaleString()}`}
+          value={`৳ ${stats.prizePool.toLocaleString()}`}
           icon={WalletIcon}
         />
       </div>
 
       {/* Top Tabs: Club Tournaments (CvC) vs Player Tournaments (PvP) */}
       <div className="mt-8 flex border-b border-surface-line">
-        <button
-          onClick={() => handleTabChange("cvc")}
-          className={`flex items-center gap-2 border-b-2 px-6 py-3 font-display text-sm font-semibold transition-colors ${
-            activeTab === "cvc"
-              ? "border-accent text-accent-ink"
-              : "border-transparent text-ink-soft hover:text-ink"
-          }`}
-        >
-          <UsersIcon className="h-4 w-4" />
-          My Club Tournaments (CvC)
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs ${
-              activeTab === "cvc" ? "bg-accent/20 text-accent-ink" : "bg-surface-line text-ink-faint"
+        {(
+          [
+            ["cvc", "My Club Tournaments (CvC)", UsersIcon],
+            ["pvp", "My Player Tournaments (PvP)", CrosshairIcon],
+          ] as const
+        ).map(([tab, label, Icon]) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => handleTabChange(tab)}
+            className={`flex items-center gap-2 border-b-2 px-6 py-3 font-display text-sm font-semibold transition-colors ${
+              activeTab === tab ? "border-accent text-accent-ink" : "border-transparent text-ink-soft hover:text-ink"
             }`}
           >
-            {activeTab === "cvc" ? joinedTournaments.length : "•"}
-          </span>
-        </button>
-
-        <button
-          onClick={() => handleTabChange("pvp")}
-          className={`flex items-center gap-2 border-b-2 px-6 py-3 font-display text-sm font-semibold transition-colors ${
-            activeTab === "pvp"
-              ? "border-accent text-accent-ink"
-              : "border-transparent text-ink-soft hover:text-ink"
-          }`}
-        >
-          <CrosshairIcon className="h-4 w-4" />
-          My Player Tournaments (PvP)
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs ${
-              activeTab === "pvp" ? "bg-accent/20 text-accent-ink" : "bg-surface-line text-ink-faint"
-            }`}
-          >
-            {activeTab === "pvp" ? joinedTournaments.length : "•"}
-          </span>
-        </button>
+            <Icon className="h-4 w-4" />
+            {label}
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs ${
+                activeTab === tab ? "bg-accent/20 text-accent-ink" : "bg-surface-line text-ink-faint"
+              }`}
+            >
+              {typeCounts[tab]}
+            </span>
+          </button>
+        ))}
       </div>
 
       {/* Status (upcoming / live / history) and — for hosts — hosted vs joined */}
       <div className="mt-6 flex flex-wrap items-center gap-2">
-        <div className="flex items-center rounded-lg border border-surface-line bg-surface/50 p-1 text-xs">
-          {(
-            [
-              ["all", "All"],
-              ["upcoming", "Upcoming"],
-              ["live", "Live"],
-              ["completed", "Completed"],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => {
-                setStatusFilter(key);
-                setPage(1);
-              }}
-              className={pill(statusFilter === key)}
-            >
-              {label} <span className="opacity-70">({statusCounts[key]})</span>
-            </button>
-          ))}
-        </div>
-        {hostsTournaments ? (
-          <div className="flex items-center rounded-lg border border-surface-line bg-surface/50 p-1 text-xs">
-            {(
-              [
-                ["all", "Everything"],
-                ["hosted", "Hosted by us"],
-                ["joined", "Joined"],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  setRelationFilter(key);
-                  setPage(1);
-                }}
-                className={pill(relationFilter === key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        ) : null}
+        {optionGroup("status", [
+          ["all", "All"],
+          ["upcoming", "Upcoming"],
+          ["live", "Live"],
+          ["completed", "Completed"],
+        ])}
+        {hostsTournaments
+          ? optionGroup("relation", [
+              ["all", "Everything"],
+              ["hosted", "Hosted by us"],
+              ["joined", "Joined"],
+            ])
+          : null}
       </div>
 
-      {/* Filter and Search Bar */}
+      {/* Search, fee / prize filters and sorting */}
       <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
+        <div className="relative max-w-md flex-1">
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
           <input
             type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
+            value={filters.search}
+            onChange={(e) => updateFilter("search", e.target.value)}
             placeholder="Search by tournament or community name..."
-            className="w-full rounded-xl border border-surface-line bg-surface/60 py-2 pl-10 pr-4 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
+            className="w-full rounded-xl border border-surface-line bg-surface/60 py-2 pl-10 pr-9 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-accent focus:ring-1 focus:ring-accent/30"
           />
+          {filters.search ? (
+            <button
+              type="button"
+              onClick={() => updateFilter("search", "")}
+              aria-label="Clear search"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-ink-faint hover:text-ink"
+            >
+              <CloseIcon className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
         </div>
 
-        {/* Filter Pills */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Entry Fee Filters */}
-          <div className="flex items-center rounded-lg border border-surface-line bg-surface/50 p-1 text-xs">
-            <button
-              onClick={() => setFeeFilter("all")}
-              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                feeFilter === "all" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              All Fees
-            </button>
-            <button
-              onClick={() => setFeeFilter("free")}
-              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                feeFilter === "free" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              Free Entry
-            </button>
-            <button
-              onClick={() => setFeeFilter("paid")}
-              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                feeFilter === "paid" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              Paid Entry
-            </button>
-          </div>
-
-          {/* Prize Pool Filters */}
-          <div className="flex items-center rounded-lg border border-surface-line bg-surface/50 p-1 text-xs">
-            <button
-              onClick={() => setPrizeFilter("all")}
-              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                prizeFilter === "all" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              All Prizes
-            </button>
-            <button
-              onClick={() => setPrizeFilter("with_prize")}
-              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                prizeFilter === "with_prize" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              With Prize
-            </button>
-            <button
-              onClick={() => setPrizeFilter("friendly")}
-              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                prizeFilter === "friendly" ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
-              }`}
-            >
-              Friendly
-            </button>
-          </div>
-
-          {/* Sort Selector */}
+          {optionGroup("fee", [
+            ["all", "All Fees"],
+            ["free", "Free Entry"],
+            ["paid", "Paid Entry"],
+          ])}
+          {optionGroup("prize", [
+            ["all", "All Prizes"],
+            ["with_prize", "With Prize"],
+            ["friendly", "Friendly"],
+          ])}
           <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as "startAt" | "prizePoolBdt")}
+            value={sort}
+            onChange={(e) => {
+              setSort(e.target.value as SortKey);
+              setPage(1);
+            }}
+            aria-label="Sort tournaments"
             className="rounded-lg border border-surface-line bg-surface px-3 py-1.5 text-xs text-ink-soft outline-none focus:border-accent [color-scheme:dark]"
           >
-            <option value="startAt">Starts Soonest</option>
-            <option value="prizePoolBdt">Highest Prize Pool</option>
+            <option value="status">Live &amp; upcoming first</option>
+            <option value="recent">Most recent</option>
+            <option value="prize">Highest prize pool</option>
           </select>
         </div>
       </div>
 
+      {/* Result summary */}
+      <div className="mt-4 flex items-center justify-between gap-3 text-xs text-ink-faint">
+        <span>
+          Showing <strong className="text-ink">{filtered.length}</strong> of {tabTournaments.length}
+        </span>
+        {activeFilterCount ? (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="inline-flex items-center gap-1.5 rounded-full border border-surface-line-strong px-3 py-1 font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
+          >
+            <CloseIcon className="h-3 w-3" />
+            Clear filters ({activeFilterCount})
+          </button>
+        ) : null}
+      </div>
+
       {/* Tournament Cards Grid */}
-      <div className="mt-6">
+      <div className="mt-4">
         {isLoading || isSessionLoading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
@@ -365,16 +333,12 @@ function TournamentsContent() {
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {pageItems.map((tour) => (
-                <TournamentCard
-                  key={tour.id}
-                  tournament={tour}
-                  href={`/dashboard/efootball/tournaments/${tour.id}`}
-                />
+                <TournamentCard key={tour.id} tournament={tour} href={`/dashboard/efootball/tournaments/${tour.id}`} />
               ))}
             </div>
             {pageCount > 1 && (
               <div className="mt-8">
-                <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+                <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
               </div>
             )}
           </>
@@ -383,8 +347,8 @@ function TournamentsContent() {
             icon={TrophyIcon}
             title={activeTab === "cvc" ? "No Club Tournaments" : "No Player Tournaments"}
             body={
-              search || feeFilter !== "all" || prizeFilter !== "all" || statusFilter !== "all" || relationFilter !== "all"
-                ? "Try clearing your search query or filters."
+              activeFilterCount
+                ? "No tournaments match these filters. Try clearing them."
                 : "Tournaments you join — or that your community hosts — will appear here."
             }
           />

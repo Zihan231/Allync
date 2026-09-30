@@ -158,13 +158,29 @@ export function TournamentDetailView({
         : participant.userId === user?.id || participant.userId === user?.personId,
     ),
   );
+  // Hosts (the creator, or the hosting community's President / VP) also have it under My Tournaments.
+  const viewerHostsTournament = Boolean(
+    tournament &&
+      user &&
+      (tournament.creatorId === user.id ||
+        tournament.community?.creatorId === user.id ||
+        tournament.community?.presidentId === user.id ||
+        tournament.community?.vicePresidentId === user.id ||
+        communityMembers.some(
+          (member) =>
+            (member.id === user.id || member.id === user.personId) &&
+            (member.communityRole === "President" || member.communityRole === "Vice President"),
+        )),
+  );
 
   useEffect(() => {
     if (
       context !== "my-tournaments" ||
       isSessionLoading ||
+      isLoadingCommunityMembers ||
       !tournament ||
-      viewerIsParticipant
+      viewerIsParticipant ||
+      viewerHostsTournament
     ) {
       return;
     }
@@ -172,7 +188,7 @@ export function TournamentDetailView({
     router.replace(
       `/dashboard/efootball/community/${tournament.communityId}/tournaments/${tournament.id}`,
     );
-  }, [context, isSessionLoading, router, tournament, viewerIsParticipant]);
+  }, [context, isSessionLoading, isLoadingCommunityMembers, router, tournament, viewerIsParticipant, viewerHostsTournament]);
 
   // Club and teams state for CvC
   const [userClubDetails, setUserClubDetails] = useState<BackendClub | null>(null);
@@ -243,7 +259,11 @@ export function TournamentDetailView({
   if (
     isLoading ||
     isSessionLoading ||
-    (context === "my-tournaments" && tournament && !viewerIsParticipant)
+    // Non-participants who don't host it are about to be redirected to the community route.
+    (context === "my-tournaments" &&
+      tournament &&
+      !viewerIsParticipant &&
+      (isLoadingCommunityMembers || !viewerHostsTournament))
   ) {
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-3">
