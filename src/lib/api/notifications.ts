@@ -9,6 +9,10 @@ export interface NotificationItem {
   link: string | null;
   read: boolean;
   createdAt: string;
+  /** Message code rendered in the viewer's language (title / message are the English fallback). */
+  code?: string | null;
+  /** Values for the coded message: names, counts, ISO times (keys ending in `At`). */
+  params?: Record<string, string | number | null> | null;
 }
 
 /** Newest first. `before` (the `createdAt` of the last item) pages back; `unread` filters. */

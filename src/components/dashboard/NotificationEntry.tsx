@@ -5,6 +5,7 @@ import { ChevronDownIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Locale } from "@/lib/i18n/translations";
 import type { NotificationItem } from "@/lib/api/notifications";
+import { renderNotification } from "@/lib/notifications/renderNotification";
 
 /** "5m ago", "3h ago", "2d ago" — or "Just now" — in the viewer's language. */
 export function formatTimeAgo(iso: string, locale: Locale, justNow: string): string {
@@ -43,6 +44,7 @@ export function NotificationEntry({
 }) {
   const { t, locale } = useLanguage();
   const s = t.dashboard.shell;
+  const { title, message } = renderNotification(n, t, locale);
   const [expanded, setExpanded] = useState(false);
   const [overflows, setOverflows] = useState(false);
   const messageRef = useRef<HTMLParagraphElement>(null);
@@ -52,7 +54,7 @@ export function NotificationEntry({
     const el = messageRef.current;
     if (!compact || !el || expanded) return;
     setOverflows(el.scrollHeight > el.clientHeight + 1);
-  }, [compact, expanded, n.message]);
+  }, [compact, expanded, message]);
 
   return (
     <div
@@ -67,7 +69,7 @@ export function NotificationEntry({
       }`}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className={`font-semibold leading-snug ${!n.read ? "text-accent" : "text-ink"}`}>{n.title}</span>
+        <span className={`font-semibold leading-snug ${!n.read ? "text-accent" : "text-ink"}`}>{title}</span>
         <span className="flex shrink-0 items-center gap-1.5 pt-0.5">
           <span className="font-mono text-[10px] text-ink-faint" suppressHydrationWarning>
             {formatTimeAgo(n.createdAt, locale, s.notificationsJustNow)}
@@ -81,7 +83,7 @@ export function NotificationEntry({
           compact && !expanded ? "line-clamp-3" : ""
         }`}
       >
-        {n.message}
+        {message}
       </p>
       {compact && (overflows || expanded) ? (
         <button

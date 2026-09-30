@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getNotifications,
@@ -12,6 +12,8 @@ import {
 import { useSession } from "@/lib/session/SessionContext";
 import { useToast } from "@/lib/useToast";
 import { syncFromBackend } from "@/lib/mock/communityStore";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { renderNotification } from "@/lib/notifications/renderNotification";
 
 // The SSE stream pushes new notifications instantly; polling is only a fallback for missed events
 // (e.g. while the stream reconnects).
@@ -21,6 +23,12 @@ export function useRealtimeNotifications() {
   const { isAuthenticated, user } = useSession();
   const queryClient = useQueryClient();
   const { toasts, toast, dismiss } = useToast();
+  // Read by the SSE handler, so switching language doesn't reconnect the stream.
+  const { t, locale } = useLanguage();
+  const languageRef = useRef({ t, locale });
+  useEffect(() => {
+    languageRef.current = { t, locale };
+  }, [t, locale]);
 
   const notificationsQuery = useQuery({
     queryKey: ["notifications"],
@@ -52,7 +60,12 @@ export function useRealtimeNotifications() {
         try {
           const notif: NotificationItem = JSON.parse(event.data);
           if (notif && notif.title) {
-            toast(notif.message, "info", { title: notif.title, link: notif.link });
+            const { title, message } = renderNotification(
+              notif,
+              languageRef.current.t,
+              languageRef.current.locale,
+            );
+            toast(message, "info", { title, link: notif.link });
             void queryClient.invalidateQueries({ queryKey: ["notifications"] });
             void queryClient.invalidateQueries({ queryKey: ["notifications-unread-count"] });
 
