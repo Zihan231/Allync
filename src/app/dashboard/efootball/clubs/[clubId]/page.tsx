@@ -327,24 +327,25 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between">
-        <div className="-mt-14 flex items-end gap-4 sm:-mt-16">
-          <div className="rounded-full border-4 border-bg bg-surface">
+      {/* Only the avatar overlaps the cover; name and actions always sit below it. */}
+      <div className="relative z-10 flex flex-col gap-4 px-1 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-end gap-4">
+          <div className="-mt-14 shrink-0 rounded-full border-4 border-bg bg-surface sm:-mt-16">
             <Avatar dpUrl={club.dpUrl} name={club.name} size="xl" mode="lightbox" shape="circle" />
           </div>
-          <div className="pb-1">
+          <div className="min-w-0 pb-1 pt-3">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-2xl font-bold text-ink">{club.name}</h1>
+              <h1 className="truncate font-display text-2xl font-bold text-ink">{club.name}</h1>
               <StagePill stage={club.stage} />
             </div>
-            <p className="font-mono text-xs text-ink-faint">
+            <p className="mt-0.5 font-mono text-xs text-ink-faint">
               {club.points.toLocaleString()} pts
               {squadTeams.length ? ` · ${squadTeams.join(", ")} ${t.dashboard.club.teamsSuffix}` : ""}
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 pb-1">
+        <div className="flex flex-wrap gap-2 lg:justify-end lg:pt-3">
           {members.length > 0 ? (
             <button
               type="button"
