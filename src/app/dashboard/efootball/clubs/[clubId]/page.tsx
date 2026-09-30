@@ -11,7 +11,6 @@ import { useMockClubs, useMockPeople, useMockJoinRequests, addPendingJoinRequest
   removePendingJoinRequest,
    joinClub, leaveClub, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
 import { AppLoader } from "@/components/common/AppLoader";
-import { useMockTournaments } from "@/lib/mock/store";
 import { mockCommunities } from "@/lib/mock";
 import { getClubInsights } from "@/lib/mock/clubInsights";
 import { BackButton } from "@/components/dashboard/BackButton";
@@ -90,7 +89,6 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
   const clubs = useMockClubs();
   const people = useMockPeople();
   const joinRequests = useMockJoinRequests();
-  const tournaments = useMockTournaments();
   const [tab, setTab] = useUrlTab(CLUB_TABS, "overview");
   const [showChangeManagerModal, setShowChangeManagerModal] = useState(false);
   const [showTransferAuthorityModal, setShowTransferAuthorityModal] = useState(false);
@@ -132,7 +130,6 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
     [people, club, clubId]
   );
   const insights = useMemo(() => (club ? getClubInsights(club, members) : null), [club, members]);
-  const clubTournaments = useMemo(() => tournaments.filter((tour) => tour.clubId === clubId), [tournaments, clubId]);
 
   const leftoverStaff = members.filter((p) => p.clubRole === "Manager");
   const squadTeams = Array.from(new Set(members.map((p) => p.squadTeam ?? "Main")));
@@ -516,7 +513,7 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
         {tab === "matchStats" ? <ClubMatchStatsTab club={club} members={members} /> : null}
         {tab === "teamUp" ? <ClubTeamUpTab club={club} members={members} /> : null}
         {tab === "tournaments" ? (
-          <ClubTournamentsTab tournaments={clubTournaments} clubId={club.id} canManage={canManageTeams} />
+          <ClubTournamentsTab clubId={club.id} />
         ) : null}
       </div>
 

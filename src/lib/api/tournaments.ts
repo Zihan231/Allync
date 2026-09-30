@@ -156,6 +156,8 @@ export interface TournamentQueryParams {
   type?: TournamentType;
   status?: TournamentStatus;
   communityId?: string;
+  /** Only tournaments this club has entered. */
+  clubId?: string;
   search?: string;
   isPaid?: boolean;
   hasPrizePool?: boolean;

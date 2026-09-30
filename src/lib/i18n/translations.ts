@@ -853,6 +853,8 @@ export const translations = {
         emptyPvp: "No Player Tournaments",
         emptyFiltered: "No tournaments match these filters. Try clearing them.",
         emptyBody: "Tournaments you join — or that your community hosts — will appear here.",
+        clubEmptyTitle: "No tournaments yet",
+        clubEmptyBody: "This club hasn't entered any tournaments. Club leaders register the club from a community's Tournaments tab.",
       },
       pagination: {
         prev: "Prev",
@@ -2601,6 +2603,8 @@ export const translations = {
         emptyPvp: "কোনো প্লেয়ার টুর্নামেন্ট নেই",
         emptyFiltered: "এই ফিল্টারগুলোর সাথে কোনো টুর্নামেন্ট মেলেনি। ফিল্টার মুছে দেখুন।",
         emptyBody: "আপনি যেসব টুর্নামেন্টে অংশ নেবেন — বা আপনার কমিউনিটি যেগুলো আয়োজন করবে — সেগুলো এখানে দেখা যাবে।",
+        clubEmptyTitle: "এখনো কোনো টুর্নামেন্ট নেই",
+        clubEmptyBody: "এই ক্লাব এখনো কোনো টুর্নামেন্টে অংশ নেয়নি। ক্লাবের নেতারা কমিউনিটির টুর্নামেন্ট ট্যাব থেকে ক্লাবকে নিবন্ধন করেন।",
       },
       pagination: {
         prev: "আগের",
