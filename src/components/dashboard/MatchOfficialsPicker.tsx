@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format, roleLabel } from "@/lib/i18n/translations";
 import { useCommunityMembers } from "@/lib/api/hooks/useCommunities";
 import { useClubMembers } from "@/lib/api/hooks/useTeams";
+import { useClub } from "@/lib/api/hooks/useClubs";
 
 /** Mirrors the backend limit on match officials per tournament. */
 export const MAX_MATCH_OFFICIALS = 10;
@@ -55,14 +56,17 @@ export function MatchOfficialsPicker({
   const isClub = host.kind === "club";
   const community = useCommunityMembers(isClub ? "" : host.id);
   const club = useClubMembers(isClub ? host.id : "");
-  const isLoading = isClub ? club.isLoading : community.isLoading;
+  // Club tournaments: members the club nominated (club Settings) can be picked too.
+  const clubInfo = useClub(isClub ? host.id : "");
+  const nominees = new Set(isClub ? (clubInfo.data?.matchOfficialIds ?? []) : []);
+  const isLoading = isClub ? club.isLoading || clubInfo.isLoading : community.isLoading;
   const members: Candidate[] = isClub
     ? (club.data ?? []).map((m) => ({
         id: m.userId,
         name: m.user?.name || mo.unnamed,
         dpUrl: m.user?.dpUrl ?? null,
         role: m.clubRole ?? "",
-        detail: null,
+        detail: nominees.has(m.userId) ? mo.nominee : null,
       }))
     : (community.data ?? []).map((m) => ({
         id: m.id,
@@ -82,7 +86,11 @@ export function MatchOfficialsPicker({
 
   // Officials who can be picked, filtered by the search.
   const query = search.trim().toLowerCase();
-  const eligible = members.filter((m) => (roles.officials as readonly string[]).includes(m.role));
+  const eligible = members.filter(
+    (m) =>
+      !(roles.leaders as readonly string[]).includes(m.role) &&
+      ((roles.officials as readonly string[]).includes(m.role) || nominees.has(m.id)),
+  );
   const options = eligible.filter(
     (m) => !query || m.name.toLowerCase().includes(query) || (m.detail ?? "").toLowerCase().includes(query),
   );

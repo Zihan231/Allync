@@ -23,6 +23,8 @@ export interface BackendClub {
   minRoster: number;
   maxRoster: number;
   communityIds: string[];
+  /** User ids of members nominated as match officials for the club's tournaments. */
+  matchOfficialIds?: string[];
   stage: string;
   memberCount?: number;
   location: string | null;

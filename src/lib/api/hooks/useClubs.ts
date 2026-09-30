@@ -9,6 +9,9 @@ import {
   changeClubManagerRequest,
   transferClubManagerRequest,
   transferClubPresidentRequest,
+  assignClubPositionRequest,
+  setClubMatchOfficialsRequest,
+  type ClubPosition,
   type ChangeManagerPayload,
   type ChangeManagerResponse,
 } from "@/lib/api/clubs";
@@ -183,6 +186,31 @@ export function useTransferClubPresident(clubId: string) {
       queryClient.invalidateQueries({ queryKey: teamKeys.members(clubId) });
       queryClient.invalidateQueries({ queryKey: meKey });
       queryClient.invalidateQueries({ queryKey: clubKeys.all });
+    },
+  });
+}
+
+/** Club Settings: assign or clear a staff position. Refreshes the roster and the club. */
+export function useAssignClubPosition(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ profileId, role }: { profileId: string; role: ClubPosition }) =>
+      assignClubPositionRequest(clubId, profileId, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: clubKeys.detail(clubId) });
+      queryClient.invalidateQueries({ queryKey: teamKeys.members(clubId) });
+      queryClient.invalidateQueries({ queryKey: clubKeys.manager(clubId) });
+    },
+  });
+}
+
+/** Club Settings: save the match-official nominees. */
+export function useSetClubMatchOfficials(clubId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userIds: string[]) => setClubMatchOfficialsRequest(clubId, userIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: clubKeys.detail(clubId) });
     },
   });
 }

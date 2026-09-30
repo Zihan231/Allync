@@ -1,4 +1,4 @@
-import { format, type Locale, type TranslationDict } from "@/lib/i18n/translations";
+import { format, roleLabel, type Locale, type TranslationDict } from "@/lib/i18n/translations";
 import type { NotificationItem } from "@/lib/api/notifications";
 import { formatGameRange, formatMatchTime, roundLabel } from "@/components/dashboard/fixtures/labels";
 
@@ -29,6 +29,7 @@ export function renderNotification(
   }
   if (p.deadlineAt) values.deadline = formatMatchTime(String(p.deadlineAt), locale);
   if (typeof p.round === "string") values.round = roundLabel(p.round, t);
+  if (typeof p.role === "string") values.role = roleLabel(p.role, t);
   if (typeof p.changes === "string") {
     values.changes = p.changes
       .split(",")

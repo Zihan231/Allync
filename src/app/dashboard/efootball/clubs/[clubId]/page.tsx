@@ -2,7 +2,6 @@
 
 import { Suspense, use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { joinClubRequest, getMyClubRequest } from "@/lib/api/clubs";
@@ -34,10 +33,8 @@ import { ClubTeamsTab } from "@/components/dashboard/ClubTeamsTab";
 import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
 import { ClubLatestTournaments } from "@/components/dashboard/ClubLatestTournaments";
 import { EmptyState } from "@/components/dashboard/EmptyState";
-import { ChangeManagerModal } from "@/components/dashboard/ChangeManagerModal";
-import { TransferAuthorityModal } from "@/components/dashboard/TransferAuthorityModal";
-import { useDeleteClub, useLeaveClub } from "@/lib/api/hooks/useClubs";
-import { UsersIcon, TrophyIcon, FacebookIcon, SwapIcon, TrashIcon } from "@/components/icons";
+import { useLeaveClub } from "@/lib/api/hooks/useClubs";
+import { UsersIcon, TrophyIcon, FacebookIcon, SettingsIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/lib/useToast";
 import { ToastContainer } from "@/components/common/Toast";
@@ -85,15 +82,11 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
   const { clubId } = use(params);
   const { t } = useLanguage();
   const { user, setClub, refreshSession } = useSession();
-  const router = useRouter();
-  const deleteClub = useDeleteClub();
   const clubs = useMockClubs();
   const people = useMockPeople();
   const joinRequests = useMockJoinRequests();
   const [tab, setTab] = useUrlTab(CLUB_TABS, "overview");
   const tabsRef = useRef<HTMLDivElement>(null);
-  const [showChangeManagerModal, setShowChangeManagerModal] = useState(false);
-  const [showTransferAuthorityModal, setShowTransferAuthorityModal] = useState(false);
   const { confirm, confirmProps } = useConfirm();
   const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
   const [isPendingLocal, setIsPendingLocal] = useState(false);
@@ -169,17 +162,9 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
     }
   }, [currentUserPerson?.clubId, currentUserPerson?.clubRole, myRequestData, club, isPendingLocal, user.club?.id, setClub, refreshSession]);
 
-  const isPresident = isMine && (user.club?.role === "President" || currentUserPerson?.clubRole === "President");
-  const canHandoverAuthority = isMine && (
-    user.club?.role === "President" ||
-    user.club?.role === "General Secretary" ||
-    currentUserPerson?.clubRole === "President" ||
-    currentUserPerson?.clubRole === "General Secretary"
-  );
   const canManageClub = isMine && (user.club?.role === "President" || user.club?.role === "General Secretary" || currentUserPerson?.clubRole === "President" || currentUserPerson?.clubRole === "General Secretary");
   const canManageTeams = isMine && (user.club?.role === "President" || user.club?.role === "Manager" || currentUserPerson?.clubRole === "President" || currentUserPerson?.clubRole === "Manager");
   const isManager = isMine && (user.club?.role === "Manager" || currentUserPerson?.clubRole === "Manager");
-  const canChangeManager = canManageClub;
   const hasOtherClub = !!user.club && !isMine;
 
   const hasPendingRequest =
@@ -241,23 +226,6 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
       }
     } finally {
       setIsJoining(false);
-    }
-  };
-
-  const handleDeleteClub = async () => {
-    if (!club || !isPresident) return;
-    if (!await confirm(`Delete ${club.name}? This cannot be undone. All club data, rosters, and stats will be permanently removed.`, {
-      title: "Delete Club",
-      variant: "danger",
-      confirmLabel: "Delete Forever",
-    })) return;
-
-    try {
-      await deleteClub.mutateAsync(club.id);
-      setClub(null);
-      router.push("/dashboard/efootball/clubs");
-    } catch (err: any) {
-      toast(err?.response?.data?.message || err?.message || "Failed to delete club.", "error");
     }
   };
 
@@ -368,14 +336,6 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
             </a>
           ) : null}
 
-          {canManageClub ? (
-            <Link
-              href={`/dashboard/efootball/clubs/${club.id}/edit`}
-              className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink"
-            >
-              {t.dashboard.clubs.editButton}
-            </Link>
-          ) : null}
           {canManageTeams && club.joinPolicy === "approval" ? (
             <Link
               href={`/dashboard/efootball/clubs/${club.id}/requests`}
@@ -385,39 +345,16 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
             </Link>
           ) : null}
 
-          {canChangeManager ? (
-            <button
-              type="button"
-              onClick={() => setShowChangeManagerModal(true)}
-              className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent-ink transition-colors hover:bg-accent/20"
-            >
-              <SwapIcon className="h-4 w-4" />
-              {t.dashboard.clubs.changeManagerButton}
-            </button>
-          ) : null}
-
-          
-          {isPresident ? (
-            <button
-              type="button"
-              onClick={handleDeleteClub}
-              disabled={deleteClub.isPending}
-              className="flex items-center gap-1.5 rounded-full border border-danger/40 bg-danger-soft px-4 py-2 text-sm font-semibold text-danger-ink transition-colors hover:bg-danger-soft/80 shadow-sm disabled:opacity-50"
-            >
-              <TrashIcon className="h-4 w-4" />
-              {deleteClub.isPending ? "Deleting..." : "Delete Club"}
-            </button>
-          ) : null}
+          {/* Club leaders: editing, positions, officials, presidency and deletion live in Settings. */}
           {isMine ? (
-            canHandoverAuthority ? (
-              <button
-                type="button"
-                onClick={() => setShowTransferAuthorityModal(true)}
-                className="flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-4 py-2 text-sm font-semibold text-warning-ink transition-colors hover:bg-warning/20 shadow-sm"
+            canManageClub ? (
+              <Link
+                href={`/dashboard/efootball/clubs/${club.id}/settings`}
+                className="flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent-soft px-4 py-2 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent hover:text-bg"
               >
-                <SwapIcon className="h-4 w-4" />
-                Transfer Authority
-              </button>
+                <SettingsIcon className="h-4 w-4" />
+                {t.dashboard.clubSettings.button}
+              </Link>
             ) : (
               <button
                 onClick={handleLeave}
@@ -536,24 +473,6 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
           />
         ) : null}
       </div>
-
-      <TransferAuthorityModal
-        open={showTransferAuthorityModal}
-        onClose={() => setShowTransferAuthorityModal(false)}
-        entityType="club"
-        entityId={club.id}
-        entityName={club.name}
-        members={members}
-      />
-
-      <ChangeManagerModal
-        open={showChangeManagerModal}
-        onClose={() => setShowChangeManagerModal(false)}
-        clubId={club.id}
-        clubName={club.name}
-        members={members}
-        isManagerSelfTransfer={false}
-      />
 
       <ConfirmDialog {...confirmProps} />
       <ToastContainer toasts={toasts} onDismiss={dismiss} />

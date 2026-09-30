@@ -128,6 +128,8 @@ export interface BackendTournament {
     color?: string;
     initials?: string;
     dpUrl?: string | null;
+    /** The hosting club's match-official nominees (detail endpoint). */
+    matchOfficialIds?: string[];
   } | null;
   createdById?: string;
   creatorId?: string;

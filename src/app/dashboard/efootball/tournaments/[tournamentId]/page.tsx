@@ -346,7 +346,8 @@ export function TournamentDetailView({
         .filter(
           (member) =>
             matchOfficialIds.includes(member.userId) &&
-            ["Captain", "Vice-Captain", "Academy Captain", "Manager"].includes(member.clubRole ?? ""),
+            (["Captain", "Vice-Captain", "Academy Captain", "Manager"].includes(member.clubRole ?? "") ||
+              (tournament.hostClub?.matchOfficialIds ?? []).includes(member.userId)),
         )
         .map((member) => ({ id: member.userId, name: member.user?.name ?? "", dpUrl: member.user?.dpUrl ?? null }))
     : communityMembers.filter(

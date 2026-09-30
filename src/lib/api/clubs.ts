@@ -110,6 +110,28 @@ export async function transferClubPresidentRequest(
   return res.data;
 }
 
+/** Staff positions assignable from club Settings; `Player` clears a member's position. */
+export const ASSIGNABLE_CLUB_POSITIONS = [
+  "General Secretary",
+  "Manager",
+  "Captain",
+  "Vice-Captain",
+  "Academy Captain",
+] as const;
+export type ClubPosition = (typeof ASSIGNABLE_CLUB_POSITIONS)[number] | "Player";
+
+/** Puts a member (by profile id) in a staff position, or clears theirs with `Player`. */
+export async function assignClubPositionRequest(clubId: string, profileId: string, role: ClubPosition) {
+  const res = await api.patch(`/clubs/${clubId}/positions`, { profileId, role });
+  return res.data;
+}
+
+/** The club's match-official nominees (user ids of members). */
+export async function setClubMatchOfficialsRequest(clubId: string, userIds: string[]): Promise<{ matchOfficialIds: string[] }> {
+  const res = await api.put<{ matchOfficialIds: string[] }>(`/clubs/${clubId}/match-officials`, { userIds });
+  return res.data;
+}
+
 export async function joinClubRequest(clubId: string): Promise<any> {
   const res = await api.post(`/clubs/${clubId}/join`);
   return res.data;
