@@ -9,16 +9,16 @@ import { format } from "@/lib/i18n/translations";
 import { Avatar } from "../common/Avatar";
 import { TournamentCard } from "./TournamentCard";
 import { EmptyState } from "./EmptyState";
-import { SectionHeading } from "./SectionHeading";
 import { Pagination } from "./Pagination";
 import { ArrowRightIcon, PlusIcon, TrophyIcon, UsersIcon } from "../icons";
 
 type Group = "live" | "upcoming" | "completed";
 
-const GROUP_TONE = { live: "danger", upcoming: "blue", completed: "accent" } as const;
+const GROUP_DOT = { live: "bg-danger", upcoming: "bg-blue", completed: "bg-accent" } as const;
 const GROUP_ORDER: Group[] = ["live", "upcoming", "completed"];
 const GROUP_RANK = { live: 0, upcoming: 1, completed: 2 } as const;
-const PAGE_SIZE = 6;
+/** One row of cards per page keeps each section short. */
+const PAGE_SIZE = 3;
 
 function groupOf(status: string | undefined): Group {
   const s = (status ?? "").toLowerCase();
@@ -168,50 +168,71 @@ function CommunitySection({ group }: { group: CommunityGroup }) {
   );
 }
 
-/** Live first, then upcoming (soonest first), then finished (latest first, with champions). */
+/**
+ * One section's tournaments: status filter pills (with counts) and one row of
+ * cards per page. Order: live first, then upcoming (soonest), then finished (latest).
+ */
 function GroupedTournaments({ tournaments }: { tournaments: BackendTournament[] }) {
   const { t } = useLanguage();
   const m = t.dashboard.myTournaments;
+  const [filter, setFilter] = useState<Group | "all">("all");
   const [page, setPage] = useState(1);
 
-  const groupLabel: Record<Group, string> = {
+  const filterLabel: Record<Group | "all", string> = {
+    all: m.statusAll,
     live: m.statusLive,
     upcoming: m.statusUpcoming,
     completed: m.statusCompleted,
   };
+  const counts = { all: tournaments.length, live: 0, upcoming: 0, completed: 0 };
+  for (const tour of tournaments) counts[groupOf(tour.status)]++;
 
-  // Sorted in section order, so a page boundary never splits a group unpredictably.
-  const sorted = [...tournaments].sort((a, b) => {
-    const ga = groupOf(a.status);
-    const gb = groupOf(b.status);
-    if (ga !== gb) return GROUP_RANK[ga] - GROUP_RANK[gb];
-    return ga === "completed" ? startMs(b) - startMs(a) : startMs(a) - startMs(b);
-  });
+  const sorted = tournaments
+    .filter((tour) => filter === "all" || groupOf(tour.status) === filter)
+    .sort((a, b) => {
+      const ga = groupOf(a.status);
+      const gb = groupOf(b.status);
+      if (ga !== gb) return GROUP_RANK[ga] - GROUP_RANK[gb];
+      return ga === "completed" ? startMs(b) - startMs(a) : startMs(a) - startMs(b);
+    });
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pageItems = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <>
-      <div className="space-y-8">
-        {GROUP_ORDER.map((group) => {
-          const list = pageItems.filter((tour) => groupOf(tour.status) === group);
-          if (list.length === 0) return null;
-          return (
-            <div key={group}>
-              <SectionHeading tone={GROUP_TONE[group]}>{groupLabel[group]}</SectionHeading>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {list.map((tour) => (
-                  <TournamentCard key={tour.id} tournament={tour} href={tournamentHref(tour)} showRelation={false} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+      <div className="mb-4 flex flex-wrap items-center gap-1 rounded-lg border border-surface-line bg-surface/50 p-1 text-xs sm:inline-flex">
+        {(["all", ...GROUP_ORDER] as const).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => {
+              setFilter(key);
+              setPage(1);
+            }}
+            disabled={key !== "all" && counts[key] === 0}
+            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 font-semibold transition-colors disabled:opacity-40 ${
+              filter === key ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"
+            }`}
+          >
+            {key !== "all" ? <span className={`h-1.5 w-1.5 rounded-full ${GROUP_DOT[key]}`} /> : null}
+            {filterLabel[key]}
+            <span className="opacity-70">({counts[key]})</span>
+          </button>
+        ))}
       </div>
-      <div className="mt-6">
-        <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {pageItems.map((tour) => (
+          <TournamentCard key={tour.id} tournament={tour} href={tournamentHref(tour)} showRelation={false} />
+        ))}
       </div>
+
+      {pageCount > 1 ? (
+        <div className="mt-5">
+          <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
+        </div>
+      ) : null}
     </>
   );
 }
