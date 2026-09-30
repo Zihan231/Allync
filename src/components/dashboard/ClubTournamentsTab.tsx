@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useTournaments } from "@/lib/api/hooks/useTournaments";
 import { tournamentHref, type BackendTournament } from "@/lib/api/tournaments";
+import { format } from "@/lib/i18n/translations";
+import { Avatar } from "../common/Avatar";
 import { TournamentCard } from "./TournamentCard";
 import { EmptyState } from "./EmptyState";
 import { SectionHeading } from "./SectionHeading";
 import { Pagination } from "./Pagination";
-import { PlusIcon, TrophyIcon, UsersIcon } from "../icons";
+import { ArrowRightIcon, PlusIcon, TrophyIcon, UsersIcon } from "../icons";
 
 type Group = "live" | "upcoming" | "completed";
 
@@ -82,16 +84,86 @@ export function ClubTournamentsTab({ clubId, canCreate }: { clubId: string; canC
       </section>
 
       <section>
-        <h3 className="mb-5 flex items-center gap-2 font-display text-lg font-black text-ink">
+        <h3 className="mb-1 flex items-center gap-2 font-display text-lg font-black text-ink">
           <UsersIcon className="h-5 w-5 text-accent" />
-          {m.clubEnteredTitle}
+          {m.clubCommunityTitle}
         </h3>
+        <p className="mb-5 text-xs text-ink-faint">{m.clubCommunityHint}</p>
         {enteredList.length ? (
-          <GroupedTournaments tournaments={enteredList} />
+          <div className="space-y-6">
+            {byCommunity(enteredList).map((group) => (
+              <CommunitySection key={group.id} group={group} />
+            ))}
+          </div>
         ) : (
           <EmptyState icon={TrophyIcon} title={m.clubEmptyTitle} body={m.clubEmptyBody} />
         )}
       </section>
+    </div>
+  );
+}
+
+type CommunityGroup = {
+  id: string;
+  name: string;
+  dpUrl: string | null;
+  tournaments: BackendTournament[];
+  live: number;
+};
+
+/** The club's entered tournaments per hosting community: communities with live play first, then most recent. */
+function byCommunity(tournaments: BackendTournament[]): CommunityGroup[] {
+  const groups = new Map<string, CommunityGroup>();
+  for (const tour of tournaments) {
+    const id = tour.communityId ?? tour.community?.id ?? "unknown";
+    const group = groups.get(id) ?? {
+      id,
+      name: tour.community?.name ?? "",
+      dpUrl: tour.community?.dpUrl ?? null,
+      tournaments: [],
+      live: 0,
+    };
+    group.tournaments.push(tour);
+    if (groupOf(tour.status) === "live") group.live++;
+    groups.set(id, group);
+  }
+  const latest = (g: CommunityGroup) => Math.max(...g.tournaments.map(startMs));
+  return [...groups.values()].sort((a, b) => b.live - a.live || latest(b) - latest(a));
+}
+
+/** One community's tournaments, under a header with its crest, name and a link to the community. */
+function CommunitySection({ group }: { group: CommunityGroup }) {
+  const { t } = useLanguage();
+  const m = t.dashboard.myTournaments;
+  return (
+    <div className="rounded-3xl border border-surface-line bg-surface/30 p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-surface-line/70 pb-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <Avatar dpUrl={group.dpUrl} name={group.name} size="md" mode="static" />
+          <div className="min-w-0">
+            <div className="truncate font-display text-base font-black text-ink">{group.name}</div>
+            <div className="mt-0.5 flex items-center gap-2 text-[11px] text-ink-faint">
+              <span>{format(m.clubCommunityCount, { count: group.tournaments.length })}</span>
+              {group.live ? (
+                <span className="inline-flex items-center gap-1 font-bold text-danger-ink">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-danger" />
+                  {format(m.clubCommunityLive, { count: group.live })}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+        {group.id !== "unknown" ? (
+          <Link
+            href={`/dashboard/efootball/community/${group.id}?tab=tournaments`}
+            className="inline-flex items-center gap-1 rounded-full border border-surface-line-strong px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
+          >
+            {m.clubCommunityOpen}
+            <ArrowRightIcon className="h-3.5 w-3.5" />
+          </Link>
+        ) : null}
+      </div>
+      <GroupedTournaments tournaments={group.tournaments} />
     </div>
   );
 }
