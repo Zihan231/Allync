@@ -11,8 +11,17 @@ export interface NotificationItem {
   createdAt: string;
 }
 
-export async function getNotifications(): Promise<NotificationItem[]> {
-  const res = await api.get<NotificationItem[]>("/notifications");
+/** Newest first. `before` (the `createdAt` of the last item) pages back; `unread` filters. */
+export async function getNotifications(
+  params: { limit?: number; before?: string; unread?: boolean } = {},
+): Promise<NotificationItem[]> {
+  const res = await api.get<NotificationItem[]>("/notifications", {
+    params: {
+      ...(params.limit ? { limit: params.limit } : {}),
+      ...(params.before ? { before: params.before } : {}),
+      ...(params.unread ? { unread: "true" } : {}),
+    },
+  });
   return res.data;
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export type ToastVariant = "error" | "warning" | "success" | "info";
 
@@ -8,6 +9,12 @@ export interface ToastMessage {
   id: string;
   message: string;
   variant: ToastVariant;
+  /** Bold first line (notifications). */
+  title?: string;
+  /** Clicking the toast opens this page. */
+  link?: string | null;
+  /** How long it stays (paused while hovered). */
+  durationMs?: number;
 }
 
 interface ToastItemProps {
@@ -47,17 +54,11 @@ const VARIANT_STYLES: Record<ToastVariant, { border: string; icon: string; glow:
 
 export function ToastItem({ toast, onDismiss }: ToastItemProps) {
   const styles = VARIANT_STYLES[toast.variant];
-  const progressRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = progressRef.current;
-    if (!el) return;
-    el.style.transition = "none";
-    el.style.width = "100%";
-    void el.offsetWidth;
-    el.style.transition = "width 4s linear";
-    el.style.width = "0%";
-  }, []);
+  const router = useRouter();
+  // Hovering pauses the countdown so a long message can be read in full.
+  const [paused, setPaused] = useState(false);
+  const durationMs = toast.durationMs ?? 4000;
+  const link = toast.link;
 
   const progressColor =
     toast.variant === "error"
@@ -70,7 +71,9 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
 
   return (
     <div
-      className={`relative flex items-start gap-3 rounded-xl border bg-[var(--surface)] px-4 py-3.5 pr-10 ${styles.border} ${styles.glow} overflow-hidden`}
+      className={`relative flex items-start gap-3 rounded-xl border bg-[var(--surface)] px-4 py-3.5 pr-10 ${styles.border} ${styles.glow} overflow-hidden ${
+        link ? "cursor-pointer transition-colors hover:bg-[var(--surface-raised)]" : ""
+      }`}
       style={{
         animation: "toastSlideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) both",
         backdropFilter: "blur(12px)",
@@ -79,6 +82,16 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
         pointerEvents: "auto",
       }}
       role="alert"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onClick={
+        link
+          ? () => {
+              onDismiss(toast.id);
+              router.push(link);
+            }
+          : undefined
+      }
     >
       {/* Icon */}
       <span
@@ -87,13 +100,25 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
         {ICONS[toast.variant]}
       </span>
 
-      {/* Message */}
-      <p className="flex-1 text-sm font-medium leading-snug text-[var(--ink)]">{toast.message}</p>
+      {/* Message (the full text is always in the notifications list) */}
+      <div className="min-w-0 flex-1">
+        {toast.title ? <p className="text-sm font-bold leading-snug text-[var(--ink)]">{toast.title}</p> : null}
+        <p
+          className={`text-sm leading-snug ${
+            toast.title ? "mt-0.5 line-clamp-3 font-normal text-[var(--ink-soft)]" : "font-medium text-[var(--ink)]"
+          }`}
+        >
+          {toast.message}
+        </p>
+      </div>
 
       {/* Dismiss button */}
       <button
         type="button"
-        onClick={() => onDismiss(toast.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onDismiss(toast.id);
+        }}
         aria-label="Dismiss"
         className="absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-md text-[var(--ink-faint)] transition-colors hover:bg-[var(--surface-line)] hover:text-[var(--ink)]"
       >
@@ -102,11 +127,15 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
         </svg>
       </button>
 
-      {/* Progress bar */}
+      {/* Countdown bar: dismisses the toast when it runs out; hovering pauses it */}
       <div
-        ref={progressRef}
-        className="absolute bottom-0 left-0 h-[2px] rounded-full"
-        style={{ backgroundColor: progressColor }}
+        className="absolute bottom-0 left-0 h-[2px] w-full rounded-full"
+        style={{
+          backgroundColor: progressColor,
+          animation: `toastCountdown ${durationMs}ms linear forwards`,
+          animationPlayState: paused ? "paused" : "running",
+        }}
+        onAnimationEnd={() => onDismiss(toast.id)}
       />
     </div>
   );
@@ -123,6 +152,10 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   return (
     <>
       <style>{`
+        @keyframes toastCountdown {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
         @keyframes toastSlideInRight {
           from {
             opacity: 0;

@@ -12,6 +12,7 @@ import { ToastContainer } from "../common/Toast";
 import { Avatar } from "../common/Avatar";
 import { BellIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, UsersIcon } from "../icons";
 import { useRealtimeNotifications } from "@/lib/hooks/useRealtimeNotifications";
+import { NotificationEntry } from "./NotificationEntry";
 
 export function DashboardTopbar({
   onMenuClick,
@@ -120,7 +121,7 @@ export function DashboardTopbar({
             ) : null}
           </button>
           {notifOpen ? (
-            <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-surface-line bg-surface p-3 shadow-2xl">
+            <div className="absolute right-0 top-full z-40 mt-2 w-96 max-w-[calc(100vw-1.5rem)] rounded-xl border border-surface-line bg-surface p-3 shadow-2xl">
               <div className="flex items-center justify-between border-b border-surface-line/70 pb-2">
                 <span className="font-mono text-[10px] uppercase tracking-wide text-ink-faint">
                   {t.dashboard.shell.notificationsLabel} ({unreadCount})
@@ -131,43 +132,38 @@ export function DashboardTopbar({
                     onClick={() => markAllRead()}
                     className="font-mono text-[10px] text-accent hover:underline"
                   >
-                    Mark all as read
+                    {t.dashboard.shell.notificationsMarkAllRead}
                   </button>
                 ) : null}
               </div>
-              <ul className="mt-2 max-h-72 overflow-y-auto space-y-2 pr-1 divide-y divide-surface-line/40">
+              <ul className="mt-2 max-h-[26rem] space-y-1 overflow-y-auto pr-1">
                 {notifications.length === 0 ? (
-                  <li className="py-4 text-center text-xs text-ink-faint">
-                    {t.dashboard.shell.notificationsEmpty || "You're all caught up."}
-                  </li>
+                  <li className="py-4 text-center text-xs text-ink-faint">{t.dashboard.shell.notificationsEmpty}</li>
                 ) : (
                   notifications.map((n) => (
-                    <li
-                      key={n.id}
-                      onClick={() => {
-                        if (!n.read) markAsRead(n.id);
-                        if (n.link) {
-                          setNotifOpen(false);
-                          router.push(n.link);
-                        }
-                      }}
-                      className={`pt-2 pb-1 text-xs cursor-pointer transition-colors rounded-lg px-2 hover:bg-bg-raised ${
-                        !n.read ? "bg-accent/5 font-medium" : "opacity-80"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className={`font-semibold ${!n.read ? "text-accent" : "text-ink"}`}>
-                          {n.title}
-                        </span>
-                        {!n.read ? (
-                          <span className="h-1.5 w-1.5 rounded-full bg-accent shrink-0" />
-                        ) : null}
-                      </div>
-                      <p className="mt-0.5 leading-relaxed text-ink-soft line-clamp-2">{n.message}</p>
+                    <li key={n.id}>
+                      <NotificationEntry
+                        notification={n}
+                        compact
+                        onOpen={(item) => {
+                          if (!item.read) markAsRead(item.id);
+                          if (item.link) {
+                            setNotifOpen(false);
+                            router.push(item.link);
+                          }
+                        }}
+                      />
                     </li>
                   ))
                 )}
               </ul>
+              <Link
+                href="/dashboard/notifications"
+                onClick={() => setNotifOpen(false)}
+                className="mt-2 block rounded-lg border-t border-surface-line/70 pt-2.5 text-center text-xs font-semibold text-accent-ink hover:underline"
+              >
+                {t.dashboard.shell.notificationsViewAll}
+              </Link>
             </div>
           ) : null}
         </div>

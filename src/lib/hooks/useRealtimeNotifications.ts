@@ -24,7 +24,7 @@ export function useRealtimeNotifications() {
 
   const notificationsQuery = useQuery({
     queryKey: ["notifications"],
-    queryFn: getNotifications,
+    queryFn: () => getNotifications(),
     enabled: isAuthenticated,
     refetchInterval: FALLBACK_POLL_MS,
     staleTime: 3000,
@@ -52,7 +52,7 @@ export function useRealtimeNotifications() {
         try {
           const notif: NotificationItem = JSON.parse(event.data);
           if (notif && notif.title) {
-            toast(`${notif.title}: ${notif.message}`, "info");
+            toast(notif.message, "info", { title: notif.title, link: notif.link });
             void queryClient.invalidateQueries({ queryKey: ["notifications"] });
             void queryClient.invalidateQueries({ queryKey: ["notifications-unread-count"] });
 
