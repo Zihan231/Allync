@@ -118,7 +118,17 @@ export interface BackendTournament {
   startAt: string;
   endAt: string | null;
   teamSubmissionDeadline: string;
-  communityId: string;
+  /** Hosting community; null for a club-hosted tournament (then `hostClubId` is set). */
+  communityId: string | null;
+  /** Hosting club (club tournaments are PvP for the club's members). */
+  hostClubId?: string | null;
+  hostClub?: {
+    id: string;
+    name: string;
+    color?: string;
+    initials?: string;
+    dpUrl?: string | null;
+  } | null;
   createdById?: string;
   creatorId?: string;
   bracket: TournamentBracket | null;
@@ -158,6 +168,8 @@ export interface TournamentQueryParams {
   communityId?: string;
   /** Only tournaments this club has entered. */
   clubId?: string;
+  /** Only tournaments this club hosts. */
+  hostClubId?: string;
   search?: string;
   isPaid?: boolean;
   hasPrizePool?: boolean;
@@ -181,10 +193,29 @@ export interface CreateTournamentPayload {
   prizePoolBdt?: number;
   startAt: string;
   endAt?: string;
-  communityId: string;
+  /** Exactly one host: a community, or a club (club tournaments are PvP). */
+  communityId?: string;
+  hostClubId?: string;
   playHoursStart?: number;
   playHoursEnd?: number;
   matchOfficialIds?: string[];
+}
+
+/** App link to a tournament page, under its host (community or club). Mirrors the backend helper. */
+export function tournamentHref(
+  tournament: Pick<BackendTournament, "id" | "communityId" | "hostClubId">,
+  query = "",
+): string {
+  return tournament.hostClubId
+    ? `/dashboard/efootball/clubs/${tournament.hostClubId}/tournaments/${tournament.id}${query}`
+    : `/dashboard/efootball/community/${tournament.communityId}/tournaments/${tournament.id}${query}`;
+}
+
+/** The host's Tournaments tab (community or club). */
+export function hostTournamentsHref(tournament: Pick<BackendTournament, "communityId" | "hostClubId">): string {
+  return tournament.hostClubId
+    ? `/dashboard/efootball/clubs/${tournament.hostClubId}?tab=tournaments`
+    : `/dashboard/efootball/community/${tournament.communityId}?tab=tournaments`;
 }
 
 export interface SubmitLineupPayload {

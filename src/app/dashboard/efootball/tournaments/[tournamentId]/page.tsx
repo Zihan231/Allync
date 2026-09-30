@@ -25,10 +25,11 @@ import { TeamSubmissionForm } from "@/components/dashboard/TeamSubmissionForm";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useConfirm } from "@/lib/useConfirm";
 import { useCommunityMembers } from "@/lib/api/hooks/useCommunities";
+import { useClubMembers } from "@/lib/api/hooks/useTeams";
 import { getClub } from "@/lib/api/clubs";
 import { getTeams, getClubMembers, type Team, type ClubMemberProfile } from "@/lib/api/teams";
 import type { BackendClub } from "@/lib/api/types";
-import type { SubmitLineupPayload } from "@/lib/api/tournaments";
+import { hostTournamentsHref, tournamentHref, type SubmitLineupPayload } from "@/lib/api/tournaments";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { EmptyState } from "@/components/dashboard/EmptyState";
@@ -143,6 +144,14 @@ export function TournamentDetailView({
   const { data: tournamentStructure } = useTournamentStructure(tournamentId);
   const { data: communityMembers = [], isLoading: isLoadingCommunityMembers } =
     useCommunityMembers(tournament?.communityId ?? "");
+  // Club-hosted tournaments: PvP for the club's members, run by its President / General Secretary.
+  const hostClubId = tournament?.hostClubId ?? null;
+  const { data: hostClubMembers = [] } = useClubMembers(hostClubId ?? "");
+  const viewerLeadsHostClub = Boolean(
+    hostClubId &&
+      user?.club?.id === hostClubId &&
+      (user.club.role === "President" || user.club.role === "General Secretary"),
+  );
   const joinMutation = useJoinTournament(tournamentId);
   const submitLineupMutation = useSubmitTournamentLineup(tournamentId);
   const generateBracketMutation = useGenerateTournamentBracket(tournamentId);
@@ -158,11 +167,13 @@ export function TournamentDetailView({
         : participant.userId === user?.id || participant.userId === user?.personId,
     ),
   );
-  // Hosts (the creator, or the hosting community's President / VP) also have it under My Tournaments.
+  // Hosts (the creator, the hosting community's President / VP, or the hosting club's
+  // President / GS) also have it under My Tournaments.
   const viewerHostsTournament = Boolean(
     tournament &&
       user &&
       (tournament.creatorId === user.id ||
+        viewerLeadsHostClub ||
         tournament.community?.creatorId === user.id ||
         tournament.community?.presidentId === user.id ||
         tournament.community?.vicePresidentId === user.id ||
@@ -185,9 +196,7 @@ export function TournamentDetailView({
       return;
     }
 
-    router.replace(
-      `/dashboard/efootball/community/${tournament.communityId}/tournaments/${tournament.id}`,
-    );
+    router.replace(tournamentHref(tournament));
   }, [context, isSessionLoading, isLoadingCommunityMembers, router, tournament, viewerIsParticipant, viewerHostsTournament]);
 
   // Club and teams state for CvC
@@ -291,14 +300,17 @@ export function TournamentDetailView({
   const isRegistrationClosed = rawStatus === "registration_closed" || rawStatus === "submission_phase";
 
   // Permissions and Eligibility Checks
+  const isClubHosted = Boolean(hostClubId);
   const isOrganizer =
     tournament.creatorId === user?.id ||
     tournament.createdById === user?.id ||
-    tournament.community?.creatorId === user?.id ||
-    tournament.community?.presidentId === user?.id ||
-    tournament.community?.vicePresidentId === user?.id ||
-    (user?.community?.id === tournament.communityId &&
-      (user?.community?.role === "President" || user?.community?.role === "Vice President"));
+    (isClubHosted
+      ? viewerLeadsHostClub
+      : tournament.community?.creatorId === user?.id ||
+        tournament.community?.presidentId === user?.id ||
+        tournament.community?.vicePresidentId === user?.id ||
+        (user?.community?.id === tournament.communityId &&
+          (user?.community?.role === "President" || user?.community?.role === "Vice President")));
 
   const currentUserIds = [user?.id, user?.personId].filter(
     (id): id is string => Boolean(id),
@@ -315,30 +327,41 @@ export function TournamentDetailView({
       : currentUserPerson?.communityId === tournament.communityId
         ? currentUserPerson.communityRole
         : null);
-  const isHostingCommunityLeader =
-    hostingCommunityRole === "President" ||
-    hostingCommunityRole === "Vice President" ||
-    isCurrentUserId(tournament.community?.creatorId) ||
-    isCurrentUserId(tournament.community?.presidentId) ||
-    isCurrentUserId(tournament.community?.vicePresidentId);
-  const canShowJoinAction =
-    !isLoadingCommunityMembers && !isHostingCommunityLeader;
+  // The host's leaders run the tournament and can't enter it: the community President / VP
+  // (and its creator), or the hosting club's President / GS.
+  const isHostLeader = isClubHosted
+    ? viewerLeadsHostClub
+    : hostingCommunityRole === "President" ||
+      hostingCommunityRole === "Vice President" ||
+      isCurrentUserId(tournament.community?.creatorId) ||
+      isCurrentUserId(tournament.community?.presidentId) ||
+      isCurrentUserId(tournament.community?.vicePresidentId);
+  const canShowJoinAction = (isClubHosted || !isLoadingCommunityMembers) && !isHostLeader;
 
-  // Evidence reviewers: the community President / Vice President and the match officials.
+  // Evidence reviewers: the host's leaders plus the match officials. Only officials who still
+  // hold an official role count (mirrors the backend).
   const matchOfficialIds = tournament.matchOfficialIds ?? [];
-  // Only officials who still hold an official role count (mirrors the backend).
-  const matchOfficials = communityMembers.filter(
-    (member) =>
-      matchOfficialIds.includes(member.id) &&
-      ["Team Manager", "Head of Discipline", "Scout"].includes(member.communityRole),
-  );
+  const matchOfficials: Array<{ id: string; name: string; dpUrl: string | null }> = isClubHosted
+    ? hostClubMembers
+        .filter(
+          (member) =>
+            matchOfficialIds.includes(member.userId) &&
+            ["Captain", "Vice-Captain", "Academy Captain", "Manager"].includes(member.clubRole ?? ""),
+        )
+        .map((member) => ({ id: member.userId, name: member.user?.name ?? "", dpUrl: member.user?.dpUrl ?? null }))
+    : communityMembers.filter(
+        (member) =>
+          matchOfficialIds.includes(member.id) &&
+          ["Team Manager", "Head of Discipline", "Scout"].includes(member.communityRole),
+      );
   const isMatchOfficial = matchOfficials.some((member) => isCurrentUserId(member.id));
   const isReviewer =
-    hostingCommunityRole === "President" ||
-    hostingCommunityRole === "Vice President" ||
-    isCurrentUserId(tournament.community?.presidentId) ||
-    isCurrentUserId(tournament.community?.vicePresidentId) ||
-    isMatchOfficial;
+    (isClubHosted
+      ? viewerLeadsHostClub
+      : hostingCommunityRole === "President" ||
+        hostingCommunityRole === "Vice President" ||
+        isCurrentUserId(tournament.community?.presidentId) ||
+        isCurrentUserId(tournament.community?.vicePresidentId)) || isMatchOfficial;
 
   const isCvC = tournament.type === "cvc";
 
@@ -361,12 +384,18 @@ export function TournamentDetailView({
 
   // Community membership: Club must belong to tournament.communityId
   const clubBelongsToCommunity =
-    userClubDetails?.communityIds?.includes(tournament.communityId) ||
+    userClubDetails?.communityIds?.includes(tournament.communityId ?? "") ||
     user?.community?.id === tournament.communityId;
 
-  // Player community membership for PvP
-  const playerBelongsToCommunity =
-    user?.community?.id === tournament.communityId ||
+  // Where "join the host" links go: the hosting club's page, or the hosting community's.
+  const hostPageHref = isClubHosted
+    ? `/dashboard/efootball/clubs/${hostClubId}`
+    : `/dashboard/efootball/community/${tournament.communityId}`;
+
+  // PvP eligibility: a member of the hosting club (club tournaments) or of the hosting community.
+  const playerBelongsToCommunity = isClubHosted
+    ? user?.club?.id === hostClubId
+    : user?.community?.id === tournament.communityId ||
     currentUserPerson?.communityId === tournament.communityId ||
     tournament.creatorId === user?.id ||
     tournament.creatorId === user?.personId ||
@@ -493,7 +522,7 @@ export function TournamentDetailView({
     setActionSuccess("");
     try {
       await deleteMutation.mutateAsync();
-      router.push(`/dashboard/efootball/community/${tournament.communityId}?tab=tournaments`);
+      router.push(hostTournamentsHref(tournament));
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setActionError(message || (err as Error)?.message || tm.errDelete);
@@ -676,12 +705,12 @@ export function TournamentDetailView({
                 ) : (
                   !playerBelongsToCommunity ? (
                     <div className="flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-300">
-                      <span>{td.mustBeMember}</span>
+                      <span>{isClubHosted ? td.mustBeClubMember : td.mustBeMember}</span>
                       <Link
-                        href={`/dashboard/efootball/community/${tournament.communityId}`}
+                        href={hostPageHref}
                         className="underline text-accent-ink hover:text-white"
                       >
-                        {td.joinCommunity}
+                        {isClubHosted ? td.viewClub : td.joinCommunity}
                       </Link>
                     </div>
                   ) : (
@@ -925,12 +954,16 @@ export function TournamentDetailView({
                     ? td.infoLineupLocked
                     : td.infoClubEnrolled
                   : td.infoPlayerEnrolled
-                : isHostingCommunityLeader
-                  ? td.infoLeadersCannotJoin
+                : isHostLeader
+                  ? isClubHosted
+                    ? td.infoClubLeadersCannotJoin
+                    : td.infoLeadersCannotJoin
                   : isCvC
                   ? td.infoCvcWhoRegisters
                   : !playerBelongsToCommunity
-                    ? td.infoPvpMustBeMember
+                    ? isClubHosted
+                      ? td.infoPvpMustBeClubMember
+                      : td.infoPvpMustBeMember
                     : td.infoPvpRegister}
             </p>
           </div>
@@ -964,12 +997,12 @@ export function TournamentDetailView({
                 ) : (
                   !playerBelongsToCommunity ? (
                     <div className="flex items-center gap-2.5 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-300">
-                      <span>{td.pvpMustBelong}</span>
+                      <span>{isClubHosted ? td.mustBeClubMember : td.pvpMustBelong}</span>
                       <Link
-                        href={`/dashboard/efootball/community/${tournament.communityId}`}
+                        href={hostPageHref}
                         className="rounded-full bg-rose-500/20 px-3 py-1 font-bold text-rose-200 hover:bg-rose-500/30 transition-colors"
                       >
-                        {td.joinCommunity}
+                        {isClubHosted ? td.viewClub : td.joinCommunity}
                       </Link>
                     </div>
                   ) : (

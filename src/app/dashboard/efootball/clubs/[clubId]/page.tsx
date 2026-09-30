@@ -513,7 +513,16 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
         {tab === "matchStats" ? <ClubMatchStatsTab club={club} members={members} /> : null}
         {tab === "teamUp" ? <ClubTeamUpTab club={club} members={members} /> : null}
         {tab === "tournaments" ? (
-          <ClubTournamentsTab clubId={club.id} />
+          <ClubTournamentsTab
+            clubId={club.id}
+            canCreate={
+              isMine &&
+              (user.club?.role === "President" ||
+                user.club?.role === "General Secretary" ||
+                currentUserPerson?.clubRole === "President" ||
+                currentUserPerson?.clubRole === "General Secretary")
+            }
+          />
         ) : null}
       </div>
 

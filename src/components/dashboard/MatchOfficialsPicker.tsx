@@ -6,44 +6,85 @@ import { CheckIcon, ChevronDownIcon, CloseIcon, PlusIcon, SearchIcon, ShieldIcon
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format, roleLabel } from "@/lib/i18n/translations";
 import { useCommunityMembers } from "@/lib/api/hooks/useCommunities";
-import type { BackendCommunityMember } from "@/lib/api/types";
+import { useClubMembers } from "@/lib/api/hooks/useTeams";
 
 /** Mirrors the backend limit on match officials per tournament. */
 export const MAX_MATCH_OFFICIALS = 10;
-const LEADER_ROLES = ["President", "Vice President"];
-/** Community roles that may be appointed as match officials (mirrors the backend). */
-const OFFICIAL_ROLES = ["Team Manager", "Head of Discipline", "Scout"];
+
+/** Who hosts the tournament; decides who always reviews and who can be picked. */
+export type OfficialsHost = { kind: "community" | "club"; id: string };
+
+// Mirrors the backend role lists (tournaments.service.ts).
+const ROLES = {
+  community: {
+    leaders: ["President", "Vice President"],
+    officials: ["Team Manager", "Head of Discipline", "Scout"],
+  },
+  club: {
+    leaders: ["President", "General Secretary"],
+    officials: ["Captain", "Vice-Captain", "Academy Captain", "Manager"],
+  },
+} as const;
+
+/** A community or club member, in one shape. `id` is the user id officials are stored by. */
+interface Candidate {
+  id: string;
+  name: string;
+  dpUrl: string | null;
+  role: string;
+  /** Extra line under the name (their club, for community members). */
+  detail: string | null;
+}
 
 /**
- * Picks the tournament's match officials: community members who review match
- * evidence alongside the President and Vice President (who always review).
- * `value` holds user ids.
+ * Picks the tournament's match officials, who review match evidence alongside
+ * the host's leaders (who always review): community officials for a community
+ * tournament, club staff for a club tournament. `value` holds user ids.
  */
 export function MatchOfficialsPicker({
-  communityId,
+  host,
   value,
   onChange,
 }: {
-  communityId: string;
+  host: OfficialsHost;
   value: string[];
   onChange: (userIds: string[]) => void;
 }) {
   const { t } = useLanguage();
   const mo = t.dashboard.matchOfficials;
-  const { data: members = [], isLoading } = useCommunityMembers(communityId);
+  const isClub = host.kind === "club";
+  const community = useCommunityMembers(isClub ? "" : host.id);
+  const club = useClubMembers(isClub ? host.id : "");
+  const isLoading = isClub ? club.isLoading : community.isLoading;
+  const members: Candidate[] = isClub
+    ? (club.data ?? []).map((m) => ({
+        id: m.userId,
+        name: m.user?.name || mo.unnamed,
+        dpUrl: m.user?.dpUrl ?? null,
+        role: m.clubRole ?? "",
+        detail: null,
+      }))
+    : (community.data ?? []).map((m) => ({
+        id: m.id,
+        name: m.name,
+        dpUrl: m.dpUrl,
+        role: m.communityRole,
+        detail: m.clubName,
+      }));
+  const roles = ROLES[host.kind];
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const leaders = members.filter((m) => LEADER_ROLES.includes(m.communityRole));
+  const leaders = members.filter((m) => (roles.leaders as readonly string[]).includes(m.role));
   const byId = new Map(members.map((m) => [m.id, m]));
-  const selected = value.map((id) => byId.get(id)).filter((m): m is BackendCommunityMember => Boolean(m));
+  const selected = value.map((id) => byId.get(id)).filter((m): m is Candidate => Boolean(m));
   const full = value.length >= MAX_MATCH_OFFICIALS;
 
-  // Community officials who can be picked, filtered by the search.
+  // Officials who can be picked, filtered by the search.
   const query = search.trim().toLowerCase();
-  const eligible = members.filter((m) => OFFICIAL_ROLES.includes(m.communityRole));
+  const eligible = members.filter((m) => (roles.officials as readonly string[]).includes(m.role));
   const options = eligible.filter(
-    (m) => !query || m.name.toLowerCase().includes(query) || (m.clubName ?? "").toLowerCase().includes(query),
+    (m) => !query || m.name.toLowerCase().includes(query) || (m.detail ?? "").toLowerCase().includes(query),
   );
 
   const toggle = (id: string) => {
@@ -52,13 +93,13 @@ export function MatchOfficialsPicker({
   };
   const remove = (id: string) => onChange(value.filter((x) => x !== id));
 
-  if (!communityId) {
+  if (!host.id) {
     return <p className="text-xs text-ink-faint">{mo.pickCommunityFirst}</p>;
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-xs leading-relaxed text-ink-soft">{mo.hint}</p>
+      <p className="text-xs leading-relaxed text-ink-soft">{isClub ? mo.hintClub : mo.hint}</p>
 
       {/* Always reviewing */}
       {leaders.length ? (
@@ -73,7 +114,7 @@ export function MatchOfficialsPicker({
                 <Avatar dpUrl={m.dpUrl} name={m.name} size="sm" mode="static" />
                 <span className="font-semibold text-ink">{m.name}</span>
                 <span className="rounded-full bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-accent-ink">
-                  {roleLabel(m.communityRole, t)}
+                  {roleLabel(m.role, t)}
                 </span>
               </span>
             ))}
@@ -112,7 +153,7 @@ export function MatchOfficialsPicker({
         ) : (
           <p className="flex items-center gap-2 rounded-xl border border-dashed border-surface-line px-3 py-2.5 text-xs text-ink-faint">
             <ShieldIcon className="h-3.5 w-3.5 shrink-0" />
-            {mo.none}
+            {isClub ? mo.noneClub : mo.none}
           </p>
         )}
       </div>
@@ -172,7 +213,7 @@ export function MatchOfficialsPicker({
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-semibold text-ink">{m.name}</span>
                           <span className="block truncate text-[11px] text-ink-faint">
-                            {[m.clubName, roleLabel(m.communityRole, t)].filter(Boolean).join(" · ")}
+                            {[m.detail, roleLabel(m.role, t)].filter(Boolean).join(" · ")}
                           </span>
                         </span>
                         <span
@@ -188,7 +229,7 @@ export function MatchOfficialsPicker({
                 })
               ) : (
                 <li className="px-3 py-4 text-center text-xs text-ink-faint">
-                  {eligible.length ? mo.noResults : mo.noOfficials}
+                  {eligible.length ? mo.noResults : isClub ? mo.noOfficialsClub : mo.noOfficials}
                 </li>
               )}
             </ul>

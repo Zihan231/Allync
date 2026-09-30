@@ -349,7 +349,15 @@ export function EditTournamentModal({
 
           <div className="rounded-xl border border-blue/30 bg-blue-soft/30 p-4">
             <div className="mb-3 text-xs font-semibold text-ink">{t.dashboard.matchOfficials.title}</div>
-            <MatchOfficialsPicker communityId={tournament.communityId} value={officialIds} onChange={setOfficialIds} />
+            <MatchOfficialsPicker
+              host={
+                tournament.hostClubId
+                  ? { kind: "club", id: tournament.hostClubId }
+                  : { kind: "community", id: tournament.communityId ?? "" }
+              }
+              value={officialIds}
+              onChange={setOfficialIds}
+            />
           </div>
 
           <p className="text-xs text-ink-faint">{tm.formatLocked}</p>

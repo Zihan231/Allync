@@ -16,10 +16,15 @@ import { useSession } from "@/lib/session/SessionContext";
 import { getCommunities } from "@/lib/api/communities";
 import { useCreateTournament } from "@/lib/api/hooks/useTournaments";
 import type { BackendCommunity } from "@/lib/api/types";
-import { TOURNAMENT_PRESET_ROSTERS, type TournamentType, type TournamentPreset } from "@/lib/api/tournaments";
+import {
+  TOURNAMENT_PRESET_ROSTERS,
+  tournamentHref,
+  type TournamentType,
+  type TournamentPreset,
+} from "@/lib/api/tournaments";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EntityGuidelinesPanel } from "@/components/dashboard/EntityGuidelinesPanel";
-import { MatchOfficialsPicker } from "@/components/dashboard/MatchOfficialsPicker";
+import { MatchOfficialsPicker, type OfficialsHost } from "@/components/dashboard/MatchOfficialsPicker";
 import {
   GavelIcon,
   TrophyIcon,
@@ -145,6 +150,9 @@ function CreateTournamentForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryCommunityId = searchParams.get("communityId");
+  // `?clubId=` → a club-hosted tournament: PvP between the club's members, run by its President / GS.
+  const hostClubId = searchParams.get("clubId");
+  const isClubHost = Boolean(hostClubId);
   const createMutation = useCreateTournament();
 
   const [communities, setCommunities] = useState<BackendCommunity[]>([]);
@@ -153,7 +161,7 @@ function CreateTournamentForm() {
   // Form states
   const [name, setName] = useState("");
   const [communityId, setCommunityId] = useState("");
-  const [type, setType] = useState<TournamentType>("cvc");
+  const [type, setType] = useState<TournamentType>(() => (searchParams.get("clubId") ? "pvp" : "cvc"));
   const [preset, setPreset] = useState<TournamentPreset>("8v8");
   const [startersCount, setStartersCount] = useState(8);
   const [subsCount, setSubsCount] = useState(4);
@@ -207,8 +215,8 @@ function CreateTournamentForm() {
   const [entryFeeBdt, setEntryFeeBdt] = useState(500);
   const [prizePoolBdt, setPrizePoolBdt] = useState(5000);
 
-  // Match officials (user ids) belong to one community; switching community starts over.
-  const [officials, setOfficials] = useState<{ communityId: string; ids: string[] }>({ communityId: "", ids: [] });
+  // Match officials (user ids) belong to one host; switching community starts over.
+  const [officials, setOfficials] = useState<{ hostId: string; ids: string[] }>({ hostId: "", ids: [] });
 
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -255,7 +263,10 @@ function CreateTournamentForm() {
   }, [eligibleCommunities, communityId, queryCommunityId]);
 
   const hostCommunityId = communityId || queryCommunityId || eligibleCommunities[0]?.id || user?.community?.id || "";
-  const matchOfficialIds = officials.communityId === hostCommunityId ? officials.ids : [];
+  const officialsHost: OfficialsHost = isClubHost
+    ? { kind: "club", id: hostClubId! }
+    : { kind: "community", id: hostCommunityId };
+  const matchOfficialIds = officials.hostId === officialsHost.id ? officials.ids : [];
 
   // Adjust starters and subs when preset changes
   function handlePresetSelect(selectedPreset: TournamentPreset) {
@@ -289,7 +300,7 @@ function CreateTournamentForm() {
     setErrorMessage("");
 
     const effectiveCommunityId = hostCommunityId;
-    if (!effectiveCommunityId) {
+    if (!isClubHost && !effectiveCommunityId) {
       setErrorMessage(tc.errNoCommunity);
       return;
     }
@@ -340,12 +351,10 @@ function CreateTournamentForm() {
         playHoursStart: timeInputToMinutes(playStart),
         playHoursEnd: timeInputToMinutes(playEnd),
         matchOfficialIds,
-        communityId: effectiveCommunityId,
+        ...(isClubHost ? { hostClubId: hostClubId! } : { communityId: effectiveCommunityId }),
       });
 
-      router.push(
-        `/dashboard/efootball/community/${tournament.communityId}/tournaments/${tournament.id}`,
-      );
+      router.push(tournamentHref(tournament));
     } catch (err: any) {
       const resData = err?.response?.data;
       const resMsg = resData?.message || err?.message;
@@ -362,13 +371,21 @@ function CreateTournamentForm() {
     }
   }
 
-  const isEligible = eligibleCommunities.length > 0 || Boolean(queryCommunityId) || Boolean(user?.community?.id);
+  const isClubLeader =
+    isClubHost &&
+    user?.club?.id === hostClubId &&
+    (user?.club?.role === "President" || user?.club?.role === "General Secretary");
+  const isEligible = isClubHost
+    ? isClubLeader
+    : eligibleCommunities.length > 0 || Boolean(queryCommunityId) || Boolean(user?.community?.id);
   const backCommunityId = communityId || queryCommunityId || user?.community?.id;
-  const communityBackHref = backCommunityId
-    ? `/dashboard/efootball/community/${backCommunityId}?tab=tournaments`
-    : "/dashboard/efootball/community";
+  const communityBackHref = isClubHost
+    ? `/dashboard/efootball/clubs/${hostClubId}?tab=tournaments`
+    : backCommunityId
+      ? `/dashboard/efootball/community/${backCommunityId}?tab=tournaments`
+      : "/dashboard/efootball/community";
 
-  if (!loadingCommunities && !isEligible) {
+  if ((isClubHost || !loadingCommunities) && !isEligible) {
     return (
       <div>
         <PageHeader
@@ -383,14 +400,14 @@ function CreateTournamentForm() {
             </div>
             <h3 className="mt-4 font-display text-base font-bold text-ink">{tc.accessRestrictedTitle}</h3>
             <p className="mt-2 text-xs text-ink-soft leading-relaxed">
-              {tc.accessRestrictedBody}
+              {isClubHost ? tc.accessRestrictedClubBody : tc.accessRestrictedBody}
             </p>
             <div className="mt-6">
               <Link
                 href={communityBackHref}
                 className="inline-flex items-center gap-2 rounded-full bg-surface-line px-5 py-2.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-line-strong"
               >
-                {tc.backToCommunity}
+                {isClubHost ? tc.backToClub : tc.backToCommunity}
               </Link>
             </div>
           </div>
@@ -402,7 +419,13 @@ function CreateTournamentForm() {
   return (
     <div>
       <PageHeader
-        eyebrow={eligibleCommunities[0]?.name ? `${tc.eyebrowCommunity} · ${eligibleCommunities[0].name}` : tc.eyebrowDefault}
+        eyebrow={
+          isClubHost
+            ? `${tc.eyebrowClub}${user?.club?.name ? ` · ${user.club.name}` : ""}`
+            : eligibleCommunities[0]?.name
+              ? `${tc.eyebrowCommunity} · ${eligibleCommunities[0].name}`
+              : tc.eyebrowDefault
+        }
         title={tc.pageTitle}
         backHref={communityBackHref}
       />
@@ -436,7 +459,13 @@ function CreateTournamentForm() {
 
             {/* Format: PvP vs CvC */}
             <FormSection tone="blue" icon={CrosshairIcon} title={tc.formatLabel} required>
-              <div className="grid gap-3 sm:grid-cols-2">
+              {isClubHost ? (
+                <p className="mb-3 rounded-xl border border-blue/30 bg-blue-soft/40 px-3 py-2 text-xs leading-relaxed text-blue-ink">
+                  {tc.clubPvpOnly}
+                </p>
+              ) : null}
+              <div className={`grid gap-3 ${isClubHost ? "" : "sm:grid-cols-2"}`}>
+                {isClubHost ? null : (
                 <button
                   type="button"
                   onClick={() => setType("cvc")}
@@ -459,6 +488,7 @@ function CreateTournamentForm() {
                     {tc.cvcBody}
                   </p>
                 </button>
+                )}
 
                 <button
                   type="button"
@@ -718,9 +748,9 @@ function CreateTournamentForm() {
             {/* Match officials: review evidence with the President / Vice President */}
             <FormSection tone="blue" icon={GavelIcon} title={t.dashboard.matchOfficials.title}>
               <MatchOfficialsPicker
-                communityId={hostCommunityId}
+                host={officialsHost}
                 value={matchOfficialIds}
-                onChange={(ids) => setOfficials({ communityId: hostCommunityId, ids })}
+                onChange={(ids) => setOfficials({ hostId: officialsHost.id, ids })}
               />
             </FormSection>
 

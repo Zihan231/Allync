@@ -58,7 +58,7 @@ export function TournamentCard({
 
   // Host Name
   const hostName =
-    tournament.community?.name || tournament.organizerName || tc.defaultHost;
+    tournament.community?.name || tournament.hostClub?.name || tournament.organizerName || tc.defaultHost;
 
   // Entrants and capacity
   const entrantsCount =
