@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Suspense, use, useEffect, useMemo, useState } from "react";
+import { Suspense, use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -91,6 +91,7 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
   const people = useMockPeople();
   const joinRequests = useMockJoinRequests();
   const [tab, setTab] = useUrlTab(CLUB_TABS, "overview");
+  const tabsRef = useRef<HTMLDivElement>(null);
   const [showChangeManagerModal, setShowChangeManagerModal] = useState(false);
   const [showTransferAuthorityModal, setShowTransferAuthorityModal] = useState(false);
   const { confirm, confirmProps } = useConfirm();
@@ -456,7 +457,14 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
       ) : null}
 
       <div className="mt-6">
-        <ClubLatestTournaments clubId={club.id} onViewAll={() => setTab("tournaments")} />
+        <ClubLatestTournaments
+          clubId={club.id}
+          onViewAll={() => {
+            setTab("tournaments");
+            // After the tab renders, bring the tab bar (and the list under it) into view.
+            requestAnimationFrame(() => tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+          }}
+        />
       </div>
 
       {communities.length ? (
@@ -476,7 +484,8 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
         </div>
       ) : null}
 
-      <div className="mt-8 flex flex-wrap gap-2">
+      {/* scroll-mt keeps the tab bar clear of the sticky top bar when scrolled to */}
+      <div ref={tabsRef} className="mt-8 flex scroll-mt-20 flex-wrap gap-2">
         {tabs.map((tb) => (
           <button
             key={tb.key}
