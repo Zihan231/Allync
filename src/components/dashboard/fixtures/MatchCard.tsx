@@ -75,7 +75,7 @@ export function MatchCard({
         </span>
         {isMine ? (
           <span className="shrink-0 rounded-full border border-accent/40 bg-accent px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide text-bg">
-            {f.yourClub}
+            {isCvC ? f.yourClub : f.you}
           </span>
         ) : null}
         <span className={`w-6 text-right font-mono font-black ${size === "lg" ? "text-lg" : "text-sm"} ${isMine || isWinner ? "text-accent-ink" : "text-ink-soft"}`}>

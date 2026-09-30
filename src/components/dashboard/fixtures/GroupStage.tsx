@@ -143,7 +143,7 @@ export function GroupStage({
                         </span>
                         {mine ? (
                           <span className="hidden shrink-0 rounded-full border border-accent/40 bg-accent px-2 py-1 text-[10px] font-black uppercase tracking-wide text-bg sm:inline-flex">
-                            {f.yourClub}
+                            {isCvC ? f.yourClub : f.you}
                           </span>
                         ) : null}
                         {row.qualifies ? (
