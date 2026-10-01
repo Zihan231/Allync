@@ -134,6 +134,10 @@ export const translations = {
       phone: "Phone number",
       phoneHint: "The country code is added for you. You can also paste a number with its +code.",
       errPhoneRequired: "Enter your phone number.",
+      confirmPassword: "Re-enter password",
+      confirmPasswordPlaceholder: "Type the same password again",
+      errConfirmPasswordRequired: "Re-enter your password.",
+      errPasswordMismatch: "Passwords don't match.",
       errPhoneInvalid: "Enter a valid {country} number, e.g. {example}.",
       createAccountButton: "Create account",
 
@@ -2086,6 +2090,10 @@ export const translations = {
       phone: "ফোন নম্বর",
       phoneHint: "দেশের কোড নিজে থেকেই যোগ হবে। চাইলে +কোডসহ নম্বর পেস্টও করতে পারেন।",
       errPhoneRequired: "আপনার ফোন নম্বর লিখুন।",
+      confirmPassword: "পাসওয়ার্ড আবার লিখুন",
+      confirmPasswordPlaceholder: "একই পাসওয়ার্ড আবার লিখুন",
+      errConfirmPasswordRequired: "পাসওয়ার্ডটি আবার লিখুন।",
+      errPasswordMismatch: "পাসওয়ার্ড দুটি মিলছে না।",
       errPhoneInvalid: "সঠিক {country} নম্বর লিখুন, যেমন {example}।",
       createAccountButton: "অ্যাকাউন্ট খুলুন",
 

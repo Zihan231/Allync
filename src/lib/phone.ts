@@ -49,9 +49,8 @@ export const PHONE_COUNTRIES: PhoneCountry[] = [
 
 export const DEFAULT_PHONE_COUNTRY = PHONE_COUNTRIES[0]; // Bangladesh
 
-/** 🇧🇩 from "BD". */
-export const flagEmoji = (iso2: string) =>
-  String.fromCodePoint(...[...iso2.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+/** Flag image (Windows can't draw flag emoji). */
+export const flagUrl = (iso2: string) => `https://flagcdn.com/${iso2.toLowerCase()}.svg`;
 
 const BANGLA_DIGITS = "০১২৩৪৫৬৭৮৯";
 const toAsciiDigits = (value: string) => value.replace(/[০-৯]/g, (d) => String(BANGLA_DIGITS.indexOf(d)));

@@ -67,9 +67,13 @@ export function AuthShell({
           </p>
         </div>
 
-        {/* Form panel */}
-        <div className="relative flex flex-1 items-center justify-center px-6 py-14 lg:px-14">
-          <Reveal delay={100} className="w-full max-w-sm">
+        {/* Form panel — signup has more fields, so it gets a wider, two-column form. */}
+        <div
+          className={`relative flex flex-1 items-center justify-center py-14 ${
+            variant === "signup" ? "px-0 sm:px-4 lg:px-8" : "px-6 lg:px-14"
+          }`}
+        >
+          <Reveal delay={100} className={`w-full ${variant === "signup" ? "max-w-2xl" : "max-w-sm"}`}>
             {children}
           </Reveal>
         </div>

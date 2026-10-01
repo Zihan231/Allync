@@ -9,7 +9,7 @@ import { format } from "@/lib/i18n/translations";
 import {
   DEFAULT_PHONE_COUNTRY,
   PHONE_COUNTRIES,
-  flagEmoji,
+  flagUrl,
   isValidNationalNumber,
   parsePhoneInput,
   toE164,
@@ -29,6 +29,20 @@ export function SignupForm() {
   const [national, setNational] = useState("");
   const [pendingCode, setPendingCode] = useState<string | null>(null);
   const [phoneTouched, setPhoneTouched] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmTouched, setConfirmTouched] = useState(false);
+
+  const confirmError =
+    confirmPassword === ""
+      ? t.auth.errConfirmPasswordRequired
+      : confirmPassword !== password
+        ? t.auth.errPasswordMismatch
+        : null;
+  // Say so as soon as the retyped password stops matching, not only on blur.
+  const showConfirmError =
+    confirmError !== null &&
+    (confirmTouched || (confirmPassword !== "" && !password.startsWith(confirmPassword)));
 
   const phoneError = national === "" && !pendingCode
     ? t.auth.errPhoneRequired
@@ -63,7 +77,6 @@ export function SignupForm() {
     const data = new FormData(e.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
-    const password = String(data.get("password") ?? "");
 
     if (!name || !email || !password) {
       setError("Please fill in all fields.");
@@ -72,6 +85,12 @@ export function SignupForm() {
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    setConfirmTouched(true);
+    if (confirmError) {
+      setError(confirmError);
       return;
     }
 
@@ -102,7 +121,7 @@ export function SignupForm() {
   };
 
   return (
-    <div className="rounded-2xl border border-surface-line bg-surface/60 p-8 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] backdrop-blur">
+    <div className="rounded-2xl border border-surface-line bg-surface/60 p-5 sm:p-8 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] backdrop-blur">
       <h2 className="font-display text-2xl font-bold text-ink">{t.auth.signupHeading}</h2>
       <p className="mt-1.5 text-sm text-ink-soft">
         {t.auth.alreadyHave}{" "}
@@ -117,7 +136,7 @@ export function SignupForm() {
         </div>
       )}
 
-      <form className="mt-7 space-y-5" onSubmit={handleSubmit}>
+      <form className="mt-7 grid gap-5 sm:grid-cols-2" onSubmit={handleSubmit}>
         <FormField
           label={t.auth.fullName}
           type="text"
@@ -136,19 +155,22 @@ export function SignupForm() {
         />
         <label className="block">
           <span className="text-sm font-medium text-ink-soft">{t.auth.country}</span>
-          <select
-            name="country"
-            value={country.iso2}
-            onChange={(e) => handleCountryChange(e.target.value)}
-            autoComplete="country"
-            className="mt-1.5 w-full rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20 [color-scheme:dark]"
-          >
-            {PHONE_COUNTRIES.map((c) => (
-              <option key={c.iso2} value={c.iso2}>
-                {flagEmoji(c.iso2)} {c.name} (+{c.dialCode})
-              </option>
-            ))}
-          </select>
+          <div className="relative mt-1.5">
+            <Flag iso2={country.iso2} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2" />
+            <select
+              name="country"
+              value={country.iso2}
+              onChange={(e) => handleCountryChange(e.target.value)}
+              autoComplete="country"
+              className="w-full rounded-lg border border-surface-line bg-surface py-3 pl-12 pr-4 text-sm text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20 [color-scheme:dark]"
+            >
+              {PHONE_COUNTRIES.map((c) => (
+                <option key={c.iso2} value={c.iso2}>
+                  {c.name} (+{c.dialCode})
+                </option>
+              ))}
+            </select>
+          </div>
         </label>
 
         <label className="block">
@@ -164,7 +186,7 @@ export function SignupForm() {
           >
             {/* The country code is filled in from the chosen country. */}
             <span className="flex shrink-0 items-center gap-1.5 border-r border-surface-line bg-bg/40 px-3 font-mono text-sm text-ink-soft">
-              <span aria-hidden="true">{flagEmoji(country.iso2)}</span>+{country.dialCode}
+              <Flag iso2={country.iso2} />+{country.dialCode}
             </span>
             <input
               type="tel"
@@ -195,10 +217,24 @@ export function SignupForm() {
           name="password"
           placeholder={t.auth.passwordPlaceholder}
           autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <FormField
+          label={t.auth.confirmPassword}
+          type="password"
+          name="confirmPassword"
+          placeholder={t.auth.confirmPasswordPlaceholder}
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          onBlur={() => setConfirmTouched(true)}
+          error={showConfirmError ? confirmError : null}
           required
         />
 
-        <label className="flex items-start gap-2.5 text-sm text-ink-soft">
+        <label className="flex items-start gap-2.5 text-sm text-ink-soft sm:col-span-2">
           <input
             type="checkbox"
             name="agree"
@@ -211,12 +247,26 @@ export function SignupForm() {
         <button
           type="submit"
           disabled={loading}
-          className="group flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-display font-semibold text-bg shadow-[0_0_24px_rgba(217,165,68,0.3)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+          className="group flex w-full sm:col-span-2 items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-display font-semibold text-bg shadow-[0_0_24px_rgba(217,165,68,0.3)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
         >
           {loading ? "Creating account..." : t.auth.createAccountButton}
           <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </button>
       </form>
     </div>
+  );
+}
+
+/** Small flag image for a country (ISO 3166 alpha-2). */
+function Flag({ iso2, className = "" }: { iso2: string; className?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- tiny external SVG, no optimisation needed
+    <img
+      src={flagUrl(iso2)}
+      alt=""
+      width={20}
+      height={14}
+      className={`h-3.5 w-5 shrink-0 rounded-[2px] object-cover ring-1 ring-white/10 ${className}`}
+    />
   );
 }

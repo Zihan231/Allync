@@ -6,8 +6,9 @@ export function FormField({
   label,
   type,
   className,
+  error,
   ...props
-}: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
+}: { label: string; /** Shown under the field, which turns red. */ error?: string | null } & InputHTMLAttributes<HTMLInputElement>) {
   const isPassword = type === "password";
   const [showPassword, setShowPassword] = useState(false);
 
@@ -19,8 +20,13 @@ export function FormField({
       <div className="relative mt-1.5">
         <input
           type={inputType}
+          aria-invalid={error ? true : undefined}
           {...props}
-          className={`w-full rounded-lg border border-surface-line bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-faint outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20 ${
+          className={`w-full rounded-lg border bg-surface px-4 py-3 text-sm text-ink placeholder:text-ink-faint outline-none transition-colors focus:ring-2 ${
+            error
+              ? "border-danger focus:border-danger focus:ring-danger/20"
+              : "border-surface-line focus:border-accent focus:ring-accent/20"
+          } ${
             isPassword ? "pr-11" : ""
           } ${className || ""}`}
         />
@@ -56,6 +62,11 @@ export function FormField({
           </button>
         ) : null}
       </div>
+      {error ? (
+        <p className="mt-1.5 text-xs font-semibold text-danger-ink" role="alert">
+          {error}
+        </p>
+      ) : null}
     </label>
   );
 }
