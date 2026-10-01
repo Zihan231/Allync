@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { getPlayerRankings, type PlayerRankingRow } from "@/lib/mock/rankingsData";
+import { useAllPlayerStats } from "@/lib/api/hooks/useStats";
+import type { PlayerStatsRow } from "@/lib/api/stats";
 import type { Club } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
 import { SquadPlayerCard } from "./SquadPlayerCard";
@@ -41,54 +42,15 @@ export function ClubSquadTab({
   const [pageSize, setPageSize] = useState(8);
   const [page, setPage] = useState(1);
 
-  // Robustly build rows for every member in this club
-  const rows: PlayerRankingRow[] = useMemo(() => {
-    if (members.length === 0) return [];
-    const clubMap = new Map([
-      [club.id, club.name],
-      [club.name, club.name],
-    ]);
-
-    const rankings = getPlayerRankings(
-      dataScope === "alltime" ? "all-time" : "season-2026",
-      members,
-      clubMap
-    );
-    const rankingsById = new Map(rankings.map((r) => [r.id, r]));
-
-    return members.map((p, idx) => {
-      const existing = rankingsById.get(p.id);
-      if (existing) {
-        return {
-          ...existing,
-          clubName: club.name,
-        };
-      }
-      const pts = p.points || 500;
-      return {
-        id: p.id,
-        rank: idx + 1,
-        name: p.name,
-        dpUrl: p.dpUrl,
-        clubName: club.name,
-        PTS: pts,
-        PL: Math.max(1, Math.round(pts / 50)),
-        W: Math.max(0, Math.round(pts / 80)),
-        D: 2,
-        L: 1,
-        GF: Math.max(0, Math.round(pts / 30)),
-        GA: 8,
-        CS: 3,
-        HT: 1,
-        DHT: 0,
-        streak: 2,
-        motm: 1,
-        winPct: 60,
-        VP: Math.round(pts * 0.8),
-        isReal: true,
-      };
-    });
-  }, [members, club.id, club.name, dataScope]);
+  // Every member's stats from confirmed results; members who haven't played get a zero line.
+  const { data: stats } = useAllPlayerStats({
+    clubId: club.id,
+    period: dataScope === "alltime" ? "all-time" : "this-month",
+  });
+  const rows: PlayerStatsRow[] = useMemo(() => {
+    const byId = new Map((stats ?? []).map((r) => [r.id, r]));
+    return members.map((p) => byId.get(p.id) ?? emptyStatsRow(p, club.name));
+  }, [members, stats, club.name]);
 
   const personById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
 
@@ -132,7 +94,7 @@ export function ClubSquadTab({
     });
 
     list = [...list];
-    if (sortBy === "rank") list.sort((a, b) => a.rank - b.rank);
+    if (sortBy === "rank") list.sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
     else if (sortBy === "az") list.sort((a, b) => a.name.localeCompare(b.name));
     else if (sortBy === "pts") list.sort((a, b) => b.PTS - a.PTS);
     else if (sortBy === "w") list.sort((a, b) => b.W - a.W);
@@ -284,7 +246,7 @@ export function ClubSquadTab({
               className="rounded-lg border border-surface-line-strong bg-surface px-2 py-1 text-xs text-ink focus:border-accent focus:outline-none"
             >
               <option value="alltime">{t.dashboard.clubSquad.dataScopeAllTime}</option>
-              <option value="season">{t.dashboard.clubSquad.dataScopeSeason}</option>
+              <option value="season">{t.dashboard.rankings.periodThisMonth}</option>
             </select>
           </label>
         </div>
@@ -356,7 +318,7 @@ export function ClubSquadTab({
                   return (
                     <tr key={row.id} className="transition-colors hover:bg-surface/60">
                       <td className="px-4 py-3 font-mono text-xs font-bold text-ink-faint">
-                        {person.shirtNumber ? `#${person.shirtNumber}` : `${row.rank}`}
+                        {person.shirtNumber ? `#${person.shirtNumber}` : (row.rank ?? "—")}
                       </td>
                       <td className="px-4 py-3">
                         <Link
@@ -423,4 +385,17 @@ export function ClubSquadTab({
       )}
     </div>
   );
+}
+
+/** A member with no confirmed games in the period. */
+function emptyStatsRow(p: Person, clubName: string): PlayerStatsRow {
+  return {
+    id: p.id,
+    name: p.name,
+    dpUrl: p.dpUrl ?? null,
+    clubName,
+    rank: null,
+    PL: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, GD: 0, CS: 0, HT: 0, DHT: 0,
+    streak: 0, motm: 0, winPct: 0, PTS: 0,
+  };
 }

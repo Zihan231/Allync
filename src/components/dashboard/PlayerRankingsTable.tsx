@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Avatar } from "@/components/common/Avatar";
 import { RankBadge } from "./RankBadge";
-import type { PlayerRankingRow } from "@/lib/mock/rankingsData";
+import type { PlayerStatsRow } from "@/lib/api/stats";
 
 type Col = {
-  key: keyof PlayerRankingRow | "winPctFmt" | "ptsFmt";
+  key: keyof PlayerStatsRow;
   label: string;
   align?: "right" | "center";
   hideClass?: string;
@@ -26,15 +26,16 @@ const COLS: Col[] = [
   { key: "PTS", label: "PTS", align: "right" },
 ];
 
-function cellValue(row: PlayerRankingRow, key: Col["key"]) {
+function cellValue(row: PlayerStatsRow, key: Col["key"]) {
   if (key === "streak") return row.streak > 0 ? row.streak : "—";
-  if (key === "motm") return row.motm > 0 ? row.motm : "—";
+  if (key === "motm") return row.motm > 0 ? row.motm : "—"; // MOTM isn't recorded yet
   if (key === "winPct") return `${row.winPct.toFixed(1)}%`;
   if (key === "PTS") return row.PTS.toLocaleString();
-  return String(row[key as keyof PlayerRankingRow] ?? "");
+  return String(row[key] ?? "");
 }
 
-export function PlayerRankingsTable({ rows }: { rows: PlayerRankingRow[] }) {
+/** Player stats table; rows come from the stats API (computed from confirmed results). */
+export function PlayerRankingsTable({ rows }: { rows: PlayerStatsRow[] }) {
   return (
     <div className="overflow-hidden rounded-xl border border-surface-line">
       <table className="w-full table-auto text-left text-xs sm:text-sm">
@@ -53,47 +54,38 @@ export function PlayerRankingsTable({ rows }: { rows: PlayerRankingRow[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => {
-            const nameCell = (
-              <div className="flex min-w-0 items-center gap-2">
-                <Avatar dpUrl={row.dpUrl} name={row.name} size="sm" mode="static" className="hidden sm:flex" />
-                <div className="min-w-0">
-                  <div className="max-w-[110px] truncate font-medium text-ink sm:max-w-[180px]">{row.name}</div>
-                  {row.clubName ? (
-                    <div className="max-w-[110px] truncate text-[10px] text-ink-faint sm:max-w-[180px] sm:text-xs">
-                      {row.clubName}
+          {rows.map((row, i) => (
+            <tr key={row.id} className={i % 2 === 0 ? "bg-surface/40" : ""}>
+              <td className="whitespace-nowrap px-1.5 py-2 sm:px-2.5">
+                {row.rank != null ? <RankBadge rank={row.rank} /> : <span className="font-mono text-ink-faint">—</span>}
+              </td>
+              <td className="min-w-0 px-1.5 py-2 sm:px-2.5">
+                <Link href={`/dashboard/efootball/players/${row.id}`} className="block min-w-0">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Avatar dpUrl={row.dpUrl} name={row.name} size="sm" mode="static" className="hidden sm:flex" />
+                    <div className="min-w-0">
+                      <div className="max-w-[110px] truncate font-medium text-ink sm:max-w-[180px]">{row.name}</div>
+                      {row.clubName ? (
+                        <div className="max-w-[110px] truncate text-[10px] text-ink-faint sm:max-w-[180px] sm:text-xs">
+                          {row.clubName}
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
-              </div>
-            );
-            return (
-              <tr key={row.id} className={i % 2 === 0 ? "bg-surface/40" : ""}>
-                <td className="whitespace-nowrap px-1.5 py-2 sm:px-2.5">
-                  <RankBadge rank={row.rank} />
+                  </div>
+                </Link>
+              </td>
+              {COLS.map((c) => (
+                <td
+                  key={c.key}
+                  className={`whitespace-nowrap px-1 py-2 font-mono text-ink-soft sm:px-1.5 ${
+                    c.align === "right" ? "text-right" : "text-center"
+                  } ${c.key === "PTS" ? "font-semibold text-accent-ink" : ""} ${c.hideClass ?? ""}`}
+                >
+                  {cellValue(row, c.key)}
                 </td>
-                <td className="min-w-0 px-1.5 py-2 sm:px-2.5">
-                  {row.isReal ? (
-                    <Link href={`/dashboard/efootball/players/${row.id}`} className="block min-w-0">
-                      {nameCell}
-                    </Link>
-                  ) : (
-                    nameCell
-                  )}
-                </td>
-                {COLS.map((c) => (
-                  <td
-                    key={c.key}
-                    className={`whitespace-nowrap px-1 py-2 font-mono text-ink-soft sm:px-1.5 ${
-                      c.align === "right" ? "text-right" : "text-center"
-                    } ${c.key === "PTS" ? "font-semibold text-accent-ink" : ""} ${c.hideClass ?? ""}`}
-                  >
-                    {cellValue(row, c.key)}
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

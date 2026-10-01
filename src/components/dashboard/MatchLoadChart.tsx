@@ -1,4 +1,4 @@
-import type { MatchLoadPoint } from "@/lib/mock/playerInsights";
+export type MatchLoadPoint = { label: string; matches: number; wins: number; goalsFor: number };
 
 const SERIES_COLORS = ["var(--blue)", "var(--success)", "var(--accent)"];
 

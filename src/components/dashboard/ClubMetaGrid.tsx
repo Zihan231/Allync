@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Club } from "@/lib/mock/types";
 import type { ClubRole } from "@/lib/session/SessionContext";
 import type { useMockPeople } from "@/lib/mock/communityStore";
-import { getClubRankings } from "@/lib/mock/rankingsData";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Avatar } from "../common/Avatar";
 
@@ -40,7 +39,7 @@ export function ClubMetaGrid({ club, members }: { club: Club; members: Person[] 
   const { t } = useLanguage();
 
   const byRole = (role: ClubRole) => members.find((p) => p.clubRole === role);
-  const teamStrength = getClubRankings([club])[0]?.rating ?? club.points;
+  const teamStrength = club.points;
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

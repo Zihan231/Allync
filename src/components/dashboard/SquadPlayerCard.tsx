@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import type { PlayerRankingRow } from "@/lib/mock/rankingsData";
+import type { PlayerStatsRow } from "@/lib/api/stats";
 import type { useMockPeople } from "@/lib/mock/communityStore";
 import { Avatar } from "../common/Avatar";
 import { RankBadge } from "./RankBadge";
@@ -42,7 +42,7 @@ export function SquadPlayerCard({
   contractDays,
 }: {
   person: Person;
-  row: PlayerRankingRow;
+  row: PlayerStatsRow;
   contractDays: number;
 }) {
   const { t } = useLanguage();
@@ -76,7 +76,7 @@ export function SquadPlayerCard({
       <div className={`absolute inset-x-0 top-0 h-1.5 ${accent.bar}`} />
 
       <div className="flex items-center justify-between px-4">
-        <RankBadge rank={row.rank} />
+        {row.rank != null ? <RankBadge rank={row.rank} /> : null}
         <span
           className={`flex h-7 min-w-7 items-center justify-center rounded-full bg-accent-soft px-2 font-mono text-xs font-bold text-accent-ink ${
             person.shirtNumber ? "" : "invisible"

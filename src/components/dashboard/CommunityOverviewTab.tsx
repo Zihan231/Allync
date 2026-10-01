@@ -92,11 +92,7 @@ export function CommunityOverviewTab({
           <ClubNewsFeed items={newsFeed} title={t.dashboard.communityOverview.newsFeedTitle} />
         </div>
       </div>
-      <ClubTopPerformers
-        clubs={memberClubs}
-        members={clubMembers}
-        title={t.dashboard.communityOverview.topPerformersTitle}
-      />
+      <ClubTopPerformers communityId={community.id} title={t.dashboard.communityOverview.topPerformersTitle} />
     </div>
   );
 }

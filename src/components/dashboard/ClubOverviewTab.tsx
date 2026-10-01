@@ -36,7 +36,7 @@ export function ClubOverviewTab({
           <ClubNewsFeed items={insights.newsFeed} />
         </div>
       </div>
-      <ClubTopPerformers clubs={[club]} members={members} />
+      <ClubTopPerformers clubId={club.id} />
     </div>
   );
 }

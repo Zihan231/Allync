@@ -2232,12 +2232,15 @@ export function ThemedStatCard({
   value,
   icon: Icon,
   theme,
+  badge,
 }: {
   label: string;
   value: string;
   icon: IconComponent;
   tone?: "blue" | "success" | "accent" | "danger" | "warning";
   theme?: CosmeticItem | null;
+  /** A tier label next to the value (e.g. "Pro"); `hint` shows on hover. */
+  badge?: { label: string; hint?: string; color: { text: string; bg: string; border: string } } | null;
 }) {
   const tokens = getThemeTokens(theme);
 
@@ -2303,17 +2306,15 @@ export function ThemedStatCard({
         >
           {value}
         </span>
-        <div
-          className="flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[8px] sm:text-[9px] font-black uppercase shadow-md backdrop-blur shrink-0"
-          style={{
-            borderColor: tokens.highlightBorder,
-            backgroundColor: tokens.highlightBg,
-            color: tokens.highlightText,
-          }}
-        >
-          <span className="text-[9px]">▲</span>
-          <span>PRO</span>
-        </div>
+        {badge ? (
+          <span
+            title={badge.hint}
+            className="rounded-full border px-2 py-0.5 font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wide shadow-md backdrop-blur shrink-0"
+            style={{ borderColor: badge.color.border, backgroundColor: badge.color.bg, color: badge.color.text }}
+          >
+            {badge.label}
+          </span>
+        ) : null}
       </div>
     </div>
   );

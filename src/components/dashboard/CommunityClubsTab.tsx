@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Club, Community } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
-import { getCommunityClubRankings } from "@/lib/mock/rankingsData";
+import { useClubRankings } from "@/lib/api/hooks/useStats";
 import { Avatar } from "../common/Avatar";
 import { EmptyState } from "./EmptyState";
 import { SearchIcon, TrophyIcon, UsersIcon } from "../icons";
@@ -14,6 +14,7 @@ type Person = ReturnType<typeof useMockPeople>[number];
 type JoinFilter = "all" | "instant" | "approval";
 
 export function CommunityClubsTab({
+  community,
   memberClubs,
   allPeople,
 }: {
@@ -25,8 +26,12 @@ export function CommunityClubsTab({
   const [search, setSearch] = useState("");
   const [joinFilter, setJoinFilter] = useState<JoinFilter>("all");
 
-  const rankings = useMemo(() => getCommunityClubRankings(memberClubs), [memberClubs]);
-  const rankingById = useMemo(() => new Map(rankings.map((r) => [r.id, r])), [rankings]);
+  // Member clubs' real ranks: global rank from the stats API, community rank = order among the ranked members.
+  const { data: clubStats } = useClubRankings({ communityId: community.id, limit: 100 });
+  const rankingById = useMemo(() => {
+    const ranked = (clubStats?.data ?? []).filter((r) => r.rank != null);
+    return new Map(ranked.map((r, i) => [r.id, { rank: r.rank, communityRank: i + 1 }]));
+  }, [clubStats]);
   const memberCounts = useMemo(
     () => new Map(memberClubs.map((club) => [club.id, allPeople.filter((p) => p.clubId === club.id).length])),
     [memberClubs, allPeople]

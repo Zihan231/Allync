@@ -3,18 +3,17 @@
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMemo } from "react";
 import { useMockTournaments } from "@/lib/mock/store";
 import { useMyGames } from "@/lib/api/hooks/useTournaments";
 import { formatGameRange, roundLabel } from "@/components/dashboard/fixtures/labels";
-import { useMockPeople, useMockClubs } from "@/lib/mock/communityStore";
+import { useMockPeople } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { PlayerRankingsTable } from "@/components/dashboard/PlayerRankingsTable";
 import { ClubRankingsTable } from "@/components/dashboard/ClubRankingsTable";
-import { getPlayerRankings, getClubRankings } from "@/lib/mock/rankingsData";
+import { useClubRankings, usePlayerRankings } from "@/lib/api/hooks/useStats";
 import { CalendarIcon, TrophyIcon, WalletIcon, ChartIcon, ArrowRightIcon, UsersIcon } from "@/components/icons";
 
 export default function EfootballOverviewPage() {
@@ -26,18 +25,14 @@ export default function EfootballOverviewPage() {
   const upcomingCount = toPlay?.meta.total ?? 0;
   const tournaments = useMockTournaments();
   const people = useMockPeople();
-  const clubs = useMockClubs();
 
   const latestTournament = tournaments.find((t2) => t2.status === "live") ?? tournaments[0];
 
   const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === user.personId) + 1;
 
-  const clubNameById = useMemo(() => new Map(clubs.map((c) => [c.id, c.name])), [clubs]);
-  const topPlayers = useMemo(
-    () => getPlayerRankings("all-time", people, clubNameById).slice(0, 5),
-    [people, clubNameById]
-  );
-  const topClubs = useMemo(() => getClubRankings(clubs).slice(0, 5), [clubs]);
+  // Top 5 all-time, from confirmed results.
+  const topPlayers = usePlayerRankings({ limit: 5 }).data?.data ?? [];
+  const topClubs = useClubRankings({ limit: 5 }).data?.data ?? [];
 
   return (
     <div>

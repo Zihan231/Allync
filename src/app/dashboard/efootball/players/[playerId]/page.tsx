@@ -1,11 +1,15 @@
 "use client";
 
-import { use, useMemo, useState, type ReactNode } from "react";
+import { use, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockPeople, useMockClubs, useMockCommunities } from "@/lib/mock/communityStore";
-import { getPlayerInsights } from "@/lib/mock/playerInsights";
+import { usePlayerStats } from "@/lib/api/hooks/useStats";
+import type { PlayerProfileStats, StatLine, StatsPeriod } from "@/lib/api/stats";
+import { downloadCsv } from "@/lib/csv";
+import { TIER_COLORS, WIN_RATE_MIN_MATCHES, tierFor, type TierStat } from "@/lib/playerTiers";
 import { BackButton } from "@/components/dashboard/BackButton";
 import { Avatar } from "@/components/common/Avatar";
 import { RankBadge } from "@/components/dashboard/RankBadge";
@@ -39,7 +43,7 @@ import {
   getThemeTokens,
   ThemeTeamAttachmentBadge,
 } from "@/components/cosmetics/CosmeticDisplay";
-import type { StatsRow, TransferEntry } from "@/lib/mock/playerInsights";
+import type { TransferEntry } from "@/lib/mock/playerInsights";
 
 type IconComponent = (props: { className?: string }) => React.ReactElement;
 
@@ -275,9 +279,10 @@ function StatsTable({
   tone,
   icon,
   theme,
+  onDownload,
 }: {
   title: string;
-  row: StatsRow;
+  row: StatLine & { rank: number | null };
   tone: SectionTone;
   icon: IconComponent;
   pf: {
@@ -295,19 +300,21 @@ function StatsTable({
     rt: string;
   };
   theme?: CosmeticItem | null;
+  onDownload?: () => void;
 }) {
   const tokens = getThemeTokens(theme);
+  // MOTM and RT aren't recorded yet.
   const cells: { label: string; value: string; tone: SectionTone; highlight?: boolean }[] = [
-    { label: pf.m, value: String(row.m), tone: "blue" },
-    { label: pf.w, value: String(row.w), tone: "success" },
-    { label: pf.d, value: String(row.d), tone: "blue" },
-    { label: pf.l, value: String(row.l), tone: "danger" },
+    { label: pf.m, value: String(row.PL), tone: "blue" },
+    { label: pf.w, value: String(row.W), tone: "success" },
+    { label: pf.d, value: String(row.D), tone: "blue" },
+    { label: pf.l, value: String(row.L), tone: "danger" },
     { label: pf.winPct, value: `${row.winPct}%`, tone: "accent", highlight: true },
-    { label: pf.gf, value: String(row.gf), tone: "success", highlight: true },
-    { label: pf.ga, value: String(row.ga), tone: "danger" },
-    { label: pf.cs, value: String(row.cs), tone: "blue" },
-    { label: pf.motm, value: String(row.motm), tone: "accent", highlight: true },
-    { label: pf.rt, value: String(row.rt), tone: "warning", highlight: true },
+    { label: pf.gf, value: String(row.GF), tone: "success", highlight: true },
+    { label: pf.ga, value: String(row.GA), tone: "danger" },
+    { label: pf.cs, value: String(row.CS), tone: "blue" },
+    { label: pf.motm, value: "—", tone: "accent", highlight: true },
+    { label: pf.rt, value: "—", tone: "warning", highlight: true },
   ];
 
   return (
@@ -319,7 +326,9 @@ function StatsTable({
       action={
         <button
           type="button"
-          className="rounded-full border px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold backdrop-blur transition-all"
+          onClick={onDownload}
+          disabled={!onDownload}
+          className="rounded-full border px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold backdrop-blur transition-all disabled:opacity-50"
           style={{
             borderColor: tokens.innerBorder,
             backgroundColor: tokens.innerBg,
@@ -334,7 +343,7 @@ function StatsTable({
         className="-mt-1 mb-3 sm:mb-4 flex flex-wrap items-center gap-1.5 text-xs font-medium"
         style={{ color: tokens.mutedText }}
       >
-        <span>{pf.rankLabel}</span> <RankBadge rank={row.rank} />
+        <span>{pf.rankLabel}</span> {row.rank != null ? <RankBadge rank={row.rank} /> : <span>—</span>}
       </div>
       <div className="grid grid-cols-2 min-[420px]:grid-cols-5 sm:grid-cols-5 lg:grid-cols-10 gap-1.5 sm:gap-2.5">
         {cells.map((c) => (
@@ -345,9 +354,24 @@ function StatsTable({
   );
 }
 
+const EMPTY_LINE: StatLine & { rank: number | null; rankedPlayers: number } = {
+  PL: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, GD: 0, CS: 0, HT: 0, DHT: 0,
+  streak: 0, motm: 0, winPct: 0, PTS: 0, rank: null, rankedPlayers: 0,
+};
+
+/** CSV of the player's stats: one row per period. */
+function downloadPlayerStats(name: string, stats: PlayerProfileStats, periodLabel: Record<StatsPeriod, string>) {
+  const header = ["Period", "Rank", "PL", "W", "D", "L", "Win%", "GF", "GA", "GD", "CS", "HT", "DHT", "Streak", "PTS"];
+  const rows = (Object.keys(periodLabel) as StatsPeriod[]).map((period) => {
+    const l = stats.periods[period];
+    return [periodLabel[period], l.rank ?? "", l.PL, l.W, l.D, l.L, l.winPct, l.GF, l.GA, l.GD, l.CS, l.HT, l.DHT, l.streak, l.PTS];
+  });
+  downloadCsv(`${name.trim().replace(/\s+/g, "-") || "player"}-stats.csv`, [header, ...rows]);
+}
+
 export default function PlayerProfilePage({ params }: { params: Promise<{ playerId: string }> }) {
   const { playerId } = use(params);
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const pf = t.dashboard.playerProfile;
   const { user } = useSession();
   const people = useMockPeople();
@@ -357,16 +381,63 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
 
   const person = people.find((p) => p.id === playerId);
 
-  const insights = useMemo(() => (person ? getPlayerInsights(person) : null), [person]);
+  // Real stats, computed by the backend from confirmed results.
+  const { data: stats, isLoading: statsLoading } = usePlayerStats(person?.id);
 
-  if (!person || !insights) {
+  if (!person) {
     return <EmptyState icon={UsersIcon} title={t.dashboard.players.notFound} body="" />;
   }
 
+  const allTime = stats?.periods["all-time"] ?? EMPTY_LINE;
+  const hasGames = allTime.PL > 0;
+  const dash = statsLoading ? "…" : "—";
+  const dateLocale = locale === "bn" ? "bn-BD" : "en-GB";
+  const fmtDate = (iso: string | null | undefined) =>
+    iso ? new Date(iso).toLocaleDateString(dateLocale, { day: "2-digit", month: "short", year: "numeric" }) : dash;
+  const fmtGap = (ms: number | null | undefined) => {
+    if (ms == null) return dash;
+    const hours = ms / 3_600_000;
+    if (hours < 24) return format(pf.snapshot.hours, { n: Math.max(1, Math.round(hours)) });
+    const days = hours / 24;
+    return days < 14
+      ? format(pf.snapshot.days, { n: Math.round(days * 10) / 10 })
+      : format(pf.snapshot.weeks, { n: Math.round((days / 7) * 10) / 10 });
+  };
+  const bucketLabel = (iso: string) =>
+    new Date(iso).toLocaleDateString(
+      dateLocale,
+      trendView === "monthly" ? { month: "short" } : { day: "2-digit", month: "short" },
+    );
+  const trendData = (stats?.rankTrend[trendView] ?? []).map((p) => ({ label: bucketLabel(p.start), rank: p.rank }));
+  const loadData = (stats?.load[trendView] ?? []).map((p) => ({ ...p, label: bucketLabel(p.start) }));
+  const periodLabel: Record<StatsPeriod, string> = {
+    "all-time": t.dashboard.rankings.periodAllTime,
+    "this-week": t.dashboard.rankings.periodThisWeek,
+    "last-week": t.dashboard.rankings.periodLastWeek,
+    "this-month": t.dashboard.rankings.periodThisMonth,
+    "last-month": t.dashboard.rankings.periodLastMonth,
+  };
+  // Club transfers aren't recorded yet; the journey shows once they are.
+  const transfers: TransferEntry[] = [];
+
   const club = person.clubId ? clubs.find((c) => c.id === person.clubId) : null;
   const community = person.communityId ? communities.find((c) => c.id === person.communityId) : null;
-  const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === person.id) + 1;
-const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleId) : null;
+  const rank = allTime.rank ?? 0;
+
+  /** Tier label for a headline stat, with what the next tier needs on hover. */
+  const tierBadge = (stat: TierStat, value: number) => {
+    const tier = tierFor(stat, value, allTime.PL);
+    const unit = stat === "winRate" ? "%" : "";
+    const hint =
+      stat === "winRate" && allTime.PL < WIN_RATE_MIN_MATCHES
+        ? format(pf.tiers.winRateMinHint, { count: WIN_RATE_MIN_MATCHES })
+        : tier.next
+          ? format(pf.tiers.nextHint, { tier: pf.tiers[tier.next.key], value: `${tier.next.at}${unit}` })
+          : pf.tiers.topHint;
+    return { label: pf.tiers[tier.key], hint, color: TIER_COLORS[tier.key] };
+  };
+
+  const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleId) : null;
   const equippedBadge = person.equippedBadgeId ? getCosmetic(person.equippedBadgeId) : null;
   const equippedFrame = person.equippedFrameId ? getCosmetic(person.equippedFrameId) : null;
   const equippedTheme = person.equippedThemeId ? getCosmetic(person.equippedThemeId) : null;
@@ -375,15 +446,16 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
     .map(getCosmetic)
     .filter((c): c is CosmeticItem => c != null && c.category === "badge");
 
-  const birthday = (person.birthday ? formatBirthday(person.birthday) : null) ?? insights.personalInfo.birthday;
-  const bloodGroup = formatBloodGroup(person.bloodGroup ?? insights.personalInfo.bloodGroup);
-  const deviceName = person.deviceName ?? insights.personalInfo.deviceName;
-  const deviceModel = person.deviceModel ?? insights.personalInfo.deviceModel;
-  const konamiUid = person.konamiUid ?? insights.personalInfo.konamiUid;
-  const country = person.country || insights.personalInfo.country;
-  const division = person.division || insights.personalInfo.division;
-  const district = person.district || insights.personalInfo.district;
-  const education = person.education && person.education.length > 0 ? person.education : insights.personalInfo.education;
+  // Only what the player filled in; empty fields show a dash.
+  const birthday = (person.birthday ? formatBirthday(person.birthday) : null) ?? "—";
+  const bloodGroup = person.bloodGroup ? formatBloodGroup(person.bloodGroup) : "—";
+  const deviceName = person.deviceName ?? "—";
+  const deviceModel = person.deviceModel ?? null;
+  const konamiUid = person.konamiUid ?? "—";
+  const country = person.country || "—";
+  const division = person.division || "—";
+  const district = person.district || "—";
+  const education = person.education ?? [];
 
   return (
     <div className="relative pb-12 overflow-x-clip max-w-full">
@@ -423,8 +495,8 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
             theme={equippedTheme}
             rank={rank > 0 ? rank : 1}
             points={person.points}
-            winRate={insights.winRate}
-            totalWins={insights.totalWins}
+            winRate={allTime.winPct}
+            totalWins={allTime.W}
           />
         </ThemedProfileHeroBanner>
       </div>
@@ -521,10 +593,10 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
 
       {/* Holographic eFootball Stat Overview with Goal Net Vectors */}
       <div className="mt-6 sm:mt-8 grid gap-2.5 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        <ThemedStatCard label={pf.statTotalMatches} value={String(insights.totalMatches)} icon={ChartIcon} tone="blue" theme={equippedTheme} />
-        <ThemedStatCard label={pf.statTotalWins} value={String(insights.totalWins)} icon={TrophyIcon} tone="success" theme={equippedTheme} />
-        <ThemedStatCard label={pf.statWinRate} value={`${insights.winRate}%`} icon={CrosshairIcon} tone="accent" theme={equippedTheme} />
-        <ThemedStatCard label={pf.statGoalsFor} value={String(insights.goalsFor)} icon={FlameIcon} tone="danger" theme={equippedTheme} />
+        <ThemedStatCard label={pf.statTotalMatches} value={statsLoading ? "…" : String(allTime.PL)} icon={ChartIcon} tone="blue" theme={equippedTheme} badge={statsLoading ? null : tierBadge("matches", allTime.PL)} />
+        <ThemedStatCard label={pf.statTotalWins} value={statsLoading ? "…" : String(allTime.W)} icon={TrophyIcon} tone="success" theme={equippedTheme} badge={statsLoading ? null : tierBadge("wins", allTime.W)} />
+        <ThemedStatCard label={pf.statWinRate} value={statsLoading ? "…" : `${allTime.winPct}%`} icon={CrosshairIcon} tone="accent" theme={equippedTheme} badge={statsLoading ? null : tierBadge("winRate", allTime.winPct)} />
+        <ThemedStatCard label={pf.statGoalsFor} value={statsLoading ? "…" : String(allTime.GF)} icon={FlameIcon} tone="danger" theme={equippedTheme} badge={statsLoading ? null : tierBadge("goals", allTime.GF)} />
       </div>
 
       {/* Full Cosmetic Locker & Loadout Showcase Module */}
@@ -564,7 +636,7 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
               </div>
             </Link>
           ) : (
-            <p className="mt-2 text-sm" style={{ color: tokens.mutedText }}>{t.dashboard.players.noAffiliation}</p>
+            <p className="mt-2 text-sm" style={{ color: tokens.mutedText }}>{t.dashboard.players.noClub}</p>
           )}
         </div>
 
@@ -594,7 +666,7 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
               </div>
             </Link>
           ) : (
-            <p className="mt-2 text-sm" style={{ color: tokens.mutedText }}>{t.dashboard.players.noAffiliation}</p>
+            <p className="mt-2 text-sm" style={{ color: tokens.mutedText }}>{t.dashboard.players.noCommunity}</p>
           )}
         </div>
       </div>
@@ -636,20 +708,40 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
 
       {/* Player Snapshot */}
       <SectionCard icon={FlameIcon} tone="accent" title={pf.snapshot.title} subtitle={pf.snapshot.subtitle} theme={equippedTheme}>
+        {!statsLoading && !hasGames ? (
+          <p className="-mt-1 mb-4 text-sm" style={{ color: tokens.mutedText }}>{pf.snapshot.noGames}</p>
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <SnapshotRow label={pf.snapshot.debut} value={insights.snapshot.debut} tone="accent" theme={equippedTheme} />
-          <SnapshotRow label={pf.snapshot.lastPlayed} value={insights.snapshot.lastPlayed} tone="accent" theme={equippedTheme} />
-          <SnapshotRow label={pf.snapshot.avgGap} value={insights.snapshot.avgGapLabel} tone="accent" theme={equippedTheme} />
-          <SnapshotRow label={pf.snapshot.maxGap} value={insights.snapshot.maxGapLabel} tone="accent" theme={equippedTheme} />
+          <SnapshotRow label={pf.snapshot.debut} value={fmtDate(stats?.snapshot.debut)} tone="accent" theme={equippedTheme} />
+          <SnapshotRow label={pf.snapshot.lastPlayed} value={fmtDate(stats?.snapshot.lastPlayed)} tone="accent" theme={equippedTheme} />
+          <SnapshotRow label={pf.snapshot.avgGap} value={fmtGap(stats?.snapshot.avgGapMs)} tone="accent" theme={equippedTheme} />
+          <SnapshotRow label={pf.snapshot.maxGap} value={fmtGap(stats?.snapshot.maxGapMs)} tone="accent" theme={equippedTheme} />
           <SnapshotRow
             label={pf.snapshot.unbeatenStreak}
-            value={`${insights.snapshot.unbeatenStreak.matches} ${pf.snapshot.matchesSuffix}: ${insights.snapshot.unbeatenStreak.from} — ${insights.snapshot.unbeatenStreak.to}`}
+            value={
+              stats?.snapshot.unbeatenRun
+                ? format(pf.snapshot.unbeatenValue, {
+                    matches: stats.snapshot.unbeatenRun.matches,
+                    from: fmtDate(stats.snapshot.unbeatenRun.from),
+                    to: fmtDate(stats.snapshot.unbeatenRun.to),
+                  })
+                : dash
+            }
             tone="accent"
             theme={equippedTheme}
           />
           <SnapshotRow
             label={pf.snapshot.highestGoals}
-            value={`${insights.snapshot.highestGoals.goals} goals — ${insights.snapshot.highestGoals.date} vs ${insights.snapshot.highestGoals.opponent} (${insights.snapshot.highestGoals.goals}–${insights.snapshot.highestGoals.conceded})`}
+            value={
+              stats?.snapshot.highestScoring
+                ? format(pf.snapshot.highestGoalsValue, {
+                    goals: stats.snapshot.highestScoring.goals,
+                    conceded: stats.snapshot.highestScoring.conceded,
+                    opponent: stats.snapshot.highestScoring.opponent,
+                    date: fmtDate(stats.snapshot.highestScoring.date),
+                  })
+                : dash
+            }
             tone="accent"
             theme={equippedTheme}
           />
@@ -667,9 +759,9 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
             }}
           >
             <div>
-              <p className="text-base font-bold" style={{ color: tokens.headingText }}>{insights.topOpponents.mostPlayed.name}</p>
+              <p className="text-base font-bold" style={{ color: tokens.headingText }}>{stats?.topOpponents.mostPlayed?.name ?? dash}</p>
               <p className="text-xs font-mono mt-0.5" style={{ color: tokens.mutedText }}>
-                {insights.topOpponents.mostPlayed.matches} {pf.topOpponents.matchesSuffix}
+                {stats?.topOpponents.mostPlayed?.matches ?? 0} {pf.topOpponents.matchesSuffix}
               </p>
             </div>
             <span
@@ -693,9 +785,9 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
             }}
           >
             <div>
-              <p className="text-base font-bold" style={{ color: tokens.headingText }}>{insights.topOpponents.mostWins.name}</p>
+              <p className="text-base font-bold" style={{ color: tokens.headingText }}>{stats?.topOpponents.mostWins?.name ?? dash}</p>
               <p className="text-xs font-mono mt-0.5" style={{ color: tokens.mutedText }}>
-                {insights.topOpponents.mostWins.wins} {pf.topOpponents.winsSuffix}
+                {stats?.topOpponents.mostWins?.wins ?? 0} {pf.topOpponents.winsSuffix}
               </p>
             </div>
             <span
@@ -751,7 +843,7 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
           </div>
         }
       >
-        <RankTrendChart data={trendView === "monthly" ? insights.monthlyTrend : insights.weeklyTrend} />
+        <RankTrendChart data={trendData} />
 
         <div className="mt-8 border-t pt-6" style={{ borderColor: tokens.innerBorder }}>
           <h4 className="font-display text-base font-bold" style={{ color: tokens.headingText }}>{pf.trend.matchLoadTitle}</h4>
@@ -771,7 +863,7 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
             </span>
           </div>
           <div className="mt-3">
-            <MatchLoadChart data={insights.monthlyMatchLoad} />
+            <MatchLoadChart data={loadData} />
           </div>
         </div>
       </SectionCard>
@@ -779,9 +871,11 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
       {/* Rankings Overview */}
       <SectionCard icon={BracketIcon} tone="accent" title={pf.rankingsOverview.title} subtitle={pf.rankingsOverview.subtitle} theme={equippedTheme}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {insights.seasonRankings.map((row) => (
+          {(["all-time", "this-month", "last-month", "this-week", "last-week"] as const).map((period) => {
+            const row = stats?.periods[period];
+            return (
             <div
-              key={row.label}
+              key={period}
               className="group relative flex items-center justify-between overflow-hidden rounded-xl border px-4 py-3.5 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
               style={{
                 borderColor: tokens.innerBorder,
@@ -795,20 +889,32 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
                 />
               ) : null}
               <div>
-                <p className="text-sm font-bold transition-colors" style={{ color: tokens.headingText }}>{row.label}</p>
+                <p className="text-sm font-bold transition-colors" style={{ color: tokens.headingText }}>{periodLabel[period]}</p>
                 <p className="text-xs font-mono mt-0.5" style={{ color: tokens.mutedText }}>
-                  {row.wins.toLocaleString()} {pf.rankingsOverview.winsSuffix}
+                  {(row?.W ?? 0).toLocaleString()} {pf.rankingsOverview.winsSuffix}
                 </p>
               </div>
-              <RankBadge rank={row.rank} />
+              {row?.rank != null ? (
+                <RankBadge rank={row.rank} />
+              ) : (
+                <span className="font-mono text-sm" style={{ color: tokens.mutedText }}>{dash}</span>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </SectionCard>
 
       {/* Statistics tables */}
-      <StatsTable title={pf.stats.allTimeTitle} row={insights.statsAllTime} pf={pf.stats} tone="success" icon={ShieldIcon} theme={equippedTheme} />
-      <StatsTable title={pf.stats.season2026Title} row={insights.statsSeason2026} pf={pf.stats} tone="warning" icon={CrosshairIcon} theme={equippedTheme} />
+      <StatsTable
+        title={pf.stats.allTimeTitle}
+        row={allTime}
+        pf={pf.stats}
+        tone="success"
+        icon={ShieldIcon}
+        theme={equippedTheme}
+        onDownload={stats ? () => downloadPlayerStats(person.name, stats, periodLabel) : undefined}
+      />
 
       {/* Personal Info */}
       <SectionCard icon={SettingsIcon} tone="blue" title={pf.personalInfo.title} theme={equippedTheme}>
@@ -828,9 +934,11 @@ const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleI
       </SectionCard>
 
       {/* Transfer History */}
-      <SectionCard icon={SwapIcon} tone="danger" title={pf.transferHistory.title} theme={equippedTheme}>
-        <TransferJourney entries={insights.transferHistory} theme={equippedTheme} />
-      </SectionCard>
+      {transfers.length ? (
+        <SectionCard icon={SwapIcon} tone="danger" title={pf.transferHistory.title} theme={equippedTheme}>
+          <TransferJourney entries={transfers} theme={equippedTheme} />
+        </SectionCard>
+      ) : null}
     </div>
   );
 }

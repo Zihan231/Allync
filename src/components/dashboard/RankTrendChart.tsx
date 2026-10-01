@@ -1,23 +1,24 @@
-import type { TrendPoint } from "@/lib/mock/playerInsights";
+/** One period on the chart; `rank` is null when the player didn't play in it. */
+export type RankTrendPoint = { label: string; rank: number | null };
 
-export function RankTrendChart({ data, height = 180 }: { data: TrendPoint[]; height?: number }) {
+export function RankTrendChart({ data, height = 180 }: { data: RankTrendPoint[]; height?: number }) {
   const width = 640;
   const padding = { top: 16, right: 12, bottom: 22, left: 12 };
   const innerW = width - padding.left - padding.right;
   const innerH = height - padding.top - padding.bottom;
 
-  const ranks = data.map((d) => d.rank);
-  const min = Math.min(...ranks);
-  const max = Math.max(...ranks);
+  const ranks = data.map((d) => d.rank).filter((r): r is number => r != null);
+  const min = ranks.length ? Math.min(...ranks) : 1;
+  const max = ranks.length ? Math.max(...ranks) : 1;
   const span = Math.max(1, max - min);
 
   // Lower rank number is better, so the axis is inverted: best rank sits
   // near the top of the chart instead of the bottom.
-  const points = data.map((d, i) => {
-    const x = padding.left + (data.length <= 1 ? 0 : (i / (data.length - 1)) * innerW);
-    const y = padding.top + ((d.rank - min) / span) * innerH;
-    return { x, y, ...d };
-  });
+  const xAt = (i: number) => padding.left + (data.length <= 1 ? 0 : (i / (data.length - 1)) * innerW);
+  // Periods without a rank are skipped; the line joins the ranked ones.
+  const points = data.flatMap((d, i) =>
+    d.rank == null ? [] : [{ x: xAt(i), y: padding.top + ((d.rank - min) / span) * innerH, rank: d.rank }],
+  );
 
   const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
 
@@ -49,9 +50,9 @@ export function RankTrendChart({ data, height = 180 }: { data: TrendPoint[]; hei
           </g>
         );
       })}
-      {points.map((p, i) => (
-        <text key={`x-${i}`} x={p.x} y={height - 4} textAnchor="middle" fontSize={9} fill="var(--ink-faint)">
-          {p.label}
+      {data.map((d, i) => (
+        <text key={`x-${i}`} x={xAt(i)} y={height - 4} textAnchor="middle" fontSize={9} fill="var(--ink-faint)">
+          {d.label}
         </text>
       ))}
     </svg>

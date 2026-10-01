@@ -711,7 +711,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
         ) : null}
         {tab === "members" ? <CommunityMembersTab members={allMembers} memberClubs={memberClubs} /> : null}
         {tab === "clubs" ? <CommunityClubsTab community={community} memberClubs={memberClubs} allPeople={people} /> : null}
-        {tab === "rankings" ? <CommunityRankingsTab memberClubs={memberClubs} /> : null}
+        {tab === "rankings" ? <CommunityRankingsTab communityId={community.id} /> : null}
         {tab === "tournaments" ? (
           <CommunityTournamentsTab
             communityId={community.id}

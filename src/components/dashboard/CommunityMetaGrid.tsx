@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Club, Community } from "@/lib/mock/types";
 import type { CommunityRole } from "@/lib/session/SessionContext";
 import type { useMockPeople } from "@/lib/mock/communityStore";
-import { getCommunityClubRankings, rankCommunities } from "@/lib/mock/rankingsData";
+import { rankCommunities } from "@/lib/mock/rankingsData";
 import { getCommunityFreeAgents } from "@/lib/mock/communityInsights";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Avatar } from "../common/Avatar";
@@ -59,10 +59,7 @@ export function CommunityMetaGrid({
     allPeople.filter((p) => p.clubId && memberClubs.some((c) => c.id === p.clubId)).length +
     getCommunityFreeAgents(community, allPeople).length;
 
-  const clubRatings = getCommunityClubRankings(memberClubs);
-  const communityRating = clubRatings.length
-    ? Math.round(clubRatings.reduce((sum, r) => sum + r.rating, 0) / clubRatings.length)
-    : community.points;
+  const communityRating = community.points;
 
   const globalRank = rankCommunities(allCommunities).find((r) => r.id === community.id)?.rank ?? "—";
 
