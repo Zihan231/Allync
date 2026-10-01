@@ -15,6 +15,9 @@ export async function registerRequest(payload: {
   name: string;
   email: string;
   password: string;
+  /** E.164, e.g. "+8801712345678". */
+  phoneNumber: string;
+  country: string;
 }): Promise<AuthResponse> {
   const res = await api.post<AuthResponse>("/auth/register", payload);
   return res.data;

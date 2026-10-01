@@ -130,6 +130,11 @@ export const translations = {
       joinAsPlayerHint: "Join clubs, communities, and tournaments.",
       joinAsOrganizerHint: "Run tournaments for any game. Paid entry fees need KYC first.",
       agreeTerms: "I agree to ALLYNQ's Terms and Privacy Policy.",
+      country: "Country",
+      phone: "Phone number",
+      phoneHint: "The country code is added for you. You can also paste a number with its +code.",
+      errPhoneRequired: "Enter your phone number.",
+      errPhoneInvalid: "Enter a valid {country} number, e.g. {example}.",
       createAccountButton: "Create account",
 
       highlight1Title: "One account, every arena",
@@ -2077,6 +2082,11 @@ export const translations = {
       joinAsPlayerHint: "ক্লাব, কমিউনিটি, আর টুর্নামেন্টে যোগ দিন।",
       joinAsOrganizerHint: "যেকোনো গেমের টুর্নামেন্ট চালান। পেইড এন্ট্রি ফির আগে লাগবে KYC।",
       agreeTerms: "আমি ALLYNQ-এর শর্তাবলী ও প্রাইভেসি পলিসিতে সম্মত।",
+      country: "দেশ",
+      phone: "ফোন নম্বর",
+      phoneHint: "দেশের কোড নিজে থেকেই যোগ হবে। চাইলে +কোডসহ নম্বর পেস্টও করতে পারেন।",
+      errPhoneRequired: "আপনার ফোন নম্বর লিখুন।",
+      errPhoneInvalid: "সঠিক {country} নম্বর লিখুন, যেমন {example}।",
       createAccountButton: "অ্যাকাউন্ট খুলুন",
 
       highlight1Title: "একটা অ্যাকাউন্ট, সব গেম",

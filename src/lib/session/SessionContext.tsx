@@ -150,7 +150,13 @@ type SessionContextValue = {
   setCommunity: (community: MockUser["community"]) => void;
   updateProfile: (input: { name?: string; email?: string }) => void;
   login: (input: { email: string; name?: string; password?: string }) => Promise<void>;
-  signup: (input: { name: string; email: string; password?: string }) => Promise<void>;
+  signup: (input: {
+    name: string;
+    email: string;
+    password?: string;
+    phoneNumber: string;
+    country: string;
+  }) => Promise<void>;
   switchPersona: (personId: string) => void;
   logout: () => void;
   refreshSession: () => Promise<MockUser | null>;
@@ -314,12 +320,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     syncFromBackend(true).catch(() => {});
   };
 
-  const signup: SessionContextValue["signup"] = async ({ name, email, password }) => {
+  const signup: SessionContextValue["signup"] = async ({ name, email, password, phoneNumber, country }) => {
     if (!password) {
       throw new Error("Please enter a password");
     }
 
-    const res = await registerMutation.mutateAsync({ name: name.trim(), email: email.trim(), password });
+    const res = await registerMutation.mutateAsync({
+      name: name.trim(),
+      email: email.trim(),
+      password,
+      phoneNumber,
+      country,
+    });
 
     if (!res || !res.user) {
       throw new Error("Failed to register account");
