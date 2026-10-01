@@ -112,6 +112,16 @@ const PRESET_TONES: Record<TournamentPreset, { idle: string; active: string; tex
   },
 };
 
+/** Upper limit for an entry fee or prize pool (৳1 crore). */
+const MAX_AMOUNT_BDT = 10_000_000;
+/** Keeps digits only, without leading zeros (Bangla digits are converted). */
+const amountDigits = (value: string) =>
+  value
+    .replace(/[০-৯]/g, (d) => String("০১২৩৪৫৬৭৮৯".indexOf(d)))
+    .replace(/\D/g, "")
+    .replace(/^0+(?=\d)/, "")
+    .slice(0, 9);
+
 function FormSection({
   tone,
   icon: Icon,
@@ -212,8 +222,28 @@ function CreateTournamentForm() {
 
   // Financials
   const [isPaid, setIsPaid] = useState(false);
-  const [entryFeeBdt, setEntryFeeBdt] = useState(500);
-  const [prizePoolBdt, setPrizePoolBdt] = useState(5000);
+  // Typed as text (digits only) so the fields can be cleared and validated inline.
+  const [entryFeeInput, setEntryFeeInput] = useState("500");
+  const [prizePoolInput, setPrizePoolInput] = useState("5000");
+  const entryFeeBdt = Number(entryFeeInput || 0);
+  const prizePoolBdt = Number(prizePoolInput || 0);
+  const entryFeeError =
+    isClubHost || !isPaid
+      ? null
+      : entryFeeInput === ""
+        ? tc.errEntryFeeEmpty
+        : entryFeeBdt <= 0
+          ? tc.errEntryFeeZero
+          : entryFeeBdt > MAX_AMOUNT_BDT
+            ? tc.errAmountMax
+            : null;
+  const prizePoolError = isClubHost
+    ? null
+    : prizePoolInput === ""
+      ? tc.errPrizePoolEmpty
+      : prizePoolBdt > MAX_AMOUNT_BDT
+        ? tc.errAmountMax
+        : null;
 
   // Match officials (user ids) belong to one host; switching community starts over.
   const [officials, setOfficials] = useState<{ hostId: string; ids: string[] }>({ hostId: "", ids: [] });
@@ -331,6 +361,12 @@ function CreateTournamentForm() {
 
     if (participantsError) {
       setErrorMessage(participantsError);
+      return;
+    }
+
+    const amountError = entryFeeError || prizePoolError;
+    if (amountError) {
+      setErrorMessage(amountError);
       return;
     }
 
@@ -789,24 +825,38 @@ function CreateTournamentForm() {
                   <label className="block">
                     <span className="text-xs text-ink-soft">{tc.entryFeeLabel}</span>
                     <input
-                      type="number"
-                      min={0}
-                      value={entryFeeBdt}
-                      onChange={(e) => setEntryFeeBdt(Math.max(0, Number(e.target.value)))}
-                      className={fieldClass}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      value={entryFeeInput}
+                      onChange={(e) => setEntryFeeInput(amountDigits(e.target.value))}
+                      aria-invalid={entryFeeError !== null}
+                      className={`${fieldClass} ${entryFeeError ? "border-danger focus:border-danger" : ""}`}
                     />
+                    {entryFeeError ? (
+                      <p className="mt-1.5 text-xs font-semibold text-danger-ink" role="alert">
+                        {entryFeeError}
+                      </p>
+                    ) : null}
                   </label>
                 )}
 
                 <label className="block">
                   <span className="text-xs text-ink-soft">{tc.prizePoolLabel}</span>
                   <input
-                    type="number"
-                    min={0}
-                    value={prizePoolBdt}
-                    onChange={(e) => setPrizePoolBdt(Math.max(0, Number(e.target.value)))}
-                    className={fieldClass}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={prizePoolInput}
+                    onChange={(e) => setPrizePoolInput(amountDigits(e.target.value))}
+                    aria-invalid={prizePoolError !== null}
+                    className={`${fieldClass} ${prizePoolError ? "border-danger focus:border-danger" : ""}`}
                   />
+                  {prizePoolError ? (
+                    <p className="mt-1.5 text-xs font-semibold text-danger-ink" role="alert">
+                      {prizePoolError}
+                    </p>
+                  ) : null}
                 </label>
               </div>
               </div>
