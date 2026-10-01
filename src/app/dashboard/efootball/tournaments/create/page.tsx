@@ -343,9 +343,10 @@ function CreateTournamentForm() {
         startersCount: type === "cvc" ? startersCount : 1,
         subsCount: type === "cvc" ? subsCount : 0,
         maxParticipants,
-        isPaid,
-        entryFeeBdt: isPaid ? entryFeeBdt : 0,
-        prizePoolBdt: prizePoolBdt > 0 ? prizePoolBdt : 0,
+        // Club tournaments are friendlies: no entry fee or prize.
+        isPaid: isClubHost ? false : isPaid,
+        entryFeeBdt: !isClubHost && isPaid ? entryFeeBdt : 0,
+        prizePoolBdt: !isClubHost && prizePoolBdt > 0 ? prizePoolBdt : 0,
         startAt: startDate.toISOString(),
         endAt: endAt ? new Date(endAt).toISOString() : undefined,
         playHoursStart: timeInputToMinutes(playStart),
@@ -754,7 +755,12 @@ function CreateTournamentForm() {
               />
             </FormSection>
 
-            {/* Entry Fee & Prize Pool */}
+            {/* Entry Fee & Prize Pool (community tournaments; club ones are friendlies) */}
+            {isClubHost ? (
+              <FormSection tone="accent" icon={WalletIcon} title={tc.friendlyClubTitle}>
+                <p className="text-sm text-ink-soft">{tc.friendlyClubBody}</p>
+              </FormSection>
+            ) : (
             <FormSection tone="accent" icon={WalletIcon} title={tc.feesLabel}>
               <div className="space-y-4">
               <div className="grid grid-cols-2 gap-2 rounded-xl border border-surface-line bg-surface/40 p-1">
@@ -805,6 +811,7 @@ function CreateTournamentForm() {
               </div>
               </div>
             </FormSection>
+            )}
 
             {/* Submit Button */}
             <div className="pt-4">

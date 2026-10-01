@@ -55,6 +55,7 @@ export function EditTournamentModal({
   const [capacity, setCapacity] = useState(String(tournament.maxParticipants));
   const [startAt, setStartAt] = useState(() => toLocalInput(tournament.startAt));
   const [endAt, setEndAt] = useState(() => toLocalInput(tournament.endAt));
+  const isClubHosted = Boolean(tournament.hostClubId);
   const [isPaid, setIsPaid] = useState(tournament.entryFeeBdt > 0);
   const [entryFee, setEntryFee] = useState(String(tournament.entryFeeBdt || 0));
   const [prizePool, setPrizePool] = useState(String(tournament.prizePoolBdt || 0));
@@ -102,14 +103,14 @@ export function EditTournamentModal({
     endAt && startAt && new Date(endAt).getTime() <= new Date(startAt).getTime()
       ? tm.errEndBeforeStart
       : null;
-  const entryFeeError = isPaid && entryFee === "" ? tm.errAmount : null;
+  const entryFeeError = !isClubHosted && isPaid && entryFee === "" ? tm.errAmount : null;
   const ts = t.dashboard.schedule;
   const fixturesExist = Boolean(tournament.format);
   const playStartMin = playStart ? timeInputToMinutes(playStart) : NaN;
   const playEndMin = playEnd ? timeInputToMinutes(playEnd) : NaN;
   const playHoursProblem =
     fixturesExist ? null : Number.isNaN(playStartMin) || Number.isNaN(playEndMin) ? ts.errPlayHoursShort : playHoursError(playStartMin, playEndMin, t);
-  const prizePoolError = prizePool === "" ? tm.errAmount : null;
+  const prizePoolError = !isClubHosted && prizePool === "" ? tm.errAmount : null;
   const firstError =
     nameError || capacityError || startError || endError || entryFeeError || prizePoolError || playHoursProblem;
 
@@ -120,8 +121,9 @@ export function EditTournamentModal({
       return;
     }
 
-    const nextEntryFee = isPaid ? Number(entryFee) : 0;
-    const nextPrizePool = Number(prizePool);
+    // Club tournaments are friendlies: no entry fee or prize.
+    const nextEntryFee = !isClubHosted && isPaid ? Number(entryFee) : 0;
+    const nextPrizePool = isClubHosted ? 0 : Number(prizePool);
     const playHoursChanged =
       !fixturesExist &&
       (playStartMin !== (tournament.playHoursStart ?? DEFAULT_PLAY_HOURS.start) ||
@@ -274,6 +276,7 @@ export function EditTournamentModal({
             </label>
           </div>
 
+          {isClubHosted ? null : (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2 rounded-xl border border-surface-line bg-surface/40 p-1">
               {[false, true].map((paid) => (
@@ -319,6 +322,7 @@ export function EditTournamentModal({
               </label>
             </div>
           </div>
+          )}
 
           <div className="rounded-xl border border-surface-line bg-bg/40 p-4">
             <div className="text-xs font-semibold text-ink">{ts.playHours}</div>
