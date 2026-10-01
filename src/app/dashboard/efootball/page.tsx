@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMemo } from "react";
-import { useMockMatches, useMockTournaments } from "@/lib/mock/store";
+import { useMockTournaments } from "@/lib/mock/store";
+import { useMyGames } from "@/lib/api/hooks/useTournaments";
+import { formatGameRange, roundLabel } from "@/components/dashboard/fixtures/labels";
 import { useMockPeople, useMockClubs } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
-import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { PlayerRankingsTable } from "@/components/dashboard/PlayerRankingsTable";
@@ -17,14 +18,16 @@ import { getPlayerRankings, getClubRankings } from "@/lib/mock/rankingsData";
 import { CalendarIcon, TrophyIcon, WalletIcon, ChartIcon, ArrowRightIcon, UsersIcon } from "@/components/icons";
 
 export default function EfootballOverviewPage() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user } = useSession();
-  const matches = useMockMatches();
+  // The player's next games still to play, from the backend.
+  const { data: toPlay } = useMyGames({ state: "to_play", limit: 3 });
+  const upcoming = toPlay?.data ?? [];
+  const upcomingCount = toPlay?.meta.total ?? 0;
   const tournaments = useMockTournaments();
   const people = useMockPeople();
   const clubs = useMockClubs();
 
-  const upcoming = matches.filter((m) => m.status === "unplayed" || m.status === "awaiting_opponent").slice(0, 3);
   const latestTournament = tournaments.find((t2) => t2.status === "live") ?? tournaments[0];
 
   const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === user.personId) + 1;
@@ -57,7 +60,7 @@ export default function EfootballOverviewPage() {
         <StatTile label={t.dashboard.overview.statWinRate} value="68%" icon={ChartIcon} trend={{ value: "+4%", direction: "up" }} />
         <StatTile label={t.dashboard.overview.statTournaments} value={String(tournaments.length)} icon={TrophyIcon} />
         <StatTile label={t.dashboard.overview.statWallet} value={`৳ ${user.wallet.balanceBdt.toLocaleString()}`} icon={WalletIcon} />
-        <StatTile label={t.dashboard.overview.statUpcoming} value={String(upcoming.length)} icon={CalendarIcon} />
+        <StatTile label={t.dashboard.overview.statUpcoming} value={String(upcomingCount)} icon={CalendarIcon} />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.3fr_1fr]">
@@ -76,7 +79,23 @@ export default function EfootballOverviewPage() {
           </SectionHeading>
           <div className="mt-4 space-y-2">
             {upcoming.length > 0 ? (
-              upcoming.map((m) => <MiniMatchRow key={m.id} match={m} />)
+              upcoming.map((g) => (
+                <Link
+                  key={g.id}
+                  href={g.tournament.link}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-surface-line bg-bg-raised px-3.5 py-2.5 transition-colors hover:border-surface-line-strong"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-ink">vs {g.opponent.name}</div>
+                    <div className="truncate text-xs text-ink-faint">
+                      {g.tournament.name} · {roundLabel(g.roundName, t)}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-xs tabular-nums text-ink-soft">
+                    {g.scheduledStart ? formatGameRange(g, t, locale) : t.dashboard.myMatches.notScheduled}
+                  </span>
+                </Link>
+              ))
             ) : (
               <p className="text-sm text-ink-soft">{t.dashboard.overview.noUpcoming}</p>
             )}

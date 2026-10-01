@@ -536,3 +536,59 @@ export async function generateTournamentBracket(
   );
   return res.data;
 }
+
+/** From the player's side: what's left to do with a game. */
+export type MyGameState = "to_play" | "waiting" | "review" | "finished";
+export type MyGameHostKind = "club" | "community";
+
+/** One of the signed-in player's games (a PvP game, or their pairing in a CvC fixture). */
+export interface MyGame {
+  id: string;
+  matchId: string;
+  state: MyGameState;
+  status: string;
+  resolution: string | null;
+  outcome: "won" | "lost" | "draw" | null;
+  myGoals: number | null;
+  opponentGoals: number | null;
+  mySubmitted: boolean;
+  reviewNote: string | null;
+  stage: "group" | "knockout";
+  roundName: string;
+  groupLabel: string | null;
+  isDecider: boolean;
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
+  evidenceDeadline: string | null;
+  me: { name: string; dpUrl: string | null };
+  opponent: { userId: string | null; name: string; dpUrl: string | null };
+  myClubName: string | null;
+  opponentClubName: string | null;
+  tournament: { id: string; name: string; type: "pvp" | "cvc"; status: string; link: string };
+  host: { kind: MyGameHostKind; id: string; name: string; dpUrl: string | null };
+}
+
+export interface MyGamesParams {
+  host?: MyGameHostKind;
+  hostId?: string;
+  state?: MyGameState;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface MyGamesResponse {
+  data: MyGame[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+  facets: {
+    states: Record<MyGameState, number>;
+    hostKinds: Record<MyGameHostKind, number>;
+    hosts: Array<{ kind: MyGameHostKind; id: string; name: string; count: number }>;
+  };
+}
+
+/** The signed-in player's games across every tournament, with counts for the filters. */
+export async function getMyGames(params: MyGamesParams): Promise<MyGamesResponse> {
+  const res = await api.get<MyGamesResponse>("/tournaments/my-games", { params });
+  return res.data;
+}

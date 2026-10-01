@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  getMyGames,
+  type MyGamesParams,
   getTournaments,
   getTournament,
   createTournament,
@@ -40,7 +42,18 @@ export const tournamentKeys = {
   reviewQueue: (id: string) => ["tournaments", "review-queue", id] as const,
   reviewGame: (id: string, gameId: string) => ["tournaments", "review-game", id, gameId] as const,
   clubCommitments: (id: string, clubId: string) => ["tournaments", "club-commitments", id, clubId] as const,
+  myGames: (params: MyGamesParams) => ["tournaments", "my-games", params] as const,
 };
+
+/** The signed-in player's games (Matches page). Keeps the last page on screen while the next loads. */
+export function useMyGames(params: MyGamesParams) {
+  return useQuery({
+    queryKey: tournamentKeys.myGames(params),
+    queryFn: () => getMyGames(params),
+    placeholderData: (previous) => previous,
+    staleTime: 30 * 1000,
+  });
+}
 
 /**
  * `viewerId` must be passed for per-user queries (`joined` / `scope`) so cached results are
