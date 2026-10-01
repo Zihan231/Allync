@@ -6,6 +6,7 @@ import { useClubRankings } from "@/lib/api/hooks/useStats";
 import { ClubRankingsTable } from "./ClubRankingsTable";
 import { EmptyState } from "./EmptyState";
 import { Pagination } from "./Pagination";
+import { StatsInfoPanel } from "./StatsInfoPanel";
 import { TrophyIcon } from "../icons";
 
 const PAGE_SIZE = 20;
@@ -20,6 +21,7 @@ export function CommunityRankingsTab({ communityId }: { communityId: string }) {
   return (
     <div>
       <h3 className="font-display text-sm font-bold text-ink">{t.dashboard.communityRankings.title}</h3>
+      <StatsInfoPanel variant="clubs" className="mt-3" />
       <div className="mt-4 space-y-5">
         {isLoading ? (
           <div className="h-48 animate-pulse rounded-xl border border-surface-line bg-surface/40" />

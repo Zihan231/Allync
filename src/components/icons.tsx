@@ -387,3 +387,13 @@ export function CheckIcon({ className, style }: IconProps) {
     </svg>
   );
 }
+
+export function InfoIcon({ className, style }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={style} aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M12 11v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="12" cy="8" r="0.9" fill="currentColor" />
+    </svg>
+  );
+}

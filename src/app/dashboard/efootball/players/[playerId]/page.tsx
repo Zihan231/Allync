@@ -14,6 +14,7 @@ import { BackButton } from "@/components/dashboard/BackButton";
 import { Avatar } from "@/components/common/Avatar";
 import { RankBadge } from "@/components/dashboard/RankBadge";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { StatsInfoPanel } from "@/components/dashboard/StatsInfoPanel";
 import { type SectionTone } from "@/components/dashboard/SectionHeading";
 import { RankTrendChart } from "@/components/dashboard/RankTrendChart";
 import { MatchLoadChart } from "@/components/dashboard/MatchLoadChart";
@@ -239,17 +240,21 @@ function StatCell({
   value,
   theme,
   highlight = false,
+  hint,
 }: {
   label: string;
   value: string;
   tone?: SectionTone;
   theme?: CosmeticItem | null;
   highlight?: boolean;
+  /** Shown on hover (e.g. why a value is a dash). */
+  hint?: string;
 }) {
   const tokens = getThemeTokens(theme);
 
   return (
     <div
+      title={hint}
       className="group relative overflow-hidden rounded-xl border px-1.5 py-2 sm:px-2 sm:py-3 text-center backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
       style={{
         borderColor: highlight ? tokens.highlightBorder : tokens.innerBorder,
@@ -302,9 +307,10 @@ function StatsTable({
   theme?: CosmeticItem | null;
   onDownload?: () => void;
 }) {
+  const notRecorded = useLanguage().t.dashboard.statsInfo.notRecorded;
   const tokens = getThemeTokens(theme);
   // MOTM and RT aren't recorded yet.
-  const cells: { label: string; value: string; tone: SectionTone; highlight?: boolean }[] = [
+  const cells: { label: string; value: string; tone: SectionTone; highlight?: boolean; hint?: string }[] = [
     { label: pf.m, value: String(row.PL), tone: "blue" },
     { label: pf.w, value: String(row.W), tone: "success" },
     { label: pf.d, value: String(row.D), tone: "blue" },
@@ -313,8 +319,8 @@ function StatsTable({
     { label: pf.gf, value: String(row.GF), tone: "success", highlight: true },
     { label: pf.ga, value: String(row.GA), tone: "danger" },
     { label: pf.cs, value: String(row.CS), tone: "blue" },
-    { label: pf.motm, value: "—", tone: "accent", highlight: true },
-    { label: pf.rt, value: "—", tone: "warning", highlight: true },
+    { label: pf.motm, value: "—", tone: "accent", highlight: true, hint: notRecorded },
+    { label: pf.rt, value: "—", tone: "warning", highlight: true, hint: notRecorded },
   ];
 
   return (
@@ -598,6 +604,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
         <ThemedStatCard label={pf.statWinRate} value={statsLoading ? "…" : `${allTime.winPct}%`} icon={CrosshairIcon} tone="accent" theme={equippedTheme} badge={statsLoading ? null : tierBadge("winRate", allTime.winPct)} />
         <ThemedStatCard label={pf.statGoalsFor} value={statsLoading ? "…" : String(allTime.GF)} icon={FlameIcon} tone="danger" theme={equippedTheme} badge={statsLoading ? null : tierBadge("goals", allTime.GF)} />
       </div>
+      <StatsInfoPanel variant="profile" className="mt-4" />
 
       {/* Full Cosmetic Locker & Loadout Showcase Module */}
       <PlayerCosmeticsShowcase

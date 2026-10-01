@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Avatar } from "@/components/common/Avatar";
 import { RankBadge } from "./RankBadge";
 import type { PlayerStatsRow } from "@/lib/api/stats";
@@ -36,6 +39,16 @@ function cellValue(row: PlayerStatsRow, key: Col["key"]) {
 
 /** Player stats table; rows come from the stats API (computed from confirmed results). */
 export function PlayerRankingsTable({ rows }: { rows: PlayerStatsRow[] }) {
+  const si = useLanguage().t.dashboard.statsInfo;
+  // Hover hints for the less obvious columns.
+  const hints: Partial<Record<Col["key"], string>> = {
+    HT: si.colHT,
+    DHT: si.colDHT,
+    streak: si.colStreak,
+    motm: si.colMotm,
+    PTS: si.colPlayerPts,
+  };
+
   return (
     <div className="overflow-hidden rounded-xl border border-surface-line">
       <table className="w-full table-auto text-left text-xs sm:text-sm">
@@ -46,9 +59,10 @@ export function PlayerRankingsTable({ rows }: { rows: PlayerStatsRow[] }) {
             {COLS.map((c) => (
               <th
                 key={c.key}
+                title={hints[c.key]}
                 className={`whitespace-nowrap px-1 py-2 font-medium sm:px-1.5 ${c.align === "right" ? "text-right" : "text-center"} ${c.hideClass ?? ""}`}
               >
-                {c.label}
+                {hints[c.key] ? <span className="cursor-help underline decoration-dotted underline-offset-2">{c.label}</span> : c.label}
               </th>
             ))}
           </tr>
@@ -77,6 +91,7 @@ export function PlayerRankingsTable({ rows }: { rows: PlayerStatsRow[] }) {
               {COLS.map((c) => (
                 <td
                   key={c.key}
+                  title={c.key === "motm" ? si.notRecorded : undefined}
                   className={`whitespace-nowrap px-1 py-2 font-mono text-ink-soft sm:px-1.5 ${
                     c.align === "right" ? "text-right" : "text-center"
                   } ${c.key === "PTS" ? "font-semibold text-accent-ink" : ""} ${c.hideClass ?? ""}`}

@@ -8,6 +8,7 @@ import { LeaderboardTable } from "@/components/dashboard/LeaderboardTable";
 import { PlayerRankingsTable } from "@/components/dashboard/PlayerRankingsTable";
 import { ClubRankingsTable } from "@/components/dashboard/ClubRankingsTable";
 import { Pagination } from "@/components/dashboard/Pagination";
+import { StatsInfoPanel } from "@/components/dashboard/StatsInfoPanel";
 import { SearchIcon } from "@/components/icons";
 import { AppLoader } from "@/components/common/AppLoader";
 import { useUrlTab } from "@/lib/navigation/useUrlTab";
@@ -220,6 +221,7 @@ function PlayersRankingsPanel() {
           placeholder={r.searchPlayerPlaceholder}
         />
       </div>
+      <StatsInfoPanel variant="players" className="mt-4" />
       <div className={`mt-5 space-y-5 transition-opacity ${isFetching && !isLoading ? "opacity-60" : ""}`}>
         <ListState
           isLoading={isLoading}
@@ -265,6 +267,7 @@ function ClubsRankingsPanel() {
           placeholder={r.searchClubPlaceholder2}
         />
       </div>
+      <StatsInfoPanel variant="clubs" className="mt-4" />
       <div className={`mt-5 space-y-5 transition-opacity ${isFetching && !isLoading ? "opacity-60" : ""}`}>
         <ListState
           isLoading={isLoading}

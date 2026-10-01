@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Avatar } from "@/components/common/Avatar";
 import { RankBadge } from "./RankBadge";
 import type { ClubStatsRow } from "@/lib/api/stats";
@@ -31,6 +34,9 @@ function cellValue(row: ClubStatsRow, key: Col["key"]) {
 
 /** Club stats table (CvC fixtures); rows come from the stats API. */
 export function ClubRankingsTable({ rows }: { rows: ClubStatsRow[] }) {
+  const si = useLanguage().t.dashboard.statsInfo;
+  const hints: Partial<Record<Col["key"], string>> = { PTS: si.colClubPts };
+
   return (
     <div className="overflow-hidden rounded-xl border border-surface-line">
       <table className="w-full table-auto text-left text-xs sm:text-sm">
@@ -41,9 +47,10 @@ export function ClubRankingsTable({ rows }: { rows: ClubStatsRow[] }) {
             {COLS.map((c) => (
               <th
                 key={c.key}
+                title={hints[c.key]}
                 className={`whitespace-nowrap px-1 py-2 font-medium sm:px-1.5 ${c.align === "right" ? "text-right" : "text-center"} ${c.hideClass ?? ""}`}
               >
-                {c.label}
+                {hints[c.key] ? <span className="cursor-help underline decoration-dotted underline-offset-2">{c.label}</span> : c.label}
               </th>
             ))}
           </tr>

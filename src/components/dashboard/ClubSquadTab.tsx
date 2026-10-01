@@ -8,6 +8,7 @@ import type { PlayerStatsRow } from "@/lib/api/stats";
 import type { Club } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
 import { SquadPlayerCard } from "./SquadPlayerCard";
+import { StatsInfoPanel } from "./StatsInfoPanel";
 import { EmptyState } from "./EmptyState";
 import { Pagination } from "./Pagination";
 import { StatusPill } from "./StatusPill";
@@ -128,6 +129,7 @@ export function ClubSquadTab({
 
   return (
     <div className="space-y-5">
+      <StatsInfoPanel variant="players" />
       {/* Top Filter & Search Bar */}
       <div className="flex flex-col gap-3 rounded-xl border border-surface-line bg-surface/30 p-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
