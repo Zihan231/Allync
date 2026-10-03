@@ -20,7 +20,7 @@ import { renderNotification } from "@/lib/notifications/renderNotification";
 const FALLBACK_POLL_MS = 60_000;
 
 export function useRealtimeNotifications() {
-  const { isAuthenticated, user } = useSession();
+  const { isAuthenticated } = useSession();
   const queryClient = useQueryClient();
   const { toasts, toast, dismiss } = useToast();
   // Read by the SSE handler, so switching language doesn't reconnect the stream.
@@ -78,6 +78,10 @@ export function useRealtimeNotifications() {
               void queryClient.invalidateQueries({ queryKey: ["community-requests"] });
             } else if (notif.type === "tournament_update") {
               void queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+            } else if (notif.type === "transfer") {
+              // Offers, contracts, wallets and squads move with every transfer event.
+              void queryClient.invalidateQueries({ queryKey: ["transfers"] });
+              void queryClient.invalidateQueries({ queryKey: ["me"] });
             }
             // Approvals and new club members change club/community rosters, which the
             // client-side store also caches — only then is a full store resync worth it.

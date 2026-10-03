@@ -7,6 +7,7 @@ import { format } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { useMockPeople, useMockClubs, useMockCommunities } from "@/lib/mock/communityStore";
 import { usePlayerStats } from "@/lib/api/hooks/useStats";
+import { useClubTransfers } from "@/lib/api/hooks/useTransfers";
 import type { PlayerProfileStats, StatLine, StatsPeriod } from "@/lib/api/stats";
 import { downloadCsv } from "@/lib/csv";
 import { TIER_COLORS, WIN_RATE_MIN_MATCHES, tierFor, type TierStat } from "@/lib/playerTiers";
@@ -15,6 +16,10 @@ import { Avatar } from "@/components/common/Avatar";
 import { RankBadge } from "@/components/dashboard/RankBadge";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { StatsInfoPanel } from "@/components/dashboard/StatsInfoPanel";
+import { ContractDocument } from "@/components/dashboard/transfers/ContractDocument";
+import { OfferToPlayerModal } from "@/components/dashboard/transfers/MakeOfferModal";
+import { TransferHistoryList } from "@/components/dashboard/transfers/TransferHistoryList";
+import { ToastContainer } from "@/components/common/Toast";
 import { type SectionTone } from "@/components/dashboard/SectionHeading";
 import { RankTrendChart } from "@/components/dashboard/RankTrendChart";
 import { MatchLoadChart } from "@/components/dashboard/MatchLoadChart";
@@ -30,6 +35,7 @@ import {
   SettingsIcon,
 } from "@/components/icons";
 import { getCosmetic, type CosmeticItem } from "@/lib/mock/cosmetics";
+import { useToast } from "@/lib/useToast";
 import {
   CosmeticBadgePill,
   CosmeticTitleText,
@@ -44,7 +50,6 @@ import {
   getThemeTokens,
   ThemeTeamAttachmentBadge,
 } from "@/components/cosmetics/CosmeticDisplay";
-import type { TransferEntry } from "@/lib/mock/playerInsights";
 
 type IconComponent = (props: { className?: string }) => React.ReactElement;
 
@@ -384,11 +389,15 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
   const clubs = useMockClubs();
   const communities = useMockCommunities();
   const [trendView, setTrendView] = useState<"monthly" | "weekly">("monthly");
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [contractOfferId, setContractOfferId] = useState<string | null>(null);
+  const { toasts, toast, dismiss } = useToast();
 
   const person = people.find((p) => p.id === playerId);
 
   // Real stats, computed by the backend from confirmed results.
   const { data: stats, isLoading: statsLoading } = usePlayerStats(person?.id);
+  const { data: leaderClub } = useClubTransfers(user.club?.id);
 
   if (!person) {
     return <EmptyState icon={UsersIcon} title={t.dashboard.players.notFound} body="" />;
@@ -423,9 +432,6 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
     "this-month": t.dashboard.rankings.periodThisMonth,
     "last-month": t.dashboard.rankings.periodLastMonth,
   };
-  // Club transfers aren't recorded yet; the journey shows once they are.
-  const transfers: TransferEntry[] = [];
-
   const club = person.clubId ? clubs.find((c) => c.id === person.clubId) : null;
   const community = person.communityId ? communities.find((c) => c.id === person.communityId) : null;
   const rank = allTime.rank ?? 0;
@@ -451,6 +457,8 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
   const ownedBadges = (person.ownedCosmeticIds ?? [])
     .map(getCosmetic)
     .filter((c): c is CosmeticItem => c != null && c.category === "badge");
+  const isOwnProfile = person.id === user.id || person.id === user.personId;
+  const canMakeOffer = !isOwnProfile && Boolean(user.club?.id && leaderClub?.isLeader);
 
   // Only what the player filled in; empty fields show a dash.
   const birthday = (person.birthday ? formatBirthday(person.birthday) : null) ?? "—";
@@ -940,109 +948,49 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
         </div>
       </SectionCard>
 
-      {/* Transfer History */}
-      {transfers.length ? (
-        <SectionCard icon={SwapIcon} tone="danger" title={pf.transferHistory.title} theme={equippedTheme}>
-          <TransferJourney entries={transfers} theme={equippedTheme} />
-        </SectionCard>
-      ) : null}
-    </div>
-  );
-}
-
-function smoothPath(points: { x: number; y: number }[]) {
-  if (points.length === 0) return "";
-  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
-  let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i === 0 ? i : i - 1];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
-    const c1x = p1.x + (p2.x - p0.x) / 6;
-    const c1y = p1.y + (p2.y - p0.y) / 6;
-    const c2x = p2.x - (p3.x - p1.x) / 6;
-    const c2y = p2.y - (p3.y - p1.y) / 6;
-    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y}`;
-  }
-  return d;
-}
-
-function TransferJourney({ entries, theme }: { entries: TransferEntry[]; theme?: CosmeticItem | null }) {
-  const tokens = getThemeTokens(theme);
-  const W = 100;
-  const ROW = 20;
-  const RAIL_LEFT = 35;
-  const RAIL_RIGHT = 65;
-  const ordered = [...entries].reverse(); // oldest (debut) first, newest (current) last
-  const n = ordered.length;
-  const H = Math.max(ROW * 1.5, n * ROW);
-  const margin = ROW * 0.7;
-
-  const points = ordered.map((tr, k) => {
-    const t = n > 1 ? k / (n - 1) : 0;
-    const x = k % 2 === 0 ? RAIL_RIGHT : RAIL_LEFT;
-    const y = H - margin - t * (H - margin * 2);
-    return { x, y, tr };
-  });
-
-  const roadPath = smoothPath(points);
-
-  return (
-    <div className="mx-auto w-full max-w-sm" style={{ aspectRatio: `${W} / ${H}` }}>
-      <div className="relative h-full w-full">
-        <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 h-full w-full" aria-hidden="true">
-          <path
-            d={roadPath}
-            stroke={theme ? tokens.innerBorder : "var(--surface-line-strong)"}
-            strokeWidth="3"
-            strokeLinecap="round"
-            fill="none"
-          />
-          <path
-            d={roadPath}
-            stroke={tokens.primary}
-            strokeWidth="1.2"
-            strokeDasharray="1.8 2.2"
-            opacity="0.95"
-            fill="none"
-            style={{ filter: theme ? `drop-shadow(0 0 6px ${tokens.primary})` : undefined }}
-          />
-        </svg>
-
-        {points.map((p, i) => (
-          <div
-            key={i}
-            className="absolute flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 shadow-xl backdrop-blur transition-all hover:scale-110"
-            style={{
-              left: `${p.x}%`,
-              top: `${p.y}%`,
-              transform: "translate(-50%, -50%)",
-              borderColor: tokens.innerBorder,
-              backgroundColor: tokens.innerBg,
-              boxShadow: theme ? tokens.glowShadow : undefined,
-            }}
-          >
-            <span
-              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[8px] font-black shadow-sm"
-              style={{
-                backgroundColor: tokens.primary,
-                color: "#000000",
-              }}
+      {/* Live transfer history and club-leader offer action. */}
+      <SectionCard
+        icon={SwapIcon}
+        tone="danger"
+        title={pf.transferHistory.title}
+        theme={equippedTheme}
+        action={
+          canMakeOffer ? (
+            <button
+              type="button"
+              onClick={() => setOfferOpen(true)}
+              className="rounded-full bg-accent px-3.5 py-1.5 text-xs font-bold text-bg transition-colors hover:bg-accent-strong"
             >
-              {p.tr.jersey}
-            </span>
-            <div className="min-w-0 leading-tight">
-              <p className="max-w-[100px] truncate text-[10px] font-bold" style={{ color: tokens.headingText }}>
-                {p.tr.club}
-              </p>
-              <p className="max-w-[100px] truncate text-[8px] font-mono" style={{ color: tokens.mutedText }}>
-                {p.tr.date}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+              {t.dashboard.transfers.makeOffer}
+            </button>
+          ) : undefined
+        }
+      >
+        <TransferHistoryList
+          userId={person.id}
+          onOpenContract={isOwnProfile ? setContractOfferId : undefined}
+        />
+      </SectionCard>
+
+      {offerOpen && user.club ? (
+        <OfferToPlayerModal
+          clubId={user.club.id}
+          clubName={user.club.name}
+          clubBalanceTk={leaderClub?.wallet?.balanceTk ?? null}
+          player={{ id: person.id, name: person.name }}
+          onClose={() => setOfferOpen(false)}
+          onToast={toast}
+        />
+      ) : null}
+      {contractOfferId ? (
+        <ContractDocument
+          offerId={contractOfferId}
+          balanceTk={leaderClub?.wallet?.balanceTk ?? null}
+          onClose={() => setContractOfferId(null)}
+          onToast={toast}
+        />
+      ) : null}
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
 }

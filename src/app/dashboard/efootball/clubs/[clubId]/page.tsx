@@ -5,11 +5,8 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { clubJoinBlockReason } from "@/lib/session/createPermissions";
-import { joinClubRequest, getMyClubRequest } from "@/lib/api/clubs";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMockClubs, useMockPeople, useMockJoinRequests, addPendingJoinRequest,
-  removePendingJoinRequest,
-   joinClub, leaveClub, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMockClubs, useMockPeople, leaveClub, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
 import { AppLoader } from "@/components/common/AppLoader";
 import { mockCommunities } from "@/lib/mock";
 import { getClubInsights } from "@/lib/mock/clubInsights";
@@ -34,7 +31,9 @@ import { ClubTeamsTab } from "@/components/dashboard/ClubTeamsTab";
 import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
 import { ClubLatestTournaments } from "@/components/dashboard/ClubLatestTournaments";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { MakeOfferModal } from "@/components/dashboard/transfers/MakeOfferModal";
 import { useLeaveClub } from "@/lib/api/hooks/useClubs";
+import { useMyTransfers } from "@/lib/api/hooks/useTransfers";
 import { UsersIcon, TrophyIcon, FacebookIcon, SettingsIcon, LockIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/lib/useToast";
@@ -85,24 +84,15 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
   const { user, setClub, refreshSession } = useSession();
   const clubs = useMockClubs();
   const people = useMockPeople();
-  const joinRequests = useMockJoinRequests();
   const [tab, setTab] = useUrlTab(CLUB_TABS, "overview");
   const tabsRef = useRef<HTMLDivElement>(null);
   const { confirm, confirmProps } = useConfirm();
   const [loading, setLoading] = useState(() => !hasSyncedFromBackend());
-  const [isPendingLocal, setIsPendingLocal] = useState(false);
   const [justLeft, setJustLeft] = useState(false);
+  const [proposing, setProposing] = useState(false);
   const queryClient = useQueryClient();
   const leaveMutation = useLeaveClub(clubId);
-  const [isJoining, setIsJoining] = useState(false);
   const { toasts, toast, dismiss } = useToast();
-
-  const { data: myRequestData, refetch: refetchMyRequest } = useQuery({
-    queryKey: ["club-my-request", clubId],
-    queryFn: () => getMyClubRequest(clubId),
-    enabled: !!clubId,
-    refetchInterval: 3000,
-  });
 
   useEffect(() => {
     let mounted = true;
@@ -141,95 +131,14 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
     (user.club?.id === club?.id || currentUserPerson?.clubId === club?.id);
 
   const isMine = isMemberOfClub;
-
-  // Reactively auto-clear pending status and sync session as soon as request is accepted
-  useEffect(() => {
-    if (justLeft) return;
-    if (
-      (currentUserPerson?.clubId === club?.id || (myRequestData && !myRequestData.hasPendingRequest && (myRequestData.request as any)?.status === "approved")) &&
-      user.club?.id !== club?.id
-    ) {
-      if (isPendingLocal) {
-        setIsPendingLocal(false);
-      }
-      if (club) {
-        setClub({
-          id: club.id,
-          name: club.name,
-          role: currentUserPerson?.clubRole || "Player",
-        });
-        void refreshSession();
-      }
-    }
-  }, [currentUserPerson?.clubId, currentUserPerson?.clubRole, myRequestData, club, isPendingLocal, user.club?.id, setClub, refreshSession]);
+  const { data: myTransfers } = useMyTransfers(!isMine);
 
   const canManageClub = isMine && (user.club?.role === "President" || user.club?.role === "General Secretary" || currentUserPerson?.clubRole === "President" || currentUserPerson?.clubRole === "General Secretary");
   const canManageTeams = isMine && (user.club?.role === "President" || user.club?.role === "Manager" || currentUserPerson?.clubRole === "President" || currentUserPerson?.clubRole === "Manager");
-  const isManager = isMine && (user.club?.role === "Manager" || currentUserPerson?.clubRole === "Manager");
-  const hasOtherClub = !!user.club && !isMine;
-  const joinBlockedReason = isMine ? null : clubJoinBlockReason(user, t);
-
-  const hasPendingRequest =
-    !isMine &&
-    !isMemberOfClub &&
-    (isPendingLocal ||
-      Boolean(myRequestData?.hasPendingRequest) ||
-      joinRequests.some(
-        (r) =>
-          r.targetType === "club" &&
-          r.targetId === club?.id &&
-          (r.personId === user.personId || r.personId === user.id) &&
-          r.status === "pending"
-      ));
-
-  const handleJoin = async () => {
-    if (!club || hasOtherClub || hasPendingRequest || joinBlockedReason || isJoining) return;
-    setJustLeft(false);
-    setIsJoining(true);
-
-    const isInstant = club.joinPolicy === "instant";
-    const previousClub = user.club;
-
-    // Instant optimistic UI update (0ms delay)
-    if (isInstant) {
-      joinClub(user.personId || user.id, club.id);
-      setClub({ id: club.id, name: club.name, role: "Player" });
-      toast(`You joined ${club.name}!`, "success");
-    } else {
-      setIsPendingLocal(true);
-      addPendingJoinRequest("club", club.id, user.personId || user.id);
-      queryClient.setQueryData(["club-my-request", club.id], {
-        hasPendingRequest: true,
-        request: { status: "pending", clubId: club.id },
-      });
-      toast("Join request sent! Awaiting approval by club leadership.", "info");
-    }
-
-    try {
-      await joinClubRequest(club.id);
-      void queryClient.invalidateQueries({ queryKey: ["club-my-request", club.id] });
-      void refreshSession();
-    } catch (err: any) {
-      // Revert optimistic changes on failure
-      if (isInstant) {
-        leaveClub(user.personId || user.id);
-        if (user.id) leaveClub(user.id);
-        setClub(previousClub);
-        toast(err?.response?.data?.message || "Failed to join club.", "error");
-      } else {
-        setIsPendingLocal(false);
-        removePendingJoinRequest("club", club.id, user.personId || user.id);
-        if (user.id) removePendingJoinRequest("club", club.id, user.id);
-        queryClient.setQueryData(["club-my-request", club.id], {
-          hasPendingRequest: false,
-          request: null,
-        });
-        toast(err?.response?.data?.message || "Failed to send join request.", "error");
-      }
-    } finally {
-      setIsJoining(false);
-    }
-  };
+  const communityBlockReason = isMine ? null : clubJoinBlockReason(user, t);
+  const isTransferLeader = myTransfers?.clubRole === "President" || myTransfers?.clubRole === "General Secretary";
+  const proposalBlockedReason = communityBlockReason ||
+    (isTransferLeader || myTransfers?.contract?.locked ? t.dashboard.transfers.notTransferable : null);
 
   const handleLeave = async () => {
     if (!club) return;
@@ -237,23 +146,20 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
 
     // Instant optimistic UI switch (0ms delay)
     setJustLeft(true);
-    setIsPendingLocal(false);
     leaveClub(user.personId || user.id);
     if (user.id) leaveClub(user.id);
-    removePendingJoinRequest("club", club.id, user.personId || user.id);
-    if (user.id) removePendingJoinRequest("club", club.id, user.id);
     setClub(null);
-    queryClient.setQueryData(["club-my-request", club.id], { hasPendingRequest: false, request: null });
     toast(`You left ${club.name}.`, "info");
 
     try {
       await leaveMutation.mutateAsync();
-      void queryClient.invalidateQueries({ queryKey: ["club-my-request", club.id] });
       void queryClient.invalidateQueries({ queryKey: ["me"] });
+      void queryClient.invalidateQueries({ queryKey: ["transfers"] });
       void refreshSession();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setJustLeft(false);
-      toast(err?.response?.data?.message || "Failed to leave club on server.", "error");
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast(message || "Failed to leave club on server.", "error");
     }
   };
 
@@ -367,24 +273,23 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
             )
           ) : (
             <button
-              onClick={handleJoin}
-              disabled={hasOtherClub || hasPendingRequest || !!joinBlockedReason}
-              title={joinBlockedReason ?? undefined}
+              type="button"
+              onClick={() => setProposing(true)}
+              disabled={!!proposalBlockedReason}
+              title={proposalBlockedReason ?? undefined}
               className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {joinBlockedReason && !hasOtherClub ? <LockIcon className="h-3.5 w-3.5" /> : null}
-              {club.joinPolicy === "instant" ? t.dashboard.clubs.joinButton : t.dashboard.clubs.requestToJoinButton}
+              {proposalBlockedReason ? <LockIcon className="h-3.5 w-3.5" /> : null}
+              {t.dashboard.transfers.proposeJoin}
             </button>
           )}
         </div>
       </div>
 
-      {hasPendingRequest ? (
-        <p className="mt-3 font-mono text-xs text-warning-ink">{t.dashboard.clubs.pendingRequestNotice}</p>
-      ) : joinBlockedReason && !hasOtherClub ? (
+      {proposalBlockedReason ? (
         <p className="mt-3 flex items-start gap-1.5 font-mono text-xs text-warning-ink">
           <LockIcon className="mt-px h-3.5 w-3.5 shrink-0" />
-          <span>{joinBlockedReason}</span>
+          <span>{proposalBlockedReason}</span>
         </p>
       ) : null}
 
@@ -462,7 +367,7 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
           <ClubSquadTab club={club} members={members} contractDaysById={insights.contractDaysById} />
         ) : null}
         {tab === "teams" ? <ClubTeamsTab clubId={club.id} canManage={canManageTeams} club={club} /> : null}
-        {tab === "transfers" ? <ClubTransfersTab club={club} allPeople={people} /> : null}
+        {tab === "transfers" ? <ClubTransfersTab club={club} /> : null}
         {tab === "rankings" ? <ClubRankingsTab club={club} members={members} /> : null}
         {tab === "table" ? <ClubTableTab club={club} /> : null}
         {tab === "rounds" ? <ClubRoundsTab club={club} members={members} /> : null}
@@ -483,6 +388,14 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
         ) : null}
       </div>
 
+      {proposing ? (
+        <MakeOfferModal
+          mode="proposal"
+          clubId={club.id}
+          onClose={() => setProposing(false)}
+          onToast={toast}
+        />
+      ) : null}
       <ConfirmDialog {...confirmProps} />
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>

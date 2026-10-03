@@ -28,6 +28,12 @@ export function renderNotification(
     values.range = formatGameRange({ scheduledStart: String(p.startAt), scheduledEnd: String(p.endAt) }, t, locale) ?? "";
   }
   if (p.deadlineAt) values.deadline = formatMatchTime(String(p.deadlineAt), locale);
+  // Any other date param (e.g. expiresAt, lockEndsAt) is shown in the viewer's language and Dhaka time.
+  for (const [key, value] of Object.entries(p)) {
+    if (key.endsWith("At") && typeof value === "string" && !Number.isNaN(Date.parse(value))) {
+      values[key] = formatMatchTime(value, locale);
+    }
+  }
   if (typeof p.round === "string") values.round = roundLabel(p.round, t);
   if (typeof p.role === "string") values.role = roleLabel(p.role, t);
   if (typeof p.changes === "string") {
