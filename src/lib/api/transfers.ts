@@ -184,3 +184,18 @@ export const cancelTransferOffer = async (offerId: string) =>
   (await api.post<TransferOffer>(`/transfers/offers/${offerId}/cancel`)).data;
 export const topUpWallet = async (clubId?: string) =>
   (await api.post<WalletView>("/transfers/wallets/top-up", clubId ? { clubId } : {})).data;
+
+export type WalletTxKind = WalletView["transactions"][number]["kind"];
+
+export interface WalletHistory {
+  balanceTk: number;
+  heldTk: number;
+  /** All-time totals by type. */
+  totals: { receivedTk: number; paidTk: number; refundedTk: number; topUpTk: number };
+  data: WalletView["transactions"];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+}
+
+/** My wallet's (or a club wallet I lead) balance, totals and paginated history. */
+export const getWalletHistory = async (params: { clubId?: string; kind?: WalletTxKind; page?: number; limit?: number }) =>
+  (await api.get<WalletHistory>("/transfers/wallets/transactions", { params })).data;

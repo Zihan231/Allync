@@ -8,6 +8,8 @@ import {
   getMyTransfers,
   getPlayerTransferStatus,
   getTransferHistory,
+  getWalletHistory,
+  type WalletTxKind,
   respondTransferOffer,
   topUpWallet,
   type CreateOfferInput,
@@ -22,6 +24,7 @@ export const transferKeys = {
   freeAgents: (params: object) => ["transfers", "free-agents", params] as const,
   history: (params: object) => ["transfers", "history", params] as const,
   contract: (offerId: string) => ["transfers", "contract", offerId] as const,
+  wallet: (params: object) => ["transfers", "wallet", params] as const,
 };
 
 export function useMyTransfers(enabled = true) {
@@ -99,4 +102,13 @@ export function useCancelTransferOffer() {
 export function useTopUpWallet() {
   const refresh = useRefreshAfter();
   return useMutation({ mutationFn: (clubId?: string) => topUpWallet(clubId), onSuccess: refresh });
+}
+
+/** Wallet page: balance, totals and paginated history (mine, or a club's I lead). */
+export function useWalletHistory(params: { clubId?: string; kind?: WalletTxKind; page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: transferKeys.wallet(params),
+    queryFn: () => getWalletHistory(params),
+    placeholderData: (previous) => previous,
+  });
 }
