@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
 import type { ClubCommitment, ContractView, OfferKind, OfferStatus, PaymentMethod } from "@/lib/api/transfers";
@@ -117,4 +119,14 @@ export function CommitmentNotice({ commitment, playerName }: { commitment: ClubC
       </span>
     </p>
   );
+}
+
+/**
+ * Renders a modal on document.body, so it always covers the whole screen —
+ * even when opened from inside another modal (a parent with backdrop blur
+ * would otherwise trap "fixed" children inside its own scrolling box).
+ */
+export function ModalPortal({ children }: { children: ReactNode }) {
+  if (typeof document === "undefined") return null;
+  return createPortal(children, document.body);
 }

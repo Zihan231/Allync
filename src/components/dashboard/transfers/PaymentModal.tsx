@@ -4,7 +4,7 @@ import { useState } from "react";
 import { format } from "@/lib/i18n/translations";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/api/transfers";
 import { CheckIcon, CloseIcon, LockIcon } from "@/components/icons";
-import { tk, useTransferLabels } from "./shared";
+import { ModalPortal, tk, useTransferLabels } from "./shared";
 
 const METHOD_STYLE: Record<PaymentMethod, { mark: string; className: string }> = {
   bkash: { mark: "b", className: "bg-[#e2136e] text-white" },
@@ -60,6 +60,7 @@ export function PaymentModal({
   }
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
       <button
         type="button"
@@ -170,5 +171,6 @@ export function PaymentModal({
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 }

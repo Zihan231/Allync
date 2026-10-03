@@ -43,8 +43,8 @@ export function ClubTransfersTab({ club }: { club: Club }) {
         <div className="min-w-0 space-y-6">
           {leader ? (
             <>
-              <OfferList title={tr.incoming} offers={data.incoming} onOpen={(id, signAs) => setContract({ offerId: id, signAs })} onToast={toast} />
-              <OfferList title={tr.outgoing} offers={data.outgoing} onOpen={(id, signAs) => setContract({ offerId: id, signAs })} onToast={toast} />
+              <OfferList title={tr.joinRequests} offers={data.incoming} onOpen={(id, signAs) => setContract({ offerId: id, signAs })} onToast={toast} />
+              <OfferList title={tr.ourOffers} offers={data.outgoing} onOpen={(id, signAs) => setContract({ offerId: id, signAs })} onToast={toast} />
             </>
           ) : (
             <p className="rounded-xl border border-dashed border-surface-line p-4 text-xs text-ink-faint">{tr.leaderOnly}</p>

@@ -34,7 +34,7 @@ import { ClubLatestTournaments } from "@/components/dashboard/ClubLatestTourname
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { MakeOfferModal } from "@/components/dashboard/transfers/MakeOfferModal";
 import { useLeaveClub } from "@/lib/api/hooks/useClubs";
-import { useCancelTransferOffer, useMyTransfers } from "@/lib/api/hooks/useTransfers";
+import { useCancelTransferOffer, useClubTransfers, useMyTransfers } from "@/lib/api/hooks/useTransfers";
 import { formatMatchTime } from "@/components/dashboard/fixtures/labels";
 import { UsersIcon, TrophyIcon, FacebookIcon, SettingsIcon, LockIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -137,6 +137,9 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
 
   const canManageClub = isMine && (user.club?.role === "President" || user.club?.role === "General Secretary" || currentUserPerson?.clubRole === "President" || currentUserPerson?.clubRole === "General Secretary");
   const canManageTeams = isMine && (user.club?.role === "President" || user.club?.role === "Manager" || currentUserPerson?.clubRole === "President" || currentUserPerson?.clubRole === "Manager");
+  // Join requests are transfer proposals now; the President / GS answer them in the Transfers tab.
+  const { data: clubTransfers } = useClubTransfers(canManageClub ? clubId : undefined);
+  const joinRequestCount = clubTransfers?.incoming.filter((o) => o.status === "pending").length ?? 0;
   const communityBlockReason = isMine ? null : clubJoinBlockReason(user, t);
   const isTransferLeader = myTransfers?.clubRole === "President" || myTransfers?.clubRole === "General Secretary";
   const openDealHere = (myTransfers?.offers ?? []).find((o) => o.status === "pending" && o.toClub.id === club?.id) ?? null;
@@ -279,13 +282,20 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
             </a>
           ) : null}
 
-          {canManageTeams && club.joinPolicy === "approval" ? (
-            <Link
-              href={`/dashboard/efootball/clubs/${club.id}/requests`}
-              className="rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink"
+          {canManageClub ? (
+            <button
+              type="button"
+              onClick={() => {
+                setTab("transfers");
+                requestAnimationFrame(() => tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-accent"
             >
-              {t.dashboard.clubs.requestsQueueTitle}
-            </Link>
+              {t.dashboard.transfers.joinRequests}
+              {joinRequestCount ? (
+                <span className="rounded-full bg-warning px-1.5 py-px font-mono text-[11px] font-bold text-bg">{joinRequestCount}</span>
+              ) : null}
+            </button>
           ) : null}
 
           {/* Club leaders: editing, positions, officials, presidency and deletion live in Settings. */}

@@ -9,7 +9,7 @@ import { Avatar } from "@/components/common/Avatar";
 import { formatMatchTime, formatShortDate } from "@/components/dashboard/fixtures/labels";
 import { CloseIcon } from "@/components/icons";
 import { PaymentModal } from "./PaymentModal";
-import { CommitmentNotice, tk, useTransferLabels } from "./shared";
+import { CommitmentNotice, ModalPortal, tk, useTransferLabels } from "./shared";
 
 const errorMessage = (err: unknown) => {
   const data = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data;
@@ -93,6 +93,7 @@ export function ContractDocument({
           : statusLabel[offer.status];
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/80 p-4 pt-[3vh] backdrop-blur-md">
       {/* Print only the contract. */}
       <style>{`@media print { body * { visibility: hidden !important; } .contract-print, .contract-print * { visibility: visible !important; } .contract-print { position: absolute; inset: 0; margin: 0; box-shadow: none !important; } .contract-noprint { display: none !important; } }`}</style>
@@ -248,6 +249,7 @@ export function ContractDocument({
         />
       ) : null}
     </div>
+    </ModalPortal>
   );
 }
 

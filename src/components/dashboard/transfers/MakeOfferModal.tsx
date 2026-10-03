@@ -8,7 +8,7 @@ import type { PaymentMethod, PlayerTransferStatus } from "@/lib/api/transfers";
 import { useMockClubs } from "@/lib/mock/communityStore";
 import { CloseIcon } from "@/components/icons";
 import { PaymentModal } from "./PaymentModal";
-import { CommitmentNotice, tk } from "./shared";
+import { CommitmentNotice, ModalPortal, tk } from "./shared";
 
 const errorMessage = (err: unknown) => {
   const data = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data;
@@ -100,6 +100,7 @@ export function MakeOfferModal(props: Props) {
   }
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/80 p-4 pt-[8vh] backdrop-blur-md">
       <button type="button" aria-label={tr.close} onClick={props.onClose} className="fixed inset-0 cursor-default" tabIndex={-1} />
       <div role="dialog" aria-modal="true" className="relative w-full max-w-md rounded-2xl border border-surface-line-strong bg-bg-raised shadow-2xl">
@@ -206,6 +207,7 @@ export function MakeOfferModal(props: Props) {
         />
       ) : null}
     </div>
+    </ModalPortal>
   );
 }
 
