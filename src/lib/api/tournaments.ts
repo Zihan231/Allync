@@ -481,6 +481,10 @@ export interface ReviewGame {
   goalsB: number | null;
   reviewNote: string | null;
   submissions: GameSubmission[];
+  /** Evidence is viewable right away; deciding opens once this is true. */
+  reviewOpen: boolean;
+  /** When deciding opens (end of the evidence window). */
+  reviewOpensAt: string | null;
 }
 
 export interface ReviewDecision {

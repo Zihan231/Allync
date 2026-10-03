@@ -7,7 +7,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
 import { useGameReview, useReviewGame } from "@/lib/api/hooks/useTournaments";
 import type { GameSubmission, ReviewGame } from "@/lib/api/tournaments";
-import { GAME_STATUS_CLASSES, gameStatusLabel, roundLabel } from "./labels";
+import { GAME_STATUS_CLASSES, formatMatchTime, gameStatusLabel, roundLabel } from "./labels";
 
 const digitsOnly = (value: string) => value.replace(/\D/g, "").slice(0, 2);
 
@@ -63,6 +63,8 @@ export function ReviewGameModal({
   const submissionFor = (side: "A" | "B") => game?.submissions.find((s) => s.side === side) ?? null;
   const [subA, subB] = [submissionFor("A"), submissionFor("B")];
   const mismatch = Boolean(subA && subB && (subA.goalsA !== subB.goalsA || subA.goalsB !== subB.goalsB));
+  // Evidence is viewable early; approve / reject wait for the upload window to close.
+  const locked = Boolean(game && !game.reviewOpen);
 
   async function submit(action: "approve" | "reject") {
     if (!game) return;
@@ -194,6 +196,11 @@ export function ReviewGameModal({
           </div>
         ) : (
           <div className="space-y-5 px-6 py-5">
+            {locked ? (
+              <div className="rounded-xl border border-blue/40 bg-blue-soft px-4 py-2.5 text-xs font-semibold text-blue-ink">
+                {format(rv.earlyBanner, { time: game.reviewOpensAt ? formatMatchTime(game.reviewOpensAt, locale) : "—" })}
+              </div>
+            ) : null}
             {mismatch ? (
               <div className="rounded-xl border border-warning/40 bg-warning-soft px-4 py-2.5 text-xs font-semibold text-warning-ink">{rv.mismatch}</div>
             ) : null}
@@ -268,10 +275,10 @@ export function ReviewGameModal({
             </>
           ) : (
             <>
-              <button type="button" onClick={() => setRejecting(true)} disabled={mutation.isPending || !game} className="rounded-full border border-danger/50 bg-danger-soft px-4 py-2 text-xs font-bold text-danger-ink transition-colors hover:bg-danger hover:text-white disabled:opacity-40">
+              <button type="button" onClick={() => setRejecting(true)} disabled={mutation.isPending || !game || locked} className="rounded-full border border-danger/50 bg-danger-soft px-4 py-2 text-xs font-bold text-danger-ink transition-colors hover:bg-danger hover:text-white disabled:opacity-40">
                 {rv.reject}
               </button>
-              <button type="button" onClick={() => submit("approve")} disabled={mutation.isPending || !game} className="rounded-full bg-success px-6 py-2.5 font-display text-sm font-black text-bg shadow-[0_0_18px_rgba(63,191,127,0.35)] transition-transform hover:-translate-y-0.5 disabled:opacity-40">
+              <button type="button" onClick={() => submit("approve")} disabled={mutation.isPending || !game || locked} className="rounded-full bg-success px-6 py-2.5 font-display text-sm font-black text-bg shadow-[0_0_18px_rgba(63,191,127,0.35)] transition-transform hover:-translate-y-0.5 disabled:opacity-40">
                 {mutation.isPending ? rv.approving : rv.approve}
               </button>
             </>

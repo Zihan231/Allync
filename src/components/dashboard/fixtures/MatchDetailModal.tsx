@@ -139,10 +139,12 @@ export function MatchDetailModal({
                   openTiming={game.id === focusGameId && focusPanel === "time"}
                   onUpload={(resubmit) => setSubmittingGame({ game, resubmit })}
                   onReview={
+                    // Officials can open the evidence as soon as a player uploads;
+                    // deciding opens when the evidence window closes.
                     onReviewGame &&
                     fixtureOpen &&
                     game.evidenceDeadline !== null &&
-                    now > new Date(game.evidenceDeadline).getTime()
+                    (game.submittedSides.length > 0 || now > new Date(game.evidenceDeadline).getTime())
                       ? () => onReviewGame(game.id)
                       : undefined
                   }
@@ -437,7 +439,9 @@ function GameRow({
               onClick={onReview}
               className="rounded-full border border-warning/50 bg-warning-soft px-4 py-1.5 text-xs font-bold text-warning-ink transition-colors hover:bg-warning hover:text-bg"
             >
-              {t.dashboard.review.review}
+              {game.evidenceDeadline && now <= new Date(game.evidenceDeadline).getTime()
+                ? t.dashboard.review.viewEvidence
+                : t.dashboard.review.review}
             </button>
           ) : null}
         </div>

@@ -1269,6 +1269,11 @@ export const translations = {
 
         queueTitle: "Awaiting review",
         queueEmpty: "No results waiting for review.",
+        view: "View",
+        viewEvidence: "View evidence",
+        readyCount: "{n} ready to decide",
+        opensAt: "Review opens {time}",
+        earlyBanner: "You can watch the evidence now. Approving or rejecting opens at {time}, when the players' upload window closes — until then they can still replace their files.",
         queueItem: "{a} vs {b}",
         review: "Review",
         title: "Review game result",
@@ -3323,6 +3328,11 @@ export const translations = {
 
         queueTitle: "যাচাইয়ের অপেক্ষায়",
         queueEmpty: "যাচাইয়ের অপেক্ষায় কোনো রেজাল্ট নেই।",
+        view: "দেখুন",
+        viewEvidence: "প্রমাণ দেখুন",
+        readyCount: "{n}টি সিদ্ধান্তের জন্য প্রস্তুত",
+        opensAt: "রিভিউ শুরু {time}",
+        earlyBanner: "আপনি এখনই প্রমাণ দেখতে পারেন। অনুমোদন বা বাতিল করা যাবে {time} থেকে, যখন প্লেয়ারদের আপলোডের সময় শেষ হবে — ততক্ষণ তারা ফাইল বদলাতে পারবে।",
         queueItem: "{a} বনাম {b}",
         review: "যাচাই করুন",
         title: "গেমের রেজাল্ট যাচাই",
