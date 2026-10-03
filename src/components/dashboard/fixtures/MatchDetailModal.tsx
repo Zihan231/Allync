@@ -415,7 +415,11 @@ function GameRow({
                 {iSubmitted ? <span className="text-[11px] font-semibold text-warning-ink">{r.submittedAwaiting}</span> : null}
                 <button
                   type="button"
-                  onClick={() => onUpload(iSubmitted)}
+                  onClick={() => {
+                    // Close the evidence view so it doesn't sit behind the upload form.
+                    setShowEvidence(false);
+                    onUpload(iSubmitted);
+                  }}
                   className="rounded-full bg-accent px-4 py-1.5 font-display text-xs font-bold text-bg transition-transform hover:-translate-y-0.5"
                 >
                   {iSubmitted || game.status === "rejected" ? r.resubmit : r.submit}
