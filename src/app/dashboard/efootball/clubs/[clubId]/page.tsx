@@ -3,6 +3,7 @@
 import { Suspense, use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { clubJoinBlockReason } from "@/lib/session/createPermissions";
 import { useQueryClient } from "@tanstack/react-query";
@@ -80,7 +81,7 @@ export default function ClubDetailPage({ params }: { params: Promise<{ clubId: s
 
 function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) {
   const { clubId } = use(params);
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user, setClub, refreshSession } = useSession();
   const clubs = useMockClubs();
   const people = useMockPeople();
@@ -137,8 +138,30 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
   const canManageTeams = isMine && (user.club?.role === "President" || user.club?.role === "Manager" || currentUserPerson?.clubRole === "President" || currentUserPerson?.clubRole === "Manager");
   const communityBlockReason = isMine ? null : clubJoinBlockReason(user, t);
   const isTransferLeader = myTransfers?.clubRole === "President" || myTransfers?.clubRole === "General Secretary";
-  const proposalBlockedReason = communityBlockReason ||
-    (isTransferLeader || myTransfers?.contract?.locked ? t.dashboard.transfers.notTransferable : null);
+  const openDealHere = (myTransfers?.offers ?? []).some((o) => o.status === "pending" && o.toClub.id === club?.id);
+  const scheduledMove = (myTransfers?.offers ?? []).some((o) => o.status === "scheduled");
+  const lockedContract = myTransfers?.contract?.locked ? myTransfers.contract : null;
+  // Why "Propose to join" is locked (first reason that applies), or null if it can be used.
+  const proposalBlockedReason =
+    communityBlockReason ||
+    (isTransferLeader
+      ? t.dashboard.transfers.notTransferable
+      : openDealHere
+        ? t.dashboard.transfers.proposalPendingNote
+        : scheduledMove
+          ? t.dashboard.transfers.scheduledBlocked
+          : lockedContract
+            ? format(t.dashboard.transfers.lockedUntil, {
+                club: lockedContract.clubName,
+                date: new Date(lockedContract.lockEndsAt).toLocaleDateString(locale === "bn" ? "bn-BD" : "en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }),
+              })
+            : null);
+  // Locked (without a message) until the player's transfer status has loaded.
+  const proposalLocked = Boolean(proposalBlockedReason) || (!isMine && !myTransfers);
 
   const handleLeave = async () => {
     if (!club) return;
@@ -275,11 +298,11 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
             <button
               type="button"
               onClick={() => setProposing(true)}
-              disabled={!!proposalBlockedReason}
+              disabled={proposalLocked}
               title={proposalBlockedReason ?? undefined}
               className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 font-display text-sm font-semibold text-bg disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {proposalBlockedReason ? <LockIcon className="h-3.5 w-3.5" /> : null}
+              {proposalLocked ? <LockIcon className="h-3.5 w-3.5" /> : null}
               {t.dashboard.transfers.proposeJoin}
             </button>
           )}

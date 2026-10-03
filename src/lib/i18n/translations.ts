@@ -2028,6 +2028,10 @@ export const translations = {
         toppedUp: "{amount} tk demo funds added",
         notTransferable: "This player can't be transferred right now.",
         scheduledBadge: "Transfer scheduled",
+        proposalPending: "proposal pending",
+        lockedUntil: "You're under contract with {club} until {date}. You can't propose to clubs before then — but a club can buy you out.",
+        scheduledBlocked: "Your transfer is already agreed and waits for a tournament to end.",
+        proposalPendingNote: "You already have an open deal with this club. Wait until it's accepted, declined or expires — or withdraw it — before sending another.",
       },
       statsInfo: {
         title: "How stats are counted",
@@ -4241,6 +4245,10 @@ export const translations = {
         toppedUp: "{amount} টাকা ডেমো টাকা যোগ হয়েছে",
         notTransferable: "এই প্লেয়ারকে এখন ট্রান্সফার করা যাবে না।",
         scheduledBadge: "ট্রান্সফার নির্ধারিত",
+        proposalPending: "প্রস্তাব অপেক্ষমাণ",
+        lockedUntil: "{date} পর্যন্ত আপনি {club}-এর সাথে চুক্তিবদ্ধ। তার আগে কোনো ক্লাবে প্রস্তাব দিতে পারবেন না — তবে কোনো ক্লাব আপনাকে বাইআউট করতে পারে।",
+        scheduledBlocked: "আপনার ট্রান্সফার ইতিমধ্যে চূড়ান্ত — একটি টুর্নামেন্ট শেষের অপেক্ষায়।",
+        proposalPendingNote: "এই ক্লাবের সাথে আপনার একটি খোলা প্রস্তাব আছে। নতুন প্রস্তাব পাঠানোর আগে সেটি গৃহীত, প্রত্যাখ্যাত বা মেয়াদোত্তীর্ণ হওয়া পর্যন্ত অপেক্ষা করুন — অথবা প্রত্যাহার করুন।",
       },
       statsInfo: {
         title: "পরিসংখ্যান কীভাবে গণনা হয়",

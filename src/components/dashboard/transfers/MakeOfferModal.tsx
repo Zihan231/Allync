@@ -57,6 +57,9 @@ export function MakeOfferModal(props: Props) {
   const [paying, setPaying] = useState(false);
 
   const amountTk = isBuyout ? buyoutPrice : Number(amount || 0);
+  // One open deal per player and club: clubs he already has a pending offer with can't get another.
+  const openWith = new Set((mine?.offers ?? []).filter((o) => o.status === "pending").map((o) => o.toClub.id));
+  const alreadyOpen = props.mode === "proposal" && Boolean(clubId) && openWith.has(clubId);
   const title =
     props.mode === "proposal"
       ? tr.proposeTitle
@@ -83,6 +86,7 @@ export function MakeOfferModal(props: Props) {
   async function submit() {
     setError("");
     if (!clubId) return setError(tr.pickClub);
+    if (alreadyOpen) return setError(tr.proposalPendingNote);
     if (props.mode === "offer" && amountTk > 0) {
       setPaying(true);
       return;
@@ -124,8 +128,9 @@ export function MakeOfferModal(props: Props) {
                   .filter((c) => c.id !== mine?.clubId || !mine?.contract?.locked)
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <option key={c.id} value={c.id} disabled={openWith.has(c.id)}>
                       {c.name}
+                      {openWith.has(c.id) ? ` · ${tr.proposalPending}` : ""}
                     </option>
                   ))}
               </select>
@@ -160,6 +165,12 @@ export function MakeOfferModal(props: Props) {
 
           <p className="rounded-lg bg-surface/60 px-3 py-2 text-xs leading-relaxed text-ink-soft">{hint}</p>
 
+          {alreadyOpen ? (
+            <p className="rounded-lg border border-warning/40 bg-warning-soft px-3 py-2 text-xs font-semibold text-warning-ink">
+              {tr.proposalPendingNote}
+            </p>
+          ) : null}
+
           {error ? (
             <p className="rounded-lg border border-danger/40 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger-ink" role="alert">
               {error}
@@ -169,7 +180,7 @@ export function MakeOfferModal(props: Props) {
           <button
             type="button"
             onClick={submit}
-            disabled={create.isPending}
+            disabled={create.isPending || alreadyOpen}
             className="w-full rounded-full bg-accent py-2.5 font-display text-sm font-black text-bg disabled:opacity-50"
           >
             {props.mode === "proposal"
