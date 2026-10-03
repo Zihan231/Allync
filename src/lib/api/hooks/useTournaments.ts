@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  getMyEvidence,
   getMyGames,
   type MyGamesParams,
   getTournaments,
@@ -43,7 +44,17 @@ export const tournamentKeys = {
   reviewGame: (id: string, gameId: string) => ["tournaments", "review-game", id, gameId] as const,
   clubCommitments: (id: string, clubId: string) => ["tournaments", "club-commitments", id, clubId] as const,
   myGames: (params: MyGamesParams) => ["tournaments", "my-games", params] as const,
+  myEvidence: (id: string, gameId: string) => ["tournaments", "my-evidence", id, gameId] as const,
 };
+
+/** The player's own uploaded evidence for a game; loads only when `enabled` (e.g. the panel is open). */
+export function useMyEvidence(tournamentId: string, gameId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: tournamentKeys.myEvidence(tournamentId, gameId),
+    queryFn: () => getMyEvidence(tournamentId, gameId),
+    enabled,
+  });
+}
 
 /** The signed-in player's games (Matches page). Keeps the last page on screen while the next loads. */
 export function useMyGames(params: MyGamesParams) {
@@ -178,8 +189,10 @@ export function useSubmitGameResult(tournamentId: string) {
     { gameId: string; input: GameResultInput; onProgress?: (percent: number) => void }
   >({
     mutationFn: ({ gameId, input, onProgress }) => submitGameResult(tournamentId, gameId, input, onProgress),
-    onSuccess: () => {
+    onSuccess: (_saved, { gameId }) => {
       queryClient.invalidateQueries({ queryKey: tournamentKeys.structure(tournamentId) });
+      // A re-upload replaces the files shown in "View my evidence".
+      queryClient.invalidateQueries({ queryKey: tournamentKeys.myEvidence(tournamentId, gameId) });
     },
   });
 }

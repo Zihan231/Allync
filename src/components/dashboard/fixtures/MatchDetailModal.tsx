@@ -22,6 +22,7 @@ import {
   toLocalTimeInput,
 } from "./labels";
 import { SubmitResultModal } from "./SubmitResultModal";
+import { MyEvidencePanel } from "./MyEvidencePanel";
 import { useNow } from "./useNow";
 
 const FINAL_GAME_STATUSES = ["approved", "walkover", "forfeited"];
@@ -200,6 +201,7 @@ function GameRow({
   const [editingTime, setEditingTime] = useState(openTiming);
   const [newTime, setNewTime] = useState(() => (game.scheduledStart ? toLocalTimeInput(game.scheduledStart) : ""));
   const [error, setError] = useState("");
+  const [showEvidence, setShowEvidence] = useState(false);
 
   useEffect(() => {
     if (!focused) return;
@@ -395,8 +397,18 @@ function GameRow({
       ) : null}
 
       {/* Actions */}
-      {(mySide && !isFinal) || onReview ? (
+      {(mySide && (!isFinal || iSubmitted)) || onReview ? (
         <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
+          {mySide && iSubmitted ? (
+            <button
+              type="button"
+              onClick={() => setShowEvidence((open) => !open)}
+              aria-expanded={showEvidence}
+              className="rounded-full border border-surface-line-strong px-4 py-1.5 text-xs font-bold text-ink-soft transition-colors hover:border-accent hover:text-ink"
+            >
+              {showEvidence ? r.hideMyEvidence : r.viewMyEvidence}
+            </button>
+          ) : null}
           {mySide && !isFinal ? (
             canUpload ? (
               <>
@@ -426,6 +438,7 @@ function GameRow({
           ) : null}
         </div>
       ) : null}
+      {mySide && iSubmitted && showEvidence ? <MyEvidencePanel tournamentId={tournamentId} gameId={game.id} /> : null}
     </li>
   );
 }

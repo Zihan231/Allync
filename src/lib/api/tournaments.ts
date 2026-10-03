@@ -592,3 +592,9 @@ export async function getMyGames(params: MyGamesParams): Promise<MyGamesResponse
   const res = await api.get<MyGamesResponse>("/tournaments/my-games", { params });
   return res.data;
 }
+
+/** The signed-in player's own uploaded evidence for one of their games, or null before they upload. */
+export async function getMyEvidence(tournamentId: string, gameId: string): Promise<GameSubmission | null> {
+  const res = await api.get<GameSubmission | null>(`/tournaments/${tournamentId}/games/${gameId}/my-evidence`);
+  return res.data || null;
+}
