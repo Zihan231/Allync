@@ -34,7 +34,8 @@ import { ClubLatestTournaments } from "@/components/dashboard/ClubLatestTourname
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { MakeOfferModal } from "@/components/dashboard/transfers/MakeOfferModal";
 import { useLeaveClub } from "@/lib/api/hooks/useClubs";
-import { useMyTransfers } from "@/lib/api/hooks/useTransfers";
+import { useCancelTransferOffer, useMyTransfers } from "@/lib/api/hooks/useTransfers";
+import { formatMatchTime } from "@/components/dashboard/fixtures/labels";
 import { UsersIcon, TrophyIcon, FacebookIcon, SettingsIcon, LockIcon } from "@/components/icons";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useToast } from "@/lib/useToast";
@@ -138,7 +139,18 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
   const canManageTeams = isMine && (user.club?.role === "President" || user.club?.role === "Manager" || currentUserPerson?.clubRole === "President" || currentUserPerson?.clubRole === "Manager");
   const communityBlockReason = isMine ? null : clubJoinBlockReason(user, t);
   const isTransferLeader = myTransfers?.clubRole === "President" || myTransfers?.clubRole === "General Secretary";
-  const openDealHere = (myTransfers?.offers ?? []).some((o) => o.status === "pending" && o.toClub.id === club?.id);
+  const openDealHere = (myTransfers?.offers ?? []).find((o) => o.status === "pending" && o.toClub.id === club?.id) ?? null;
+  const cancelOffer = useCancelTransferOffer();
+  /** Withdraw the open proposal to this club; "Propose to join" unlocks again. */
+  const withdrawProposal = async () => {
+    if (!openDealHere) return;
+    try {
+      await cancelOffer.mutateAsync(openDealHere.id);
+      toast(t.dashboard.transfers.withdrawnToast, "success");
+    } catch (err: any) {
+      toast(err?.response?.data?.message || t.dashboard.transfers.errGeneric, "error");
+    }
+  };
   const scheduledMove = (myTransfers?.offers ?? []).some((o) => o.status === "scheduled");
   const lockedContract = myTransfers?.contract?.locked ? myTransfers.contract : null;
   // Why "Propose to join" is locked (first reason that applies), or null if it can be used.
@@ -309,7 +321,27 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
         </div>
       </div>
 
-      {proposalBlockedReason ? (
+      {openDealHere && openDealHere.kind === "player_proposal" ? (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning-soft/40 px-4 py-3">
+          <p className="flex items-start gap-1.5 text-xs font-semibold text-warning-ink">
+            <LockIcon className="mt-px h-3.5 w-3.5 shrink-0" />
+            <span>
+              {format(t.dashboard.transfers.yourProposalHere, {
+                amount: `৳${openDealHere.amountTk.toLocaleString("en-US")}`,
+                time: formatMatchTime(openDealHere.expiresAt, locale),
+              })}
+            </span>
+          </p>
+          <button
+            type="button"
+            onClick={withdrawProposal}
+            disabled={cancelOffer.isPending}
+            className="rounded-full border border-danger/50 bg-bg/40 px-4 py-1.5 text-xs font-bold text-danger-ink hover:bg-danger-soft disabled:opacity-50"
+          >
+            {t.dashboard.transfers.withdraw}
+          </button>
+        </div>
+      ) : proposalBlockedReason ? (
         <p className="mt-3 flex items-start gap-1.5 font-mono text-xs text-warning-ink">
           <LockIcon className="mt-px h-3.5 w-3.5 shrink-0" />
           <span>{proposalBlockedReason}</span>

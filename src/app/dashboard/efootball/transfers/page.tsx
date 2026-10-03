@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { ContractDocument } from "@/components/dashboard/transfers/ContractDocument";
 import { MakeOfferModal } from "@/components/dashboard/transfers/MakeOfferModal";
 import { OfferCard } from "@/components/dashboard/transfers/OfferCard";
+import { ProposalList } from "@/components/dashboard/transfers/ProposalList";
 import { TransferHistoryList } from "@/components/dashboard/transfers/TransferHistoryList";
 import { WalletCard } from "@/components/dashboard/transfers/WalletCard";
 import { CommitmentNotice, TransferFeeBadge } from "@/components/dashboard/transfers/shared";
@@ -22,12 +23,12 @@ export default function TransfersPage() {
   const { user } = useSession();
   const { data, isLoading } = useMyTransfers();
   const { toasts, toast, dismiss } = useToast();
-  const [proposing, setProposing] = useState(false);
+  // Propose form: open with no club picked (null clubId) or for one club.
+  const [proposing, setProposing] = useState<{ clubId?: string } | null>(null);
   const [contract, setContract] = useState<{ offerId: string; signAs?: "player" | "club" } | null>(null);
 
   const offers = data?.offers ?? [];
   const received = offers.filter((o) => o.kind !== "player_proposal");
-  const sent = offers.filter((o) => o.kind === "player_proposal");
   const isClubLeader = data?.clubRole === "President" || data?.clubRole === "General Secretary";
   const lockedHere = Boolean(data?.contract?.locked);
 
@@ -50,7 +51,7 @@ export default function TransfersPage() {
                 {!isClubLeader && !lockedHere ? (
                   <button
                     type="button"
-                    onClick={() => setProposing(true)}
+                    onClick={() => setProposing({})}
                     className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-xs font-bold text-bg"
                   >
                     <PlusIcon className="h-3.5 w-3.5" />
@@ -91,7 +92,7 @@ export default function TransfersPage() {
             {/* Offers */}
             <section className="rounded-2xl border border-surface-line bg-surface/50 p-5">
               <h2 className="font-display text-base font-black text-ink">{tr.offersTitle}</h2>
-              {offers.length === 0 ? (
+              {received.length === 0 ? (
                 <p className="mt-3 text-sm text-ink-soft">{tr.noOffers}</p>
               ) : (
                 <div className="mt-4 space-y-4">
@@ -105,18 +106,21 @@ export default function TransfersPage() {
                       </ul>
                     </div>
                   ) : null}
-                  {sent.length ? (
-                    <div>
-                      <h3 className="mb-2 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-faint">{tr.outgoing}</h3>
-                      <ul className="space-y-3">
-                        {sent.map((o) => (
-                          <OfferCard key={o.id} offer={o} viewer="player" canAct onOpenContract={(id, signAs) => setContract({ offerId: id, signAs })} onToast={toast} />
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
                 </div>
               )}
+            </section>
+
+            {/* Every club he proposed to: withdraw open ones, propose again to closed ones. */}
+            <section className="rounded-2xl border border-surface-line bg-surface/50 p-5">
+              <h2 className="font-display text-base font-black text-ink">{tr.myProposals}</h2>
+              <ProposalList
+                proposals={data.proposals ?? []}
+                openClubIds={new Set(offers.filter((o) => o.status === "pending").map((o) => o.toClub.id))}
+                canPropose={!isClubLeader && !lockedHere}
+                onProposeAgain={(clubId) => setProposing({ clubId })}
+                onOpenContract={(offerId) => setContract({ offerId })}
+                onToast={toast}
+              />
             </section>
 
             {/* History */}
@@ -132,7 +136,9 @@ export default function TransfersPage() {
         </div>
       )}
 
-      {proposing ? <MakeOfferModal mode="proposal" onClose={() => setProposing(false)} onToast={toast} /> : null}
+      {proposing ? (
+        <MakeOfferModal mode="proposal" clubId={proposing.clubId} onClose={() => setProposing(null)} onToast={toast} />
+      ) : null}
       {contract ? (
         <ContractDocument
           offerId={contract.offerId}

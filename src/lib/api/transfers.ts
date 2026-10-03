@@ -92,6 +92,8 @@ export interface MyTransfers {
   contract: ContractView | null;
   commitment: ClubCommitment | null;
   offers: TransferOffer[];
+  /** His recent proposals to clubs (open and closed), newest first. */
+  proposals: TransferOffer[];
   wallet: WalletView;
 }
 
