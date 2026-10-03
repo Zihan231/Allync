@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { format } from "@/lib/i18n/translations";
+import type { ContractView } from "@/lib/api/transfers";
 import type { PlayerStatsRow } from "@/lib/api/stats";
 import type { useMockPeople } from "@/lib/mock/communityStore";
+import { formatShortDate } from "./fixtures/labels";
 import { Avatar } from "../common/Avatar";
 import { RankBadge } from "./RankBadge";
 import { StatusPill, type StatusTone } from "./StatusPill";
@@ -39,11 +42,12 @@ const TEAM_ACCENT: Record<SquadTeam, { bar: string; card: string; ring: string; 
 export function SquadPlayerCard({
   person,
   row,
-  contractDays,
+  contract,
 }: {
   person: Person;
   row: PlayerStatsRow;
-  contractDays: number;
+  /** undefined while loading, null when this member has no player contract. */
+  contract: ContractView | null | undefined;
 }) {
   const { t } = useLanguage();
   const squadTeam: SquadTeam = person.squadTeam ?? "Main";
@@ -105,9 +109,7 @@ export function SquadPlayerCard({
 
         <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
           <StatusPill tone={accent.pillTone}>{teamLabel}</StatusPill>
-          <StatusPill tone={contractDays < 30 ? "warning" : "neutral"}>
-            {t.dashboard.clubSquad.contractExpiresLabel}: {contractDays}d
-          </StatusPill>
+          <SquadContractPill contract={contract} />
         </div>
       </div>
 
@@ -161,5 +163,43 @@ export function SquadPlayerCard({
         </div>
       </div>
     </div>
+  );
+}
+
+/** Public contract duration shown consistently in both squad grid and table views. */
+export function SquadContractPill({ contract }: { contract: ContractView | null | undefined }) {
+  const { t, locale } = useLanguage();
+  const tr = t.dashboard.transfers;
+  const tone: StatusTone =
+    contract === undefined || contract === null
+      ? "neutral"
+      : !contract.locked
+        ? "accent"
+        : contract.daysLeft <= 7
+          ? "danger"
+          : contract.daysLeft <= 30
+            ? "warning"
+            : "success";
+  const value =
+    contract === undefined
+      ? "..."
+      : contract === null
+        ? tr.noContractYet
+        : contract.locked
+          ? format(tr.daysLeft, { n: contract.daysLeft })
+          : tr.freeAgent;
+  const title =
+    contract?.locked
+      ? `${format(tr.daysLeft, { n: contract.daysLeft })} · ${format(tr.lockEnds, { date: formatShortDate(contract.lockEndsAt, locale) })}`
+      : contract
+        ? tr.lockOver
+        : tr.noContractYet;
+
+  return (
+    <span title={title}>
+      <StatusPill tone={tone}>
+        {t.dashboard.clubSquad.contractExpiresLabel}: {value}
+      </StatusPill>
+    </span>
   );
 }

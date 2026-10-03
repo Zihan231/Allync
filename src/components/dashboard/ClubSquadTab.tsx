@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAllPlayerStats } from "@/lib/api/hooks/useStats";
+import { useClubTransfers } from "@/lib/api/hooks/useTransfers";
 import type { PlayerStatsRow } from "@/lib/api/stats";
 import type { Club } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
-import { SquadPlayerCard } from "./SquadPlayerCard";
+import { SquadContractPill, SquadPlayerCard } from "./SquadPlayerCard";
 import { StatsInfoPanel } from "./StatsInfoPanel";
 import { EmptyState } from "./EmptyState";
 import { Pagination } from "./Pagination";
 import { StatusPill } from "./StatusPill";
 import { Avatar } from "../common/Avatar";
-import { UsersIcon, SearchIcon, TrophyIcon } from "../icons";
+import { UsersIcon, SearchIcon } from "../icons";
 
 type Person = ReturnType<typeof useMockPeople>[number];
 type TeamFilter = "all" | "Main" | "Academy" | "Legend";
@@ -27,11 +28,9 @@ const PAGE_SIZE_OPTIONS = [8, 12, 24];
 export function ClubSquadTab({
   club,
   members,
-  contractDaysById,
 }: {
   club: Club;
   members: Person[];
-  contractDaysById: Map<string, number>;
 }) {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
@@ -48,6 +47,13 @@ export function ClubSquadTab({
     clubId: club.id,
     period: dataScope === "alltime" ? "all-time" : "this-month",
   });
+  // This endpoint deliberately exposes squad contracts publicly; wallet and
+  // offer details are still returned only to the club's President / GS.
+  const { data: transferData } = useClubTransfers(club.id);
+  const contractByUserId = useMemo(
+    () => new Map((transferData?.squad ?? []).map((member) => [member.userId, member.contract])),
+    [transferData?.squad],
+  );
   const rows: PlayerStatsRow[] = useMemo(() => {
     const byId = new Map((stats ?? []).map((r) => [r.id, r]));
     return members.map((p) => byId.get(p.id) ?? emptyStatsRow(p, club.name));
@@ -109,10 +115,6 @@ export function ClubSquadTab({
   const startIndex = (page - 1) * pageSize;
   const pageRows = filtered.slice(startIndex, startIndex + pageSize);
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, teamFilter, lineupFilter, dataScope, sortBy, pageSize]);
-
   const teamOptions: { key: TeamFilter; label: string }[] = [
     { key: "all", label: t.dashboard.clubSquad.teamFilterAll },
     { key: "Main", label: t.dashboard.clubSquad.squadTeamMain },
@@ -138,7 +140,10 @@ export function ClubSquadTab({
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search players by name, #, position..."
             className="w-full rounded-lg border border-surface-line-strong bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
           />
@@ -171,7 +176,10 @@ export function ClubSquadTab({
             <span>Per page:</span>
             <select
               value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
               className="rounded-lg border border-surface-line-strong bg-surface px-2 py-1 text-xs text-ink focus:border-accent focus:outline-none"
             >
               {PAGE_SIZE_OPTIONS.map((size) => (
@@ -192,7 +200,10 @@ export function ClubSquadTab({
             <button
               key={opt.key}
               type="button"
-              onClick={() => setTeamFilter(opt.key)}
+              onClick={() => {
+                setTeamFilter(opt.key);
+                setPage(1);
+              }}
               className={`rounded-full border px-3.5 py-1 text-xs font-medium transition-colors ${
                 teamFilter === opt.key
                   ? "border-blue bg-blue-soft text-blue-ink"
@@ -210,7 +221,10 @@ export function ClubSquadTab({
             <button
               key={opt.key}
               type="button"
-              onClick={() => setLineupFilter(opt.key)}
+              onClick={() => {
+                setLineupFilter(opt.key);
+                setPage(1);
+              }}
               className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                 lineupFilter === opt.key
                   ? "border-accent bg-accent-soft text-accent-ink"
@@ -228,7 +242,10 @@ export function ClubSquadTab({
             {t.dashboard.clubSquad.sortByLabel}
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              onChange={(e) => {
+                setSortBy(e.target.value as SortBy);
+                setPage(1);
+              }}
               className="rounded-lg border border-surface-line-strong bg-surface px-2 py-1 text-xs text-ink focus:border-accent focus:outline-none"
             >
               <option value="rank">Rank</option>
@@ -244,7 +261,10 @@ export function ClubSquadTab({
             {t.dashboard.clubSquad.dataScopeLabel}
             <select
               value={dataScope}
-              onChange={(e) => setDataScope(e.target.value as DataScope)}
+              onChange={(e) => {
+                setDataScope(e.target.value as DataScope);
+                setPage(1);
+              }}
               className="rounded-lg border border-surface-line-strong bg-surface px-2 py-1 text-xs text-ink focus:border-accent focus:outline-none"
             >
               <option value="alltime">{t.dashboard.clubSquad.dataScopeAllTime}</option>
@@ -286,7 +306,7 @@ export function ClubSquadTab({
                   key={row.id}
                   person={person}
                   row={row}
-                  contractDays={contractDaysById.get(person.id) ?? 30}
+                  contract={transferData ? (contractByUserId.get(person.id) ?? null) : undefined}
                 />
               );
             })}
@@ -309,6 +329,7 @@ export function ClubSquadTab({
                   <th className="px-4 py-3">Role</th>
                   <th className="px-4 py-3">Squad Team</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">{t.dashboard.clubSquad.contractExpiresLabel}</th>
                   <th className="px-4 py-3 text-right">Points</th>
                   <th className="px-4 py-3 text-right">Action</th>
                 </tr>
@@ -361,6 +382,11 @@ export function ClubSquadTab({
                         >
                           {person.lineupStatus ?? "None"}
                         </StatusPill>
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        <SquadContractPill
+                          contract={transferData ? (contractByUserId.get(person.id) ?? null) : undefined}
+                        />
                       </td>
                       <td className="px-4 py-3 text-right font-mono text-xs font-bold text-ink">
                         {row.PTS.toLocaleString()}

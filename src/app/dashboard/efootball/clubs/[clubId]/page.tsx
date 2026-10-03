@@ -364,7 +364,7 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
         ) : null}
         {tab === "fixtures" ? <ClubFixturesTab club={club} members={members} /> : null}
         {tab === "squad" ? (
-          <ClubSquadTab club={club} members={members} contractDaysById={insights.contractDaysById} />
+          <ClubSquadTab club={club} members={members} />
         ) : null}
         {tab === "teams" ? <ClubTeamsTab clubId={club.id} canManage={canManageTeams} club={club} /> : null}
         {tab === "transfers" ? <ClubTransfersTab club={club} /> : null}
