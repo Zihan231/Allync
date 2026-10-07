@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { useSession } from "@/lib/session/SessionContext";
 import { games } from "@/lib/games";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusPill } from "@/components/dashboard/StatusPill";
@@ -11,32 +10,6 @@ import { ArrowRightIcon } from "@/components/icons";
 
 export default function DashboardHubPage() {
   const { t } = useLanguage();
-  const { user } = useSession();
-
-  if (user.mode === "organizer") {
-    return (
-      <div className="mx-auto max-w-2xl">
-        <div className="rounded-2xl border border-surface-line bg-surface/50 p-8 text-center">
-          <div className="font-mono text-xs uppercase tracking-widest text-blue-ink">
-            {t.dashboard.shell.modeOrganizer}
-          </div>
-          <h1 className="font-display mt-3 text-2xl font-bold text-ink">
-            {t.dashboard.hub.organizerTitle}
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-            {t.dashboard.hub.organizerBody}
-          </p>
-          <Link
-            href="/dashboard/organizer"
-            className="group mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-display font-semibold text-bg transition-transform hover:-translate-y-0.5"
-          >
-            {t.dashboard.hub.organizerCta}
-            <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>

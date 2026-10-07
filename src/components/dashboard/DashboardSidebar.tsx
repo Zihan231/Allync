@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession, type Mode } from "@/lib/session/SessionContext";
+import { hasRole } from "@/lib/api/admin";
 import { RoleToggle } from "../auth/RoleToggle";
 import {
   HomeIcon,
@@ -15,11 +16,10 @@ import {
   WalletIcon,
   StoreIcon,
   ShieldIcon,
-  PlusIcon,
-  GavelIcon,
   ChartIcon,
   LockIcon,
-  SettingsIcon,
+  TrashIcon,
+  ClockIcon,
 } from "../icons";
 
 type NavItem = {
@@ -36,14 +36,15 @@ export function DashboardSidebar({
   onClose: () => void;
 }) {
   const { t } = useLanguage();
-  const { user, setMode } = useSession();
+  const { user } = useSession();
   const pathname = usePathname();
   const router = useRouter();
+  const isStaff = Boolean(user.systemRole);
+  const mode: Mode = isStaff && pathname.startsWith("/dashboard/admin") ? "admin" : "player";
 
-  const handleModeChange = (mode: Mode) => {
-    setMode(mode);
+  const handleModeChange = (next: Mode) => {
     onClose();
-    router.push(mode === "organizer" ? "/dashboard/organizer" : "/dashboard");
+    router.push(next === "admin" ? "/dashboard/admin" : "/dashboard");
   };
 
   const playerBase = `/dashboard/${user.activeGame}`;
@@ -68,23 +69,25 @@ export function DashboardSidebar({
     { href: `${playerBase}/profile`, label: t.dashboard.shell.navProfile, icon: ChartIcon },
   ];
 
-  const organizerItems: NavItem[] = [
-    { href: "/dashboard/organizer", label: t.dashboard.shell.navOrganizerOverview, icon: HomeIcon },
-    { href: "/dashboard/organizer/tournaments", label: t.dashboard.shell.navMyTournaments, icon: TrophyIcon },
-    { href: "/dashboard/organizer/tournaments/create", label: t.dashboard.shell.navCreateTournament, icon: PlusIcon },
-    { href: "/dashboard/organizer/disputes", label: t.dashboard.shell.navDisputes, icon: GavelIcon },
-    { href: "/dashboard/organizer/payouts", label: t.dashboard.shell.navPayouts, icon: WalletIcon },
-    { href: "/dashboard/organizer/verification", label: t.dashboard.shell.navVerification, icon: LockIcon },
-    ...(!user.community || user.community.role !== "Member"
-      ? [{ href: "/dashboard/organizer/community", label: t.dashboard.shell.navCommunityMgmt, icon: ShieldIcon }]
+  const adminItems: NavItem[] = [
+    { href: "/dashboard/admin", label: t.admin.nav.dashboard, icon: ChartIcon },
+    { href: "/dashboard/admin/users", label: t.admin.nav.users, icon: UsersIcon },
+    { href: "/dashboard/admin/verification", label: t.admin.nav.verification, icon: LockIcon },
+    ...(hasRole(user.systemRole, "admin")
+      ? [
+          { href: "/dashboard/admin/content", label: t.admin.nav.content, icon: TrophyIcon },
+          { href: "/dashboard/admin/bin", label: t.admin.nav.bin, icon: TrashIcon },
+        ]
       : []),
-    { href: "/dashboard/organizer/settings", label: t.dashboard.shell.navSettings, icon: SettingsIcon },
+    ...(hasRole(user.systemRole, "super_admin")
+      ? [{ href: "/dashboard/admin/audit", label: t.admin.nav.audit, icon: ClockIcon }]
+      : []),
   ];
 
-  const items = user.mode === "player" ? playerItems : organizerItems;
+  const items = mode === "admin" ? adminItems : playerItems;
 
   const isActive = (href: string) =>
-    href === playerBase || href === "/dashboard/organizer"
+    href === playerBase || href === "/dashboard/admin"
       ? pathname === href
       : pathname.startsWith(href);
 
@@ -114,9 +117,11 @@ export function DashboardSidebar({
   return (
     <>
       <aside className="fixed top-14 min-[400px]:top-16 left-0 bottom-0 z-20 hidden w-60 shrink-0 overflow-y-auto border-r border-surface-line/70 bg-bg/95 backdrop-blur-md lg:block">
-        <div className="border-b border-surface-line/70 p-3">
-          <RoleToggle value={user.mode} onChange={handleModeChange} className="w-full" />
-        </div>
+        {isStaff ? (
+          <div className="border-b border-surface-line/70 p-3">
+            <RoleToggle value={mode} onChange={handleModeChange} className="w-full" />
+          </div>
+        ) : null}
         {content}
       </aside>
 
@@ -132,9 +137,11 @@ export function DashboardSidebar({
                 ALL<span className="text-accent">Y</span>NQ
               </Link>
             </div>
-            <div className="border-b border-surface-line/70 p-3">
-              <RoleToggle value={user.mode} onChange={handleModeChange} className="w-full" />
-            </div>
+            {isStaff ? (
+              <div className="border-b border-surface-line/70 p-3">
+                <RoleToggle value={mode} onChange={handleModeChange} className="w-full" />
+              </div>
+            ) : null}
             {content}
           </div>
         </div>

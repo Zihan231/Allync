@@ -12,8 +12,9 @@ import { useMe } from "@/lib/api/hooks/useUsers";
 import { useLoginMutation, useRegisterMutation, useLogoutMutation } from "@/lib/api/hooks/useAuth";
 import { getPerson, getClub, getCommunity, syncFromBackend } from "@/lib/mock/communityStore";
 import type { VerificationLevel } from "@/lib/mock/types";
+import type { SystemRole } from "@/lib/api/admin";
 
-export type Mode = "player" | "organizer";
+export type Mode = "player" | "admin";
 export type GameId = "efootball" | "pubg" | "freefire" | "valorant";
 export type KycStatus = "unverified" | "pending" | "verified";
 export type VerificationStatus = "unverified" | "pending" | "verified";
@@ -53,6 +54,8 @@ export type MockUser = {
   wallet: { balanceBdt: number };
   club: { id: string; name: string; role: ClubRole } | null;
   community: { id: string; name: string; role: CommunityRole } | null;
+  /** Allync staff role; null for everyone else. */
+  systemRole?: SystemRole | null;
   raw?: any;
 };
 
@@ -87,6 +90,7 @@ function emptyUser(): MockUser {
     wallet: { balanceBdt: 0 },
     club: null,
     community: null,
+    systemRole: null,
   };
 }
 
@@ -131,6 +135,7 @@ export function backendUserToMockUser(u: any): MockUser {
             role: (ef.communityRole as CommunityRole) || "Member",
           }
         : null),
+    systemRole: (u?.systemRole as SystemRole | null) ?? null,
     raw: u,
   };
 }

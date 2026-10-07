@@ -21,7 +21,6 @@ import {
   isInstagramUrl,
   isValidPhone,
 } from "@/lib/validation";
-import { getVerificationLevelForDocument } from "@/lib/verification";
 import type {
   BloodGroup,
   DocumentType,
@@ -208,7 +207,9 @@ export function ProfileEditForm() {
   const { t } = useLanguage();
   const pf = t.dashboard.profileForm;
   const dash = pf.notProvided;
-  const { user, refreshSession, setDpUrl, updateProfile, setVerificationStatus, setVerificationLevel } = useSession();
+  const { user, refreshSession, setDpUrl, updateProfile, setVerificationStatus } = useSession();
+  // Staff review state of the uploaded ID (none / pending / approved / rejected), from the server.
+  const reviewStatus: string = user.raw?.verificationStatus ?? (user.verificationStatus === "pending" ? "pending" : "none");
   const person = getPerson(user.id) || getPerson(user.personId);
   const router = useRouter();
 
@@ -356,9 +357,6 @@ export function ProfileEditForm() {
         payload = {
           documentType: form.documentType || null,
           documentDataUrl: form.documentDataUrl || null,
-          verificationLevel: form.documentType
-            ? getVerificationLevelForDocument(form.documentType)
-            : (person?.verificationLevel ?? user.verificationLevel ?? 0),
         };
       }
 
@@ -384,10 +382,8 @@ export function ProfileEditForm() {
         setDpUrl(form.dpUrl);
         updateProfile({ email: form.email });
       } else if (tab === "verification") {
+        // The level is granted by staff after review; until then the document waits in the queue.
         setVerificationStatus(form.documentType ? "pending" : "unverified");
-        if (form.documentType) {
-          setVerificationLevel(getVerificationLevelForDocument(form.documentType));
-        }
       }
 
       if (refreshSession) {
@@ -1074,9 +1070,13 @@ export function ProfileEditForm() {
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-surface-line pb-4">
                 <span className="rounded-full border border-surface-line-strong bg-bg-raised px-3 py-1.5 text-xs font-medium text-ink">
                   {pf.verificationLevelLabel}: {user.verificationLevel ?? 0}
-                  {user.verificationStatus === "pending" ? ` • ${pf.verificationLevelPending}` : ""}
+                  {reviewStatus === "pending" ? ` • ${pf.verificationLevelPending}` : ""}
+                  {reviewStatus === "rejected" ? ` • ${pf.verificationLevelRejected}` : ""}
                 </span>
               </div>
+              {reviewStatus === "rejected" && user.raw?.verificationNote ? (
+                <p className="mt-2 rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger-ink">{user.raw.verificationNote}</p>
+              ) : null}
 
               {editingTab === "verification" ? (
                 <div className="mt-4 space-y-1.5 text-xs text-ink-faint">

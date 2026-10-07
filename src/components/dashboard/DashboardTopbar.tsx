@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { games, getGame } from "@/lib/games";
@@ -23,6 +23,7 @@ export function DashboardTopbar({
 }) {
   const { t } = useLanguage();
   const { user, logout } = useSession();
+  const pathname = usePathname();
   const router = useRouter();
 
   const [gameMenuOpen, setGameMenuOpen] = useState(false);
@@ -72,7 +73,7 @@ export function DashboardTopbar({
       </div>
 
       <div className="flex items-center gap-1 min-[380px]:gap-2 shrink-0">
-        {user.mode === "player" ? (
+        {!pathname.startsWith("/dashboard/admin") ? (
           <div className="relative shrink-0" ref={gameMenuRef}>
             <button
               type="button"

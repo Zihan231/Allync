@@ -3,6 +3,7 @@
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Mode } from "@/lib/session/SessionContext";
 
+/** Player / Admin switch, shown to Allync staff only. */
 export function RoleToggle({
   value,
   onChange,
@@ -15,8 +16,8 @@ export function RoleToggle({
   const { t } = useLanguage();
 
   const options: { value: Mode; label: string }[] = [
-    { value: "player", label: t.auth.player },
-    { value: "organizer", label: t.auth.organizer },
+    { value: "player", label: t.admin.modePlayer },
+    { value: "admin", label: t.admin.modeAdmin },
   ];
 
   return (
@@ -41,7 +42,7 @@ export function RoleToggle({
         ))}
       </div>
       <p className="mt-1.5 text-xs text-ink-faint">
-        {value === "player" ? t.auth.joinAsPlayerHint : t.auth.joinAsOrganizerHint}
+        {value === "player" ? t.auth.joinAsPlayerHint : t.admin.modeHint}
       </p>
     </div>
   );

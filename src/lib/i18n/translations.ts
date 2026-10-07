@@ -1,4 +1,5 @@
 import { Fragment, createElement, type ReactNode } from "react";
+import { adminBn, adminEn } from "./admin";
 
 export type Locale = "en" | "bn";
 
@@ -1008,6 +1009,15 @@ export const translations = {
         "transfer.memberJoined": { title: "New signing", message: "{player} joined {club}." },
         "transfer.memberLeft": { title: "Player transferred", message: "{player} left {fromClub} for {club}." },
         "transfer.renewed": { title: "Contract renewed", message: "{player}'s contract with {club} is renewed (contract {contractNo}). A new lock has started." },
+        "admin.warning": { title: "Warning from ALLYNQ", message: "You received a warning: {reason}" },
+        "admin.suspended": { title: "Account suspended", message: "Your account is suspended until {until}: {reason}" },
+        "admin.unsuspended": { title: "Suspension lifted", message: "Your account suspension has been lifted." },
+        "admin.unbanned": { title: "Ban lifted", message: "Your account ban has been lifted. Welcome back." },
+        "admin.password_reset": { title: "Password reset", message: "An administrator reset your password. Sign in with the new one." },
+        "admin.role_changed": { title: "Staff role changed", message: "Your ALLYNQ staff role is now: {role}." },
+        "admin.message": { title: "Message from ALLYNQ", message: "{message}" },
+        "verification.approved": { title: "Verification approved", message: "Your ID was approved. Verification level {level}." },
+        "verification.rejected": { title: "Verification rejected", message: "Your ID document was rejected: {note} Please upload a clearer document." },
         "transfer.paymentReceived": { title: "Payment received", message: "{amount} tk received from {club} for {player}." },
         "transfer.freeAgent": { title: "You're a free agent", message: "Your lock with {club} has ended. You can propose to any club, or renew." },
         "transfer.freeAgentClub": { title: "Player out of lock", message: "{player}'s lock has ended — renew him before another club signs him." },
@@ -2140,6 +2150,7 @@ export const translations = {
         notProvided: "-----",
         verificationLevelLabel: "Verification Level",
         verificationLevelPending: "Pending review",
+        verificationLevelRejected: "Rejected — upload a new document",
         accountInfo: {
           title: "Account Info",
           emailLabel: "Email Address",
@@ -2242,6 +2253,7 @@ export const translations = {
         demoPersonaDual: "Club + Community President — Sabbir Rahman",
       },
     },
+    admin: adminEn,
   },
   bn: {
     nav: {
@@ -3246,6 +3258,15 @@ export const translations = {
         "transfer.memberJoined": { title: "নতুন সাইনিং", message: "{player} {club}-এ যোগ দিয়েছেন।" },
         "transfer.memberLeft": { title: "প্লেয়ার ট্রান্সফার", message: "{player} {fromClub} ছেড়ে {club}-এ গেছেন।" },
         "transfer.renewed": { title: "চুক্তি নবায়ন", message: "{club}-এর সাথে {player}-এর চুক্তি নবায়ন হয়েছে (চুক্তি {contractNo})। নতুন লক শুরু হয়েছে।" },
+        "admin.warning": { title: "ALLYNQ থেকে সতর্কতা", message: "আপনাকে সতর্ক করা হয়েছে: {reason}" },
+        "admin.suspended": { title: "অ্যাকাউন্ট সাসপেন্ড", message: "আপনার অ্যাকাউন্ট {until} পর্যন্ত সাসপেন্ড: {reason}" },
+        "admin.unsuspended": { title: "সাসপেনশন তোলা হয়েছে", message: "আপনার অ্যাকাউন্টের সাসপেনশন তুলে নেওয়া হয়েছে।" },
+        "admin.unbanned": { title: "ব্যান তোলা হয়েছে", message: "আপনার অ্যাকাউন্টের ব্যান তুলে নেওয়া হয়েছে। আবার স্বাগতম।" },
+        "admin.password_reset": { title: "পাসওয়ার্ড রিসেট", message: "একজন অ্যাডমিন আপনার পাসওয়ার্ড রিসেট করেছেন। নতুনটি দিয়ে সাইন ইন করুন।" },
+        "admin.role_changed": { title: "স্টাফ রোল বদলেছে", message: "ALLYNQ-এ আপনার স্টাফ রোল এখন: {role}।" },
+        "admin.message": { title: "ALLYNQ থেকে বার্তা", message: "{message}" },
+        "verification.approved": { title: "ভেরিফিকেশন অনুমোদিত", message: "আপনার আইডি অনুমোদিত হয়েছে। ভেরিফিকেশন লেভেল {level}।" },
+        "verification.rejected": { title: "ভেরিফিকেশন বাতিল", message: "আপনার আইডি ডকুমেন্ট বাতিল হয়েছে: {note} আরও পরিষ্কার একটি ডকুমেন্ট আপলোড করুন।" },
         "transfer.paymentReceived": { title: "পেমেন্ট প্রাপ্ত", message: "{player}-এর জন্য {club} থেকে {amount} টাকা এসেছে।" },
         "transfer.freeAgent": { title: "আপনি এখন ফ্রি এজেন্ট", message: "{club}-এর সাথে আপনার লক শেষ। এখন যেকোনো ক্লাবে প্রস্তাব দিতে বা নবায়ন করতে পারবেন।" },
         "transfer.freeAgentClub": { title: "প্লেয়ারের লক শেষ", message: "{player}-এর লক শেষ — অন্য ক্লাব নেওয়ার আগে নবায়ন করুন।" },
@@ -4377,6 +4398,7 @@ export const translations = {
         notProvided: "-----",
         verificationLevelLabel: "ভেরিফিকেশন লেভেল",
         verificationLevelPending: "পর্যালোচনাধীন",
+        verificationLevelRejected: "বাতিল — নতুন ডকুমেন্ট আপলোড করুন",
         accountInfo: {
           title: "অ্যাকাউন্ট তথ্য",
           emailLabel: "ইমেইল ঠিকানা",
@@ -4478,6 +4500,7 @@ export const translations = {
         demoPersonaDual: "ক্লাব + কমিউনিটি প্রেসিডেন্ট — সাব্বির রহমান",
       },
     },
+    admin: adminBn,
   },
 } as const;
 
