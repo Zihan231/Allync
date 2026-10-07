@@ -3,6 +3,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import QRCode from "qrcode";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { setupStaffTwoFactor, type TwoFactorChallenge, type TwoFactorSetup } from "@/lib/api/auth";
@@ -17,12 +18,35 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [challenge, setChallenge] = useState<TwoFactorChallenge | null>(null);
   const [twoFactorSetup, setTwoFactorSetup] = useState<TwoFactorSetup | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       router.replace("/dashboard");
     }
   }, [isLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!twoFactorSetup?.otpauthUri) {
+      setQrCodeUrl(null);
+      return;
+    }
+    QRCode.toDataURL(twoFactorSetup.otpauthUri, {
+      width: 224,
+      margin: 1,
+      errorCorrectionLevel: "M",
+    })
+      .then((url) => {
+        if (!cancelled) setQrCodeUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrCodeUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [twoFactorSetup]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -113,7 +137,20 @@ export function LoginForm() {
             </div>
             {twoFactorSetup && (
               <div className="rounded-lg border border-surface-line bg-bg/50 p-3 text-sm text-ink-soft">
-                <p className="mb-2 font-medium text-ink">Authenticator setup key</p>
+                <p className="mb-2 font-medium text-ink">Scan with your authenticator app</p>
+                {qrCodeUrl ? (
+                  <img
+                    src={qrCodeUrl}
+                    alt="Authenticator app setup QR code"
+                    className="mx-auto h-48 w-48 rounded-md bg-white p-2"
+                  />
+                ) : (
+                  <div className="mx-auto flex h-48 w-48 items-center justify-center rounded-md bg-surface text-xs">
+                    Preparing QR code…
+                  </div>
+                )}
+                <p className="mt-3 text-xs">Open Google or Microsoft Authenticator, tap +, then scan this QR code.</p>
+                <p className="mb-2 mt-4 font-medium text-ink">Or enter the setup key manually</p>
                 <code className="block break-all rounded bg-surface px-2 py-1.5 text-xs text-accent-ink">{twoFactorSetup.secret}</code>
                 <p className="mt-2 text-xs">In your authenticator app, choose “enter setup key” and use account name Allync.</p>
               </div>
@@ -138,7 +175,7 @@ export function LoginForm() {
               {loading ? "Verifying…" : "Verify and log in"}
               <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
-            <button type="button" onClick={() => { setChallenge(null); setTwoFactorSetup(null); setError(null); }} className="w-full text-sm text-ink-soft hover:text-ink">
+            <button type="button" onClick={() => { setChallenge(null); setTwoFactorSetup(null); setQrCodeUrl(null); setError(null); }} className="w-full text-sm text-ink-soft hover:text-ink">
               Use a different account
             </button>
           </form>
