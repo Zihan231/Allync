@@ -17,10 +17,13 @@ import {
 } from "@/lib/phone";
 import { FormField } from "./FormField";
 import { ArrowRightIcon } from "../icons";
+import { usePublicSettings } from "@/lib/api/hooks/useAdmin";
 
 export function SignupForm() {
   const { t } = useLanguage();
   const { signup, isAuthenticated, isLoading } = useSession();
+  const { data: platform } = usePublicSettings();
+  const signupsClosed = platform?.features.signupsOpen === false;
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -136,6 +139,10 @@ export function SignupForm() {
         </div>
       )}
 
+      {signupsClosed ? (
+        <div className="mt-5 rounded-lg border border-warning/50 bg-warning-soft px-4 py-3 text-sm text-warning-ink">{t.admin.signupsClosed}</div>
+      ) : null}
+
       <form className="mt-7 grid gap-5 sm:grid-cols-2" onSubmit={handleSubmit}>
         <FormField
           label={t.auth.fullName}
@@ -246,7 +253,7 @@ export function SignupForm() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || signupsClosed}
           className="group flex w-full sm:col-span-2 items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-display font-semibold text-bg shadow-[0_0_24px_rgba(217,165,68,0.3)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
         >
           {loading ? "Creating account..." : t.auth.createAccountButton}

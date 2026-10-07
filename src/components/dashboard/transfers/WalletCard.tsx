@@ -31,6 +31,8 @@ export function WalletCard({
     refund: tr.txRefund,
     payout_sent: tr.txPayout,
     received: tr.txReceived,
+    adjustment: tr.txAdjustment,
+    reversal: tr.txReversal,
   } as const;
 
   async function addFunds() {
@@ -75,7 +77,8 @@ export function WalletCard({
       <ul className="mt-3 divide-y divide-surface-line/70">
         {wallet.transactions.length ? (
           wallet.transactions.slice(0, 8).map((tx) => {
-            const positive = tx.kind === "top_up" || tx.kind === "refund" || tx.kind === "received";
+            // Staff adjustments and reversals can go either way, so the sign decides.
+            const positive = tx.kind !== "payout_sent" && tx.amountTk > 0;
             return (
               <li key={tx.id} className="flex items-center justify-between gap-3 py-2 text-xs">
                 <div className="min-w-0">

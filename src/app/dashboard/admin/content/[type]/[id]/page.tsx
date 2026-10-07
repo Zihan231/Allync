@@ -21,6 +21,7 @@ import {
   type Member,
 } from "@/lib/api/adminManage";
 import { useAdminContent, useManageAction, useManagedClub, useManagedCommunity, useManagedTournament } from "@/lib/api/hooks/useAdmin";
+import { WalletPanel } from "@/components/admin/WalletTools";
 
 type Run = (action: ManageAction, done?: () => void) => Promise<void>;
 
@@ -43,7 +44,7 @@ export default function ManagePage({ params }: { params: Promise<{ type: string;
     <div>
       <BackButton href="/dashboard/admin/content" />
       <div className="mt-4">
-        {type === "club" ? <ClubManage id={id} run={run} busy={mutation.isPending} /> : null}
+        {type === "club" ? <ClubManage id={id} run={run} busy={mutation.isPending} notify={toast} /> : null}
         {type === "community" ? <CommunityManage id={id} run={run} busy={mutation.isPending} /> : null}
         {type === "tournament" ? <TournamentManage id={id} run={run} busy={mutation.isPending} /> : null}
       </div>
@@ -264,7 +265,7 @@ function LeaderRows({ roles, people, onChange, canEdit }: { roles: LeaderRole[];
 
 // --------------------------------------------------------------------- clubs
 
-function ClubManage({ id, run, busy }: { id: string; run: Run; busy: boolean }) {
+function ClubManage({ id, run, busy, notify }: { id: string; run: Run; busy: boolean; notify: (text: string, tone: "success" | "error") => void }) {
   const { t, locale } = useLanguage();
   const tm = t.admin.manage;
   const { data: club, isLoading, error } = useManagedClub(id);
@@ -338,6 +339,10 @@ function ClubManage({ id, run, busy }: { id: string; run: Run; busy: boolean }) 
             </Button>
           </div>
         </Panel>
+      </div>
+
+      <div className="mt-4">
+        <WalletPanel ownerType="club" ownerId={c.id} ownerName={c.name} onMessage={notify} />
       </div>
 
       <Panel title={format(tm.members, { count: c.members.length })} className="mt-4">

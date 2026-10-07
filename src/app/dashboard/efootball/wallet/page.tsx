@@ -50,11 +50,21 @@ export default function WalletPage() {
     refund: tr.txRefund,
     payout_sent: tr.txPayout,
     received: tr.txReceived,
+    adjustment: tr.txAdjustment,
+    reversal: tr.txReversal,
   };
   const filterLabel = (k: WalletTxKind | undefined) =>
     !k
       ? tr.filterAll
-      : { received: tr.filterReceived, payout_sent: tr.filterPaid, hold: tr.filterHeld, refund: tr.filterRefund, top_up: tr.filterTopUp }[k];
+      : {
+          received: tr.filterReceived,
+          payout_sent: tr.filterPaid,
+          hold: tr.filterHeld,
+          refund: tr.filterRefund,
+          top_up: tr.filterTopUp,
+          adjustment: tr.txAdjustment,
+          reversal: tr.txReversal,
+        }[k];
   const kindIcon = (k: WalletTxKind) =>
     k === "top_up" ? PlusIcon : k === "hold" ? LockIcon : k === "refund" ? ClockIcon : k === "received" ? WalletIcon : SwapIcon;
 
@@ -168,7 +178,8 @@ export default function WalletPage() {
               <ul className="divide-y divide-surface-line/70 rounded-xl border border-surface-line bg-surface/40">
                 {data.data.map((tx) => {
                   const Icon = kindIcon(tx.kind);
-                  const incoming = tx.kind === "top_up" || tx.kind === "refund" || tx.kind === "received";
+                  // Staff adjustments and reversals can go either way, so the sign decides.
+                  const incoming = tx.kind !== "payout_sent" && tx.amountTk > 0;
                   const neutral = tx.kind === "payout_sent";
                   return (
                     <li key={tx.id} className="flex items-center gap-3 px-4 py-3">

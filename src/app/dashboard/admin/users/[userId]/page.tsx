@@ -32,8 +32,10 @@ import {
 import { SuspendUntilField, localInputValue } from "@/components/admin/SuspendUntilField";
 import { DocumentViewer } from "@/components/admin/DocumentViewer";
 import { tk } from "@/components/dashboard/transfers/shared";
+import { EndLockButton, WalletPanel } from "@/components/admin/WalletTools";
 
 type Tab = "overview" | "logins" | "activity" | "audit";
+const isFuture = (iso: string | null) => Boolean(iso && new Date(iso).getTime() > Date.now());
 const STAFF_ROLES = ["moderator", "admin", "super_admin"];
 type Dialog = "warn" | "suspend" | "unsuspend" | "ban" | "unban" | "logout" | "reset" | "role" | "edit" | "bin" | null;
 
@@ -163,6 +165,19 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ user
 
       <div className="mt-4">
         {tab === "overview" ? <Overview u={u} onViewDocument={() => setShowDoc(true)} /> : null}
+        {tab === "overview" ? (
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <WalletPanel ownerType="user" ownerId={u.id} ownerName={u.name} onMessage={toast} />
+            {u.contractNo && isFuture(u.lockEndsAt) ? (
+              <Panel title={t.admin.user.fields.contract}>
+                <p className="mb-3 text-sm text-ink-soft">
+                  {u.contractNo} · {u.clubName} · {format(t.admin.market.lockedUntil, { date: fmtDate(u.lockEndsAt, locale) })}
+                </p>
+                <EndLockButton userId={u.id} name={u.name} onMessage={toast} />
+              </Panel>
+            ) : null}
+          </div>
+        ) : null}
         {tab === "logins" ? <Logins u={u} /> : null}
         {tab === "activity" ? <Activity userId={u.id} /> : null}
         {tab === "audit" ? <AuditList u={u} /> : null}

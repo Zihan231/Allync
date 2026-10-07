@@ -27,6 +27,7 @@ export function useTransferLabels() {
     declined: tr.statusDeclined,
     cancelled: tr.statusCancelled,
     expired: tr.statusExpired,
+    reversed: tr.statusReversed,
   };
   const method: Record<PaymentMethod, string> = { bkash: tr.methodBkash, nagad: tr.methodNagad, card: tr.methodCard };
   return { tr, kind, status, method };
@@ -39,6 +40,7 @@ export const STATUS_CLASSES: Record<OfferStatus, string> = {
   declined: "bg-danger-soft text-danger-ink",
   cancelled: "bg-surface-line text-ink-faint",
   expired: "bg-surface-line text-ink-faint",
+  reversed: "bg-danger-soft text-danger-ink",
 };
 
 /**

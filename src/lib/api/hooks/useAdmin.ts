@@ -34,6 +34,22 @@ import {
   type DecideInput,
   type DisputeQuery,
 } from "@/lib/api/adminManage";
+import {
+  cancelAnnouncement,
+  createAnnouncement,
+  getAdminOffers,
+  getAnnouncements,
+  getHealth,
+  getLedger,
+  getPlatformSettings,
+  getPublicSettings,
+  getWallet,
+  runPlatformAction,
+  updatePlatformSettings,
+  type AdminOffersQuery,
+  type LedgerQuery,
+  type SettingsSection,
+} from "@/lib/api/adminPlatform";
 
 export const adminKeys = {
   all: ["admin"] as const,
@@ -150,4 +166,58 @@ export function useManagedTournament(id: string | undefined) {
 
 export function useManageAction() {
   return useAdminMutation(runManageAction);
+}
+
+// ---------------------------------------- transfers, settings, announcements, health
+
+export function useAdminOffers(query: AdminOffersQuery) {
+  return useQuery({ queryKey: ["admin", "offers", query], queryFn: () => getAdminOffers(query), placeholderData: keepPreviousData });
+}
+
+export function useLedger(query: LedgerQuery) {
+  return useQuery({ queryKey: ["admin", "ledger", query], queryFn: () => getLedger(query), placeholderData: keepPreviousData });
+}
+
+export function useAdminWallet(ownerType: "user" | "club", ownerId: string | undefined, enabled = true) {
+  return useQuery({ queryKey: ["admin", "wallet", ownerType, ownerId], queryFn: () => getWallet(ownerType, ownerId!), enabled: enabled && Boolean(ownerId) });
+}
+
+export function usePlatformAction() {
+  return useAdminMutation(runPlatformAction);
+}
+
+export function usePlatformSettings(enabled = true) {
+  return useQuery({ queryKey: ["admin", "settings"], queryFn: getPlatformSettings, enabled });
+}
+
+export function useUpdatePlatformSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ section, patch }: { section: SettingsSection; patch: Record<string, unknown> }) => updatePlatformSettings(section, patch),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["admin", "settings"], data);
+      queryClient.invalidateQueries({ queryKey: ["public-settings"] });
+    },
+  });
+}
+
+/** Maintenance and feature switches; refreshed every minute so a banner appears without reloading. */
+export function usePublicSettings() {
+  return useQuery({ queryKey: ["public-settings"], queryFn: getPublicSettings, staleTime: 30_000, refetchInterval: 60_000 });
+}
+
+export function useAnnouncements(params: { page?: number; limit?: number }) {
+  return useQuery({ queryKey: ["admin", "announcements", params], queryFn: () => getAnnouncements(params), placeholderData: keepPreviousData });
+}
+
+export function useCreateAnnouncement() {
+  return useAdminMutation(createAnnouncement);
+}
+
+export function useCancelAnnouncement() {
+  return useAdminMutation(cancelAnnouncement);
+}
+
+export function useHealth() {
+  return useQuery({ queryKey: ["admin", "health"], queryFn: getHealth, refetchInterval: 30_000 });
 }

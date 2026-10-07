@@ -23,6 +23,8 @@ import {
   ClockIcon,
   FlagIcon,
   GavelIcon,
+  BellIcon,
+  SettingsIcon,
 } from "../icons";
 
 type NavItem = {
@@ -86,11 +88,17 @@ export function DashboardSidebar({
     ...(hasRole(user.systemRole, "admin")
       ? [
           { href: "/dashboard/admin/content", label: t.admin.nav.content, icon: TrophyIcon },
+          { href: "/dashboard/admin/transfers", label: t.admin.nav.market, icon: WalletIcon },
+          { href: "/dashboard/admin/announcements", label: t.admin.nav.announce, icon: BellIcon },
           { href: "/dashboard/admin/bin", label: t.admin.nav.bin, icon: TrashIcon },
+          { href: "/dashboard/admin/health", label: t.admin.nav.health, icon: ChartIcon },
         ]
       : []),
     ...(hasRole(user.systemRole, "super_admin")
-      ? [{ href: "/dashboard/admin/audit", label: t.admin.nav.audit, icon: ClockIcon }]
+      ? [
+          { href: "/dashboard/admin/settings", label: t.admin.nav.settings, icon: SettingsIcon },
+          { href: "/dashboard/admin/audit", label: t.admin.nav.audit, icon: ClockIcon },
+        ]
       : []),
   ];
 

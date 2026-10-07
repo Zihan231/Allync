@@ -1,7 +1,7 @@
 import { api } from "./axios";
 
 export type OfferKind = "player_proposal" | "club_offer" | "renewal" | "buyout";
-export type OfferStatus = "pending" | "scheduled" | "completed" | "declined" | "cancelled" | "expired";
+export type OfferStatus = "pending" | "scheduled" | "completed" | "declined" | "cancelled" | "expired" | "reversed";
 export type PaymentMethod = "bkash" | "nagad" | "card";
 export const PAYMENT_METHODS: PaymentMethod[] = ["bkash", "nagad", "card"];
 
@@ -70,7 +70,7 @@ export interface WalletView {
   heldTk: number;
   transactions: Array<{
     id: string;
-    kind: "top_up" | "hold" | "refund" | "payout_sent" | "received";
+    kind: "top_up" | "hold" | "refund" | "payout_sent" | "received" | "adjustment" | "reversal";
     amountTk: number;
     counterparty: string | null;
     reference: string | null;
