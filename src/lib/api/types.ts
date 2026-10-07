@@ -83,6 +83,8 @@ export interface BackendUser {
   documentType: string | null;
   documentDataUrl: string | null;
   verificationLevel: number;
+  /** Platform staff access level; null for ordinary player accounts. */
+  systemRole: "moderator" | "admin" | "super_admin" | null;
   ownedCosmeticIds: string[] | null;
   equippedBadgeId: string | null;
   equippedTitleId: string | null;

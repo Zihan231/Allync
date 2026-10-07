@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useSession();
+  const { user, isAuthenticated, isLoading } = useSession();
   const isHub = pathname === "/dashboard";
 
   const prevPathname = useRef<string | null>(null);
@@ -29,6 +29,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.replace("/login");
     }
   }, [isLoading, isAuthenticated, router]);
+
+  // Staff sign in to operate the platform, so the dashboard root is their
+  // control centre. They can still switch to a specific player game view.
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user.systemRole && pathname === "/dashboard") {
+      router.replace("/dashboard/admin");
+    }
+  }, [isLoading, isAuthenticated, pathname, router, user.systemRole]);
 
   if (isLoading) {
     return <AppLoader />;

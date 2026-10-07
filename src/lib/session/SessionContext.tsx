@@ -9,6 +9,7 @@ import {
 } from "react";
 import { isApiError } from "@/lib/api/axios";
 import {
+  type AuthResponse,
   isTwoFactorChallenge,
   type TwoFactorChallenge,
   verifyStaffTwoFactor,
@@ -159,8 +160,8 @@ type SessionContextValue = {
   setClub: (club: MockUser["club"]) => void;
   setCommunity: (community: MockUser["community"]) => void;
   updateProfile: (input: { name?: string; email?: string }) => void;
-  login: (input: { email: string; name?: string; password?: string }) => Promise<TwoFactorChallenge | null>;
-  completeStaffTwoFactor: (challengeToken: string, code: string) => Promise<void>;
+  login: (input: { email: string; name?: string; password?: string }) => Promise<AuthResponse | TwoFactorChallenge>;
+  completeStaffTwoFactor: (challengeToken: string, code: string) => Promise<AuthResponse>;
   signup: (input: {
     name: string;
     email: string;
@@ -331,7 +332,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     establishSession(res.user);
-    return null;
+    return res;
   };
 
   const completeStaffTwoFactor: SessionContextValue["completeStaffTwoFactor"] = async (
@@ -340,6 +341,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   ) => {
     const res = await verifyStaffTwoFactor(challengeToken, code);
     establishSession(res.user);
+    return res;
   };
 
   const signup: SessionContextValue["signup"] = async ({ name, email, password, phoneNumber, country }) => {

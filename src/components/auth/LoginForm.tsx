@@ -6,7 +6,12 @@ import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { setupStaffTwoFactor, type TwoFactorChallenge, type TwoFactorSetup } from "@/lib/api/auth";
+import {
+  isTwoFactorChallenge,
+  setupStaffTwoFactor,
+  type TwoFactorChallenge,
+  type TwoFactorSetup,
+} from "@/lib/api/auth";
 import { FormField } from "./FormField";
 import { ArrowRightIcon } from "../icons";
 
@@ -64,13 +69,13 @@ export function LoginForm() {
     setLoading(true);
     try {
       const result = await login({ email, password });
-      if (result) {
+      if (isTwoFactorChallenge(result)) {
         setChallenge(result);
         if (result.setupRequired) {
           setTwoFactorSetup(await setupStaffTwoFactor(result.challengeToken));
         }
       } else {
-        router.push("/dashboard");
+        router.push(result.user.systemRole ? "/dashboard/admin" : "/dashboard");
       }
     } catch (err: any) {
       let msg = err?.message ?? "Invalid email or password";
@@ -99,8 +104,8 @@ export function LoginForm() {
     }
     setLoading(true);
     try {
-      await completeStaffTwoFactor(challenge.challengeToken, code);
-      router.push("/dashboard");
+      const result = await completeStaffTwoFactor(challenge.challengeToken, code);
+      router.push(result.user.systemRole ? "/dashboard/admin" : "/dashboard");
     } catch (err: any) {
       setError(typeof err?.message === "string" ? err.message : "Could not verify that code.");
     } finally {

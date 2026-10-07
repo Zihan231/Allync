@@ -52,7 +52,7 @@ export function DashboardSidebar({
 
   const handleModeChange = (next: Mode) => {
     onClose();
-    router.push(next === "admin" ? "/dashboard/admin" : "/dashboard");
+    router.push(next === "admin" ? "/dashboard/admin" : `/dashboard/${user.activeGame}`);
   };
 
   const playerBase = `/dashboard/${user.activeGame}`;
