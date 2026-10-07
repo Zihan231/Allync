@@ -105,10 +105,14 @@ export function useTopUpWallet() {
 }
 
 /** Wallet page: balance, totals and paginated history (mine, or a club's I lead). */
-export function useWalletHistory(params: { clubId?: string; kind?: WalletTxKind; page?: number; limit?: number }) {
+export function useWalletHistory(
+  params: { clubId?: string; kind?: WalletTxKind; page?: number; limit?: number },
+  enabled = true,
+) {
   return useQuery({
     queryKey: transferKeys.wallet(params),
     queryFn: () => getWalletHistory(params),
     placeholderData: (previous) => previous,
+    enabled,
   });
 }

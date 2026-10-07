@@ -88,6 +88,7 @@ export interface TransferSettingsView {
 export interface MyTransfers {
   settings: TransferSettingsView;
   clubId: string | null;
+  clubName: string | null;
   clubRole: string | null;
   contract: ContractView | null;
   commitment: ClubCommitment | null;

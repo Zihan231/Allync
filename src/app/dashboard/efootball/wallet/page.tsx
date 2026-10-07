@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
-import { useSession } from "@/lib/session/SessionContext";
-import { useTopUpWallet, useWalletHistory } from "@/lib/api/hooks/useTransfers";
+import { useMyTransfers, useTopUpWallet, useWalletHistory } from "@/lib/api/hooks/useTransfers";
 import type { WalletTxKind } from "@/lib/api/transfers";
 import { useToast } from "@/lib/useToast";
 import { ToastContainer } from "@/components/common/Toast";
@@ -14,7 +13,7 @@ import { Pagination } from "@/components/dashboard/Pagination";
 import { ContractDocument } from "@/components/dashboard/transfers/ContractDocument";
 import { tk } from "@/components/dashboard/transfers/shared";
 import { formatMatchTime } from "@/components/dashboard/fixtures/labels";
-import { ArrowRightIcon, ClockIcon, LockIcon, PlusIcon, SwapIcon, WalletIcon } from "@/components/icons";
+import { ArrowRightIcon, ClockIcon, LockIcon, PlusIcon, ShieldIcon, SwapIcon, UsersIcon, WalletIcon } from "@/components/icons";
 
 const PAGE_SIZE = 15;
 const FILTERS: Array<WalletTxKind | undefined> = [undefined, "received", "payout_sent", "hold", "refund", "top_up"];
@@ -26,12 +25,18 @@ const FILTERS: Array<WalletTxKind | undefined> = [undefined, "received", "payout
 export default function WalletPage() {
   const { t, locale } = useLanguage();
   const tr = t.dashboard.transfers;
-  const { user } = useSession();
   const { toasts, toast, dismiss } = useToast();
 
-  const leadsClub = Boolean(user.club && (user.club.role === "President" || user.club.role === "General Secretary"));
-  const [scope, setScope] = useState<"me" | "club">("me");
-  const clubId = scope === "club" && leadsClub ? user.club!.id : undefined;
+  // Whether he leads a club comes from the server (the saved session can be out of date).
+  const { data: me } = useMyTransfers();
+  const leadsClub = Boolean(me?.clubId && (me.clubRole === "President" || me.clubRole === "General Secretary"));
+  // Club leaders start on the club wallet (that's where transfer money moves); others on their own.
+  const [chosen, setChosen] = useState<"me" | "club" | null>(null);
+  const scope = chosen ?? (leadsClub ? "club" : "me");
+  const clubId = scope === "club" && leadsClub ? me!.clubId! : undefined;
+  // Balances for the two wallet cards.
+  const { data: mine } = useWalletHistory({ limit: 1 });
+  const { data: club } = useWalletHistory({ clubId: me?.clubId ?? undefined, limit: 1 }, leadsClub);
   const [kind, setKind] = useState<WalletTxKind | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [contractId, setContractId] = useState<string | null>(null);
@@ -64,7 +69,7 @@ export default function WalletPage() {
   }
 
   const switchScope = (next: "me" | "club") => {
-    setScope(next);
+    setChosen(next);
     setKind(undefined);
     setPage(1);
   };
@@ -74,21 +79,42 @@ export default function WalletPage() {
       <PageHeader eyebrow="eFootball" title={t.dashboard.shell.navWallet} />
 
       {leadsClub ? (
-        <div className="mt-6 flex border-b border-surface-line" role="tablist">
-          {(["me", "club"] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              role="tab"
-              aria-selected={scope === s}
-              onClick={() => switchScope(s)}
-              className={`-mb-px border-b-2 px-4 py-2.5 font-display text-sm font-semibold transition-colors ${
-                scope === s ? "border-accent text-accent-ink" : "border-transparent text-ink-soft hover:text-ink"
-              }`}
-            >
-              {s === "me" ? tr.myWallet : format(tr.clubWallet, { club: user.club!.name })}
-            </button>
-          ))}
+        <div className="mt-6 grid gap-3 sm:grid-cols-2" role="tablist">
+          {(["club", "me"] as const).map((s) => {
+            const active = scope === s;
+            const summary = s === "club" ? club : mine;
+            const Icon = s === "club" ? ShieldIcon : UsersIcon;
+            return (
+              <button
+                key={s}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => switchScope(s)}
+                className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition-colors ${
+                  active ? "border-accent bg-accent-soft/40 ring-1 ring-accent/40" : "border-surface-line bg-surface/50 hover:border-surface-line-strong"
+                }`}
+              >
+                <span
+                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                    active ? "bg-accent text-bg" : "bg-surface-line text-ink-soft"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-ink">
+                    {s === "me" ? tr.myWallet : format(tr.clubWallet, { club: me?.clubName ?? "" })}
+                  </span>
+                  <span className="block font-mono text-[11px] text-ink-faint">
+                    {tr.available}
+                    {summary?.heldTk ? ` · ${tr.held} ${tk(summary.heldTk)}` : ""}
+                  </span>
+                </span>
+                <span className="font-display text-xl font-black tabular-nums text-ink">{summary ? tk(summary.balanceTk) : "–"}</span>
+              </button>
+            );
+          })}
         </div>
       ) : null}
 
