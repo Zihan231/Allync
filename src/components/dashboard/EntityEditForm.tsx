@@ -15,6 +15,7 @@ export function EntityEditForm({
   initialDpUrl = null,
   initialCoverUrl = null,
   initialJoinPolicy = "instant",
+  showJoinPolicy = true,
   showLocation = false,
   locationLabel = "Location",
   initialLocation = "",
@@ -28,6 +29,8 @@ export function EntityEditForm({
   initialDpUrl?: string | null;
   initialCoverUrl?: string | null;
   initialJoinPolicy?: JoinPolicy;
+  /** Communities still choose instant / approval joining; clubs join through transfer offers. */
+  showJoinPolicy?: boolean;
   showLocation?: boolean;
   locationLabel?: string;
   initialLocation?: string;
@@ -85,6 +88,7 @@ export function EntityEditForm({
         <ImageUploadControl label={t.dashboard.shared.coverLabel} value={coverUrl} onChange={setCoverUrl} />
       </div>
 
+      {showJoinPolicy ? (
       <div>
         <span className="text-sm font-medium text-ink-soft">{t.dashboard.clubs.joinPolicyLabel}</span>
         <div className="mt-1.5 grid grid-cols-2 gap-2 rounded-lg border border-surface-line bg-surface p-1">
@@ -108,6 +112,7 @@ export function EntityEditForm({
           </button>
         </div>
       </div>
+      ) : null}
 
       <button
         type="submit"

@@ -137,6 +137,7 @@ export default function CreateClubPage() {
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <div className="rounded-xl border border-surface-line bg-surface/50 p-6">
             <EntityEditForm
+              showJoinPolicy={false}
               nameLabel={t.dashboard.clubs.createNameLabel}
               descriptionLabel={t.dashboard.clubs.descriptionLabel}
               submitLabel={createClub.isPending ? t.dashboard.createEntity.creatingClub : t.dashboard.clubs.createSubmit}

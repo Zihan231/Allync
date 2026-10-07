@@ -132,30 +132,6 @@ export async function setClubMatchOfficialsRequest(clubId: string, userIds: stri
   return res.data;
 }
 
-export async function joinClubRequest(clubId: string): Promise<any> {
-  const res = await api.post(`/clubs/${clubId}/join`);
-  return res.data;
-}
-
-export async function getMyClubRequest(clubId: string): Promise<{ hasPendingRequest: boolean; request: any }> {
-  const res = await api.get(`/clubs/${clubId}/my-request`);
-  return res.data;
-}
-
-export async function getClubRequests(clubId: string): Promise<any[]> {
-  const res = await api.get(`/clubs/${clubId}/requests`);
-  return res.data;
-}
-
-export async function reviewClubRequest(
-  clubId: string,
-  requestId: string,
-  status: 'approved' | 'rejected',
-): Promise<any> {
-  const res = await api.post(`/clubs/${clubId}/requests/${requestId}/review`, { status });
-  return res.data;
-}
-
 export async function leaveClubRequest(clubId: string): Promise<any> {
   const res = await api.post(`/clubs/${clubId}/leave`);
   return res.data;

@@ -11,7 +11,6 @@ import { EmptyState } from "./EmptyState";
 import { SearchIcon, TrophyIcon, UsersIcon } from "../icons";
 
 type Person = ReturnType<typeof useMockPeople>[number];
-type JoinFilter = "all" | "instant" | "approval";
 
 export function CommunityClubsTab({
   community,
@@ -24,7 +23,6 @@ export function CommunityClubsTab({
 }) {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
-  const [joinFilter, setJoinFilter] = useState<JoinFilter>("all");
 
   // Member clubs' real ranks: global rank from the stats API, community rank = order among the ranked members.
   const { data: clubStats } = useClubRankings({ communityId: community.id, limit: 100 });
@@ -40,15 +38,9 @@ export function CommunityClubsTab({
   const filtered = memberClubs.filter((club) => {
     const q = search.trim().toLowerCase();
     if (q && !club.name.toLowerCase().includes(q)) return false;
-    if (joinFilter !== "all" && club.joinPolicy !== joinFilter) return false;
     return true;
   });
 
-  const filterOptions: { key: JoinFilter; label: string }[] = [
-    { key: "all", label: t.dashboard.community.quickFilterAll },
-    { key: "instant", label: t.dashboard.community.quickFilterOpen },
-    { key: "approval", label: t.dashboard.community.quickFilterApproval },
-  ];
 
   return (
     <div>
@@ -62,22 +54,6 @@ export function CommunityClubsTab({
             placeholder={t.dashboard.community.searchPlaceholder}
             className="w-full rounded-lg border border-surface-line-strong bg-surface py-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-faint"
           />
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {filterOptions.map((opt) => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => setJoinFilter(opt.key)}
-              className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                joinFilter === opt.key
-                  ? "border-blue bg-blue-soft text-blue-ink"
-                  : "border-surface-line-strong text-ink-soft hover:text-ink"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
         </div>
       </div>
 

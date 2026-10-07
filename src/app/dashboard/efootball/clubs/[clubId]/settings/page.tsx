@@ -160,6 +160,7 @@ function ClubSettingsContent({ params }: { params: Promise<{ clubId: string }> }
             initialDpUrl={club.dpUrl}
             initialCoverUrl={club.coverUrl}
             initialJoinPolicy={club.joinPolicy as JoinPolicy}
+            showJoinPolicy={false}
             showLocation
             locationLabel={cs.detailsLocation}
             initialLocation={club.location ?? ""}

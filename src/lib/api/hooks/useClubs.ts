@@ -229,7 +229,6 @@ export function useLeaveClub(clubId: string) {
     mutationFn: () => leaveClubRequest(clubId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clubKeys.detail(clubId) });
-      queryClient.invalidateQueries({ queryKey: ["club-my-request", clubId] });
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
   });
