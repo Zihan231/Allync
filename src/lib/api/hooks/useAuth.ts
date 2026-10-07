@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { loginRequest, registerRequest, logoutRequest } from "@/lib/api/auth";
+import { isTwoFactorChallenge, loginRequest, registerRequest, logoutRequest } from "@/lib/api/auth";
 import { meKey } from "./useUsers";
 
 export function useLoginMutation() {
@@ -10,7 +10,9 @@ export function useLoginMutation() {
       // Seed the /users/me cache directly from the login response so the
       // profile page doesn't have to make a second round trip for data we
       // already have.
-      queryClient.setQueryData(meKey, data.user);
+      if (!isTwoFactorChallenge(data)) {
+        queryClient.setQueryData(meKey, data.user);
+      }
     },
   });
 }

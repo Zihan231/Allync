@@ -6,8 +6,42 @@ export interface AuthResponse {
   user: BackendUser;
 }
 
-export async function loginRequest(payload: { email: string; password: string }): Promise<AuthResponse> {
-  const res = await api.post<AuthResponse>("/auth/login", payload);
+export interface TwoFactorChallenge {
+  requiresTwoFactor: true;
+  setupRequired: boolean;
+  challengeToken: string;
+  expiresInSeconds: number;
+}
+
+export interface TwoFactorSetup {
+  secret: string;
+  otpauthUri: string;
+}
+
+export type LoginResponse = AuthResponse | TwoFactorChallenge;
+
+export function isTwoFactorChallenge(response: LoginResponse): response is TwoFactorChallenge {
+  return "requiresTwoFactor" in response && response.requiresTwoFactor;
+}
+
+export async function loginRequest(payload: { email: string; password: string }): Promise<LoginResponse> {
+  const res = await api.post<LoginResponse>("/auth/login", payload);
+  return res.data;
+}
+
+export async function setupStaffTwoFactor(challengeToken: string): Promise<TwoFactorSetup> {
+  const res = await api.post<TwoFactorSetup>("/auth/staff-2fa/setup", { token: challengeToken });
+  return res.data;
+}
+
+export async function verifyStaffTwoFactor(
+  challengeToken: string,
+  code: string,
+): Promise<AuthResponse> {
+  const res = await api.post<AuthResponse>("/auth/staff-2fa/verify", {
+    token: challengeToken,
+    code,
+  });
   return res.data;
 }
 

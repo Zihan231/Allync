@@ -8,6 +8,11 @@ import {
   type ReactNode,
 } from "react";
 import { isApiError } from "@/lib/api/axios";
+import {
+  isTwoFactorChallenge,
+  type TwoFactorChallenge,
+  verifyStaffTwoFactor,
+} from "@/lib/api/auth";
 import { useMe } from "@/lib/api/hooks/useUsers";
 import { useLoginMutation, useRegisterMutation, useLogoutMutation } from "@/lib/api/hooks/useAuth";
 import { getPerson, getClub, getCommunity, syncFromBackend } from "@/lib/mock/communityStore";
@@ -154,7 +159,8 @@ type SessionContextValue = {
   setClub: (club: MockUser["club"]) => void;
   setCommunity: (community: MockUser["community"]) => void;
   updateProfile: (input: { name?: string; email?: string }) => void;
-  login: (input: { email: string; name?: string; password?: string }) => Promise<void>;
+  login: (input: { email: string; name?: string; password?: string }) => Promise<TwoFactorChallenge | null>;
+  completeStaffTwoFactor: (challengeToken: string, code: string) => Promise<void>;
   signup: (input: {
     name: string;
     email: string;
@@ -299,6 +305,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const establishSession = (backendUser: any) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(SESSION_FLAG, "1");
+    }
+    setHasSessionFlag(true);
+    persist(backendUserToMockUser(backendUser));
+    setIsAuthenticated(true);
+    syncFromBackend(true).catch(() => {});
+  };
+
   const login: SessionContextValue["login"] = async ({ email, password }) => {
     if (!password) {
       throw new Error("Please enter your password");
@@ -306,23 +322,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     const res = await loginMutation.mutateAsync({ email: email.trim(), password });
 
+    if (isTwoFactorChallenge(res)) {
+      return res;
+    }
+
     if (!res || !res.user) {
       throw new Error("Failed to authenticate with server");
     }
 
-    // The backend also sets the httpOnly auth cookie on this response; we
-    // just remember locally that a real session exists so init() knows to
-    // check it on reload.
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(SESSION_FLAG, "1");
-    }
-    setHasSessionFlag(true);
+    establishSession(res.user);
+    return null;
+  };
 
-    const mock = backendUserToMockUser(res.user);
-    persist(mock);
-    setIsAuthenticated(true);
-
-    syncFromBackend(true).catch(() => {});
+  const completeStaffTwoFactor: SessionContextValue["completeStaffTwoFactor"] = async (
+    challengeToken,
+    code,
+  ) => {
+    const res = await verifyStaffTwoFactor(challengeToken, code);
+    establishSession(res.user);
   };
 
   const signup: SessionContextValue["signup"] = async ({ name, email, password, phoneNumber, country }) => {
@@ -423,6 +440,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setCommunity,
     updateProfile,
     login,
+    completeStaffTwoFactor,
     signup,
     switchPersona,
     logout,

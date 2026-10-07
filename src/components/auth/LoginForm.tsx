@@ -5,15 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
+import { setupStaffTwoFactor, type TwoFactorChallenge, type TwoFactorSetup } from "@/lib/api/auth";
 import { FormField } from "./FormField";
 import { ArrowRightIcon } from "../icons";
 
 export function LoginForm() {
   const { t } = useLanguage();
-  const { login, isAuthenticated, isLoading } = useSession();
+  const { login, completeStaffTwoFactor, isAuthenticated, isLoading } = useSession();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [challenge, setChallenge] = useState<TwoFactorChallenge | null>(null);
+  const [twoFactorSetup, setTwoFactorSetup] = useState<TwoFactorSetup | null>(null);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -36,8 +39,15 @@ export function LoginForm() {
 
     setLoading(true);
     try {
-      await login({ email, password });
-      router.push("/dashboard");
+      const result = await login({ email, password });
+      if (result) {
+        setChallenge(result);
+        if (result.setupRequired) {
+          setTwoFactorSetup(await setupStaffTwoFactor(result.challengeToken));
+        }
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: any) {
       let msg = err?.message ?? "Invalid email or password";
       try {
@@ -49,6 +59,26 @@ export function LoginForm() {
       } catch {}
       msg = msg.replace(/^API \d+ [^:]+: /, "");
       setError(typeof msg === "string" ? msg : "Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTwoFactorSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!challenge) return;
+    setError(null);
+    const code = String(new FormData(e.currentTarget).get("code") ?? "").replace(/\s/g, "");
+    if (!/^\d{6}$/.test(code)) {
+      setError("Enter the 6-digit code from your authenticator app.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await completeStaffTwoFactor(challenge.challengeToken, code);
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(typeof err?.message === "string" ? err.message : "Could not verify that code.");
     } finally {
       setLoading(false);
     }
@@ -71,6 +101,48 @@ export function LoginForm() {
           </div>
         )}
 
+        {challenge ? (
+          <form className="mt-7 space-y-5" onSubmit={handleTwoFactorSubmit}>
+            <div>
+              <h3 className="font-display text-lg font-semibold text-ink">Two-step sign-in</h3>
+              <p className="mt-1 text-sm text-ink-soft">
+                {challenge.setupRequired
+                  ? "Add this account to an authenticator app, then enter its 6-digit code."
+                  : "Enter the 6-digit code from your authenticator app."}
+              </p>
+            </div>
+            {twoFactorSetup && (
+              <div className="rounded-lg border border-surface-line bg-bg/50 p-3 text-sm text-ink-soft">
+                <p className="mb-2 font-medium text-ink">Authenticator setup key</p>
+                <code className="block break-all rounded bg-surface px-2 py-1.5 text-xs text-accent-ink">{twoFactorSetup.secret}</code>
+                <p className="mt-2 text-xs">In your authenticator app, choose “enter setup key” and use account name Allync.</p>
+              </div>
+            )}
+            {challenge.setupRequired && !twoFactorSetup && (
+              <p className="text-sm text-ink-soft">Preparing your authenticator setup…</p>
+            )}
+            <FormField
+              label="Authenticator code"
+              type="text"
+              name="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="123456"
+              required
+            />
+            <button
+              type="submit"
+              disabled={loading || (challenge.setupRequired && !twoFactorSetup)}
+              className="group flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-display font-semibold text-bg shadow-[0_0_24px_rgba(217,165,68,0.3)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+            >
+              {loading ? "Verifying…" : "Verify and log in"}
+              <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </button>
+            <button type="button" onClick={() => { setChallenge(null); setTwoFactorSetup(null); setError(null); }} className="w-full text-sm text-ink-soft hover:text-ink">
+              Use a different account
+            </button>
+          </form>
+        ) : (
         <form className="mt-7 space-y-5" onSubmit={handleSubmit}>
           <FormField
             label={t.auth.email}
@@ -112,6 +184,7 @@ export function LoginForm() {
             <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </button>
         </form>
+        )}
       </div>
 
       <p className="mt-6 text-center text-xs leading-relaxed text-ink-faint">
