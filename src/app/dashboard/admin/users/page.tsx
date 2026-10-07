@@ -398,20 +398,20 @@ export default function AdminUsersPage() {
       ) : null}
 
       {/* Table */}
-      <div className={`mt-3 overflow-x-auto rounded-xl border border-surface-line transition-opacity ${isFetching && !isLoading ? "opacity-60" : ""}`}>
+      <div className={`mt-3 overflow-hidden rounded-xl border border-surface-line transition-opacity ${isFetching && !isLoading ? "opacity-60" : ""}`}>
         {isLoading ? (
           <div className="h-64 animate-pulse bg-surface/40" />
         ) : rows.length ? (
-          <table className="w-full min-w-[720px] text-left">
+          <table className="w-full table-fixed text-left">
             <thead className="bg-surface/60 font-mono text-[10px] uppercase tracking-wide text-ink-faint">
               <tr>
                 <th className="w-10 px-3 py-2.5">
                   <input type="checkbox" checked={allOnPage} onChange={toggleAll} className="h-4 w-4 accent-[var(--color-accent)]" aria-label="Select page" />
                 </th>
-                <th className="px-3 py-2.5">{au.cols.user}</th>
+                <th className="w-[30%] px-2 py-2.5 sm:px-3">{au.cols.user}</th>
                 {columns.map((c) => (
-                  <th key={c} className="px-3 py-2.5">
-                    {au.cols[c]}
+                  <th key={c} className="truncate px-2 py-2.5 sm:px-3" title={au.cols[c]}>
+                    <span className="truncate">{au.cols[c]}</span>
                   </th>
                 ))}
               </tr>
@@ -419,7 +419,7 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-surface-line/70">
               {rows.map((u) => (
                 <tr key={u.id} className={selected.has(u.id) ? "bg-accent-soft/20" : "hover:bg-surface/40"}>
-                  <td className="px-3 py-2.5">
+                  <td className="px-2 py-2.5 sm:px-3">
                     <input type="checkbox" checked={selected.has(u.id)} onChange={() => toggle(u.id)} className="h-4 w-4 accent-[var(--color-accent)]" aria-label={u.name} />
                   </td>
                   <td className="px-3 py-2.5">
@@ -434,7 +434,7 @@ export default function AdminUsersPage() {
                     </Link>
                   </td>
                   {columns.map((c) => (
-                    <td key={c} className="px-3 py-2.5 align-middle">
+                  <td key={c} className="truncate px-2 py-2.5 align-middle text-ellipsis sm:px-3">
                       {cell(c, u)}
                     </td>
                   ))}
