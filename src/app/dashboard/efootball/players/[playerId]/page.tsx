@@ -50,6 +50,7 @@ import {
   getThemeTokens,
   ThemeTeamAttachmentBadge,
 } from "@/components/cosmetics/CosmeticDisplay";
+import { ReportButton } from "@/components/reports/ReportButton";
 
 type IconComponent = (props: { className?: string }) => React.ReactElement;
 
@@ -479,12 +480,15 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
       <div className="flex flex-wrap items-center justify-between gap-3">
         <BackButton />
         {person.id !== user.personId ? (
-          <Link
-            href="/dashboard/efootball/profile"
-            className="rounded-full border border-surface-line-strong px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
-          >
-            {pf.myProfile}
-          </Link>
+          <div className="flex items-center gap-2">
+            {!isOwnProfile ? <ReportButton targetType="user" targetId={person.id} targetName={person.name} /> : null}
+            <Link
+              href="/dashboard/efootball/profile"
+              className="rounded-full border border-surface-line-strong px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
+            >
+              {pf.myProfile}
+            </Link>
+          </div>
         ) : null}
       </div>
 

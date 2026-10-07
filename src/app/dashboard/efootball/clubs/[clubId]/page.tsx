@@ -42,6 +42,8 @@ import { useToast } from "@/lib/useToast";
 import { ToastContainer } from "@/components/common/Toast";
 import { useConfirm } from "@/lib/useConfirm";
 import { useUrlTab } from "@/lib/navigation/useUrlTab";
+import { ReportButton } from "@/components/reports/ReportButton";
+import { FrozenNotice } from "@/components/common/FrozenNotice";
 
 type Tab =
   | "overview"
@@ -226,7 +228,11 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
 
   return (
     <div>
-      <BackButton href="/dashboard/efootball/clubs" />
+      <div className="flex items-center justify-between gap-3">
+        <BackButton href="/dashboard/efootball/clubs" />
+        <ReportButton targetType="club" targetId={club.id} targetName={club.name} />
+      </div>
+      <FrozenNotice kind="club" id={club.id} />
       <div className="relative">
         <CoverPhoto coverUrl={club.coverUrl} name={club.name} color={club.color} className="h-56 rounded-xl sm:h-72 lg:h-80" />
         <div

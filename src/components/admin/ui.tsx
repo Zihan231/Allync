@@ -160,6 +160,15 @@ const toneClasses = {
 };
 export type Tone = keyof typeof toneClasses;
 
+/** Colour of each report status, shared by the staff report pages. */
+export const REPORT_STATUS_TONE: Record<"open" | "in_review" | "action_taken" | "rejected" | "withdrawn", Tone> = {
+  open: "danger",
+  in_review: "warning",
+  action_taken: "success",
+  rejected: "neutral",
+  withdrawn: "neutral",
+};
+
 export function Badge({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
   return (
     <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide ${toneClasses[tone]}`}>

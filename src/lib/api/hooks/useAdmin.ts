@@ -23,6 +23,17 @@ import {
   type UserAction,
   type VerificationStatus,
 } from "@/lib/api/admin";
+import {
+  decideDispute,
+  getDispute,
+  getDisputes,
+  getManagedClub,
+  getManagedCommunity,
+  getManagedTournament,
+  runManageAction,
+  type DecideInput,
+  type DisputeQuery,
+} from "@/lib/api/adminManage";
 
 export const adminKeys = {
   all: ["admin"] as const,
@@ -109,4 +120,34 @@ export function useRestoreFromBin() {
 
 export function usePurgeFromBin() {
   return useAdminMutation(({ type, id }: { type: BinType; id: string }) => purgeFromBin(type, id));
+}
+
+// ------------------------------------------ dispute centre and management
+
+export function useDisputes(query: DisputeQuery) {
+  return useQuery({ queryKey: ["admin", "disputes", query], queryFn: () => getDisputes(query), placeholderData: keepPreviousData });
+}
+
+export function useDispute(gameId: string | undefined) {
+  return useQuery({ queryKey: ["admin", "dispute", gameId], queryFn: () => getDispute(gameId!), enabled: Boolean(gameId) });
+}
+
+export function useDecideDispute() {
+  return useAdminMutation(({ gameId, ...input }: { gameId: string } & DecideInput) => decideDispute(gameId, input));
+}
+
+export function useManagedClub(id: string | undefined) {
+  return useQuery({ queryKey: ["admin", "manage", "club", id], queryFn: () => getManagedClub(id!), enabled: Boolean(id) });
+}
+
+export function useManagedCommunity(id: string | undefined) {
+  return useQuery({ queryKey: ["admin", "manage", "community", id], queryFn: () => getManagedCommunity(id!), enabled: Boolean(id) });
+}
+
+export function useManagedTournament(id: string | undefined) {
+  return useQuery({ queryKey: ["admin", "manage", "tournament", id], queryFn: () => getManagedTournament(id!), enabled: Boolean(id) });
+}
+
+export function useManageAction() {
+  return useAdminMutation(runManageAction);
 }

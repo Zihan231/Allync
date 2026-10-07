@@ -9,6 +9,7 @@ import { Avatar } from "@/components/common/Avatar";
 import { StatusPill, type StatusTone } from "./StatusPill";
 import { formatGameRange, formatMatchTime, roundLabel } from "./fixtures/labels";
 import { ArrowRightIcon, ShieldIcon, UsersIcon } from "@/components/icons";
+import { ReportButton } from "@/components/reports/ReportButton";
 
 const stateTone: Record<MyGame["state"], StatusTone> = {
   to_play: "warning",
@@ -67,62 +68,68 @@ export function MyGameCard({ game }: { game: MyGame }) {
     .join(" · ");
 
   return (
-    <Link
-      href={game.tournament.link}
-      className="group flex flex-col rounded-2xl border border-surface-line bg-surface/50 p-4 transition-colors hover:border-surface-line-strong hover:bg-surface/70"
-    >
-      {/* Host and tournament */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-faint">
-            <HostIcon className="h-3 w-3 shrink-0" />
-            <span className="truncate">
-              {game.host.kind === "club" ? mm.hostClub : mm.hostCommunity} · {game.host.name}
-            </span>
+    <div className="relative flex [&>a]:flex-1">
+      <Link
+        href={game.tournament.link}
+        className="group flex flex-col rounded-2xl border border-surface-line bg-surface/50 p-4 transition-colors hover:border-surface-line-strong hover:bg-surface/70"
+      >
+        {/* Host and tournament */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-faint">
+              <HostIcon className="h-3 w-3 shrink-0" />
+              <span className="truncate">
+                {game.host.kind === "club" ? mm.hostClub : mm.hostCommunity} · {game.host.name}
+              </span>
+            </div>
+            <div className="mt-0.5 truncate font-display text-sm font-bold text-ink">{game.tournament.name}</div>
           </div>
-          <div className="mt-0.5 truncate font-display text-sm font-bold text-ink">{game.tournament.name}</div>
+          {pill ? <StatusPill tone={pill.tone}>{pill.label}</StatusPill> : null}
         </div>
-        {pill ? <StatusPill tone={pill.tone}>{pill.label}</StatusPill> : null}
-      </div>
 
-      {/* You vs opponent */}
-      <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <Side name={mm.you} sub={game.myClubName} dpUrl={game.me.dpUrl} avatarName={game.me.name} />
-        <div className="text-center">
-          {game.myGoals != null && game.opponentGoals != null ? (
-            <span
-              className={`font-display text-xl font-black tabular-nums ${
-                game.outcome === "won" ? "text-success-ink" : game.outcome === "lost" ? "text-danger-ink" : "text-ink"
-              }`}
-            >
-              {game.myGoals} – {game.opponentGoals}
-            </span>
-          ) : (
-            <span className="font-mono text-xs font-bold uppercase text-ink-faint">vs</span>
-          )}
+        {/* You vs opponent */}
+        <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <Side name={mm.you} sub={game.myClubName} dpUrl={game.me.dpUrl} avatarName={game.me.name} />
+          <div className="text-center">
+            {game.myGoals != null && game.opponentGoals != null ? (
+              <span
+                className={`font-display text-xl font-black tabular-nums ${
+                  game.outcome === "won" ? "text-success-ink" : game.outcome === "lost" ? "text-danger-ink" : "text-ink"
+                }`}
+              >
+                {game.myGoals} – {game.opponentGoals}
+              </span>
+            ) : (
+              <span className="font-mono text-xs font-bold uppercase text-ink-faint">vs</span>
+            )}
+          </div>
+          <Side name={game.opponent.name} sub={game.opponentClubName} dpUrl={game.opponent.dpUrl} align="end" />
         </div>
-        <Side name={game.opponent.name} sub={game.opponentClubName} dpUrl={game.opponent.dpUrl} align="end" />
-      </div>
 
-      {/* Round, time and what's next */}
-      <div className="mt-4 space-y-1 border-t border-surface-line/70 pt-3 text-xs">
-        <div className="flex items-center justify-between gap-2 text-ink-soft">
-          <span className="truncate font-semibold">{round}</span>
-          <span className="shrink-0 tabular-nums">{range ?? mm.notScheduled}</span>
+        {/* Round, time and what's next */}
+        <div className="mt-4 space-y-1 border-t border-surface-line/70 pt-3 text-xs">
+          <div className="flex items-center justify-between gap-2 text-ink-soft">
+            <span className="truncate font-semibold">{round}</span>
+            <span className="shrink-0 tabular-nums">{range ?? mm.notScheduled}</span>
+          </div>
+          {note ? (
+            <p className={game.state === "to_play" ? "font-semibold text-warning-ink" : "text-ink-faint"}>{note}</p>
+          ) : null}
+          {game.state === "to_play" && game.status === "rejected" && game.reviewNote ? (
+            <p className="truncate text-ink-faint">“{game.reviewNote}”</p>
+          ) : null}
         </div>
-        {note ? (
-          <p className={game.state === "to_play" ? "font-semibold text-warning-ink" : "text-ink-faint"}>{note}</p>
-        ) : null}
-        {game.state === "to_play" && game.status === "rejected" && game.reviewNote ? (
-          <p className="truncate text-ink-faint">“{game.reviewNote}”</p>
-        ) : null}
-      </div>
 
-      <span className="mt-3 inline-flex items-center gap-1 self-end text-xs font-semibold text-accent-ink">
-        {mm.openMatch}
-        <ArrowRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-      </span>
-    </Link>
+        <span className="mt-3 inline-flex items-center gap-1 self-end text-xs font-semibold text-accent-ink">
+          {mm.openMatch}
+          <ArrowRightIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </Link>
+      {/* Beside the card link, so the click (and the form) don't open the match. */}
+      <div className="absolute bottom-3 left-4">
+        <ReportButton compact targetType="match" targetId={game.matchId} targetName={`${game.tournament.name} · ${round}`} />
+      </div>
+    </div>
   );
 }
 

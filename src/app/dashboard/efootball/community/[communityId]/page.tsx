@@ -44,6 +44,8 @@ import { useConfirm } from "@/lib/useConfirm";
 import { useCommunity, useJoinCommunity, useLeaveCommunity, useRemoveClubFromCommunity } from "@/lib/api/hooks/useCommunities";
 import { isApiError } from "@/lib/api/axios";
 import { useUrlTab } from "@/lib/navigation/useUrlTab";
+import { ReportButton } from "@/components/reports/ReportButton";
+import { FrozenNotice } from "@/components/common/FrozenNotice";
 
 type Tab = "overview" | "members" | "clubs" | "rankings" | "tournaments";
 const COMMUNITY_TABS: readonly Tab[] = ["overview", "members", "clubs", "rankings", "tournaments"];
@@ -377,7 +379,11 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
 
   return (
     <div>
-      <BackButton href="/dashboard/efootball/community" />
+      <div className="flex items-center justify-between gap-3">
+        <BackButton href="/dashboard/efootball/community" />
+        <ReportButton targetType="community" targetId={community.id} targetName={community.name} />
+      </div>
+      <FrozenNotice kind="community" id={community.id} />
       <div className="relative">
         <CoverPhoto
           coverUrl={community.coverUrl}

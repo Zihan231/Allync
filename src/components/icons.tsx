@@ -397,3 +397,12 @@ export function InfoIcon({ className, style }: IconProps) {
     </svg>
   );
 }
+
+export function FlagIcon({ className, style }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={style} aria-hidden="true">
+      <path d="M5 21V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M5 4h11l-2 4 2 4H5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}

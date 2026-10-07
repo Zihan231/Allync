@@ -11,6 +11,9 @@ export interface BackendTeam {
 }
 
 export interface BackendClub {
+  /** Set while ALLYNQ staff have frozen it. */
+  frozenAt?: string | null;
+  frozenReason?: string | null;
   id: string;
   name: string;
   color: string;
@@ -92,6 +95,9 @@ export interface BackendUser {
 
 
 export interface BackendCommunity {
+  /** Set while ALLYNQ staff have frozen it. */
+  frozenAt?: string | null;
+  frozenReason?: string | null;
   id: string;
   name: string;
   rules: string;

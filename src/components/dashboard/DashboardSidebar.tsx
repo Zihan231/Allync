@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession, type Mode } from "@/lib/session/SessionContext";
 import { hasRole } from "@/lib/api/admin";
+import { useAdminReportCounts } from "@/lib/api/hooks/useReports";
 import { RoleToggle } from "../auth/RoleToggle";
 import {
   HomeIcon,
@@ -20,12 +21,16 @@ import {
   LockIcon,
   TrashIcon,
   ClockIcon,
+  FlagIcon,
+  GavelIcon,
 } from "../icons";
 
 type NavItem = {
   href: string;
   label: string;
   icon: (props: { className?: string }) => React.ReactElement;
+  /** Small count shown next to the label (e.g. open reports). */
+  badge?: number;
 };
 
 export function DashboardSidebar({
@@ -41,6 +46,7 @@ export function DashboardSidebar({
   const router = useRouter();
   const isStaff = Boolean(user.systemRole);
   const mode: Mode = isStaff && pathname.startsWith("/dashboard/admin") ? "admin" : "player";
+  const { data: reportCounts } = useAdminReportCounts(mode === "admin");
 
   const handleModeChange = (next: Mode) => {
     onClose();
@@ -67,12 +73,16 @@ export function DashboardSidebar({
     { href: `${playerBase}/rankings`, label: t.dashboard.rankings.pageTitle, icon: TrophyIcon },
     { href: `${playerBase}/store`, label: t.dashboard.shell.navStore, icon: StoreIcon },
     { href: `${playerBase}/profile`, label: t.dashboard.shell.navProfile, icon: ChartIcon },
+    { href: `${playerBase}/reports`, label: t.reports.myTitle, icon: FlagIcon },
   ];
 
   const adminItems: NavItem[] = [
     { href: "/dashboard/admin", label: t.admin.nav.dashboard, icon: ChartIcon },
     { href: "/dashboard/admin/users", label: t.admin.nav.users, icon: UsersIcon },
+    { href: "/dashboard/admin/reports", label: t.admin.nav.reports, icon: FlagIcon, badge: reportCounts?.active },
+    { href: "/dashboard/admin/disputes", label: t.admin.nav.disputes, icon: GavelIcon },
     { href: "/dashboard/admin/verification", label: t.admin.nav.verification, icon: LockIcon },
+    { href: "/dashboard/admin/activity", label: t.admin.nav.activity, icon: CalendarIcon },
     ...(hasRole(user.systemRole, "admin")
       ? [
           { href: "/dashboard/admin/content", label: t.admin.nav.content, icon: TrophyIcon },
@@ -107,7 +117,10 @@ export function DashboardSidebar({
             }`}
           >
             <item.icon className="h-4.5 w-4.5" />
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {item.badge ? (
+              <span className="rounded-full bg-danger px-1.5 py-0.5 font-mono text-[10px] font-bold leading-none text-white">{item.badge}</span>
+            ) : null}
           </a>
         );
       })}

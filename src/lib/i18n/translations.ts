@@ -1,5 +1,6 @@
 import { Fragment, createElement, type ReactNode } from "react";
 import { adminBn, adminEn } from "./admin";
+import { reportsBn, reportsEn } from "./reports";
 
 export type Locale = "en" | "bn";
 
@@ -1016,6 +1017,19 @@ export const translations = {
         "admin.password_reset": { title: "Password reset", message: "An administrator reset your password. Sign in with the new one." },
         "admin.role_changed": { title: "Staff role changed", message: "Your ALLYNQ staff role is now: {role}." },
         "admin.message": { title: "Message from ALLYNQ", message: "{message}" },
+        "admin.leader_changed": { title: "Leadership changed", message: "ALLYNQ staff made {name} the {role} of {group}: {reason}" },
+        "admin.frozen": { title: "Frozen by ALLYNQ staff", message: "{group} was frozen: {reason}. Tournaments, transfers and edits are paused until it is unfrozen." },
+        "admin.unfrozen": { title: "Unfrozen", message: "{group} was unfrozen. Everything works again." },
+        "admin.tournament_rescheduled": { title: "Tournament schedule changed", message: "ALLYNQ staff changed the schedule of \"{tournament}\". {reason}" },
+        "admin.tournament_cancelled": { title: "Tournament cancelled", message: "\"{tournament}\" was cancelled by ALLYNQ staff: {reason}" },
+        "admin.tournament_completed": { title: "Tournament finished", message: "\"{tournament}\" was marked as finished by ALLYNQ staff: {reason}" },
+        "admin.tournament_ongoing": { title: "Tournament is live", message: "\"{tournament}\" was marked as live by ALLYNQ staff: {reason}" },
+        "admin.tournament_registration_open": { title: "Registration reopened", message: "\"{tournament}\" is open for registration again: {reason}" },
+        "admin.official_added": { title: "You are a match official", message: "ALLYNQ staff made you a match official for \"{tournament}\". You can now review its match evidence." },
+        "admin.participant_removed": { title: "Removed from a tournament", message: "ALLYNQ staff removed {name} from \"{tournament}\": {reason}" },
+        "report.message": { title: "New reply on your report", message: "ALLYNQ staff replied about \"{target}\"." },
+        "report.resolved": { title: "Report resolved", message: "Action was taken on your report about \"{target}\": {resolution}" },
+        "report.rejected": { title: "Report closed", message: "Your report about \"{target}\" was closed without action: {resolution}" },
         "verification.approved": { title: "Verification approved", message: "Your ID was approved. Verification level {level}." },
         "verification.rejected": { title: "Verification rejected", message: "Your ID document was rejected: {note} Please upload a clearer document." },
         "transfer.paymentReceived": { title: "Payment received", message: "{amount} tk received from {club} for {player}." },
@@ -2254,6 +2268,7 @@ export const translations = {
       },
     },
     admin: adminEn,
+    reports: reportsEn,
   },
   bn: {
     nav: {
@@ -3265,6 +3280,19 @@ export const translations = {
         "admin.password_reset": { title: "পাসওয়ার্ড রিসেট", message: "একজন অ্যাডমিন আপনার পাসওয়ার্ড রিসেট করেছেন। নতুনটি দিয়ে সাইন ইন করুন।" },
         "admin.role_changed": { title: "স্টাফ রোল বদলেছে", message: "ALLYNQ-এ আপনার স্টাফ রোল এখন: {role}।" },
         "admin.message": { title: "ALLYNQ থেকে বার্তা", message: "{message}" },
+        "admin.leader_changed": { title: "নেতৃত্ব বদল", message: "ALLYNQ স্টাফ {name}-কে {group}-এর {role} করেছেন: {reason}" },
+        "admin.frozen": { title: "ALLYNQ স্টাফ ফ্রিজ করেছেন", message: "{group} ফ্রিজ করা হয়েছে: {reason}। আনফ্রিজ না হওয়া পর্যন্ত টুর্নামেন্ট, ট্রান্সফার ও এডিট বন্ধ।" },
+        "admin.unfrozen": { title: "আনফ্রিজ হয়েছে", message: "{group} আনফ্রিজ হয়েছে। সব আবার চালু।" },
+        "admin.tournament_rescheduled": { title: "টুর্নামেন্টের সময় বদলেছে", message: "ALLYNQ স্টাফ \"{tournament}\"-এর সময়সূচি বদলেছেন। {reason}" },
+        "admin.tournament_cancelled": { title: "টুর্নামেন্ট বাতিল", message: "ALLYNQ স্টাফ \"{tournament}\" বাতিল করেছেন: {reason}" },
+        "admin.tournament_completed": { title: "টুর্নামেন্ট শেষ", message: "ALLYNQ স্টাফ \"{tournament}\" শেষ বলে চিহ্নিত করেছেন: {reason}" },
+        "admin.tournament_ongoing": { title: "টুর্নামেন্ট চলমান", message: "ALLYNQ স্টাফ \"{tournament}\" চলমান বলে চিহ্নিত করেছেন: {reason}" },
+        "admin.tournament_registration_open": { title: "রেজিস্ট্রেশন আবার খোলা", message: "\"{tournament}\"-এ আবার রেজিস্ট্রেশন চলছে: {reason}" },
+        "admin.official_added": { title: "আপনি ম্যাচ অফিসিয়াল", message: "ALLYNQ স্টাফ আপনাকে \"{tournament}\"-এর ম্যাচ অফিসিয়াল করেছেন। এখন আপনি এর ম্যাচের প্রমাণ যাচাই করতে পারবেন।" },
+        "admin.participant_removed": { title: "টুর্নামেন্ট থেকে সরানো হয়েছে", message: "ALLYNQ স্টাফ {name}-কে \"{tournament}\" থেকে সরিয়েছেন: {reason}" },
+        "report.message": { title: "আপনার রিপোর্টে নতুন উত্তর", message: "\"{target}\" নিয়ে ALLYNQ স্টাফ উত্তর দিয়েছেন।" },
+        "report.resolved": { title: "রিপোর্টের সমাধান", message: "\"{target}\" নিয়ে আপনার রিপোর্টে ব্যবস্থা নেওয়া হয়েছে: {resolution}" },
+        "report.rejected": { title: "রিপোর্ট বন্ধ", message: "\"{target}\" নিয়ে আপনার রিপোর্ট কোনো ব্যবস্থা ছাড়াই বন্ধ হয়েছে: {resolution}" },
         "verification.approved": { title: "ভেরিফিকেশন অনুমোদিত", message: "আপনার আইডি অনুমোদিত হয়েছে। ভেরিফিকেশন লেভেল {level}।" },
         "verification.rejected": { title: "ভেরিফিকেশন বাতিল", message: "আপনার আইডি ডকুমেন্ট বাতিল হয়েছে: {note} আরও পরিষ্কার একটি ডকুমেন্ট আপলোড করুন।" },
         "transfer.paymentReceived": { title: "পেমেন্ট প্রাপ্ত", message: "{player}-এর জন্য {club} থেকে {amount} টাকা এসেছে।" },
@@ -4501,6 +4529,7 @@ export const translations = {
       },
     },
     admin: adminBn,
+    reports: reportsBn,
   },
 } as const;
 

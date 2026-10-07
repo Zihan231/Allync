@@ -108,6 +108,12 @@ export default function AdminContentPage() {
                     <span>{format(tc.created, { date: fmtDate(row.createdAt, locale) })}</span>
                   </div>
                 </div>
+                <Link
+                  href={`/dashboard/admin/content/${type}/${row.id}`}
+                  className="rounded-full border border-surface-line-strong px-3 py-1 text-xs font-semibold text-ink hover:border-accent"
+                >
+                  {t.admin.manage.manage}
+                </Link>
                 <Button small variant="danger" onClick={() => setBinning(row)}>
                   {tc.moveToBin}
                 </Button>

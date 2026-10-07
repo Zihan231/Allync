@@ -127,9 +127,12 @@ export default function AdminDashboardPage() {
   const att = data?.attention;
   const attentionRows = att
     ? ([
+        [ad.attention.leaderReports, att.leaderReports, "/dashboard/admin/reports"],
+        [ad.attention.unassignedReports, att.unassignedReports, "/dashboard/admin/reports"],
+        [ad.attention.openReports, att.openReports, "/dashboard/admin/reports"],
         [ad.attention.pendingVerifications, att.pendingVerifications, "/dashboard/admin/verification"],
-        [ad.attention.openDisputes, att.openDisputes, null],
-        [ad.attention.staleDisputes, att.staleDisputes, null],
+        [ad.attention.openDisputes, att.openDisputes, "/dashboard/admin/disputes"],
+        [ad.attention.staleDisputes, att.staleDisputes, "/dashboard/admin/disputes"],
         [ad.attention.binExpiringSoon, att.binExpiringSoon, "/dashboard/admin/bin"],
         [ad.attention.suspensionsEndingToday, att.suspensionsEndingToday, "/dashboard/admin/users?status=suspended"],
         [ad.attention.suspiciousIps, att.suspiciousIps, null],
@@ -291,7 +294,7 @@ export default function AdminDashboardPage() {
               <ul className="space-y-1 text-xs">
                 {att.oldestDisputes.map((m) => (
                   <li key={m.id}>
-                    <a href={`/dashboard/efootball/tournaments/${m.tournamentId}`} className="text-ink-soft hover:text-accent-ink">
+                    <a href={`/dashboard/admin/disputes?tournamentId=${m.tournamentId}`} className="text-ink-soft hover:text-accent-ink">
                       {m.tournamentName} · {m.roundName} · {fmtDate(m.updatedAt, locale)}
                     </a>
                   </li>
@@ -313,7 +316,7 @@ export default function AdminDashboardPage() {
           <Kpi label={ad.totals.communities} value={n(data?.totals.communities)} />
           <Kpi label={ad.totals.liveTournaments} value={n(data?.totals.liveTournaments)} />
           <Kpi label={ad.totals.upcomingTournaments} value={n(data?.totals.upcomingTournaments)} />
-          <Kpi label={ad.totals.openDisputes} value={n(data?.totals.openDisputes)} />
+          <Kpi label={ad.totals.openDisputes} value={n(data?.totals.openDisputes)} href="/dashboard/admin/disputes" />
           <Kpi label={ad.totals.walletBalance} value={tk(data?.totals.walletBalanceTk ?? 0)} />
           <Kpi label={ad.totals.walletHeld} value={tk(data?.totals.walletHeldTk ?? 0)} />
           <Kpi label={ad.totals.openOffers} value={n(data?.totals.openOffers)} />

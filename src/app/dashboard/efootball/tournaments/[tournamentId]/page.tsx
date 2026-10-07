@@ -51,6 +51,7 @@ import {
   FlameIcon,
   GavelIcon,
 } from "@/components/icons";
+import { ReportButton } from "@/components/reports/ReportButton";
 
 type TournamentDetailTab = "bracket" | "participants" | "lineup";
 const TOURNAMENT_DETAIL_TABS: readonly TournamentDetailTab[] = [
@@ -613,6 +614,7 @@ export function TournamentDetailView({
                 </button>
               </>
             ) : null}
+            {!isOrganizer ? <ReportButton compact targetType="tournament" targetId={tournament.id} targetName={tournament.name} /> : null}
             <div className="flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface-raised px-3.5 py-1 text-xs font-bold">
               <span className={`h-2 w-2 rounded-full ${statusBadge.dot}`} />
               <span className={statusBadge.text}>{statusBadge.label}</span>

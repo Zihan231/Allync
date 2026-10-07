@@ -96,6 +96,9 @@ export interface AdminDashboard {
     openDisputes: number;
     staleDisputes: number;
     binExpiringSoon: number;
+    openReports: number;
+    unassignedReports: number;
+    leaderReports: number;
     suspensionsEndingToday: number;
     suspiciousIps: number;
     sharedIps: number;
