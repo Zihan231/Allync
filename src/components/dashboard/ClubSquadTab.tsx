@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAllPlayerStats } from "@/lib/api/hooks/useStats";
-import { useClubTransfers } from "@/lib/api/hooks/useTransfers";
+import { useClubLoans, useClubTransfers } from "@/lib/api/hooks/useTransfers";
+import { format } from "@/lib/i18n/translations";
+import { formatShortDate } from "./fixtures/labels";
 import type { PlayerStatsRow } from "@/lib/api/stats";
 import type { Club } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
@@ -22,6 +24,8 @@ type LineupFilter = "all" | "Starter" | "Sub" | "Staff";
 type DataScope = "alltime" | "season";
 type SortBy = "rank" | "az" | "w" | "pl" | "gf" | "pts";
 type ViewMode = "grid" | "table";
+/** Loans: everyone, players borrowed from other clubs, or our players away on loan. */
+type LoanFilter = "all" | "borrowed" | "lent";
 
 const PAGE_SIZE_OPTIONS = [8, 12, 24];
 
@@ -32,7 +36,9 @@ export function ClubSquadTab({
   club: Club;
   members: Person[];
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const tr = t.dashboard.transfers;
+  const [loanFilter, setLoanFilter] = useState<LoanFilter>("all");
   const [search, setSearch] = useState("");
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("all");
   const [lineupFilter, setLineupFilter] = useState<LineupFilter>("all");
@@ -53,6 +59,16 @@ export function ClubSquadTab({
   const contractByUserId = useMemo(
     () => new Map((transferData?.squad ?? []).map((member) => [member.userId, member.contract])),
     [transferData?.squad],
+  );
+  // Borrowed players are members here (with an "on loan from" note); lent ones play elsewhere.
+  const loanByUserId = useMemo(
+    () => new Map((transferData?.squad ?? []).filter((m) => m.onLoanFrom).map((m) => [m.userId, m.onLoanFrom!])),
+    [transferData?.squad],
+  );
+  const { data: clubLoans } = useClubLoans(club.id);
+  const lentOut = useMemo(
+    () => (clubLoans?.loansOut ?? []).filter((l) => l.status === "active" || l.status === "returning" || l.status === "scheduled"),
+    [clubLoans?.loansOut],
   );
   const rows: PlayerStatsRow[] = useMemo(() => {
     const byId = new Map((stats ?? []).map((r) => [r.id, r]));
@@ -79,6 +95,8 @@ export function ClubSquadTab({
           return false;
         }
       }
+
+      if (loanFilter === "borrowed" && !loanByUserId.has(person.id)) return false;
 
       // Squad Team filter
       if (teamFilter !== "all" && (person.squadTeam ?? "Main") !== teamFilter) {
@@ -109,7 +127,7 @@ export function ClubSquadTab({
     else if (sortBy === "gf") list.sort((a, b) => b.GF - a.GF);
 
     return list;
-  }, [rows, search, teamFilter, lineupFilter, sortBy, personById]);
+  }, [rows, search, teamFilter, lineupFilter, sortBy, personById, loanFilter, loanByUserId]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const startIndex = (page - 1) * pageSize;
@@ -132,6 +150,58 @@ export function ClubSquadTab({
   return (
     <div className="space-y-5">
       <StatsInfoPanel variant="players" />
+
+      {/* Loans quick filter */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {(
+          [
+            ["all", tr.loanFilterAll, members.length],
+            ["borrowed", tr.loanFilterBorrowed, loanByUserId.size],
+            ["lent", tr.loanFilterLent, lentOut.length],
+          ] as const
+        ).map(([key, label, count]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => {
+              setLoanFilter(key);
+              setPage(1);
+            }}
+            className={`rounded-full border px-3.5 py-1 text-xs font-semibold transition-colors ${
+              loanFilter === key ? "border-accent bg-accent-soft text-accent-ink" : "border-surface-line-strong text-ink-soft hover:text-ink"
+            }`}
+          >
+            {label} <span className="opacity-70">({count})</span>
+          </button>
+        ))}
+      </div>
+
+      {loanFilter === "lent" ? (
+        lentOut.length ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {lentOut.map((loan) => (
+              <Link
+                key={loan.id}
+                href={`/dashboard/efootball/players/${loan.player.id}`}
+                className="flex items-center gap-3 rounded-xl border border-surface-line bg-surface/50 p-3.5 transition-colors hover:border-accent/50"
+              >
+                <Avatar dpUrl={loan.player.dpUrl} name={loan.player.name} size="md" mode="static" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-bold text-ink">{loan.player.name}</div>
+                  <div className="truncate text-[11px] text-accent-ink">{format(tr.loanAt, { club: loan.borrowClub.name })}</div>
+                  <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-ink-faint">
+                    <span>{format(tr.loanProgress, { played: loan.matchesPlayed, total: loan.matches })}</span>
+                    {loan.endsBy ? <span>{format(tr.loanEndsBy, { date: formatShortDate(loan.endsBy, locale) })}</span> : null}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={UsersIcon} title={tr.loanNoneLent} body="" />
+        )
+      ) : null}
+      {loanFilter === "lent" ? null : (<>
       {/* Top Filter & Search Bar */}
       <div className="flex flex-col gap-3 rounded-xl border border-surface-line bg-surface/30 p-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
@@ -302,12 +372,22 @@ export function ClubSquadTab({
               const person = personById.get(row.id);
               if (!person) return null;
               return (
-                <SquadPlayerCard
-                  key={row.id}
-                  person={person}
-                  row={row}
-                  contract={transferData ? (contractByUserId.get(person.id) ?? null) : undefined}
-                />
+                <div key={row.id} className="relative">
+                  <SquadPlayerCard
+                    person={person}
+                    row={row}
+                    contract={transferData ? (contractByUserId.get(person.id) ?? null) : undefined}
+                  />
+                  {loanByUserId.has(person.id) ? (
+                    <span className="pointer-events-none absolute left-2 top-2 z-10 rounded-full border border-accent/50 bg-bg/90 px-2 py-0.5 text-[10px] font-bold text-accent-ink backdrop-blur">
+                      {format(tr.loanFrom, { club: loanByUserId.get(person.id)!.clubName })} ·{" "}
+                      {format(tr.loanProgress, {
+                        played: loanByUserId.get(person.id)!.matchesPlayed,
+                        total: loanByUserId.get(person.id)!.matches,
+                      })}
+                    </span>
+                  ) : null}
+                </div>
               );
             })}
           </div>
@@ -366,6 +446,11 @@ export function ClubSquadTab({
                         ) : (
                           <span className="text-ink-faint">—</span>
                         )}
+                        {loanByUserId.has(person.id) ? (
+                          <div className="mt-1 text-[10px] font-bold text-accent-ink">
+                            {format(tr.loanFrom, { club: loanByUserId.get(person.id)!.clubName })}
+                          </div>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3 text-xs text-ink-soft">
                         {person.squadTeam ?? "Main"}
@@ -411,6 +496,7 @@ export function ClubSquadTab({
           </div>
         </div>
       )}
+      </>)}
     </div>
   );
 }

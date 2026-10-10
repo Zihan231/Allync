@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { format } from "@/lib/i18n/translations";
-import { useCreateLoan, useMyTransfers } from "@/lib/api/hooks/useTransfers";
+import { useCreateLoan, useMyTransfers, usePlayerTransferStatus } from "@/lib/api/hooks/useTransfers";
+import { useClub } from "@/lib/api/hooks/useClubs";
 import type { PaymentMethod } from "@/lib/api/transfers";
 import { useMockClubs } from "@/lib/mock/communityStore";
-import { CloseIcon } from "@/components/icons";
+import { ArrowRightIcon, CloseIcon } from "@/components/icons";
+import { Avatar } from "@/components/common/Avatar";
 import { digits } from "./MakeOfferModal";
 import { PaymentModal } from "./PaymentModal";
-import { ModalPortal, tk, useTransferLabels } from "./shared";
+import { ModalPortal, TransferFeeBadge, tk, useTransferLabels } from "./shared";
 
 const errorMessage = (err: unknown) => {
   const data = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data;
@@ -55,6 +57,13 @@ export function LoanModal({
   const [paying, setPaying] = useState(false);
 
   const feeTk = Number(fee || 0);
+
+  // The two clubs: his club (keeps his contract) and the club that borrows him.
+  const { data: status } = usePlayerTransferStatus(player.id);
+  const parentId = mode === "borrow" ? (status?.clubId ?? "") : clubId;
+  const borrowerId = mode === "borrow" ? clubId : otherClubId;
+  const { data: parentClub } = useClub(parentId);
+  const { data: borrowClub } = useClub(borrowerId);
   const title = format(mode === "borrow" ? tr.loanRequestTitle : tr.loanOutTitle, { player: player.name });
 
   async function send(paymentMethod?: PaymentMethod): Promise<string | null> {
@@ -102,6 +111,39 @@ export function LoanModal({
           </header>
 
           <div className="space-y-4 px-5 py-5">
+            {/* Clubs: who lends him to whom, his contract, and the paying club's wallet */}
+            <div className="rounded-xl border border-surface-line bg-surface/40 p-3">
+              <div className="flex items-center gap-2">
+                {(
+                  [
+                    [tr.loanFromLabel, parentClub, parentClubName ?? tr.hisClub],
+                    [tr.loanToLabel, borrowClub, mode === "lend" ? tr.pickClub : ""],
+                  ] as const
+                ).map(([label, c, fallback], i) => (
+                  <div key={label} className="flex min-w-0 flex-1 items-center gap-2">
+                    {i === 1 ? <ArrowRightIcon className="h-4 w-4 shrink-0 text-ink-faint" /> : null}
+                    {c ? <Avatar dpUrl={c.dpUrl} name={c.name} size="sm" mode="static" shape="square" /> : null}
+                    <div className="min-w-0">
+                      <div className="font-mono text-[9px] font-bold uppercase tracking-wider text-ink-faint">{label}</div>
+                      <div className="truncate text-sm font-semibold text-ink">{c?.name ?? fallback}</div>
+                      {c ? <div className="text-[10px] text-ink-faint">{format(tr.loanClubPoints, { points: c.points.toLocaleString() })}</div> : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-surface-line pt-2.5 text-xs">
+                <span className="flex items-center gap-1.5 text-ink-soft">
+                  {tr.loanContractLabel}
+                  {status?.contract ? <TransferFeeBadge contract={status.contract} compact /> : <span className="text-ink-faint">—</span>}
+                </span>
+                {mode === "borrow" && clubBalanceTk !== null ? (
+                  <span className={clubBalanceTk < feeTk ? "font-semibold text-danger-ink" : "text-ink-soft"}>
+                    {format(tr.loanWallet, { amount: tk(clubBalanceTk) })}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
             {mode === "lend" ? (
               <label className="block">
                 <span className="text-xs font-semibold text-ink-soft">{tr.loanToClub}</span>
