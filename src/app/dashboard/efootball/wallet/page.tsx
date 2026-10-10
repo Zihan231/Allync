@@ -16,7 +16,7 @@ import { formatMatchTime } from "@/components/dashboard/fixtures/labels";
 import { ArrowRightIcon, ClockIcon, LockIcon, PlusIcon, ShieldIcon, SwapIcon, UsersIcon, WalletIcon } from "@/components/icons";
 
 const PAGE_SIZE = 15;
-const FILTERS: Array<WalletTxKind | undefined> = [undefined, "received", "payout_sent", "hold", "refund", "top_up"];
+const FILTERS: Array<WalletTxKind | undefined> = [undefined, "received", "payout_sent", "hold", "refund", "top_up", "purchase"];
 
 /**
  * Demo wallet: balance, held money and totals, with the full transaction
@@ -52,6 +52,7 @@ export default function WalletPage() {
     received: tr.txReceived,
     adjustment: tr.txAdjustment,
     reversal: tr.txReversal,
+    purchase: tr.txPurchase,
   };
   const filterLabel = (k: WalletTxKind | undefined) =>
     !k
@@ -64,6 +65,7 @@ export default function WalletPage() {
           top_up: tr.filterTopUp,
           adjustment: tr.txAdjustment,
           reversal: tr.txReversal,
+          purchase: tr.txPurchase,
         }[k];
   const kindIcon = (k: WalletTxKind) =>
     k === "top_up" ? PlusIcon : k === "hold" ? LockIcon : k === "refund" ? ClockIcon : k === "received" ? WalletIcon : SwapIcon;

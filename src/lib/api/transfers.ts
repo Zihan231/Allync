@@ -83,7 +83,7 @@ export interface WalletView {
   heldTk: number;
   transactions: Array<{
     id: string;
-    kind: "top_up" | "hold" | "refund" | "payout_sent" | "received" | "adjustment" | "reversal";
+    kind: "top_up" | "hold" | "refund" | "payout_sent" | "received" | "adjustment" | "reversal" | "purchase";
     amountTk: number;
     counterparty: string | null;
     reference: string | null;

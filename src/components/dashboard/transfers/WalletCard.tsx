@@ -33,6 +33,7 @@ export function WalletCard({
     received: tr.txReceived,
     adjustment: tr.txAdjustment,
     reversal: tr.txReversal,
+    purchase: tr.txPurchase,
   } as const;
 
   async function addFunds() {

@@ -4,10 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
+import { format } from "@/lib/i18n/translations";
 import { useMockPeople, updatePersonProfile } from "@/lib/mock/communityStore";
-import { useUpdateMe } from "@/lib/api/hooks/useUsers";
+import { useEquipStoreItem, useMyStore, usePurchaseStoreItem, useStoreCatalog } from "@/lib/api/hooks/useStore";
+import type { MyStore, StoreItem } from "@/lib/api/store";
+import { PaymentModal } from "@/components/dashboard/transfers/PaymentModal";
 import {
-  getCosmeticsByCategory,
+  getCosmetic,
   RARITY_CONFIG,
   type CosmeticCategory,
   type CosmeticItem,
@@ -121,17 +124,52 @@ function CardPreview({
   );
 }
 
+/** A store item with its look: built-in items reuse the app's cosmetic design; staff items get a plain one. */
+function toCosmetic(item: StoreItem): CosmeticItem {
+  const base = getCosmetic(item.sku);
+  if (base) return { ...base, name: item.name || base.name, description: item.description ?? base.description, priceBdt: item.priceTk };
+  return {
+    id: item.sku,
+    category: item.category,
+    tier: item.priceTk > 0 ? "premium" : "free",
+    rarity: (item.metadata?.rarity as CosmeticRarity | undefined) ?? "common",
+    unlockMethod: item.priceTk > 0 ? "purchase" : "free",
+    name: item.name,
+    description: item.description ?? "",
+    icon: "shield",
+    tone: "accent",
+    color: "#d9a544",
+    priceBdt: item.priceTk,
+  };
+}
+
+/**
+ * The cosmetics store: items are bought with the wallet (free ones claimed) and kept on
+ * the account; the user switches between the items they own. Prices and availability
+ * come from the server (staff manage them in the admin store manager).
+ */
 export default function StorePage() {
   const { t } = useLanguage();
+  const ts = t.dashboard.store;
   const { user } = useSession();
   const people = useMockPeople();
   const [activeCategory, setActiveCategory] = useState<CosmeticCategory>("theme");
   const [themeFilter, setThemeFilter] = useState<"all" | "team" | "esports">("all");
   const [selectedRarity, setSelectedRarity] = useState<CosmeticRarity | "all">("all");
+  const [ownedOnly, setOwnedOnly] = useState(false);
   const [lastEquippedItem, setLastEquippedItem] = useState<CosmeticItem | null>(null);
-  const updateMe = useUpdateMe();
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+  const [checkout, setCheckout] = useState<CosmeticItem | null>(null);
+  const catalog = useStoreCatalog();
+  const mine = useMyStore();
+  const purchase = usePurchaseStoreItem();
+  const equip = useEquipStoreItem();
+  const busy = purchase.isPending || equip.isPending;
 
   const person = people.find((p) => p.id === user.personId);
+  const owned = new Set(mine.data?.owned ?? []);
+  const allItems = (catalog.data ?? []).map(toCosmetic);
 
   const categories: { id: CosmeticCategory; label: string }[] = [
     { id: "theme", label: t.dashboard.store.tabThemes },
@@ -149,7 +187,7 @@ export default function StorePage() {
     { id: "common", label: "• Common" },
   ];
 
-  const rawItems = getCosmeticsByCategory(activeCategory);
+  const rawItems = allItems.filter((i) => i.category === activeCategory);
   const items = rawItems
     .filter((i) => {
       if (activeCategory === "theme" && themeFilter !== "all") {
@@ -158,35 +196,72 @@ export default function StorePage() {
       }
       return true;
     })
-    .filter((i) => (selectedRarity === "all" ? true : i.rarity === selectedRarity));
+    .filter((i) => (selectedRarity === "all" ? true : i.rarity === selectedRarity))
+    .filter((i) => !ownedOnly || owned.has(i.id));
 
-  const handleInstantEquip = async (item: CosmeticItem) => {
+  /** Keeps the locally cached profile (used for cosmetics around the app) in step with the server. */
+  const sync = (state: MyStore) => {
     if (!person) return;
-    const ownedCosmeticIds = Array.from(new Set([...(person.ownedCosmeticIds ?? []), item.id]));
-    const field = item.category === "badge" ? "equippedBadgeId" : item.category === "title" ? "equippedTitleId" : item.category === "frame" ? "equippedFrameId" : "equippedThemeId";
-    await updateMe.mutateAsync({ ownedCosmeticIds, [field]: item.id });
-    updatePersonProfile(person.id, { ownedCosmeticIds, [field]: item.id });
-    setLastEquippedItem(item);
+    updatePersonProfile(person.id, {
+      ownedCosmeticIds: state.owned,
+      equippedBadgeId: state.equipped.badge ?? undefined,
+      equippedTitleId: state.equipped.title ?? undefined,
+      equippedFrameId: state.equipped.frame ?? undefined,
+      equippedThemeId: state.equipped.theme ?? undefined,
+    });
   };
 
-  const handleUnequip = async (item: CosmeticItem) => {
-    if (!person) return;
-    const field = item.category === "badge" ? "equippedBadgeId" : item.category === "title" ? "equippedTitleId" : item.category === "frame" ? "equippedFrameId" : "equippedThemeId";
-    await updateMe.mutateAsync({ [field]: null });
-    updatePersonProfile(person.id, { [field]: null });
-    if (lastEquippedItem?.id === item.id) {
-      setLastEquippedItem(null);
+  const errorText = (err: unknown) => {
+    const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+    return (Array.isArray(message) ? message.join(", ") : message) || ts.actionError;
+  };
+
+  async function buy(item: CosmeticItem): Promise<null> {
+    const state = await purchase.mutateAsync({ sku: item.id });
+    sync(state);
+    setLastEquippedItem(item);
+    setNotice(format(ts.boughtToast, { name: item.name }));
+    return null;
+  }
+
+  const handleBuy = async (item: CosmeticItem) => {
+    setError("");
+    setNotice("");
+    if (item.priceBdt > 0) {
+      setCheckout(item);
+      return;
+    }
+    try {
+      await buy(item);
+    } catch (err) {
+      setError(errorText(err));
     }
   };
 
-  const isItemEquipped = (item: CosmeticItem): boolean => {
-    if (!person) return false;
-    if (item.category === "badge") return person.equippedBadgeId === item.id;
-    if (item.category === "title") return person.equippedTitleId === item.id;
-    if (item.category === "frame") return person.equippedFrameId === item.id;
-    if (item.category === "theme") return person.equippedThemeId === item.id;
-    return false;
+  const handleInstantEquip = async (item: CosmeticItem) => {
+    setError("");
+    try {
+      const state = await equip.mutateAsync({ category: item.category, sku: item.id });
+      sync(state);
+      setLastEquippedItem(item);
+      setNotice(format(ts.equippedToast, { name: item.name }));
+    } catch (err) {
+      setError(errorText(err));
+    }
   };
+
+  const handleUnequip = async (item: CosmeticItem) => {
+    setError("");
+    try {
+      const state = await equip.mutateAsync({ category: item.category, sku: null });
+      sync(state);
+      if (lastEquippedItem?.id === item.id) setLastEquippedItem(null);
+    } catch (err) {
+      setError(errorText(err));
+    }
+  };
+
+  const isItemEquipped = (item: CosmeticItem): boolean => mine.data?.equipped[item.category] === item.id;
 
   return (
     <div className="relative pb-16">
@@ -195,11 +270,19 @@ export default function StorePage() {
       <div className="glow-blue pointer-events-none absolute right-0 top-32 -z-10 h-[380px] w-[380px] blur-[90px] opacity-35" />
 
       <PageHeader
-        eyebrow="Cosmetic Locker"
-        title="Unlimited Cosmetics Showcase"
-        description="All 28 Mythic, Legendary, Epic & Rare Themes, Frames, Titles, and Badges are fully unlocked with unlimited instant access."
+        eyebrow={ts.eyebrow}
+        title={ts.pageTitle}
+        description={ts.description}
         action={
           <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              href="/dashboard/efootball/wallet"
+              className="flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/20"
+              title={ts.addFunds}
+            >
+              <span className="font-mono text-[11px] uppercase tracking-wide text-emerald-300/80">{ts.balanceLabel}</span>
+              <span className="font-display font-black">৳{(mine.data?.balanceTk ?? 0).toLocaleString()}</span>
+            </Link>
             <Link
               href="/dashboard/efootball/profile"
               className="flex items-center gap-1.5 rounded-full border border-accent bg-accent/20 px-4 py-2 text-sm font-semibold text-accent-ink transition-all hover:bg-accent hover:text-bg shadow-sm"
@@ -217,29 +300,39 @@ export default function StorePage() {
         }
       />
 
-      {/* Unlimited Access Banner */}
-      <div className="mt-6 rounded-2xl border border-emerald-500/40 bg-gradient-to-r from-emerald-950/70 via-bg-raised/90 to-emerald-950/70 p-4 shadow-xl backdrop-blur">
+      {/* Collection summary, last action and errors */}
+      <div className="mt-6 rounded-2xl border border-accent/30 bg-gradient-to-r from-accent/10 via-bg-raised/90 to-accent/10 p-4 shadow-xl backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 font-black">
-              ✓
-            </span>
-            <div>
-              <p className="font-display text-sm font-bold text-ink">
-                Unlocked Sandbox Mode
-              </p>
-              <p className="text-xs text-ink-soft">
-                Click any Theme, Frame, Title or Badge to instantly equip it to your profile.
-              </p>
+          <div className="flex items-center gap-3">
+            <p className="font-display text-sm font-bold text-ink">
+              {format(ts.ownedCount, { owned: owned.size, total: allItems.length })}
+            </p>
+            <div className="flex rounded-full border border-surface-line-strong bg-surface/60 p-0.5 text-xs font-semibold">
+              {([false, true] as const).map((value) => (
+                <button
+                  key={String(value)}
+                  type="button"
+                  onClick={() => setOwnedOnly(value)}
+                  className={`rounded-full px-3 py-1 transition-colors ${ownedOnly === value ? "bg-accent text-bg" : "text-ink-soft hover:text-ink"}`}
+                >
+                  {value ? ts.ownedOnly : ts.allItems}
+                </button>
+              ))}
             </div>
           </div>
-          {lastEquippedItem ? (
-            <div className="flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-3.5 py-1 text-xs font-bold text-accent-ink animate-pulse">
+          {notice ? (
+            <div className="flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-3.5 py-1 text-xs font-bold text-accent-ink">
               <FlameIcon className="h-3.5 w-3.5" />
-              Equipped: {lastEquippedItem.name}
+              {notice}
             </div>
           ) : null}
         </div>
+        {error ? (
+          <p className="mt-3 rounded-lg border border-danger/40 bg-danger-soft px-3 py-2 text-xs font-semibold text-danger-ink" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {catalog.isError ? <p className="mt-3 text-xs font-semibold text-danger-ink">{ts.loadError}</p> : null}
       </div>
 
       {/* Category tabs */}
@@ -325,6 +418,14 @@ export default function StorePage() {
           </div>
         ) : null}
       </div>
+
+      {catalog.isLoading ? (
+        <div className="mt-6 flex h-48 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        </div>
+      ) : ownedOnly && items.length === 0 ? (
+        <p className="mt-6 rounded-2xl border border-dashed border-surface-line p-8 text-center text-sm text-ink-soft">{ts.emptyOwned}</p>
+      ) : null}
 
       {/* Items Grid */}
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -418,13 +519,28 @@ export default function StorePage() {
 
               {/* Bottom Action Footer */}
               <div className="mt-5 border-t border-surface-line pt-4 flex items-center justify-between gap-3">
-                <span className="font-mono text-[11px] font-bold text-emerald-400 flex items-center gap-1">
-                  <span>✓</span> UNLOCKED
-                </span>
+                {owned.has(item.id) ? (
+                  <span className="font-mono text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                    <span>✓</span> {ts.owned}
+                  </span>
+                ) : (
+                  <span className="font-display text-sm font-black text-ink">
+                    {item.priceBdt > 0 ? `৳${item.priceBdt.toLocaleString()}` : ts.free}
+                  </span>
+                )}
 
                 {/* Instant Equip Action Button */}
                 <div className="flex items-center gap-2">
-                  {isEquipped ? (
+                  {!owned.has(item.id) ? (
+                    <button
+                      type="button"
+                      onClick={() => handleBuy(item)}
+                      disabled={busy || mine.isLoading}
+                      className="rounded-full bg-accent px-5 py-2 text-xs font-black uppercase tracking-wider text-bg shadow-lg transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+                    >
+                      {item.priceBdt > 0 ? format(ts.buyFor, { amount: item.priceBdt.toLocaleString() }) : ts.getFree}
+                    </button>
+                  ) : isEquipped ? (
                     <>
                       <span className="rounded-full bg-emerald-500/20 border border-emerald-400/50 px-3.5 py-1.5 text-xs font-bold text-emerald-300 shadow-sm flex items-center gap-1">
                         <span>●</span> {t.dashboard.store.equipped}
@@ -432,6 +548,7 @@ export default function StorePage() {
                       <button
                         type="button"
                         onClick={() => handleUnequip(item)}
+                        disabled={busy}
                         className="text-xs text-ink-faint underline hover:text-ink transition-colors"
                       >
                         {t.dashboard.store.unequip}
@@ -441,7 +558,8 @@ export default function StorePage() {
                     <button
                       type="button"
                       onClick={() => handleInstantEquip(item)}
-                      className={`rounded-full px-5 py-2 text-xs font-black uppercase tracking-wider shadow-lg transition-all duration-200 active:scale-95 ${
+                      disabled={busy}
+                      className={`disabled:opacity-50 rounded-full px-5 py-2 text-xs font-black uppercase tracking-wider shadow-lg transition-all duration-200 active:scale-95 ${
                         item.rarity === "mythic"
                           ? "bg-gradient-to-r from-rose-500 via-purple-600 to-cyan-500 text-white hover:brightness-110 shadow-[0_0_16px_rgba(255,0,128,0.5)]"
                           : item.rarity === "legendary"
@@ -460,6 +578,17 @@ export default function StorePage() {
           );
         })}
       </div>
+
+      {checkout ? (
+        <PaymentModal
+          amountTk={checkout.priceBdt}
+          payeeName="ALLYNQ Store"
+          purpose={format(ts.purchaseTitle, { name: checkout.name })}
+          balanceTk={mine.data?.balanceTk ?? null}
+          onPay={() => buy(checkout)}
+          onClose={() => setCheckout(null)}
+        />
+      ) : null}
     </div>
   );
 }
