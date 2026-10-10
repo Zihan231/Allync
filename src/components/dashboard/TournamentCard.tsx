@@ -62,8 +62,13 @@ export function TournamentCard({
       : countdownTime;
 
   // Host Name
+  // General tournaments (no community or club) show their organizer.
   const hostName =
-    tournament.community?.name || tournament.hostClub?.name || tournament.organizerName || tc.defaultHost;
+    tournament.community?.name ||
+    tournament.hostClub?.name ||
+    (tournament.creator?.name ? format(tc.organizedBy, { name: tournament.creator.name }) : null) ||
+    tournament.organizerName ||
+    tc.defaultHost;
 
   // Entrants and capacity
   const entrantsCount =

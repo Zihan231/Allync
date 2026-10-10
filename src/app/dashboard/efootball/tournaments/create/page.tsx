@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, type ComponentType, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
@@ -15,6 +15,8 @@ import {
 import { useSession } from "@/lib/session/SessionContext";
 import { getCommunities } from "@/lib/api/communities";
 import { useCreateTournament } from "@/lib/api/hooks/useTournaments";
+import { useMyTransfers } from "@/lib/api/hooks/useTransfers";
+import { PaymentModal } from "@/components/dashboard/transfers/PaymentModal";
 import type { BackendCommunity } from "@/lib/api/types";
 import {
   TOURNAMENT_PRESET_ROSTERS,
@@ -164,6 +166,11 @@ function CreateTournamentForm() {
   // `?clubId=` → a club-hosted tournament: PvP between the club's members, run by its President / GS.
   const hostClubId = searchParams.get("clubId");
   const isClubHost = Boolean(hostClubId);
+  // Organizer mode (/dashboard/organizer/create): a general tournament, no community or club,
+  // open to everyone. Its prize is paid from the organizer's wallet.
+  const isGeneralHost = usePathname().startsWith("/dashboard/organizer");
+  const { data: myTransfers } = useMyTransfers(isGeneralHost);
+  const [prizeCheckout, setPrizeCheckout] = useState(false);
   const createMutation = useCreateTournament();
 
   const [communities, setCommunities] = useState<BackendCommunity[]>([]);
@@ -332,7 +339,7 @@ function CreateTournamentForm() {
     setErrorMessage("");
 
     const effectiveCommunityId = hostCommunityId;
-    if (!isClubHost && !effectiveCommunityId) {
+    if (!isClubHost && !isGeneralHost && !effectiveCommunityId) {
       setErrorMessage(tc.errNoCommunity);
       return;
     }
@@ -372,9 +379,30 @@ function CreateTournamentForm() {
       return;
     }
 
-    try {
+    // A general tournament with a prize: pay the prize into a hold first (the checkout creates it).
+    if (isGeneralHost && prizePoolBdt > 0) {
+      setPrizeCheckout(true);
+      return;
+    }
 
-      const tournament = await createMutation.mutateAsync({
+    try {
+      const tournament = await createNow();
+      router.push(tournamentHref(tournament));
+    } catch (err: any) {
+      setErrorMessage(createErrorMessage(err));
+    }
+  }
+
+  function createErrorMessage(err: any): string {
+    const resMsg = err?.response?.data?.message || err?.message;
+    if (Array.isArray(resMsg)) return resMsg.join(", ");
+    if (typeof resMsg === "string" && resMsg.trim()) return resMsg;
+    return tc.errCreateFailed;
+  }
+
+  function createNow() {
+    {
+      return createMutation.mutateAsync({
         name: name.trim(),
         type,
         platform,
@@ -386,28 +414,17 @@ function CreateTournamentForm() {
         isPaid: isClubHost ? false : isPaid,
         entryFeeBdt: !isClubHost && isPaid ? entryFeeBdt : 0,
         prizePoolBdt: !isClubHost && prizePoolBdt > 0 ? prizePoolBdt : 0,
-        startAt: startDate.toISOString(),
+        startAt: new Date(startAt).toISOString(),
         endAt: endAt ? new Date(endAt).toISOString() : undefined,
         playHoursStart: timeInputToMinutes(playStart),
         playHoursEnd: timeInputToMinutes(playEnd),
-        matchOfficialIds,
-        ...(isClubHost ? { hostClubId: hostClubId! } : { communityId: effectiveCommunityId }),
+        matchOfficialIds: isGeneralHost ? [] : matchOfficialIds,
+        ...(isClubHost
+          ? { hostClubId: hostClubId! }
+          : isGeneralHost
+            ? { general: true }
+            : { communityId: hostCommunityId }),
       });
-
-      router.push(tournamentHref(tournament));
-    } catch (err: any) {
-      const resData = err?.response?.data;
-      const resMsg = resData?.message || err?.message;
-      let displayMsg: string = tc.errCreateFailed;
-      if (Array.isArray(resMsg)) {
-        displayMsg = resMsg.join(", ");
-      } else if (typeof resMsg === "string" && resMsg.trim()) {
-        displayMsg = resMsg;
-      } else if (err?.message) {
-        displayMsg = err.message;
-      }
-      console.warn("Tournament creation error:", displayMsg);
-      setErrorMessage(displayMsg);
     }
   }
 
@@ -415,11 +432,15 @@ function CreateTournamentForm() {
     isClubHost &&
     user?.club?.id === hostClubId &&
     (user?.club?.role === "President" || user?.club?.role === "General Secretary");
-  const isEligible = isClubHost
-    ? isClubLeader
-    : eligibleCommunities.length > 0 || Boolean(queryCommunityId) || Boolean(user?.community?.id);
+  const isEligible = isGeneralHost
+    ? true
+    : isClubHost
+      ? isClubLeader
+      : eligibleCommunities.length > 0 || Boolean(queryCommunityId) || Boolean(user?.community?.id);
   const backCommunityId = communityId || queryCommunityId || user?.community?.id;
-  const communityBackHref = isClubHost
+  const communityBackHref = isGeneralHost
+    ? "/dashboard/organizer"
+    : isClubHost
     ? `/dashboard/efootball/clubs/${hostClubId}?tab=tournaments`
     : backCommunityId
       ? `/dashboard/efootball/community/${backCommunityId}?tab=tournaments`
@@ -460,7 +481,9 @@ function CreateTournamentForm() {
     <div>
       <PageHeader
         eyebrow={
-          isClubHost
+          isGeneralHost
+            ? tc.eyebrowOrganizer
+            : isClubHost
             ? `${tc.eyebrowClub}${user?.club?.name ? ` · ${user.club.name}` : ""}`
             : eligibleCommunities[0]?.name
               ? `${tc.eyebrowCommunity} · ${eligibleCommunities[0].name}`
@@ -814,7 +837,8 @@ function CreateTournamentForm() {
               </div>
             </FormSection>
 
-            {/* Match officials: review evidence with the President / Vice President */}
+            {/* Match officials: review evidence with the President / Vice President (general: the organizer reviews) */}
+            {isGeneralHost ? null : (
             <FormSection tone="blue" icon={GavelIcon} title={t.dashboard.matchOfficials.title}>
               <MatchOfficialsPicker
                 host={officialsHost}
@@ -822,6 +846,7 @@ function CreateTournamentForm() {
                 onChange={(ids) => setOfficials({ hostId: officialsHost.id, ids })}
               />
             </FormSection>
+            )}
 
             {/* Entry Fee & Prize Pool (community tournaments; club ones are friendlies) */}
             {isClubHost ? (
@@ -831,6 +856,11 @@ function CreateTournamentForm() {
             ) : (
             <FormSection tone="accent" icon={WalletIcon} title={tc.feesLabel}>
               <div className="space-y-4">
+              {isGeneralHost ? (
+                <p className="rounded-xl border border-accent/30 bg-accent-soft/40 px-3 py-2 text-xs leading-relaxed text-ink-soft">
+                  {tc.generalNote}
+                </p>
+              ) : null}
               <div className="grid grid-cols-2 gap-2 rounded-xl border border-surface-line bg-surface/40 p-1">
                 <button
                   type="button"
@@ -930,6 +960,23 @@ function CreateTournamentForm() {
           />
         </div>
       </div>
+
+      {prizeCheckout ? (
+        <PaymentModal
+          amountTk={prizePoolBdt}
+          payeeName={tc.champion}
+          purpose={format(tc.prizePurpose, { tournament: name.trim() })}
+          balanceTk={myTransfers?.wallet.balanceTk ?? null}
+          onPay={async () => {
+            // Creating the tournament holds the prize from the organizer's wallet.
+            const tournament = await createNow();
+            setPrizeCheckout(false);
+            router.push(tournamentHref(tournament));
+            return null;
+          }}
+          onClose={() => setPrizeCheckout(false)}
+        />
+      ) : null}
     </div>
   );
 }

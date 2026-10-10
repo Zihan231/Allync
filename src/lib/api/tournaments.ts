@@ -60,6 +60,10 @@ export interface TournamentParticipant {
   submittedAt?: string | null;
   /** When the participant registered (the backend's creation timestamp). */
   createdAt: string;
+  /** General tournaments: entry fee held from the entrant, or already paid to the organizer. */
+  feeHeldTk?: number;
+  feePaidTk?: number;
+  paymentRef?: string | null;
   club?: {
     id: string;
     name: string;
@@ -137,6 +141,10 @@ export interface BackendTournament {
   } | null;
   createdById?: string;
   creatorId?: string;
+  /** Who created it; for a general tournament (no community or club) this is its organizer. */
+  creator?: { id: string; name: string; dpUrl?: string | null } | null;
+  /** General tournaments: prize money still held from the organizer's wallet. */
+  prizeHeldTk?: number;
   bracket: TournamentBracket | null;
   /** Set once fixtures are generated. */
   format?: TournamentFormat | null;
@@ -171,6 +179,8 @@ export interface BackendTournament {
 export interface TournamentQueryParams {
   type?: TournamentType;
   platform?: GamingPlatform;
+  /** "general": organizer-run tournaments open to everyone. */
+  host?: "general" | "community" | "club";
   status?: TournamentStatus;
   communityId?: string;
   /** Only tournaments this club has entered. */
@@ -192,6 +202,8 @@ export interface CreateTournamentPayload {
   name: string;
   type: TournamentType;
   platform?: GamingPlatform;
+  /** No community or club: a general tournament run by the creator, open to everyone. */
+  general?: boolean;
   preset?: TournamentPreset;
   startersCount?: number;
   subsCount?: number;
@@ -214,6 +226,7 @@ export function tournamentHref(
   tournament: Pick<BackendTournament, "id" | "communityId" | "hostClubId">,
   query = "",
 ): string {
+  if (!tournament.communityId && !tournament.hostClubId) return `/dashboard/efootball/tournaments/${tournament.id}${query}`;
   return tournament.hostClubId
     ? `/dashboard/efootball/clubs/${tournament.hostClubId}/tournaments/${tournament.id}${query}`
     : `/dashboard/efootball/community/${tournament.communityId}/tournaments/${tournament.id}${query}`;
@@ -221,9 +234,15 @@ export function tournamentHref(
 
 /** The host's Tournaments tab (community or club). */
 export function hostTournamentsHref(tournament: Pick<BackendTournament, "communityId" | "hostClubId">): string {
+  if (isGeneralTournament(tournament)) return "/dashboard/organizer";
   return tournament.hostClubId
     ? `/dashboard/efootball/clubs/${tournament.hostClubId}?tab=tournaments`
     : `/dashboard/efootball/community/${tournament.communityId}?tab=tournaments`;
+}
+
+/** A general tournament has no community or club: its creator (the organizer) runs it and anyone can enter. */
+export function isGeneralTournament(tournament: Pick<BackendTournament, "communityId" | "hostClubId">): boolean {
+  return !tournament.communityId && !tournament.hostClubId;
 }
 
 export interface SubmitLineupPayload {
@@ -237,6 +256,8 @@ export interface SubmitLineupPayload {
 export interface JoinTournamentPayload {
   clubId?: string;
   lineup?: SubmitLineupPayload;
+  /** Paid general tournaments: how the entry fee is paid (held until fixtures are out). */
+  paymentMethod?: "bkash" | "nagad" | "card";
 }
 
 export async function getTournaments(
@@ -289,6 +310,12 @@ export async function joinTournament(
   payload?: JoinTournamentPayload,
 ): Promise<TournamentParticipant> {
   const res = await api.post<TournamentParticipant>(`/tournaments/${id}/join`, payload || {});
+  return res.data;
+}
+
+/** Leave before fixtures are out (a club's President / GS withdraws the club); paid entries are refunded. */
+export async function leaveTournament(id: string): Promise<{ id: string; refundedTk: number }> {
+  const res = await api.post<{ id: string; refundedTk: number }>(`/tournaments/${id}/leave`);
   return res.data;
 }
 

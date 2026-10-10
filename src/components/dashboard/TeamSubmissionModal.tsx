@@ -8,6 +8,7 @@ import { useClubCommitments, useJoinTournament, useSubmitTournamentLineup } from
 import type { ClubMemberProfile, Team } from "@/lib/api/teams";
 import type { BackendTournament, SubmitLineupPayload, TournamentParticipant } from "@/lib/api/tournaments";
 import { TeamSubmissionForm } from "./TeamSubmissionForm";
+import { PaymentModal } from "./transfers/PaymentModal";
 
 function apiErrorMessage(err: unknown): string | undefined {
   const data = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data;
@@ -45,6 +46,9 @@ export function TeamSubmissionModal({
   const lineupMutation = useSubmitTournamentLineup(tournament.id);
   const isPending = joinMutation.isPending || lineupMutation.isPending;
   const [error, setError] = useState("");
+  // Paid general tournament: the club pays its entry fee (held) when it registers.
+  const entryFee = !tournament.communityId && !tournament.hostClubId ? (tournament.entryFeeBdt ?? 0) : 0;
+  const [checkout, setCheckout] = useState<SubmitLineupPayload | null>(null);
   // Players already in another active tournament can't be picked.
   const commitments = useClubCommitments(tournament.id, club.id);
   const lockedIn = useMemo(
@@ -66,6 +70,9 @@ export function TeamSubmissionModal({
       if (participant) {
         await lineupMutation.mutateAsync({ participantId: participant.id, payload: lineup });
         onSaved(ts.lineupSaved);
+      } else if (entryFee > 0) {
+        setCheckout(lineup);
+        return;
       } else {
         await joinMutation.mutateAsync({ clubId: club.id, lineup });
         onSaved(format(ts.registered, { club: club.name }));
@@ -156,7 +163,7 @@ export function TeamSubmissionModal({
                 teams={teams}
                 lockedIn={lockedIn}
                 initialLineup={participant?.lineup}
-                submitLabel={isEditing ? ts.updateSubmit : ts.registerSubmit}
+                submitLabel={isEditing ? ts.updateSubmit : entryFee > 0 ? format(ts.payAndRegister, { amount: entryFee }) : ts.registerSubmit}
                 submittingLabel={isEditing ? ts.updating : ts.registering}
                 isSubmitting={isPending}
                 error={error}
@@ -166,6 +173,25 @@ export function TeamSubmissionModal({
           )}
         </div>
       </div>
+      {checkout ? (
+        <PaymentModal
+          amountTk={entryFee}
+          payeeName={tournament.name}
+          purpose={format(ts.registerTitle, { club: club.name })}
+          balanceTk={null}
+          onPay={async (method) => {
+            const entry = await joinMutation.mutateAsync({ clubId: club.id, lineup: checkout, paymentMethod: method });
+            return entry.paymentRef ?? null;
+          }}
+          onClose={(paid) => {
+            setCheckout(null);
+            if (paid) {
+              onSaved(format(ts.registered, { club: club.name }));
+              onClose();
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }

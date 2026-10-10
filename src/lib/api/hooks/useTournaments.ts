@@ -7,6 +7,7 @@ import {
   getTournament,
   createTournament,
   joinTournament,
+  leaveTournament,
   submitTournamentLineup,
   getClubCommitments,
   generateTournamentBracket,
@@ -116,6 +117,20 @@ export function useJoinTournament(tournamentId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tournamentKeys.detail(tournamentId) });
       queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
+    },
+  });
+}
+
+/** Leave a tournament before fixtures are out (refunds a paid entry). */
+export function useLeaveTournament(tournamentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation<{ id: string; refundedTk: number }, Error, void>({
+    mutationFn: () => leaveTournament(tournamentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tournamentKeys.detail(tournamentId) });
+      queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
+      // The refund changes the wallet.
+      queryClient.invalidateQueries({ queryKey: ["transfers"] });
     },
   });
 }

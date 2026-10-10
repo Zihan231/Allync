@@ -20,7 +20,8 @@ import { getPerson, getClub, getCommunity, syncFromBackend } from "@/lib/mock/co
 import type { VerificationLevel } from "@/lib/mock/types";
 import type { SystemRole } from "@/lib/api/admin";
 
-export type Mode = "player" | "admin";
+/** Dashboard mode: playing, organizing general tournaments, or (staff) the admin panel. */
+export type Mode = "player" | "organizer" | "admin";
 export type GameId = "efootball" | "pubg" | "freefire" | "valorant";
 export type KycStatus = "unverified" | "pending" | "verified";
 export type VerificationStatus = "unverified" | "pending" | "verified";

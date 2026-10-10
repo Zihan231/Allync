@@ -25,6 +25,7 @@ import {
   GavelIcon,
   BellIcon,
   SettingsIcon,
+  FlameIcon,
 } from "../icons";
 
 type NavItem = {
@@ -47,12 +48,18 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const isStaff = Boolean(user.systemRole);
-  const mode: Mode = isStaff && pathname.startsWith("/dashboard/admin") ? "admin" : "player";
+  // The mode follows the page: the admin panel, the organizer area, or everything else (player).
+  const mode: Mode =
+    isStaff && pathname.startsWith("/dashboard/admin")
+      ? "admin"
+      : pathname.startsWith("/dashboard/organizer")
+        ? "organizer"
+        : "player";
   const { data: reportCounts } = useAdminReportCounts(mode === "admin");
 
   const handleModeChange = (next: Mode) => {
     onClose();
-    router.push(next === "admin" ? "/dashboard/admin" : `/dashboard/${user.activeGame}`);
+    router.push(next === "admin" ? "/dashboard/admin" : next === "organizer" ? "/dashboard/organizer" : `/dashboard/${user.activeGame}`);
   };
 
   const playerBase = `/dashboard/${user.activeGame}`;
@@ -69,6 +76,7 @@ export function DashboardSidebar({
       icon: ShieldIcon,
     },
     { href: `${playerBase}/tournaments`, label: t.dashboard.shell.navMyTournaments, icon: TrophyIcon },
+    { href: `${playerBase}/tournaments/general`, label: t.dashboard.organizerMode.navGeneral, icon: FlameIcon },
     { href: `${playerBase}/matches`, label: t.dashboard.shell.navMatches, icon: CalendarIcon },
     { href: `${playerBase}/transfers`, label: t.dashboard.transfers.pageTitle, icon: SwapIcon },
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
@@ -102,10 +110,17 @@ export function DashboardSidebar({
       : []),
   ];
 
-  const items = mode === "admin" ? adminItems : playerItems;
+  const organizerItems: NavItem[] = [
+    { href: "/dashboard/organizer", label: t.dashboard.organizerMode.navDashboard, icon: ChartIcon },
+    { href: "/dashboard/organizer/create", label: t.dashboard.organizerMode.navCreate, icon: TrophyIcon },
+    { href: `${playerBase}/tournaments/general`, label: t.dashboard.organizerMode.navGeneral, icon: FlameIcon },
+    { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
+  ];
+
+  const items = mode === "admin" ? adminItems : mode === "organizer" ? organizerItems : playerItems;
 
   const isActive = (href: string) =>
-    href === playerBase || href === "/dashboard/admin"
+    href === playerBase || href === "/dashboard/admin" || href === "/dashboard/organizer" || href === `${playerBase}/tournaments`
       ? pathname === href
       : pathname.startsWith(href);
 
@@ -138,11 +153,9 @@ export function DashboardSidebar({
   return (
     <>
       <aside className="fixed top-14 min-[400px]:top-16 left-0 bottom-0 z-20 hidden w-60 shrink-0 overflow-y-auto border-r border-surface-line/70 bg-bg/95 backdrop-blur-md lg:block">
-        {isStaff ? (
-          <div className="border-b border-surface-line/70 p-3">
-            <RoleToggle value={mode} onChange={handleModeChange} className="w-full" />
-          </div>
-        ) : null}
+        <div className="border-b border-surface-line/70 p-3">
+          <RoleToggle value={mode} onChange={handleModeChange} staff={isStaff} className="w-full" />
+        </div>
         {content}
       </aside>
 
@@ -158,11 +171,9 @@ export function DashboardSidebar({
                 ALL<span className="text-accent">Y</span>NQ
               </Link>
             </div>
-            {isStaff ? (
-              <div className="border-b border-surface-line/70 p-3">
-                <RoleToggle value={mode} onChange={handleModeChange} className="w-full" />
-              </div>
-            ) : null}
+            <div className="border-b border-surface-line/70 p-3">
+              <RoleToggle value={mode} onChange={handleModeChange} staff={isStaff} className="w-full" />
+            </div>
             {content}
           </div>
         </div>

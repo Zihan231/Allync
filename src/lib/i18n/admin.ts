@@ -5,6 +5,8 @@ export const adminEn = {
   modeAdmin: "Admin",
   modePlayer: "Player",
   modeHint: "Staff tools: users, verification, recycle bin and logs.",
+  modeOrganizer: "Organizer",
+  modeOrganizerHint: "Create and run your own tournaments, open to everyone.",
   roles: { moderator: "Moderator", admin: "Admin", super_admin: "Super admin" },
   roleNone: "Normal user",
   nav: {
@@ -714,6 +716,8 @@ export const adminBn: AdminDict = {
   modeAdmin: "অ্যাডমিন",
   modePlayer: "প্লেয়ার",
   modeHint: "স্টাফ টুলস: ইউজার, ভেরিফিকেশন, রিসাইকেল বিন ও লগ।",
+  modeOrganizer: "আয়োজক",
+  modeOrganizerHint: "সবার জন্য উন্মুক্ত নিজের টুর্নামেন্ট তৈরি ও পরিচালনা করুন।",
   roles: { moderator: "মডারেটর", admin: "অ্যাডমিন", super_admin: "সুপার অ্যাডমিন" },
   roleNone: "সাধারণ ইউজার",
   nav: {

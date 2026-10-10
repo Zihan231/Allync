@@ -10,6 +10,7 @@ import { useMockPeople } from "@/lib/mock/communityStore";
 import {
   useTournament,
   useJoinTournament,
+  useLeaveTournament,
   useSubmitTournamentLineup,
   useGenerateTournamentBracket,
   useDeleteTournament,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/api/hooks/useTournaments";
 import { EditTournamentModal } from "@/components/dashboard/EditTournamentModal";
 import { TeamSubmissionModal } from "@/components/dashboard/TeamSubmissionModal";
+import { PaymentModal } from "@/components/dashboard/transfers/PaymentModal";
 import { TournamentParticipantCard } from "@/components/dashboard/TournamentParticipantCard";
 import { TournamentFixtures } from "@/components/dashboard/fixtures/TournamentFixtures";
 import { ParticipantLineupModal } from "@/components/dashboard/ParticipantLineupModal";
@@ -27,9 +29,18 @@ import { useConfirm } from "@/lib/useConfirm";
 import { useCommunityMembers } from "@/lib/api/hooks/useCommunities";
 import { useClubMembers } from "@/lib/api/hooks/useTeams";
 import { getClub } from "@/lib/api/clubs";
-import { getTeams, getClubMembers, type Team, type ClubMemberProfile } from "@/lib/api/teams";
+import {
+  getTeams,
+  getClubMembers,
+  type Team,
+  type ClubMemberProfile,
+} from "@/lib/api/teams";
 import type { BackendClub } from "@/lib/api/types";
-import { hostTournamentsHref, tournamentHref, type SubmitLineupPayload } from "@/lib/api/tournaments";
+import {
+  hostTournamentsHref,
+  tournamentHref,
+  type SubmitLineupPayload,
+} from "@/lib/api/tournaments";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { EmptyState } from "@/components/dashboard/EmptyState";
@@ -96,7 +107,10 @@ function BracketGenerationOverlay({ label }: { label: string }) {
       aria-label={label}
     >
       <div className="w-full max-w-sm rounded-3xl border border-purple-400/30 bg-bg-raised/95 px-6 py-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-        <div className="relative mx-auto flex h-28 w-28 items-center justify-center" aria-hidden="true">
+        <div
+          className="relative mx-auto flex h-28 w-28 items-center justify-center"
+          aria-hidden="true"
+        >
           <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-purple-400 border-r-purple-400/40 motion-reduce:animate-none" />
           <span className="absolute inset-3 animate-[spin_1.5s_linear_infinite_reverse] rounded-full border border-transparent border-b-accent border-l-accent/40 motion-reduce:animate-none" />
           <span className="flex h-16 w-16 animate-pulse items-center justify-center rounded-2xl border border-purple-400/30 bg-purple-500/15 text-purple-300 shadow-[0_0_32px_rgba(168,85,247,0.28)] motion-reduce:animate-none">
@@ -104,7 +118,9 @@ function BracketGenerationOverlay({ label }: { label: string }) {
           </span>
         </div>
 
-        <p className="mt-5 font-display text-base font-black text-ink">{label}</p>
+        <p className="mt-5 font-display text-base font-black text-ink">
+          {label}
+        </p>
         <div className="mt-4 flex justify-center gap-2" aria-hidden="true">
           {[0, 1, 2].map((index) => (
             <span
@@ -150,10 +166,12 @@ export function TournamentDetailView({
   const { data: hostClubMembers = [] } = useClubMembers(hostClubId ?? "");
   const viewerLeadsHostClub = Boolean(
     hostClubId &&
-      user?.club?.id === hostClubId &&
-      (user.club.role === "President" || user.club.role === "General Secretary"),
+    user?.club?.id === hostClubId &&
+    (user.club.role === "President" || user.club.role === "General Secretary"),
   );
   const joinMutation = useJoinTournament(tournamentId);
+  const leaveMutation = useLeaveTournament(tournamentId);
+  const [entryCheckout, setEntryCheckout] = useState(false);
   const submitLineupMutation = useSubmitTournamentLineup(tournamentId);
   const generateBracketMutation = useGenerateTournamentBracket(tournamentId);
   const deleteMutation = useDeleteTournament(tournamentId);
@@ -165,29 +183,37 @@ export function TournamentDetailView({
     tournament?.participants?.some((participant) =>
       tournament.type === "cvc"
         ? participant.clubId === user?.club?.id
-        : participant.userId === user?.id || participant.userId === user?.personId,
+        : participant.userId === user?.id ||
+          participant.userId === user?.personId,
     ),
   );
   // Hosts (the creator, the hosting community's President / VP, or the hosting club's
   // President / GS) also have it under My Tournaments.
   const viewerHostsTournament = Boolean(
     tournament &&
-      user &&
-      (tournament.creatorId === user.id ||
-        viewerLeadsHostClub ||
-        tournament.community?.creatorId === user.id ||
-        tournament.community?.presidentId === user.id ||
-        tournament.community?.vicePresidentId === user.id ||
-        communityMembers.some(
-          (member) =>
-            (member.id === user.id || member.id === user.personId) &&
-            (member.communityRole === "President" || member.communityRole === "Vice President"),
-        )),
+    user &&
+    (tournament.creatorId === user.id ||
+      viewerLeadsHostClub ||
+      tournament.community?.creatorId === user.id ||
+      tournament.community?.presidentId === user.id ||
+      tournament.community?.vicePresidentId === user.id ||
+      communityMembers.some(
+        (member) =>
+          (member.id === user.id || member.id === user.personId) &&
+          (member.communityRole === "President" ||
+            member.communityRole === "Vice President"),
+      )),
+  );
+  // Platform-wide Alynq tournaments already use this route as their canonical
+  // public detail page. Never redirect a non-participant away from this same URL.
+  const isAlynqTournament = Boolean(
+    tournament && !tournament.communityId && !tournament.hostClubId,
   );
 
   useEffect(() => {
     if (
       context !== "my-tournaments" ||
+      isAlynqTournament ||
       isSessionLoading ||
       isLoadingCommunityMembers ||
       !tournament ||
@@ -198,18 +224,34 @@ export function TournamentDetailView({
     }
 
     router.replace(tournamentHref(tournament));
-  }, [context, isSessionLoading, isLoadingCommunityMembers, router, tournament, viewerIsParticipant, viewerHostsTournament]);
+  }, [
+    context,
+    isAlynqTournament,
+    isSessionLoading,
+    isLoadingCommunityMembers,
+    router,
+    tournament,
+    viewerIsParticipant,
+    viewerHostsTournament,
+  ]);
 
   // Club and teams state for CvC
-  const [userClubDetails, setUserClubDetails] = useState<BackendClub | null>(null);
+  const [userClubDetails, setUserClubDetails] = useState<BackendClub | null>(
+    null,
+  );
   const [clubTeams, setClubTeams] = useState<Team[]>([]);
   const [clubMembers, setClubMembers] = useState<ClubMemberProfile[]>([]);
   const [loadingClubData, setLoadingClubData] = useState(false);
 
   // Active tab and builder states
-  const [activeTab, setActiveTab] = useUrlTab(TOURNAMENT_DETAIL_TABS, "bracket");
+  const [activeTab, setActiveTab] = useUrlTab(
+    TOURNAMENT_DETAIL_TABS,
+    "bracket",
+  );
   const [teamModal, setTeamModal] = useState<"register" | "edit" | null>(null);
-  const [viewedParticipantId, setViewedParticipantId] = useState<string | null>(null);
+  const [viewedParticipantId, setViewedParticipantId] = useState<string | null>(
+    null,
+  );
   const [actionError, setActionError] = useState<string>("");
   const [actionSuccess, setActionSuccess] = useState<string>("");
 
@@ -245,7 +287,10 @@ export function TournamentDetailView({
     };
   }, [user?.club?.id]);
 
-  const clubMemberById = useMemo(() => new Map(clubMembers.map((m) => [m.id, m])), [clubMembers]);
+  const clubMemberById = useMemo(
+    () => new Map(clubMembers.map((m) => [m.id, m])),
+    [clubMembers],
+  );
   const myProfileId = useMemo(
     () => clubMembers.find((m) => m.userId === user?.id)?.id ?? null,
     [clubMembers, user?.id],
@@ -256,14 +301,16 @@ export function TournamentDetailView({
     if (!highlightMe || activeTab !== "lineup" || !myLineupRowId) return;
     // Wait a frame so the lineup has rendered before scrolling to it.
     const frame = requestAnimationFrame(() => {
-      document.getElementById(myLineupRowId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document
+        .getElementById(myLineupRowId)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     return () => cancelAnimationFrame(frame);
   }, [highlightMe, activeTab, myLineupRowId, tournament?.id]);
 
   const currentUserPerson = useMemo(
     () => people.find((p) => p.id === user?.id || p.id === user?.personId),
-    [people, user?.id, user?.personId]
+    [people, user?.id, user?.personId],
   );
 
   if (
@@ -272,13 +319,16 @@ export function TournamentDetailView({
     // Non-participants who don't host it are about to be redirected to the community route.
     (context === "my-tournaments" &&
       tournament &&
+      !isAlynqTournament &&
       !viewerIsParticipant &&
       (isLoadingCommunityMembers || !viewerHostsTournament))
   ) {
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-3">
         <div className="h-10 w-10 animate-spin rounded-full border-3 border-accent border-t-transparent shadow-[0_0_20px_rgba(217,165,68,0.4)]" />
-        <span className="font-display text-xs font-semibold tracking-wider text-accent-ink uppercase">{td.loadingArena}</span>
+        <span className="font-display text-xs font-semibold tracking-wider text-accent-ink uppercase">
+          {td.loadingArena}
+        </span>
       </div>
     );
   }
@@ -295,13 +345,17 @@ export function TournamentDetailView({
 
   // Normalized Status
   const rawStatus = (tournament.status || "open").toLowerCase();
-  const isRegistrationOpen = rawStatus === "open" || rawStatus === "registration_open";
+  const isRegistrationOpen =
+    rawStatus === "open" || rawStatus === "registration_open";
   const isOngoing = rawStatus === "ongoing" || rawStatus === "live";
   const isCompleted = rawStatus === "completed";
-  const isRegistrationClosed = rawStatus === "registration_closed" || rawStatus === "submission_phase";
+  const isRegistrationClosed =
+    rawStatus === "registration_closed" || rawStatus === "submission_phase";
 
   // Permissions and Eligibility Checks
   const isClubHosted = Boolean(hostClubId);
+  // General tournament: no community or club; its creator organizes it and anyone can enter.
+  const isGeneral = !tournament.communityId && !hostClubId;
   const isOrganizer =
     tournament.creatorId === user?.id ||
     tournament.createdById === user?.id ||
@@ -311,10 +365,11 @@ export function TournamentDetailView({
         tournament.community?.presidentId === user?.id ||
         tournament.community?.vicePresidentId === user?.id ||
         (user?.community?.id === tournament.communityId &&
-          (user?.community?.role === "President" || user?.community?.role === "Vice President")));
+          (user?.community?.role === "President" ||
+            user?.community?.role === "Vice President")));
 
-  const currentUserIds = [user?.id, user?.personId].filter(
-    (id): id is string => Boolean(id),
+  const currentUserIds = [user?.id, user?.personId].filter((id): id is string =>
+    Boolean(id),
   );
   const isCurrentUserId = (candidateId?: string) =>
     Boolean(candidateId && currentUserIds.includes(candidateId));
@@ -330,40 +385,61 @@ export function TournamentDetailView({
         : null);
   // The host's leaders run the tournament and can't enter it: the community President / VP
   // (and its creator), or the hosting club's President / GS.
-  const isHostLeader = isClubHosted
-    ? viewerLeadsHostClub
-    : hostingCommunityRole === "President" ||
-      hostingCommunityRole === "Vice President" ||
-      isCurrentUserId(tournament.community?.creatorId) ||
-      isCurrentUserId(tournament.community?.presidentId) ||
-      isCurrentUserId(tournament.community?.vicePresidentId);
-  const canShowJoinAction = (isClubHosted || !isLoadingCommunityMembers) && !isHostLeader;
+  const isHostLeader = isGeneral
+    ? isCurrentUserId(tournament.creatorId)
+    : isClubHosted
+      ? viewerLeadsHostClub
+      : hostingCommunityRole === "President" ||
+        hostingCommunityRole === "Vice President" ||
+        isCurrentUserId(tournament.community?.creatorId) ||
+        isCurrentUserId(tournament.community?.presidentId) ||
+        isCurrentUserId(tournament.community?.vicePresidentId);
+  const canShowJoinAction =
+    (isClubHosted || isGeneral || !isLoadingCommunityMembers) && !isHostLeader;
 
   // Evidence reviewers: the host's leaders plus the match officials. Only officials who still
   // hold an official role count (mirrors the backend).
   const matchOfficialIds = tournament.matchOfficialIds ?? [];
-  const matchOfficials: Array<{ id: string; name: string; dpUrl: string | null }> = isClubHosted
+  const matchOfficials: Array<{
+    id: string;
+    name: string;
+    dpUrl: string | null;
+  }> = isClubHosted
     ? hostClubMembers
         .filter(
           (member) =>
             matchOfficialIds.includes(member.userId) &&
-            (["Captain", "Vice-Captain", "Academy Captain", "Manager"].includes(member.clubRole ?? "") ||
-              (tournament.hostClub?.matchOfficialIds ?? []).includes(member.userId)),
+            (["Captain", "Vice-Captain", "Academy Captain", "Manager"].includes(
+              member.clubRole ?? "",
+            ) ||
+              (tournament.hostClub?.matchOfficialIds ?? []).includes(
+                member.userId,
+              )),
         )
-        .map((member) => ({ id: member.userId, name: member.user?.name ?? "", dpUrl: member.user?.dpUrl ?? null }))
+        .map((member) => ({
+          id: member.userId,
+          name: member.user?.name ?? "",
+          dpUrl: member.user?.dpUrl ?? null,
+        }))
     : communityMembers.filter(
         (member) =>
           matchOfficialIds.includes(member.id) &&
-          ["Team Manager", "Head of Discipline", "Scout"].includes(member.communityRole),
+          ["Team Manager", "Head of Discipline", "Scout"].includes(
+            member.communityRole,
+          ),
       );
-  const isMatchOfficial = matchOfficials.some((member) => isCurrentUserId(member.id));
-  const isReviewer =
-    (isClubHosted
-      ? viewerLeadsHostClub
-      : hostingCommunityRole === "President" ||
-        hostingCommunityRole === "Vice President" ||
-        isCurrentUserId(tournament.community?.presidentId) ||
-        isCurrentUserId(tournament.community?.vicePresidentId)) || isMatchOfficial;
+  const isMatchOfficial = isGeneral
+    ? matchOfficialIds.some((id) => isCurrentUserId(id))
+    : matchOfficials.some((member) => isCurrentUserId(member.id));
+  const isReviewer = isGeneral
+    ? isOrganizer || isMatchOfficial
+    : (isClubHosted
+        ? viewerLeadsHostClub
+        : hostingCommunityRole === "President" ||
+          hostingCommunityRole === "Vice President" ||
+          isCurrentUserId(tournament.community?.presidentId) ||
+          isCurrentUserId(tournament.community?.vicePresidentId)) ||
+      isMatchOfficial;
 
   const isCvC = tournament.type === "cvc";
   const isConsole = tournament.platform === "console";
@@ -379,7 +455,8 @@ export function TournamentDetailView({
   });
 
   const isRegistered = Boolean(myParticipation);
-  const viewedParticipant = tournament.participants?.find((p) => p.id === viewedParticipantId) ?? null;
+  const viewedParticipant =
+    tournament.participants?.find((p) => p.id === viewedParticipantId) ?? null;
 
   // Authority to join:
   // For CvC: Must be President or General Secretary of the club
@@ -389,25 +466,30 @@ export function TournamentDetailView({
 
   // Community membership: Club must belong to tournament.communityId
   const clubBelongsToCommunity =
+    isGeneral ||
     userClubDetails?.communityIds?.includes(tournament.communityId ?? "") ||
     user?.community?.id === tournament.communityId;
 
   // Where "join the host" links go: the hosting club's page, or the hosting community's.
-  const hostPageHref = isClubHosted
-    ? `/dashboard/efootball/clubs/${hostClubId}`
-    : `/dashboard/efootball/community/${tournament.communityId}`;
+  const hostPageHref = isGeneral
+    ? "/dashboard/efootball/tournaments/general"
+    : isClubHosted
+      ? `/dashboard/efootball/clubs/${hostClubId}`
+      : `/dashboard/efootball/community/${tournament.communityId}`;
 
   // PvP eligibility: a member of the hosting club (club tournaments) or of the hosting community.
-  const playerBelongsToCommunity = isClubHosted
-    ? user?.club?.id === hostClubId
-    : user?.community?.id === tournament.communityId ||
-    currentUserPerson?.communityId === tournament.communityId ||
-    tournament.creatorId === user?.id ||
-    tournament.creatorId === user?.personId ||
-    tournament.createdById === user?.id ||
-    tournament.community?.creatorId === user?.id ||
-    tournament.community?.presidentId === user?.id ||
-    tournament.community?.vicePresidentId === user?.id;
+  const playerBelongsToCommunity = isGeneral
+    ? true
+    : isClubHosted
+      ? user?.club?.id === hostClubId
+      : user?.community?.id === tournament.communityId ||
+        currentUserPerson?.communityId === tournament.communityId ||
+        tournament.creatorId === user?.id ||
+        tournament.creatorId === user?.personId ||
+        tournament.createdById === user?.id ||
+        tournament.community?.creatorId === user?.id ||
+        tournament.community?.presidentId === user?.id ||
+        tournament.community?.vicePresidentId === user?.id;
 
   // Authority to submit lineup: President, General Secretary, or Manager
   const canSubmitLineup =
@@ -422,7 +504,9 @@ export function TournamentDetailView({
   const isFinished = isCompleted || rawStatus === "cancelled";
   const isSubmissionOpen = !countdown.isPast && !isFinished;
   // Registered club officials can change their team until the lineup cutoff.
-  const canEditTeam = Boolean(isCvC && isRegistered && canSubmitLineup && isSubmissionOpen);
+  const canEditTeam = Boolean(
+    isCvC && isRegistered && canSubmitLineup && isSubmissionOpen,
+  );
   const ts = t.dashboard.teamSubmission;
 
   // Date labels
@@ -445,7 +529,8 @@ export function TournamentDetailView({
 
   // Relative kick-off text, by calendar day in Bangladesh time (UTC+6)
   const msUntilStart = startsDate.getTime() - Date.now();
-  const dhakaDay = (ms: number) => Math.floor((ms + 6 * 60 * 60 * 1000) / (24 * 60 * 60 * 1000));
+  const dhakaDay = (ms: number) =>
+    Math.floor((ms + 6 * 60 * 60 * 1000) / (24 * 60 * 60 * 1000));
   const daysUntilStart = dhakaDay(startsDate.getTime()) - dhakaDay(Date.now());
   const relativeStartLabel =
     msUntilStart > 0
@@ -457,46 +542,127 @@ export function TournamentDetailView({
       : td.started;
   // Once the tournament is live (or over), organizers can no longer edit or delete it.
   // Locked once fixtures are out, once it starts, or once it's over (mirrors the backend).
-  const isLocked = Boolean(tournament.format) || msUntilStart <= 0 || isOngoing || isFinished;
+  const isLocked =
+    Boolean(tournament.format) || msUntilStart <= 0 || isOngoing || isFinished;
 
   // Header status: live, open, fixtures out (not started yet), registration closed, or over.
   const statusBadge = isOngoing
-    ? { label: td.statusLive, dot: "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]", text: "text-rose-400" }
+    ? {
+        label: td.statusLive,
+        dot: "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]",
+        text: "text-rose-400",
+      }
     : isRegistrationOpen
-      ? { label: td.statusOpen, dot: "bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]", text: "text-emerald-400" }
+      ? {
+          label: td.statusOpen,
+          dot: "bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]",
+          text: "text-emerald-400",
+        }
       : rawStatus === "submission_phase"
-        ? { label: td.statusFixturesOut, dot: "bg-amber-400", text: "text-amber-300" }
+        ? {
+            label: td.statusFixturesOut,
+            dot: "bg-amber-400",
+            text: "text-amber-300",
+          }
         : rawStatus === "registration_closed"
-          ? { label: td.statusClosed, dot: "bg-slate-400", text: "text-ink-soft" }
+          ? {
+              label: td.statusClosed,
+              dot: "bg-slate-400",
+              text: "text-ink-soft",
+            }
           : rawStatus === "cancelled"
-            ? { label: td.statusCancelled, dot: "bg-slate-500", text: "text-ink-faint" }
-            : { label: td.statusCompleted, dot: "bg-slate-400", text: "text-ink-soft" };
+            ? {
+                label: td.statusCancelled,
+                dot: "bg-slate-500",
+                text: "text-ink-faint",
+              }
+            : {
+                label: td.statusCompleted,
+                dot: "bg-slate-400",
+                text: "text-ink-soft",
+              };
 
   // Capacity calculations
   const participantsCount = tournament.participants?.length || 0;
   const tournamentFormatSummary = !tournamentStructure?.format
     ? null
     : tournamentStructure.format === "knockout"
-      ? format(t.dashboard.fixtures.formatKnockout, { count: participantsCount })
+      ? format(t.dashboard.fixtures.formatKnockout, {
+          count: participantsCount,
+        })
       : format(t.dashboard.fixtures.formatGroups, {
           count: participantsCount,
           groups: tournamentStructure.groups.length,
           size: tournamentStructure.knockout.size,
         });
   // Organizers may generate early once every slot is filled; otherwise it happens 2h before the start.
-  const slotsFull = participantsCount >= (tournament.maxParticipants || Infinity);
-  const autoGenerateLabel = new Date(new Date(tournament.startAt).getTime() - 2 * 60 * 60 * 1000).toLocaleString(dateLocale, {
+  const slotsFull =
+    participantsCount >= (tournament.maxParticipants || Infinity);
+  const autoGenerateLabel = new Date(
+    new Date(tournament.startAt).getTime() - 2 * 60 * 60 * 1000,
+  ).toLocaleString(dateLocale, {
     timeZone: "Asia/Dhaka",
     day: "numeric",
     month: "short",
     hour: "numeric",
     minute: "2-digit",
   });
-  const capacityPercent = Math.min(100, Math.round((participantsCount / (tournament.maxParticipants || 16)) * 100));
+  const capacityPercent = Math.min(
+    100,
+    Math.round((participantsCount / (tournament.maxParticipants || 16)) * 100),
+  );
+
+  // A general tournament's entry fee is paid (held) when entering.
+  const entryFee = isGeneral ? (tournament.entryFeeBdt ?? 0) : 0;
+  const myFeeHeld = myParticipation?.feeHeldTk ?? 0;
+  const myFeePaid = myParticipation?.feePaidTk ?? 0;
+  // Entrants may leave until fixtures are out; a club is withdrawn by its President / GS.
+  const canLeave =
+    isRegistered &&
+    isRegistrationOpen &&
+    !tournament.format &&
+    (!isCvC || Boolean(canJoinCvC));
+
+  async function handleLeave() {
+    if (!tournament) return;
+    const confirmed = await confirm(
+      format(td.leaveConfirm, {
+        name: tournament.name,
+        refund:
+          myFeeHeld > 0 ? format(td.leaveRefund, { amount: myFeeHeld }) : "",
+      }),
+      {
+        title: td.leaveTitle,
+        variant: "danger",
+        confirmLabel: td.leaveConfirmLabel,
+        cancelLabel: tm.cancel,
+      },
+    );
+    if (!confirmed) return;
+    setActionError("");
+    setActionSuccess("");
+    try {
+      const result = await leaveMutation.mutateAsync();
+      setActionSuccess(
+        result.refundedTk
+          ? format(td.leftRefundToast, { amount: result.refundedTk })
+          : td.leftToast,
+      );
+      refetch();
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      setActionError(message || td.errLeave);
+    }
+  }
 
   // PvP registration. CvC clubs register through RegisterClubModal with their team.
   async function handleJoinTournament() {
     if (!tournament) return;
+    if (entryFee > 0) {
+      setEntryCheckout(true);
+      return;
+    }
     setActionError("");
     setActionSuccess("");
     try {
@@ -516,25 +682,35 @@ export function TournamentDetailView({
     setActionError("");
     setActionSuccess("");
     try {
-      await submitLineupMutation.mutateAsync({ participantId: myParticipation.id, payload });
+      await submitLineupMutation.mutateAsync({
+        participantId: myParticipation.id,
+        payload,
+      });
       setActionSuccess(td.toastLineupLocked);
       refetch();
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      const message = (
+        err as { response?: { data?: { message?: string | string[] } } }
+      )?.response?.data?.message;
       setActionError(
-        (Array.isArray(message) ? message.join(", ") : message) || (err as Error)?.message || td.errLineup,
+        (Array.isArray(message) ? message.join(", ") : message) ||
+          (err as Error)?.message ||
+          td.errLineup,
       );
     }
   }
 
   async function handleDeleteTournament() {
     if (!tournament) return;
-    const confirmed = await confirm(format(tm.deleteConfirm, { name: tournament.name }), {
-      title: tm.deleteTitle,
-      variant: "danger",
-      confirmLabel: tm.deleteConfirmLabel,
-      cancelLabel: tm.cancel,
-    });
+    const confirmed = await confirm(
+      format(tm.deleteConfirm, { name: tournament.name }),
+      {
+        title: tm.deleteTitle,
+        variant: "danger",
+        confirmLabel: tm.deleteConfirmLabel,
+        cancelLabel: tm.cancel,
+      },
+    );
     if (!confirmed) return;
 
     setActionError("");
@@ -543,7 +719,8 @@ export function TournamentDetailView({
       await deleteMutation.mutateAsync();
       router.push(hostTournamentsHref(tournament));
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const message = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
       setActionError(message || (err as Error)?.message || tm.errDelete);
     }
   }
@@ -566,14 +743,17 @@ export function TournamentDetailView({
       setActiveTab("bracket");
       refetch();
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const message = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
       setActionError(message || (err as Error)?.message || td.errBracket);
     }
   }
 
   return (
     <div className="relative pb-16">
-      {generateBracketMutation.isPending ? <BracketGenerationOverlay label={td.generatingBracket} /> : null}
+      {generateBracketMutation.isPending ? (
+        <BracketGenerationOverlay label={td.generatingBracket} />
+      ) : null}
 
       {/* Ambient background glows with gold, blue, and emerald radiance */}
       <div className="pointer-events-none absolute -top-10 left-1/4 -z-10 h-96 w-96 rounded-full bg-accent/20 blur-[130px]" />
@@ -592,7 +772,9 @@ export function TournamentDetailView({
             onClick={handleBack}
             className="group inline-flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface/80 px-4 py-1.5 text-xs font-semibold text-ink-soft transition-all hover:border-accent hover:text-accent-ink hover:shadow-[0_0_12px_rgba(217,165,68,0.2)] cursor-pointer"
           >
-            <span className="transition-transform group-hover:-translate-x-1">&larr;</span>
+            <span className="transition-transform group-hover:-translate-x-1">
+              &larr;
+            </span>
             <span>{td.back}</span>
           </button>
 
@@ -617,7 +799,14 @@ export function TournamentDetailView({
                 </button>
               </>
             ) : null}
-            {!isOrganizer ? <ReportButton compact targetType="tournament" targetId={tournament.id} targetName={tournament.name} /> : null}
+            {!isOrganizer ? (
+              <ReportButton
+                compact
+                targetType="tournament"
+                targetId={tournament.id}
+                targetName={tournament.name}
+              />
+            ) : null}
             <div className="flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface-raised px-3.5 py-1 text-xs font-bold">
               <span className={`h-2 w-2 rounded-full ${statusBadge.dot}`} />
               <span className={statusBadge.text}>{statusBadge.label}</span>
@@ -628,11 +817,17 @@ export function TournamentDetailView({
         {/* Tournament Title & Community Information */}
         <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3 max-w-3xl">
-
-
             <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white drop-shadow-[0_2px_15px_rgba(0,0,0,0.8)]">
               {tournament.name}
             </h1>
+            {isGeneral && tournament.creator?.name ? (
+              <p className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
+                <span className="rounded-full border border-accent/40 bg-accent-soft px-2.5 py-0.5 text-[11px] font-bold text-accent-ink">
+                  {td.openBadge}
+                </span>
+                {format(td.organizedBy, { name: tournament.creator.name })}
+              </p>
+            ) : null}
 
             {/* Badges Bar */}
             <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -640,15 +835,21 @@ export function TournamentDetailView({
                 <CrosshairIcon className="h-3.5 w-3.5 text-blue-400" />
                 {isCvC
                   ? tournament.preset === "custom"
-                    ? format(td.badgeCvcCustom, { count: tournament.startersCount })
-                    : format(td.badgeCvcPreset, { count: tournament.startersCount })
+                    ? format(td.badgeCvcCustom, {
+                        count: tournament.startersCount,
+                      })
+                    : format(td.badgeCvcPreset, {
+                        count: tournament.startersCount,
+                      })
                   : td.badgePvp}
               </span>
 
               {tournament.prizePoolBdt && tournament.prizePoolBdt > 0 ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/50 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-3.5 py-1 font-mono text-[11px] font-extrabold text-amber-300 shadow-[0_0_15px_rgba(217,165,68,0.25)]">
                   <TrophyIcon className="h-3.5 w-3.5 text-amber-400" />
-                  {format(td.badgePrizePool, { amount: tournament.prizePoolBdt.toLocaleString() })}
+                  {format(td.badgePrizePool, {
+                    amount: tournament.prizePoolBdt.toLocaleString(),
+                  })}
                 </span>
               ) : (
                 <span className="inline-flex items-center rounded-full border border-surface-line bg-surface-raised px-3 py-1 font-mono text-[11px] text-ink-faint">
@@ -656,10 +857,14 @@ export function TournamentDetailView({
                 </span>
               )}
 
-              {tournament.isPaid && tournament.entryFeeBdt && tournament.entryFeeBdt > 0 ? (
+              {tournament.isPaid &&
+              tournament.entryFeeBdt &&
+              tournament.entryFeeBdt > 0 ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/15 px-3 py-1 font-mono text-[11px] font-bold text-warning-ink">
                   <WalletIcon className="h-3 w-3 text-warning-ink" />
-                  {format(td.badgeEntryFee, { amount: tournament.entryFeeBdt.toLocaleString() })}
+                  {format(td.badgeEntryFee, {
+                    amount: tournament.entryFeeBdt.toLocaleString(),
+                  })}
                 </span>
               ) : (
                 <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-3 py-1 font-mono text-[11px] font-bold text-emerald-400">
@@ -669,7 +874,9 @@ export function TournamentDetailView({
 
               <span
                 className={`inline-flex items-center rounded-full border px-3 py-1 font-mono text-[11px] font-bold ${
-                  isConsole ? "border-violet-400/50 bg-violet-500/15 text-violet-200" : "border-surface-line-strong bg-surface/60 text-ink-soft"
+                  isConsole
+                    ? "border-violet-400/50 bg-violet-500/15 text-violet-200"
+                    : "border-surface-line-strong bg-surface/60 text-ink-soft"
                 }`}
               >
                 {isConsole ? td.badgeConsole : td.badgeMobile}
@@ -692,12 +899,20 @@ export function TournamentDetailView({
                       className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40 cursor-pointer"
                     >
                       <FlameIcon className="h-4 w-4" />
-                      {joinMutation.isPending ? td.joining : format(td.registerClub, { club: user?.club?.name ?? "" })}
+                      {joinMutation.isPending
+                        ? td.joining
+                        : format(td.registerClub, {
+                            club: user?.club?.name ?? "",
+                          })}
                     </button>
                   ) : user?.club ? (
                     <div className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300">
                       <UsersIcon className="h-3.5 w-3.5 text-amber-400" />
-                      <span>{format(td.presidentRegisters, { club: user?.club?.name ?? "" })}</span>
+                      <span>
+                        {format(td.presidentRegisters, {
+                          club: user?.club?.name ?? "",
+                        })}
+                      </span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 rounded-full border border-surface-line-strong bg-surface-raised px-4 py-2 text-xs font-medium text-ink-soft">
@@ -705,52 +920,86 @@ export function TournamentDetailView({
                       <span>{td.joinClubToParticipate}</span>
                     </div>
                   )
-                ) : (
-                  !playerBelongsToCommunity ? (
-                    <div className="flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-300">
-                      <span>{isClubHosted ? td.mustBeClubMember : td.mustBeMember}</span>
-                      <Link
-                        href={hostPageHref}
-                        className="underline text-accent-ink hover:text-white"
-                      >
-                        {isClubHosted ? td.viewClub : td.joinCommunity}
-                      </Link>
-                    </div>
-                  ) : isConsole && !userOnConsole ? (
-                    <div className="flex items-center gap-2 rounded-full border border-violet-400/40 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200">
-                      <span>{td.consoleOnly}</span>
-                      <Link href="/dashboard/efootball/profile" className="underline text-accent-ink hover:text-white">
-                        {td.setConsolePlatform}
-                      </Link>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={handleJoinTournament}
-                      disabled={joinMutation.isPending}
-                      className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-7 py-3.5 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40 cursor-pointer"
+                ) : !playerBelongsToCommunity ? (
+                  <div className="flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-300">
+                    <span>
+                      {isClubHosted ? td.mustBeClubMember : td.mustBeMember}
+                    </span>
+                    <Link
+                      href={hostPageHref}
+                      className="underline text-accent-ink hover:text-white"
                     >
-                      <FlameIcon className="h-4 w-4" />
-                      {joinMutation.isPending ? td.joining : td.participate}
-                    </button>
-                  )
+                      {isClubHosted ? td.viewClub : td.joinCommunity}
+                    </Link>
+                  </div>
+                ) : isConsole && !userOnConsole ? (
+                  <div className="flex items-center gap-2 rounded-full border border-violet-400/40 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200">
+                    <span>{td.consoleOnly}</span>
+                    <Link
+                      href="/dashboard/efootball/profile"
+                      className="underline text-accent-ink hover:text-white"
+                    >
+                      {td.setConsolePlatform}
+                    </Link>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleJoinTournament}
+                    disabled={joinMutation.isPending}
+                    className="relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-7 py-3.5 font-display text-sm font-black text-bg shadow-[0_0_25px_rgba(217,165,68,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_35px_rgba(217,165,68,0.6)] disabled:opacity-40 cursor-pointer"
+                  >
+                    <FlameIcon className="h-4 w-4" />
+                    {joinMutation.isPending
+                      ? td.joining
+                      : entryFee > 0
+                        ? format(td.joinPaid, { amount: entryFee })
+                        : td.participate}
+                  </button>
                 )}
               </>
             )}
 
+            {canLeave ? (
+              <button
+                type="button"
+                onClick={handleLeave}
+                disabled={leaveMutation.isPending}
+                className="inline-flex items-center rounded-full border border-danger/40 bg-danger-soft px-4 py-2 text-xs font-bold text-danger-ink transition-colors hover:bg-danger hover:text-white disabled:opacity-50"
+              >
+                {isCvC ? td.leaveClub : td.leave}
+              </button>
+            ) : null}
+            {isRegistered && isGeneral && (myFeeHeld > 0 || myFeePaid > 0) ? (
+              <span className="rounded-full border border-warning/40 bg-warning-soft px-3 py-1.5 text-[11px] font-semibold text-warning-ink">
+                {myFeeHeld > 0
+                  ? format(td.feeHeld, { amount: myFeeHeld })
+                  : format(td.feePaid, { amount: myFeePaid })}
+              </span>
+            ) : null}
             {isRegistered && (
               <>
                 {isCvC ? (
                   <div className="flex flex-wrap items-center gap-2.5">
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-xs font-bold text-emerald-300">
                       <CheckIcon className="h-3.5 w-3.5 text-emerald-400" />
-                      {format(td.clubEnrolled, { club: user?.club?.name || td.clubFallback })}
+                      {format(td.clubEnrolled, {
+                        club: user?.club?.name || td.clubFallback,
+                      })}
                     </span>
                     <button
-                      onClick={() => (canEditTeam ? setTeamModal("edit") : setActiveTab("lineup"))}
+                      onClick={() =>
+                        canEditTeam
+                          ? setTeamModal("edit")
+                          : setActiveTab("lineup")
+                      }
                       className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-5 py-2.5 font-display text-xs font-bold text-accent-ink transition-all hover:bg-accent hover:text-bg hover:shadow-[0_0_20px_rgba(217,165,68,0.3)] cursor-pointer"
                     >
                       <ShieldIcon className="h-4 w-4" />
-                      {canEditTeam ? (myParticipation?.lineup ? ts.editTeam : td.submitLineup) : td.manageLineup}
+                      {canEditTeam
+                        ? myParticipation?.lineup
+                          ? ts.editTeam
+                          : td.submitLineup
+                        : td.manageLineup}
                     </button>
                   </div>
                 ) : (
@@ -819,36 +1068,54 @@ export function TournamentDetailView({
                       <div className="font-mono text-2xl sm:text-3xl font-black text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.5)]">
                         {String(countdown.days).padStart(2, "0")}
                       </div>
-                      <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">{td.days}</div>
+                      <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">
+                        {td.days}
+                      </div>
                     </div>
-                    <span className="font-mono text-2xl font-black text-accent/50">:</span>
+                    <span className="font-mono text-2xl font-black text-accent/50">
+                      :
+                    </span>
                   </>
                 )}
                 <div className="text-center min-w-[52px]">
                   <div className="font-mono text-2xl sm:text-3xl font-black text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.5)]">
                     {String(countdown.hours).padStart(2, "0")}
                   </div>
-                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">{td.hours}</div>
+                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">
+                    {td.hours}
+                  </div>
                 </div>
-                <span className="font-mono text-2xl font-black text-accent/50">:</span>
+                <span className="font-mono text-2xl font-black text-accent/50">
+                  :
+                </span>
                 <div className="text-center min-w-[52px]">
                   <div className="font-mono text-2xl sm:text-3xl font-black text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.5)]">
                     {String(countdown.minutes).padStart(2, "0")}
                   </div>
-                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">{td.mins}</div>
+                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">
+                    {td.mins}
+                  </div>
                 </div>
-                <span className="font-mono text-2xl font-black text-accent/50">:</span>
+                <span className="font-mono text-2xl font-black text-accent/50">
+                  :
+                </span>
                 <div className="text-center min-w-[52px]">
                   <div className="font-mono text-2xl sm:text-3xl font-black text-accent-ink drop-shadow-[0_0_10px_rgba(217,165,68,0.5)]">
                     {String(countdown.seconds).padStart(2, "0")}
                   </div>
-                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">{td.secs}</div>
+                  <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-ink-faint mt-0.5">
+                    {td.secs}
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="rounded-2xl border border-rose-500/40 bg-rose-500/15 px-6 py-3.5 text-center shadow-[0_0_20px_rgba(244,63,94,0.2)]">
-                <div className="font-display text-sm font-bold text-rose-300">{td.cutoffClosedTitle}</div>
-                <div className="text-xs text-rose-300/80">{td.cutoffClosedBody}</div>
+                <div className="font-display text-sm font-bold text-rose-300">
+                  {td.cutoffClosedTitle}
+                </div>
+                <div className="text-xs text-rose-300/80">
+                  {td.cutoffClosedBody}
+                </div>
               </div>
             )}
           </div>
@@ -861,9 +1128,15 @@ export function TournamentDetailView({
         <div className="group relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 via-surface/80 to-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/50 hover:shadow-[0_10px_30px_-10px_rgba(59,130,246,0.3)]">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-blue-300">{td.formatPreset}</span>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-blue-300">
+              {td.formatPreset}
+            </span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.3)]">
-              {isCvC ? <UsersIcon className="h-4 w-4" /> : <CrosshairIcon className="h-4 w-4" />}
+              {isCvC ? (
+                <UsersIcon className="h-4 w-4" />
+              ) : (
+                <CrosshairIcon className="h-4 w-4" />
+              )}
             </div>
           </div>
           <div className="mt-3 font-display text-lg font-black text-white">
@@ -875,7 +1148,10 @@ export function TournamentDetailView({
           </div>
           <div className="mt-1 text-xs text-blue-200/70">
             {isCvC
-              ? format(td.startersSubs, { starters: tournament.startersCount, subs: tournament.subsCount })
+              ? format(td.startersSubs, {
+                  starters: tournament.startersCount,
+                  subs: tournament.subsCount,
+                })
               : td.singleKnockout}
           </div>
         </div>
@@ -884,14 +1160,20 @@ export function TournamentDetailView({
         <div className="group relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-surface/80 to-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-purple-400/50 hover:shadow-[0_10px_30px_-10px_rgba(168,85,247,0.3)]">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-purple-400 to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-purple-300">{td.registeredTeams}</span>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-purple-300">
+              {td.registeredTeams}
+            </span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/20 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.3)]">
               <UsersIcon className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="font-display text-lg font-black text-white">{participantsCount}</span>
-            <span className="font-mono text-xs text-ink-faint">{format(td.maxSuffix, { max: tournament.maxParticipants })}</span>
+            <span className="font-display text-lg font-black text-white">
+              {participantsCount}
+            </span>
+            <span className="font-mono text-xs text-ink-faint">
+              {format(td.maxSuffix, { max: tournament.maxParticipants })}
+            </span>
           </div>
           {/* Capacity Progress bar */}
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-line">
@@ -906,7 +1188,9 @@ export function TournamentDetailView({
         <div className="group relative overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-500/15 via-surface/80 to-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-amber-400/60 hover:shadow-[0_10px_30px_-10px_rgba(217,165,68,0.3)]">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-amber-300">{td.prizeFees}</span>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-amber-300">
+              {td.prizeFees}
+            </span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/20 text-amber-300 shadow-[0_0_12px_rgba(217,165,68,0.3)]">
               <TrophyIcon className="h-4 w-4" />
             </div>
@@ -917,8 +1201,12 @@ export function TournamentDetailView({
               : td.friendlyCup}
           </div>
           <div className="mt-1 text-xs text-amber-200/70">
-            {tournament.isPaid && tournament.entryFeeBdt && tournament.entryFeeBdt > 0
-              ? format(td.entryFeeAmount, { amount: tournament.entryFeeBdt.toLocaleString() })
+            {tournament.isPaid &&
+            tournament.entryFeeBdt &&
+            tournament.entryFeeBdt > 0
+              ? format(td.entryFeeAmount, {
+                  amount: tournament.entryFeeBdt.toLocaleString(),
+                })
               : td.freeToEnter}
           </div>
         </div>
@@ -927,7 +1215,9 @@ export function TournamentDetailView({
         <div className="group relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-surface/80 to-surface p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-400/50 hover:shadow-[0_10px_30px_-10px_rgba(52,211,153,0.3)]">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent" />
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-emerald-300">{td.matchSchedule}</span>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+              {td.matchSchedule}
+            </span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.3)]">
               <CalendarIcon className="h-4 w-4" />
             </div>
@@ -937,7 +1227,12 @@ export function TournamentDetailView({
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-200/70">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-            <span>{format(td.kickoff, { time: startsTimeLabel, relative: relativeStartLabel })}</span>
+            <span>
+              {format(td.kickoff, {
+                time: startsTimeLabel,
+                relative: relativeStartLabel,
+              })}
+            </span>
           </div>
         </div>
       </div>
@@ -969,12 +1264,12 @@ export function TournamentDetailView({
                     ? td.infoClubLeadersCannotJoin
                     : td.infoLeadersCannotJoin
                   : isCvC
-                  ? td.infoCvcWhoRegisters
-                  : !playerBelongsToCommunity
-                    ? isClubHosted
-                      ? td.infoPvpMustBeClubMember
-                      : td.infoPvpMustBeMember
-                    : td.infoPvpRegister}
+                    ? td.infoCvcWhoRegisters
+                    : !playerBelongsToCommunity
+                      ? isClubHosted
+                        ? td.infoPvpMustBeClubMember
+                        : td.infoPvpMustBeMember
+                      : td.infoPvpRegister}
             </p>
           </div>
 
@@ -993,7 +1288,10 @@ export function TournamentDetailView({
                     </div>
                   ) : !clubBelongsToCommunity ? (
                     <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-300">
-                      {format(td.clubMustBeMember, { community: tournament.community?.name || td.thisCommunity })}
+                      {format(td.clubMustBeMember, {
+                        community:
+                          tournament.community?.name || td.thisCommunity,
+                      })}
                     </div>
                   ) : (
                     <button
@@ -1001,36 +1299,45 @@ export function TournamentDetailView({
                       disabled={joinMutation.isPending}
                       className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
                     >
-                      {joinMutation.isPending ? td.registeringClub : format(td.registerClub, { club: user.club.name })}
+                      {joinMutation.isPending
+                        ? td.registeringClub
+                        : format(td.registerClub, { club: user.club.name })}
                     </button>
                   )
-                ) : (
-                  !playerBelongsToCommunity ? (
-                    <div className="flex items-center gap-2.5 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-300">
-                      <span>{isClubHosted ? td.mustBeClubMember : td.pvpMustBelong}</span>
-                      <Link
-                        href={hostPageHref}
-                        className="rounded-full bg-rose-500/20 px-3 py-1 font-bold text-rose-200 hover:bg-rose-500/30 transition-colors"
-                      >
-                        {isClubHosted ? td.viewClub : td.joinCommunity}
-                      </Link>
-                    </div>
-                  ) : isConsole && !userOnConsole ? (
-                    <div className="flex items-center gap-2 rounded-full border border-violet-400/40 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200">
-                      <span>{td.consoleOnly}</span>
-                      <Link href="/dashboard/efootball/profile" className="underline text-accent-ink hover:text-white">
-                        {td.setConsolePlatform}
-                      </Link>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={handleJoinTournament}
-                      disabled={joinMutation.isPending}
-                      className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
+                ) : !playerBelongsToCommunity ? (
+                  <div className="flex items-center gap-2.5 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-300">
+                    <span>
+                      {isClubHosted ? td.mustBeClubMember : td.pvpMustBelong}
+                    </span>
+                    <Link
+                      href={hostPageHref}
+                      className="rounded-full bg-rose-500/20 px-3 py-1 font-bold text-rose-200 hover:bg-rose-500/30 transition-colors"
                     >
-                      {joinMutation.isPending ? td.joining : td.participate}
-                    </button>
-                  )
+                      {isClubHosted ? td.viewClub : td.joinCommunity}
+                    </Link>
+                  </div>
+                ) : isConsole && !userOnConsole ? (
+                  <div className="flex items-center gap-2 rounded-full border border-violet-400/40 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200">
+                    <span>{td.consoleOnly}</span>
+                    <Link
+                      href="/dashboard/efootball/profile"
+                      className="underline text-accent-ink hover:text-white"
+                    >
+                      {td.setConsolePlatform}
+                    </Link>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleJoinTournament}
+                    disabled={joinMutation.isPending}
+                    className="rounded-full bg-gradient-to-r from-accent via-amber-400 to-accent px-6 py-3 font-display text-sm font-black text-bg shadow-[0_0_20px_rgba(217,165,68,0.4)] transition-all hover:scale-105 disabled:opacity-40"
+                  >
+                    {joinMutation.isPending
+                      ? td.joining
+                      : entryFee > 0
+                        ? format(td.joinPaid, { amount: entryFee })
+                        : td.participate}
+                  </button>
                 )}
               </>
             )}
@@ -1073,7 +1380,13 @@ export function TournamentDetailView({
               <div className="flex flex-col items-end gap-1">
                 <button
                   onClick={handleGenerateBracket}
-                  title={slotsFull ? undefined : format(t.dashboard.fixtures.earlyNeedsFull, { count: tournament.maxParticipants })}
+                  title={
+                    slotsFull
+                      ? undefined
+                      : format(t.dashboard.fixtures.earlyNeedsFull, {
+                          count: tournament.maxParticipants,
+                        })
+                  }
                   disabled={generateBracketMutation.isPending || !slotsFull}
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-purple-500/40 bg-purple-500/15 px-5 py-2.5 font-display text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all hover:bg-purple-500 hover:text-white disabled:opacity-60"
                 >
@@ -1128,7 +1441,9 @@ export function TournamentDetailView({
           }`}
         >
           <BracketIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-          <span className="min-w-0 text-center leading-tight sm:leading-normal">{td.tabBracket}</span>
+          <span className="min-w-0 text-center leading-tight sm:leading-normal">
+            {td.tabBracket}
+          </span>
         </button>
 
         <button
@@ -1142,7 +1457,9 @@ export function TournamentDetailView({
           }`}
         >
           <UsersIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-          <span className="min-w-0 text-center leading-tight sm:leading-normal">{td.tabParticipants}</span>
+          <span className="min-w-0 text-center leading-tight sm:leading-normal">
+            {td.tabParticipants}
+          </span>
           <span className="hidden rounded-full bg-surface-line px-2 py-0.5 text-xs text-ink-faint sm:inline">
             {tournament.participants?.length || 0}
           </span>
@@ -1160,7 +1477,9 @@ export function TournamentDetailView({
             }`}
           >
             <ShieldIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-            <span className="min-w-0 text-center leading-tight sm:leading-normal">{td.tabLineup}</span>
+            <span className="min-w-0 text-center leading-tight sm:leading-normal">
+              {td.tabLineup}
+            </span>
             {myParticipation?.lineup && (
               <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
             )}
@@ -1186,7 +1505,9 @@ export function TournamentDetailView({
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-ink-faint">{t.dashboard.matchOfficials.panelBody}</p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-ink-faint">
+                    {t.dashboard.matchOfficials.panelBody}
+                  </p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -1195,7 +1516,12 @@ export function TournamentDetailView({
                     key={official.id}
                     className="inline-flex items-center gap-2 rounded-full border border-surface-line bg-bg/50 py-1 pl-1 pr-3 text-xs font-semibold text-ink"
                   >
-                    <Avatar dpUrl={official.dpUrl} name={official.name} size="sm" mode="static" />
+                    <Avatar
+                      dpUrl={official.dpUrl}
+                      name={official.name}
+                      size="sm"
+                      mode="static"
+                    />
                     {official.name}
                   </span>
                 ))}
@@ -1229,7 +1555,9 @@ export function TournamentDetailView({
                   isCvC={isCvC}
                   isMine={p.id === myParticipation?.id}
                   dateLocale={dateLocale}
-                  onViewTeam={isCvC ? () => setViewedParticipantId(p.id) : undefined}
+                  onViewTeam={
+                    isCvC ? () => setViewedParticipantId(p.id) : undefined
+                  }
                 />
               ))}
             </div>
@@ -1255,12 +1583,16 @@ export function TournamentDetailView({
                 {formatNodes(td.requiredSquad, {
                   starters: (
                     <span className="font-bold text-emerald-400">
-                      {format(td.startersCount, { count: tournament.startersCount })}
+                      {format(td.startersCount, {
+                        count: tournament.startersCount,
+                      })}
                     </span>
                   ),
                   subs: (
                     <span className="font-bold text-blue-400">
-                      {format(td.substitutesCount, { count: tournament.subsCount })}
+                      {format(td.substitutesCount, {
+                        count: tournament.subsCount,
+                      })}
                     </span>
                   ),
                   total: tournament.startersCount + tournament.subsCount,
@@ -1281,7 +1613,11 @@ export function TournamentDetailView({
             )
           ) : myParticipation?.lineup ? (
             <div className="mt-8 flex flex-col items-start justify-between gap-3 rounded-2xl border border-accent/30 bg-accent-soft/40 p-5 sm:flex-row sm:items-center">
-              <p className="text-xs text-ink-soft">{format(ts.editSubtitle, { preset: `${tournament.startersCount} v ${tournament.startersCount}` })}</p>
+              <p className="text-xs text-ink-soft">
+                {format(ts.editSubtitle, {
+                  preset: `${tournament.startersCount} v ${tournament.startersCount}`,
+                })}
+              </p>
               <button
                 type="button"
                 onClick={() => setTeamModal("edit")}
@@ -1306,7 +1642,9 @@ export function TournamentDetailView({
                   teams={clubTeams}
                   initialLineup={myParticipation?.lineup}
                   submitLabel={
-                    myParticipation?.lineup ? t.dashboard.teamSubmission.updateSubmit : t.dashboard.teamSubmission.submitLineup
+                    myParticipation?.lineup
+                      ? t.dashboard.teamSubmission.updateSubmit
+                      : t.dashboard.teamSubmission.submitLineup
                   }
                   submittingLabel={t.dashboard.teamSubmission.updating}
                   isSubmitting={submitLineupMutation.isPending}
@@ -1330,7 +1668,9 @@ export function TournamentDetailView({
               <p className="mt-0.5 text-xs text-ink-faint">
                 {myParticipation.submittedAt
                   ? format(td.submittedOn, {
-                      date: new Date(myParticipation.submittedAt).toLocaleString(dateLocale),
+                      date: new Date(
+                        myParticipation.submittedAt,
+                      ).toLocaleString(dateLocale),
                     })
                   : null}
               </p>
@@ -1339,7 +1679,11 @@ export function TournamentDetailView({
                 {/* Starters Column */}
                 <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
                   <div className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-400 mb-3 flex items-center justify-between">
-                    <span>{format(td.startingXI, { count: myParticipation.lineup.starters.length })}</span>
+                    <span>
+                      {format(td.startingXI, {
+                        count: myParticipation.lineup.starters.length,
+                      })}
+                    </span>
                     <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
                   </div>
                   <div className="grid gap-2">
@@ -1355,12 +1699,17 @@ export function TournamentDetailView({
                       >
                         <span className="flex min-w-0 items-center gap-2.5">
                           <Avatar
-                            dpUrl={s.dpUrl ?? clubMemberById.get(s.profileId)?.user?.dpUrl}
+                            dpUrl={
+                              s.dpUrl ??
+                              clubMemberById.get(s.profileId)?.user?.dpUrl
+                            }
                             name={s.name}
                             size="sm"
                             mode="static"
                           />
-                          <span className="truncate font-semibold text-white">{s.name}</span>
+                          <span className="truncate font-semibold text-white">
+                            {s.name}
+                          </span>
                           {s.profileId === myProfileId ? (
                             <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-black uppercase text-bg">
                               {t.dashboard.participantView.you}
@@ -1378,7 +1727,11 @@ export function TournamentDetailView({
                 {/* Substitutes Column */}
                 <div className="rounded-2xl border border-blue-500/30 bg-blue-500/5 p-4">
                   <div className="font-mono text-xs font-bold uppercase tracking-wider text-blue-400 mb-3 flex items-center justify-between">
-                    <span>{format(td.bench, { count: myParticipation.lineup.substitutes.length })}</span>
+                    <span>
+                      {format(td.bench, {
+                        count: myParticipation.lineup.substitutes.length,
+                      })}
+                    </span>
                     <span className="h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(59,130,246,0.8)]" />
                   </div>
                   <div className="grid gap-2">
@@ -1394,12 +1747,17 @@ export function TournamentDetailView({
                       >
                         <span className="flex min-w-0 items-center gap-2.5">
                           <Avatar
-                            dpUrl={s.dpUrl ?? clubMemberById.get(s.profileId)?.user?.dpUrl}
+                            dpUrl={
+                              s.dpUrl ??
+                              clubMemberById.get(s.profileId)?.user?.dpUrl
+                            }
                             name={s.name}
                             size="sm"
                             mode="static"
                           />
-                          <span className="truncate font-semibold text-white">{s.name}</span>
+                          <span className="truncate font-semibold text-white">
+                            {s.name}
+                          </span>
                           {s.profileId === myProfileId ? (
                             <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-black uppercase text-bg">
                               {t.dashboard.participantView.you}
@@ -1453,6 +1811,25 @@ export function TournamentDetailView({
         />
       ) : null}
 
+      {entryCheckout ? (
+        <PaymentModal
+          amountTk={entryFee}
+          payeeName={tournament.creator?.name ?? tournament.name}
+          purpose={format(td.entryPurpose, { tournament: tournament.name })}
+          balanceTk={null}
+          onPay={async (method) => {
+            const entry = await joinMutation.mutateAsync({
+              paymentMethod: method,
+            });
+            refetch();
+            return entry.paymentRef ?? null;
+          }}
+          onClose={(paid) => {
+            setEntryCheckout(false);
+            if (paid) setActionSuccess(td.toastJoined);
+          }}
+        />
+      ) : null}
       {isOrganizer && !isLocked && showEditModal ? (
         <EditTournamentModal
           onClose={() => setShowEditModal(false)}
