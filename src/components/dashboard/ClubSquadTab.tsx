@@ -16,7 +16,8 @@ import { EmptyState } from "./EmptyState";
 import { Pagination } from "./Pagination";
 import { StatusPill } from "./StatusPill";
 import { Avatar } from "../common/Avatar";
-import { UsersIcon, SearchIcon } from "../icons";
+import { ArrowRightIcon, UsersIcon, SearchIcon } from "../icons";
+import type { ClubRef } from "@/lib/api/transfers";
 
 type Person = ReturnType<typeof useMockPeople>[number];
 type TeamFilter = "all" | "Main" | "Academy" | "Legend";
@@ -36,7 +37,7 @@ export function ClubSquadTab({
   club: Club;
   members: Person[];
 }) {
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
   const tr = t.dashboard.transfers;
   const [loanFilter, setLoanFilter] = useState<LoanFilter>("all");
   const [search, setSearch] = useState("");
@@ -66,6 +67,7 @@ export function ClubSquadTab({
     [transferData?.squad],
   );
   const { data: clubLoans } = useClubLoans(club.id);
+  const loanInById = useMemo(() => new Map((clubLoans?.loansIn ?? []).map((l) => [l.id, l])), [clubLoans?.loansIn]);
   const lentOut = useMemo(
     () => (clubLoans?.loansOut ?? []).filter((l) => l.status === "active" || l.status === "returning" || l.status === "scheduled"),
     [clubLoans?.loansOut],
@@ -183,17 +185,22 @@ export function ClubSquadTab({
               <Link
                 key={loan.id}
                 href={`/dashboard/efootball/players/${loan.player.id}`}
-                className="flex items-center gap-3 rounded-xl border border-surface-line bg-surface/50 p-3.5 transition-colors hover:border-accent/50"
+                className="block space-y-3 rounded-xl border border-surface-line bg-surface/50 p-3.5 transition-colors hover:border-accent/50"
               >
-                <Avatar dpUrl={loan.player.dpUrl} name={loan.player.name} size="md" mode="static" />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-bold text-ink">{loan.player.name}</div>
-                  <div className="truncate text-[11px] text-accent-ink">{format(tr.loanAt, { club: loan.borrowClub.name })}</div>
-                  <div className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-ink-faint">
-                    <span>{format(tr.loanProgress, { played: loan.matchesPlayed, total: loan.matches })}</span>
-                    {loan.endsBy ? <span>{format(tr.loanEndsBy, { date: formatShortDate(loan.endsBy, locale) })}</span> : null}
+                <div className="flex items-center gap-3">
+                  <Avatar dpUrl={loan.player.dpUrl} name={loan.player.name} size="md" mode="static" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-bold text-ink">{loan.player.name}</div>
+                    <div className="truncate text-[11px] text-accent-ink">{format(tr.loanAt, { club: loan.borrowClub.name })}</div>
                   </div>
                 </div>
+                <LoanClubsStrip
+                  from={loan.parentClub}
+                  to={loan.borrowClub}
+                  played={loan.matchesPlayed}
+                  total={loan.matches}
+                  endsBy={loan.endsBy}
+                />
               </Link>
             ))}
           </div>
@@ -372,22 +379,25 @@ export function ClubSquadTab({
               const person = personById.get(row.id);
               if (!person) return null;
               return (
-                <div key={row.id} className="relative">
-                  <SquadPlayerCard
-                    person={person}
-                    row={row}
-                    contract={transferData ? (contractByUserId.get(person.id) ?? null) : undefined}
-                  />
-                  {loanByUserId.has(person.id) ? (
-                    <span className="pointer-events-none absolute left-2 top-2 z-10 rounded-full border border-accent/50 bg-bg/90 px-2 py-0.5 text-[10px] font-bold text-accent-ink backdrop-blur">
-                      {format(tr.loanFrom, { club: loanByUserId.get(person.id)!.clubName })} ·{" "}
-                      {format(tr.loanProgress, {
-                        played: loanByUserId.get(person.id)!.matchesPlayed,
-                        total: loanByUserId.get(person.id)!.matches,
-                      })}
-                    </span>
-                  ) : null}
-                </div>
+                <SquadPlayerCard
+                  key={row.id}
+                  person={person}
+                  row={row}
+                  contract={transferData ? (contractByUserId.get(person.id) ?? null) : undefined}
+                  loan={(() => {
+                    const onLoan = loanByUserId.get(person.id);
+                    if (!onLoan) return undefined;
+                    const parent = loanInById.get(onLoan.loanId)?.parentClub;
+                    return (
+                      <LoanClubsStrip
+                        from={{ name: onLoan.clubName, dpUrl: parent?.dpUrl ?? null }}
+                        played={onLoan.matchesPlayed}
+                        total={onLoan.matches}
+                        endsBy={onLoan.endsBy}
+                      />
+                    );
+                  })()}
+                />
               );
             })}
           </div>
@@ -512,4 +522,60 @@ function emptyStatsRow(p: Person, clubName: string): PlayerStatsRow {
     PL: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0, GD: 0, CS: 0, HT: 0, DHT: 0,
     streak: 0, motm: 0, winPct: 0, PTS: 0,
   };
+}
+
+/**
+ * Compact loan line for a squad card: his club (→ the borrowing club, when it isn't
+ * this one), then a progress bar with matches played and the back-by date.
+ */
+function LoanClubsStrip({
+  from,
+  to,
+  played,
+  total,
+  endsBy,
+}: {
+  from: Pick<ClubRef, "name" | "dpUrl">;
+  /** Omitted on this club's own squad, where he plays for us. */
+  to?: Pick<ClubRef, "name" | "dpUrl">;
+  played: number;
+  total: number;
+  endsBy: string | null;
+}) {
+  const { t, locale } = useLanguage();
+  const tr = t.dashboard.transfers;
+  const pct = total > 0 ? Math.min(100, Math.round((played / total) * 100)) : 0;
+  const clubChip = (c: Pick<ClubRef, "name" | "dpUrl">) => (
+    <span className="flex min-w-0 items-center gap-1.5">
+      <Avatar dpUrl={c.dpUrl} name={c.name} size="sm" mode="static" shape="square" className="!h-5 !w-5 !rounded" />
+      <span className="truncate font-semibold text-ink" title={c.name}>
+        {c.name}
+      </span>
+    </span>
+  );
+  return (
+    <div className="rounded-lg bg-accent-soft/30 px-2.5 py-2 text-[11px]">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="shrink-0 font-mono text-[9px] font-bold uppercase tracking-wider text-accent-ink">
+          {to ? tr.loanStatusActive : tr.loanFromLabel}
+        </span>
+        {clubChip(from)}
+        {to ? (
+          <>
+            <ArrowRightIcon className="h-3 w-3 shrink-0 text-ink-faint" />
+            {clubChip(to)}
+          </>
+        ) : null}
+      </div>
+      <div className="mt-1.5 flex items-center gap-2">
+        <div className="h-1 flex-1 overflow-hidden rounded-full bg-surface-line">
+          <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+        </div>
+        <span className="shrink-0 font-mono text-[10px] text-ink-soft">
+          {played}/{total}
+          {endsBy ? ` · ${formatShortDate(endsBy, locale)}` : ""}
+        </span>
+      </div>
+    </div>
+  );
 }

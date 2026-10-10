@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
@@ -43,11 +44,14 @@ export function SquadPlayerCard({
   person,
   row,
   contract,
+  loan,
 }: {
   person: Person;
   row: PlayerStatsRow;
   /** undefined while loading, null when this member has no player contract. */
   contract: ContractView | null | undefined;
+  /** Set while he plays here on loan: shown inside the card, under the stats. */
+  loan?: ReactNode;
 }) {
   const { t } = useLanguage();
   const squadTeam: SquadTeam = person.squadTeam ?? "Main";
@@ -133,6 +137,8 @@ export function SquadPlayerCard({
           </div>
         </div>
       </div>
+
+      {loan ? <div className="mx-4 mt-2.5">{loan}</div> : null}
 
       <div className="mx-4 mt-3 flex flex-1 items-end justify-center gap-2">
         <div className={`flex items-center gap-2 ${hasSocials ? "" : "invisible"}`}>
