@@ -3,17 +3,17 @@
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockTournaments } from "@/lib/mock/store";
-import { useMyGames } from "@/lib/api/hooks/useTournaments";
+import { useMyGames, useTournaments } from "@/lib/api/hooks/useTournaments";
+import { useMyTransfers } from "@/lib/api/hooks/useTransfers";
 import { formatGameRange, roundLabel } from "@/components/dashboard/fixtures/labels";
-import { useMockPeople } from "@/lib/mock/communityStore";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatTile } from "@/components/dashboard/StatTile";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { PlayerRankingsTable } from "@/components/dashboard/PlayerRankingsTable";
 import { ClubRankingsTable } from "@/components/dashboard/ClubRankingsTable";
-import { useClubRankings, usePlayerRankings } from "@/lib/api/hooks/useStats";
+import { useClubRankings, usePlayerRankings, usePlayerStats } from "@/lib/api/hooks/useStats";
+import { tournamentHref } from "@/lib/api/tournaments";
 import { CalendarIcon, TrophyIcon, WalletIcon, ChartIcon, ArrowRightIcon, UsersIcon } from "@/components/icons";
 
 export default function EfootballOverviewPage() {
@@ -23,12 +23,26 @@ export default function EfootballOverviewPage() {
   const { data: toPlay } = useMyGames({ state: "to_play", limit: 3 });
   const upcoming = toPlay?.data ?? [];
   const upcomingCount = toPlay?.meta.total ?? 0;
-  const tournaments = useMockTournaments();
-  const people = useMockPeople();
-
-  const latestTournament = tournaments.find((t2) => t2.status === "live") ?? tournaments[0];
-
-  const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === user.personId) + 1;
+  const tournamentsQuery = useTournaments({ sortBy: "startAt", sortOrder: "DESC" });
+  const tournaments = tournamentsQuery.data ?? [];
+  const latestTournament =
+    tournaments.find((tournament) => tournament.status === "live" || tournament.status === "ongoing") ??
+    tournaments.find((tournament) =>
+      ["open", "registration_open", "submission_phase", "registration_closed"].includes(tournament.status),
+    );
+  const playerStatsQuery = usePlayerStats(user.id || undefined);
+  const allTimeStats = playerStatsQuery.data?.periods["all-time"];
+  const winRateChange = playerStatsQuery.data
+    ? playerStatsQuery.data.periods["this-month"].winPct - playerStatsQuery.data.periods["last-month"].winPct
+    : 0;
+  const winRateTrend =
+    winRateChange === 0
+      ? undefined
+      : {
+          value: `${winRateChange > 0 ? "+" : ""}${winRateChange.toFixed(1)}%`,
+          direction: winRateChange > 0 ? ("up" as const) : ("down" as const),
+        };
+  const transfersQuery = useMyTransfers(Boolean(user.id));
 
   // Top 5 all-time, from confirmed results.
   const topPlayers = usePlayerRankings({ limit: 5 }).data?.data ?? [];
@@ -49,12 +63,25 @@ export default function EfootballOverviewPage() {
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatTile
           label={t.dashboard.overview.rankLabel}
-          value={rank > 0 ? `#${rank}` : "—"}
+          value={playerStatsQuery.isLoading ? "…" : allTimeStats?.rank ? `#${allTimeStats.rank}` : "—"}
           icon={UsersIcon}
         />
-        <StatTile label={t.dashboard.overview.statWinRate} value="68%" icon={ChartIcon} trend={{ value: "+4%", direction: "up" }} />
-        <StatTile label={t.dashboard.overview.statTournaments} value={String(tournaments.length)} icon={TrophyIcon} />
-        <StatTile label={t.dashboard.overview.statWallet} value={`৳ ${user.wallet.balanceBdt.toLocaleString()}`} icon={WalletIcon} />
+        <StatTile
+          label={t.dashboard.overview.statWinRate}
+          value={playerStatsQuery.isLoading ? "…" : `${(allTimeStats?.winPct ?? 0).toFixed(1)}%`}
+          icon={ChartIcon}
+          trend={winRateTrend}
+        />
+        <StatTile
+          label={t.dashboard.overview.statTournaments}
+          value={tournamentsQuery.isLoading ? "…" : String(tournaments.length)}
+          icon={TrophyIcon}
+        />
+        <StatTile
+          label={t.dashboard.overview.statWallet}
+          value={transfersQuery.isLoading ? "…" : `৳ ${(transfersQuery.data?.wallet.balanceTk ?? 0).toLocaleString()}`}
+          icon={WalletIcon}
+        />
         <StatTile label={t.dashboard.overview.statUpcoming} value={String(upcomingCount)} icon={CalendarIcon} />
       </div>
 
@@ -115,11 +142,7 @@ export default function EfootballOverviewPage() {
                 </p>
               ) : null}
               <Link
-                href={
-                  latestTournament.communityId
-                    ? `/dashboard/efootball/community/${latestTournament.communityId}/tournaments/${latestTournament.id}`
-                    : `/dashboard/efootball/tournaments/${latestTournament.id}`
-                }
+                href={tournamentHref(latestTournament)}
                 className="group mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-accent-ink"
               >
                 View
