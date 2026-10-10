@@ -19,6 +19,7 @@ import type { BackendCommunity } from "@/lib/api/types";
 import {
   TOURNAMENT_PRESET_ROSTERS,
   tournamentHref,
+  type GamingPlatform,
   type TournamentType,
   type TournamentPreset,
 } from "@/lib/api/tournaments";
@@ -172,6 +173,7 @@ function CreateTournamentForm() {
   const [name, setName] = useState("");
   const [communityId, setCommunityId] = useState("");
   const [type, setType] = useState<TournamentType>(() => (searchParams.get("clubId") ? "pvp" : "cvc"));
+  const [platform, setPlatform] = useState<GamingPlatform>("mobile");
   const [preset, setPreset] = useState<TournamentPreset>("8v8");
   const [startersCount, setStartersCount] = useState(8);
   const [subsCount, setSubsCount] = useState(4);
@@ -375,6 +377,7 @@ function CreateTournamentForm() {
       const tournament = await createMutation.mutateAsync({
         name: name.trim(),
         type,
+        platform,
         preset: type === "cvc" ? preset : "custom",
         startersCount: type === "cvc" ? startersCount : 1,
         subsCount: type === "cvc" ? subsCount : 0,
@@ -492,6 +495,35 @@ function CreateTournamentForm() {
                 required
                 className={fieldClass}
               />
+            </FormSection>
+
+            {/* Platform: mobile vs console */}
+            <FormSection tone="blue" icon={ShieldIcon} title={tc.platformLabel} required>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    ["mobile", tc.platformMobileTitle, tc.platformMobileBody],
+                    ["console", tc.platformConsoleTitle, tc.platformConsoleBody],
+                  ] as const
+                ).map(([value, title, body]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPlatform(value)}
+                    className={`relative flex flex-col rounded-xl border p-4 text-left transition-all ${
+                      platform === value
+                        ? "border-blue bg-blue-soft shadow-[0_0_20px_rgba(76,141,255,0.18)]"
+                        : "border-surface-line bg-surface/40 hover:border-surface-line-strong"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="font-display text-sm font-bold text-ink">{title}</div>
+                      {platform === value && <CheckIcon className="h-4 w-4 text-blue" />}
+                    </div>
+                    <p className="mt-2 text-xs text-ink-soft">{body}</p>
+                  </button>
+                ))}
+              </div>
             </FormSection>
 
             {/* Format: PvP vs CvC */}

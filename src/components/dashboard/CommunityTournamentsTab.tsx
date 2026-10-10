@@ -37,6 +37,11 @@ function getPrize(tournament: TournamentItem) {
   return Math.max(0, Number(tournament.prizePoolBdt) || 0);
 }
 
+/** Mobile unless the tournament says console (older data has no platform). */
+function getPlatform(tournament: TournamentItem) {
+  return ("platform" in tournament ? tournament.platform : undefined) ?? "mobile";
+}
+
 function getVisiblePages(currentPage: number, totalPages: number) {
   const visibleCount = Math.min(5, totalPages);
   const start = Math.max(1, Math.min(currentPage - 2, totalPages - visibleCount + 1));
@@ -76,6 +81,7 @@ export function CommunityTournamentsTab({
   const [maxPrize, setMaxPrize] = useState<number | null>(null);
   const [minPrizeInput, setMinPrizeInput] = useState("0");
   const [maxPrizeInput, setMaxPrizeInput] = useState<string | null>(null);
+  const [platform, setPlatform] = useState<"all" | "mobile" | "console">("all");
 
   if (isLoading) {
     return (
@@ -102,7 +108,8 @@ export function CommunityTournamentsTab({
   const hasPrizeFilter = minPrize > 0 || effectiveMaxPrize < prizeCeiling;
   const prizeFilteredTournaments = tournaments.filter((tournament) => {
     const prize = getPrize(tournament);
-    return prize >= minPrize && prize <= effectiveMaxPrize;
+    const onPlatform = platform === "all" || getPlatform(tournament) === platform;
+    return onPlatform && prize >= minPrize && prize <= effectiveMaxPrize;
   });
   const selectedFilter = FILTERS.find((filter) => filter.key === activeFilter) ?? FILTERS[0];
   const filteredTournaments = selectedFilter.statuses
@@ -161,6 +168,7 @@ export function CommunityTournamentsTab({
 
   const clearFilters = () => {
     setActiveFilter("all");
+    setPlatform("all");
     setMinPrize(0);
     setMaxPrize(null);
     setMinPrizeInput("0");
@@ -340,6 +348,30 @@ export function CommunityTournamentsTab({
                 ? `BDT ${minPrize.toLocaleString()}–${effectiveMaxPrize.toLocaleString()}`
                 : ct.prizeRange}
             </button>
+            <div className="flex min-h-11 items-center rounded-xl border border-surface-line bg-bg/30 p-1 text-xs" role="group">
+              {(
+                [
+                  ["all", ct.platformAll],
+                  ["mobile", ct.platformMobile],
+                  ["console", ct.platformConsole],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={platform === value}
+                  onClick={() => {
+                    setPlatform(value);
+                    setPage(1);
+                  }}
+                  className={`rounded-lg px-3 py-2 font-semibold transition-colors ${
+                    platform === value ? "bg-bg-raised text-ink" : "text-ink-soft hover:text-ink"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
           </div>
         </div>

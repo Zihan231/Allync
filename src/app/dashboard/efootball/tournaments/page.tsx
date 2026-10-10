@@ -31,7 +31,8 @@ type StatusFilter = "all" | "upcoming" | "live" | "completed";
 type RelationFilter = "all" | "hosted" | "joined";
 type FeeFilter = "all" | "free" | "paid";
 type PrizeFilter = "all" | "with_prize" | "friendly";
-type SortKey = "status" | "recent" | "prize";
+type PlatformFilter = "all" | "mobile" | "console";
+type SortKey = "status" | "recent" | "prize" | "platform";
 
 interface Filters {
   search: string;
@@ -39,9 +40,10 @@ interface Filters {
   relation: RelationFilter;
   fee: FeeFilter;
   prize: PrizeFilter;
+  platform: PlatformFilter;
 }
 
-const DEFAULT_FILTERS: Filters = { search: "", status: "all", relation: "all", fee: "all", prize: "all" };
+const DEFAULT_FILTERS: Filters = { search: "", status: "all", relation: "all", fee: "all", prize: "all", platform: "all" };
 
 /** Upcoming (registration / pre-start), live, or history (completed / cancelled). */
 function statusGroup(status: string | undefined): Exclude<StatusFilter, "all"> {
@@ -54,6 +56,7 @@ function statusGroup(status: string | undefined): Exclude<StatusFilter, "all"> {
 const isPaid = (tour: BackendTournament) => (tour.entryFeeBdt ?? 0) > 0;
 const hasPrize = (tour: BackendTournament) => (tour.prizePoolBdt ?? 0) > 0;
 const startMs = (tour: BackendTournament) => new Date(tour.startAt).getTime() || 0;
+const platformOf = (tour: BackendTournament) => tour.platform ?? "mobile";
 
 /** Does `tour` pass every filter, except the one named in `skip` (used for per-option counts)? */
 function matches(tour: BackendTournament, f: Filters, skip?: keyof Filters): boolean {
@@ -64,6 +67,7 @@ function matches(tour: BackendTournament, f: Filters, skip?: keyof Filters): boo
   if (skip !== "fee" && f.fee === "paid" && !isPaid(tour)) return false;
   if (skip !== "prize" && f.prize === "with_prize" && !hasPrize(tour)) return false;
   if (skip !== "prize" && f.prize === "friendly" && hasPrize(tour)) return false;
+  if (skip !== "platform" && f.platform !== "all" && platformOf(tour) !== f.platform) return false;
   const query = f.search.trim().toLowerCase();
   if (skip !== "search" && query) {
     const inName = tour.name?.toLowerCase().includes(query);
@@ -77,6 +81,8 @@ const STATUS_RANK = { live: 0, upcoming: 1, completed: 2 } as const;
 
 function sortTournaments(list: BackendTournament[], sort: SortKey): BackendTournament[] {
   return [...list].sort((a, b) => {
+    // Console first, then the usual status order within each platform.
+    if (sort === "platform" && platformOf(a) !== platformOf(b)) return platformOf(a) === "console" ? -1 : 1;
     if (sort === "prize") return (b.prizePoolBdt ?? 0) - (a.prizePoolBdt ?? 0) || startMs(b) - startMs(a);
     if (sort === "recent") return startMs(b) - startMs(a);
     // Live first, then upcoming (soonest first), then history (most recent first).
@@ -371,6 +377,11 @@ function TournamentsContent() {
             ["with_prize", m.prizeWith],
             ["friendly", m.prizeFriendly],
           ])}
+          {optionGroup("platform", [
+            ["all", m.platformAll],
+            ["mobile", m.platformMobile],
+            ["console", m.platformConsole],
+          ])}
           <select
             value={sort}
             onChange={(e) => {
@@ -383,6 +394,7 @@ function TournamentsContent() {
             <option value="status">{m.sortStatus}</option>
             <option value="recent">{m.sortRecent}</option>
             <option value="prize">{m.sortPrize}</option>
+            <option value="platform">{m.sortPlatform}</option>
           </select>
         </div>
       </div>

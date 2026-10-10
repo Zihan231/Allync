@@ -107,6 +107,7 @@ export async function syncFromBackend(force = false): Promise<void> {
           instagramUrl: bu.instagramUrl ?? undefined,
           deviceName: bu.deviceName ?? undefined,
           deviceModel: bu.deviceModel ?? undefined,
+          gamingPlatform: bu.gamingPlatform ?? undefined,
           phoneNumber: bu.phoneNumber ?? undefined,
           birthday: bu.birthday ?? undefined,
           bloodGroup: bu.bloodGroup ?? undefined,

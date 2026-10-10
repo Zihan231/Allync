@@ -1,6 +1,8 @@
 import { api } from "./axios";
 
 export type TournamentType = "pvp" | "cvc";
+/** Mobile, or console (PlayStation / Xbox / PC). A console tournament takes console players only. */
+export type GamingPlatform = "mobile" | "console";
 /** CvC roster presets. "11v11" is legacy (older tournaments only; not offered on create). */
 export type TournamentPreset = "16v16" | "12v12" | "8v8" | "4v4" | "custom" | "11v11";
 
@@ -107,6 +109,8 @@ export interface BackendTournament {
   id: string;
   name: string;
   type: TournamentType;
+  /** Missing on older data: treat as mobile. */
+  platform?: GamingPlatform;
   preset: TournamentPreset;
   startersCount: number;
   subsCount: number;
@@ -166,6 +170,7 @@ export interface BackendTournament {
 
 export interface TournamentQueryParams {
   type?: TournamentType;
+  platform?: GamingPlatform;
   status?: TournamentStatus;
   communityId?: string;
   /** Only tournaments this club has entered. */
@@ -186,6 +191,7 @@ export interface TournamentQueryParams {
 export interface CreateTournamentPayload {
   name: string;
   type: TournamentType;
+  platform?: GamingPlatform;
   preset?: TournamentPreset;
   startersCount?: number;
   subsCount?: number;

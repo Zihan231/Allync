@@ -80,6 +80,7 @@ export function TournamentCard({
   const isPaid = Boolean(tournament.isPaid || (tournament.entryFeeBdt && tournament.entryFeeBdt > 0));
   const entryFee = tournament.entryFeeBdt ?? 0;
   const prizePool = tournament.prizePoolBdt ?? 0;
+  const isConsole = tournament.platform === "console";
 
   return (
     <Link
@@ -228,6 +229,15 @@ export function TournamentCard({
               <span>{tc.freeEntry}</span>
             </span>
           )}
+
+          {/* Platform Tag */}
+          <span
+            className={`inline-flex items-center rounded-lg border px-3 py-1 font-mono text-xs font-bold ${
+              isConsole ? "border-violet-400/70 bg-violet-950/70 text-violet-100" : "border-surface-line-strong bg-surface-raised text-ink-soft"
+            }`}
+          >
+            {isConsole ? tc.platformConsole : tc.platformMobile}
+          </span>
 
           {/* Roster Size Tag */}
           <span className="inline-flex items-center rounded-lg border border-surface-line-strong bg-surface-raised px-3 py-1 font-mono text-xs font-semibold text-white">

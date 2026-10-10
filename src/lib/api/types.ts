@@ -70,6 +70,8 @@ export interface BackendUser {
   inGameId: string | null;
   deviceName: string | null;
   deviceModel: string | null;
+  /** Mobile or console (PC counts as console). */
+  gamingPlatform?: "mobile" | "console";
   phoneNumber: string | null;
   birthday: string | null;
   bloodGroup: string | null;

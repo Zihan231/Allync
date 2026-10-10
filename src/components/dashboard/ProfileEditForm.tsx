@@ -83,6 +83,7 @@ type FormState = {
   konamiUid: string;
   deviceName: string;
   deviceModel: string;
+  gamingPlatform: "mobile" | "console";
   phoneNumber: string;
   birthday: string;
   bloodGroup: BloodGroup | "";
@@ -111,6 +112,7 @@ function buildForm(person: Person | undefined, user: MockUser): FormState {
     konamiUid: person?.konamiUid ?? person?.inGameId ?? user.raw?.efootballProfile?.konamiUid ?? user.raw?.inGameId ?? "",
     deviceName: person?.deviceName ?? user.raw?.deviceName ?? "",
     deviceModel: person?.deviceModel ?? user.raw?.deviceModel ?? "",
+    gamingPlatform: person?.gamingPlatform ?? user.raw?.gamingPlatform ?? "mobile",
     phoneNumber: person?.phoneNumber ?? user.phoneNumber ?? user.raw?.phoneNumber ?? "",
     birthday: person?.birthday ?? user.raw?.birthday ?? "",
     bloodGroup: (person?.bloodGroup ?? user.raw?.bloodGroup ?? "") as BloodGroup | "",
@@ -262,6 +264,7 @@ export function ProfileEditForm() {
         next.konamiUid = snapshot.konamiUid;
         next.deviceName = snapshot.deviceName;
         next.deviceModel = snapshot.deviceModel;
+        next.gamingPlatform = snapshot.gamingPlatform;
       } else if (tab === "personal") {
         next.phoneNumber = snapshot.phoneNumber;
         next.birthday = snapshot.birthday;
@@ -336,6 +339,7 @@ export function ProfileEditForm() {
           instagramUrl: form.instagramUrl || null,
           deviceName: form.deviceName || null,
           deviceModel: form.deviceModel || null,
+          gamingPlatform: form.gamingPlatform,
         };
       } else if (tab === "personal") {
         payload = {
@@ -713,6 +717,21 @@ export function ProfileEditForm() {
                     onChange={(e) => set("deviceModel", e.target.value)}
                     className={fieldInputClass}
                   />
+                </FieldSlot>
+                <FieldSlot
+                  label={pf.deviceInfo.platformLabel}
+                  editing={editingTab === "social"}
+                  displayValue={form.gamingPlatform === "console" ? pf.deviceInfo.platformConsole : pf.deviceInfo.platformMobile}
+                >
+                  <select
+                    value={form.gamingPlatform}
+                    onChange={(e) => set("gamingPlatform", e.target.value as "mobile" | "console")}
+                    className={`${fieldInputClass} [color-scheme:dark]`}
+                  >
+                    <option value="mobile">{pf.deviceInfo.platformMobile}</option>
+                    <option value="console">{pf.deviceInfo.platformConsole}</option>
+                  </select>
+                  <p className="mt-1 text-[11px] text-ink-faint">{pf.deviceInfo.platformHint}</p>
                 </FieldSlot>
               </div>
             </div>

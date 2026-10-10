@@ -366,6 +366,9 @@ export function TournamentDetailView({
         isCurrentUserId(tournament.community?.vicePresidentId)) || isMatchOfficial;
 
   const isCvC = tournament.type === "cvc";
+  const isConsole = tournament.platform === "console";
+  // Console tournaments take console players only (the server checks too).
+  const userOnConsole = user?.raw?.gamingPlatform === "console";
 
   // Check if current user / club is already participating
   const myParticipation = tournament.participants?.find((p) => {
@@ -664,6 +667,13 @@ export function TournamentDetailView({
                 </span>
               )}
 
+              <span
+                className={`inline-flex items-center rounded-full border px-3 py-1 font-mono text-[11px] font-bold ${
+                  isConsole ? "border-violet-400/50 bg-violet-500/15 text-violet-200" : "border-surface-line-strong bg-surface/60 text-ink-soft"
+                }`}
+              >
+                {isConsole ? td.badgeConsole : td.badgeMobile}
+              </span>
               <span className="inline-flex items-center rounded-full border border-surface-line-strong bg-surface/60 px-3 py-1 font-mono text-[11px] text-ink-soft">
                 eFootball 2026
               </span>
@@ -704,6 +714,13 @@ export function TournamentDetailView({
                         className="underline text-accent-ink hover:text-white"
                       >
                         {isClubHosted ? td.viewClub : td.joinCommunity}
+                      </Link>
+                    </div>
+                  ) : isConsole && !userOnConsole ? (
+                    <div className="flex items-center gap-2 rounded-full border border-violet-400/40 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200">
+                      <span>{td.consoleOnly}</span>
+                      <Link href="/dashboard/efootball/profile" className="underline text-accent-ink hover:text-white">
+                        {td.setConsolePlatform}
                       </Link>
                     </div>
                   ) : (
@@ -996,6 +1013,13 @@ export function TournamentDetailView({
                         className="rounded-full bg-rose-500/20 px-3 py-1 font-bold text-rose-200 hover:bg-rose-500/30 transition-colors"
                       >
                         {isClubHosted ? td.viewClub : td.joinCommunity}
+                      </Link>
+                    </div>
+                  ) : isConsole && !userOnConsole ? (
+                    <div className="flex items-center gap-2 rounded-full border border-violet-400/40 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200">
+                      <span>{td.consoleOnly}</span>
+                      <Link href="/dashboard/efootball/profile" className="underline text-accent-ink hover:text-white">
+                        {td.setConsolePlatform}
                       </Link>
                     </div>
                   ) : (

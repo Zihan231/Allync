@@ -140,10 +140,19 @@ export function TeamSubmissionModal({
                   {ts.lockCheckFailed}
                 </div>
               ) : null}
+              {tournament.platform === "console" ? (
+                <div className="mb-4 rounded-xl border border-violet-400/40 bg-violet-500/10 p-3 text-xs font-semibold text-violet-200">
+                  {ts.consoleOnlyNote}
+                </div>
+              ) : null}
               <TeamSubmissionForm
                 startersCount={tournament.startersCount}
                 subsCount={tournament.subsCount}
-                members={members}
+                members={
+                  tournament.platform === "console"
+                    ? members.filter((m) => (m.user as { gamingPlatform?: string } | null)?.gamingPlatform === "console")
+                    : members
+                }
                 teams={teams}
                 lockedIn={lockedIn}
                 initialLineup={participant?.lineup}

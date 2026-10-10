@@ -37,6 +37,7 @@ export type Person = {
   konamiUid?: string;
   deviceName?: string;
   deviceModel?: string;
+  gamingPlatform?: "mobile" | "console";
   phoneNumber?: string;
   birthday?: string;
   bloodGroup?: BloodGroup;

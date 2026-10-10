@@ -378,6 +378,9 @@ export const translations = {
         },
       },
       communityTournaments: {
+        platformAll: "All platforms",
+        platformMobile: "Mobile",
+        platformConsole: "Console",
         loadingAria: "Loading community tournaments",
         hubBadge: "Tournament hub",
         heading: "Community tournaments",
@@ -532,6 +535,10 @@ export const translations = {
         errCreateClub: "Failed to create club. Please try again.",
       },
       tournamentDetail: {
+        badgeMobile: "Mobile",
+        badgeConsole: "Console",
+        consoleOnly: "Console tournament: only console players can take part.",
+        setConsolePlatform: "Set your platform to Console",
 
         loadingArena: "Loading Tournament Arena...",
         notFoundTitle: "Tournament Not Found",
@@ -939,6 +946,10 @@ export const translations = {
         presidentOnly: "Only the President can do this.",
       },
       myTournaments: {
+        platformAll: "All platforms",
+        platformMobile: "Mobile",
+        platformConsole: "Console",
+        sortPlatform: "Platform (console first)",
         eyebrow: "Your eFootball competitions",
         statHosted: "Hosted by your community",
         statCompleted: "Completed",
@@ -1123,6 +1134,8 @@ export const translations = {
         community: "the community",
       },
       tournamentCard: {
+        platformMobile: "Mobile",
+        platformConsole: "Console",
         live: "Live Now",
         registrationOpen: "Registration Open",
         completed: "Completed",
@@ -1166,6 +1179,7 @@ export const translations = {
         youAreOfficial: "You are a match official",
       },
       teamSubmission: {
+        consoleOnlyNote: "Console tournament: only members who play on console are listed.",
 
         registerTitle: "Register {club}",
         registerSubtitle: "Submit your team for this {preset} tournament. You can change it until the lineup cutoff.",
@@ -1428,6 +1442,11 @@ export const translations = {
         rightHalf: "Lower bracket",
       },
       tournamentCreate: {
+        platformLabel: "Platform",
+        platformMobileTitle: "Mobile",
+        platformMobileBody: "eFootball on phones and tablets. Anyone can join.",
+        platformConsoleTitle: "Console",
+        platformConsoleBody: "PlayStation, Xbox and PC. Only players whose profile platform is Console can join or be picked in a lineup.",
         eyebrowRestricted: "Community Tournament Management",
         eyebrowDefault: "Community Tournament",
         eyebrowCommunity: "Community",
@@ -2284,6 +2303,10 @@ export const translations = {
           konamiUidError: "Format must match ASFZ-017-118-215.",
         },
         deviceInfo: {
+          platformLabel: "Gaming platform",
+          platformMobile: "Mobile",
+          platformConsole: "Console (PlayStation / Xbox / PC)",
+          platformHint: "Console tournaments are open to console players only.",
           title: "Device Info",
           deviceNameLabel: "Device Name",
           deviceNamePlaceholder: "e.g. iPhone 12 Pro Max",
@@ -2737,6 +2760,9 @@ export const translations = {
         },
       },
       communityTournaments: {
+        platformAll: "সব প্ল্যাটফর্ম",
+        platformMobile: "মোবাইল",
+        platformConsole: "কনসোল",
         loadingAria: "কমিউনিটির টুর্নামেন্ট লোড হচ্ছে",
         hubBadge: "টুর্নামেন্ট হাব",
         heading: "কমিউনিটির টুর্নামেন্ট",
@@ -2891,6 +2917,10 @@ export const translations = {
         errCreateClub: "ক্লাব তৈরি করা যায়নি। আবার চেষ্টা করুন।",
       },
       tournamentDetail: {
+        badgeMobile: "মোবাইল",
+        badgeConsole: "কনসোল",
+        consoleOnly: "কনসোল টুর্নামেন্ট: শুধু কনসোল প্লেয়াররা অংশ নিতে পারবেন।",
+        setConsolePlatform: "প্ল্যাটফর্ম কনসোল করুন",
 
         loadingArena: "টুর্নামেন্ট অ্যারেনা লোড হচ্ছে...",
         notFoundTitle: "টুর্নামেন্ট পাওয়া যায়নি",
@@ -3298,6 +3328,10 @@ export const translations = {
         presidentOnly: "শুধু প্রেসিডেন্ট এটি করতে পারবেন।",
       },
       myTournaments: {
+        platformAll: "সব প্ল্যাটফর্ম",
+        platformMobile: "মোবাইল",
+        platformConsole: "কনসোল",
+        sortPlatform: "প্ল্যাটফর্ম (কনসোল আগে)",
         eyebrow: "আপনার ই-ফুটবল প্রতিযোগিতা",
         statHosted: "আপনার কমিউনিটির আয়োজন",
         statCompleted: "সম্পন্ন",
@@ -3479,6 +3513,8 @@ export const translations = {
         community: "কমিউনিটি",
       },
       tournamentCard: {
+        platformMobile: "মোবাইল",
+        platformConsole: "কনসোল",
         live: "এখন লাইভ",
         registrationOpen: "রেজিস্ট্রেশন চলছে",
         completed: "সম্পন্ন",
@@ -3522,6 +3558,7 @@ export const translations = {
         youAreOfficial: "আপনি একজন ম্যাচ অফিসিয়াল",
       },
       teamSubmission: {
+        consoleOnlyNote: "কনসোল টুর্নামেন্ট: শুধু কনসোলে খেলা সদস্যদের দেখানো হচ্ছে।",
 
         registerTitle: "{club} রেজিস্টার করুন",
         registerSubtitle: "এই {preset} টুর্নামেন্টের জন্য আপনার দল জমা দিন। লাইনআপ জমার শেষ সময় পর্যন্ত এটি বদলানো যাবে।",
@@ -3784,6 +3821,11 @@ export const translations = {
         rightHalf: "নিচের ব্র্যাকেট",
       },
       tournamentCreate: {
+        platformLabel: "প্ল্যাটফর্ম",
+        platformMobileTitle: "মোবাইল",
+        platformMobileBody: "ফোন ও ট্যাবলেটে eFootball। যে কেউ যোগ দিতে পারবেন।",
+        platformConsoleTitle: "কনসোল",
+        platformConsoleBody: "PlayStation, Xbox ও PC। প্রোফাইলে প্ল্যাটফর্ম কনসোল দেওয়া প্লেয়াররাই যোগ দিতে বা লাইনআপে থাকতে পারবেন।",
         eyebrowRestricted: "কমিউনিটি টুর্নামেন্ট ম্যানেজমেন্ট",
         eyebrowDefault: "কমিউনিটি টুর্নামেন্ট",
         eyebrowCommunity: "কমিউনিটি",
@@ -4639,6 +4681,10 @@ export const translations = {
           konamiUidError: "ফরম্যাট অবশ্যই ASFZ-017-118-215 এর মতো হতে হবে।",
         },
         deviceInfo: {
+          platformLabel: "গেমিং প্ল্যাটফর্ম",
+          platformMobile: "মোবাইল",
+          platformConsole: "কনসোল (PlayStation / Xbox / PC)",
+          platformHint: "কনসোল টুর্নামেন্টে শুধু কনসোল প্লেয়াররা খেলতে পারবেন।",
           title: "ডিভাইস তথ্য",
           deviceNameLabel: "ডিভাইসের নাম",
           deviceNamePlaceholder: "যেমন iPhone 12 Pro Max",
