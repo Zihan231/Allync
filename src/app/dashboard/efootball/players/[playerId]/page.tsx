@@ -20,6 +20,7 @@ import { StatsInfoPanel } from "@/components/dashboard/StatsInfoPanel";
 import { ContractDocument } from "@/components/dashboard/transfers/ContractDocument";
 import { OfferToPlayerModal } from "@/components/dashboard/transfers/MakeOfferModal";
 import { LoanModal } from "@/components/dashboard/transfers/LoanModal";
+import { LoanRequestControl } from "@/components/dashboard/transfers/LoanRequestControl";
 import { TransferHistoryList } from "@/components/dashboard/transfers/TransferHistoryList";
 import { ToastContainer } from "@/components/common/Toast";
 import { type SectionTone } from "@/components/dashboard/SectionHeading";
@@ -483,8 +484,6 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
     .filter((c): c is CosmeticItem => c != null && c.category === "badge");
   const isOwnProfile = person.id === user.id || person.id === user.personId;
   const canMakeOffer = !isOwnProfile && Boolean(user.club?.id && leaderClub?.isLeader);
-  // Club leaders can ask to borrow a player from another club.
-  const canRequestLoan = canMakeOffer && Boolean(person.clubId) && person.clubId !== user.club?.id;
 
   // Only what the player filled in; empty fields show a dash.
   const birthday = (person.birthday ? formatBirthday(person.birthday) : null) ?? "—";
@@ -984,24 +983,24 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
         title={pf.transferHistory.title}
         theme={equippedTheme}
         action={
-          canMakeOffer ? (
-            <div className="flex flex-wrap gap-2">
-              {canRequestLoan ? (
+          !isOwnProfile ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <LoanRequestControl
+                player={{ id: person.id, name: person.name }}
+                playerClub={club ? { id: club.id, name: club.name } : null}
+                viewerClub={user.club ? { id: user.club.id, name: user.club.name } : null}
+                viewerLeads={Boolean(leaderClub?.isLeader)}
+                onRequest={() => setLoanOpen(true)}
+              />
+              {canMakeOffer ? (
                 <button
                   type="button"
-                  onClick={() => setLoanOpen(true)}
-                  className="rounded-full border border-accent/50 px-3.5 py-1.5 text-xs font-bold text-accent-ink transition-colors hover:bg-accent hover:text-bg"
+                  onClick={() => setOfferOpen(true)}
+                  className="rounded-full bg-accent px-3.5 py-1.5 text-xs font-bold text-bg transition-colors hover:bg-accent-strong"
                 >
-                  {t.dashboard.transfers.requestLoan}
+                  {t.dashboard.transfers.makeOffer}
                 </button>
               ) : null}
-              <button
-                type="button"
-                onClick={() => setOfferOpen(true)}
-                className="rounded-full bg-accent px-3.5 py-1.5 text-xs font-bold text-bg transition-colors hover:bg-accent-strong"
-              >
-                {t.dashboard.transfers.makeOffer}
-              </button>
             </div>
           ) : undefined
         }
