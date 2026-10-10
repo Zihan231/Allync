@@ -100,6 +100,7 @@ export function DashboardSidebar({
           { href: "/dashboard/admin/content", label: t.admin.nav.content, icon: TrophyIcon },
           { href: "/dashboard/admin/transfers", label: t.admin.nav.market, icon: WalletIcon },
           { href: "/dashboard/admin/announcements", label: t.admin.nav.announce, icon: BellIcon },
+          { href: "/dashboard/admin/store", label: t.admin.nav.store, icon: StoreIcon },
           { href: "/dashboard/admin/bin", label: t.admin.nav.bin, icon: TrashIcon },
           { href: "/dashboard/admin/health", label: t.admin.nav.health, icon: ChartIcon },
         ]

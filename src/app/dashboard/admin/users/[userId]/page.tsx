@@ -33,6 +33,7 @@ import { SuspendUntilField, localInputValue } from "@/components/admin/SuspendUn
 import { DocumentViewer } from "@/components/admin/DocumentViewer";
 import { tk } from "@/components/dashboard/transfers/shared";
 import { EndLockButton, WalletPanel } from "@/components/admin/WalletTools";
+import { StoreGiftPanel } from "@/components/admin/StoreGiftPanel";
 
 type Tab = "overview" | "logins" | "activity" | "audit";
 const isFuture = (iso: string | null) => Boolean(iso && new Date(iso).getTime() > Date.now());
@@ -168,6 +169,7 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ user
         {tab === "overview" ? (
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <WalletPanel ownerType="user" ownerId={u.id} ownerName={u.name} onMessage={toast} />
+            {isAdmin ? <StoreGiftPanel user={u} onMessage={toast} /> : null}
             {u.contractNo && isFuture(u.lockEndsAt) ? (
               <Panel title={t.admin.user.fields.contract}>
                 <p className="mb-3 text-sm text-ink-soft">

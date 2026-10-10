@@ -173,3 +173,33 @@ export interface Health {
 }
 
 export const getHealth = async (): Promise<Health> => (await api.get("/admin/health")).data;
+
+// ---------------------------------------------------------------- store manager
+
+/** A store item as staff see it: catalogue fields plus how it sells. */
+export interface AdminStoreItem {
+  id: string;
+  sku: string;
+  name: string;
+  description: string | null;
+  category: "badge" | "title" | "frame" | "theme";
+  priceTk: number;
+  assetUrl: string | null;
+  active: boolean;
+  sortOrder: number;
+  metadata: { rarity?: string } & Record<string, unknown>;
+  owners: number;
+  sales: number;
+  revenueTk: number;
+}
+
+export type StoreItemInput = Partial<Pick<AdminStoreItem, "sku" | "name" | "description" | "category" | "priceTk" | "assetUrl" | "active" | "sortOrder" | "metadata">>;
+
+export const getAdminStoreItems = async (): Promise<AdminStoreItem[]> => (await api.get("/admin/store/items")).data;
+export const createStoreItem = async (input: StoreItemInput) => (await api.post("/admin/store/items", input)).data;
+export const updateStoreItem = async (id: string, input: StoreItemInput) => (await api.patch(`/admin/store/items/${id}`, input)).data;
+/** Gives a user an item for free (staff gift), or takes it away. */
+export const grantStoreItem = async (userId: string, itemId: string, reason?: string) =>
+  (await api.post(`/admin/users/${userId}/store-items`, { itemId, reason })).data;
+export const revokeStoreItem = async (userId: string, itemId: string, reason?: string) =>
+  (await api.delete(`/admin/users/${userId}/store-items/${itemId}`, { data: { reason } })).data;

@@ -182,6 +182,12 @@ export interface AdminUserDetail extends AdminUserRow {
   walletHeldTk: number | null;
   contractNo: string | null;
   lockEndsAt: string | null;
+  /** Store items (SKUs) the user owns, and what they wear. */
+  ownedCosmeticIds?: string[] | null;
+  equippedBadgeId?: string | null;
+  equippedTitleId?: string | null;
+  equippedFrameId?: string | null;
+  equippedThemeId?: string | null;
   stats: { transfers: number; logins: number; failedLogins7d: number };
   logins: Array<{ id: string; success: boolean; failureReason: string | null; ip: string | null; userAgent: string | null; createdAt: string }>;
   activity: ActivityRow[];
