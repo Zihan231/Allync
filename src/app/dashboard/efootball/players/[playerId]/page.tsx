@@ -2,6 +2,7 @@
 
 import { use, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
@@ -37,6 +38,9 @@ import {
 } from "@/components/icons";
 import { getCosmetic, type CosmeticItem } from "@/lib/mock/cosmetics";
 import { useToast } from "@/lib/useToast";
+import { useMyStore, useStoreCatalog } from "@/lib/api/hooks/useStore";
+import { cosmeticBySku } from "@/lib/storeCosmetics";
+import { TryOnBar } from "@/components/cosmetics/TryOnBar";
 import {
   CosmeticBadgePill,
   CosmeticTitleText,
@@ -395,6 +399,12 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
   const [loanOpen, setLoanOpen] = useState(false);
   const [contractOfferId, setContractOfferId] = useState<string | null>(null);
   const { toasts, toast, dismiss } = useToast();
+  const trySku = useSearchParams().get("try");
+  const [tryView, setTryView] = useState<"before" | "after">("after");
+  const { data: storeCatalog } = useStoreCatalog();
+  const viewerIds = [user.id, user.personId].filter(Boolean);
+  const isOwnProfileEarly = viewerIds.includes(playerId);
+  const { data: myStore } = useMyStore(isOwnProfileEarly);
 
   const person = people.find((p) => p.id === playerId);
 
@@ -452,10 +462,21 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
     return { label: pf.tiers[tier.key], hint, color: TIER_COLORS[tier.key] };
   };
 
-  const equippedTitle = person.equippedTitleId ? getCosmetic(person.equippedTitleId) : null;
-  const equippedBadge = person.equippedBadgeId ? getCosmetic(person.equippedBadgeId) : null;
-  const equippedFrame = person.equippedFrameId ? getCosmetic(person.equippedFrameId) : null;
-  const equippedTheme = person.equippedThemeId ? getCosmetic(person.equippedThemeId) : null;
+  // On your own profile the server's store state is the truth; others show their saved look.
+  const myEquipped = isOwnProfileEarly ? myStore?.equipped : undefined;
+  const wearing = {
+    title: cosmeticBySku(myEquipped ? myEquipped.title : person.equippedTitleId, storeCatalog),
+    badge: cosmeticBySku(myEquipped ? myEquipped.badge : person.equippedBadgeId, storeCatalog),
+    frame: cosmeticBySku(myEquipped ? myEquipped.frame : person.equippedFrameId, storeCatalog),
+    theme: cosmeticBySku(myEquipped ? myEquipped.theme : person.equippedThemeId, storeCatalog),
+  };
+  // "Try" from the store (?try=<sku>, own profile only): the tried item replaces its category everywhere.
+  const tryItem = isOwnProfileEarly ? cosmeticBySku(trySku, storeCatalog) : null;
+  const look = tryItem && tryView === "after" ? { ...wearing, [tryItem.category]: tryItem } : wearing;
+  const equippedTitle = look.title;
+  const equippedBadge = look.badge;
+  const equippedFrame = look.frame;
+  const equippedTheme = look.theme;
   const tokens = getThemeTokens(equippedTheme);
   const ownedBadges = (person.ownedCosmeticIds ?? [])
     .map(getCosmetic)
@@ -1020,6 +1041,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
           onToast={toast}
         />
       ) : null}
+      {tryItem ? <TryOnBar item={tryItem} view={tryView} onViewChange={setTryView} /> : null}
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );

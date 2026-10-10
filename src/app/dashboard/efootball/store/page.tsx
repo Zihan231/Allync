@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { format } from "@/lib/i18n/translations";
 import { useMockPeople, updatePersonProfile } from "@/lib/mock/communityStore";
 import { useEquipStoreItem, useMyStore, usePurchaseStoreItem, useStoreCatalog } from "@/lib/api/hooks/useStore";
-import type { MyStore, StoreItem } from "@/lib/api/store";
+import type { MyStore } from "@/lib/api/store";
 import { PaymentModal } from "@/components/dashboard/transfers/PaymentModal";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { STORE_RETURN_KEY, storeItemToCosmetic } from "@/lib/storeCosmetics";
 import {
-  getCosmetic,
   RARITY_CONFIG,
   type CosmeticCategory,
   type CosmeticItem,
@@ -124,44 +125,82 @@ function CardPreview({
   );
 }
 
-/** A store item with its look: built-in items reuse the app's cosmetic design; staff items get a plain one. */
-function toCosmetic(item: StoreItem): CosmeticItem {
-  const base = getCosmetic(item.sku);
-  if (base) return { ...base, name: item.name || base.name, description: item.description ?? base.description, priceBdt: item.priceTk };
-  return {
-    id: item.sku,
-    category: item.category,
-    tier: item.priceTk > 0 ? "premium" : "free",
-    rarity: (item.metadata?.rarity as CosmeticRarity | undefined) ?? "common",
-    unlockMethod: item.priceTk > 0 ? "purchase" : "free",
-    name: item.name,
-    description: item.description ?? "",
-    icon: "shield",
-    tone: "accent",
-    color: "#d9a544",
-    priceBdt: item.priceTk,
-  };
-}
-
 /**
  * The cosmetics store: items are bought with the wallet (free ones claimed) and kept on
  * the account; the user switches between the items they own. Prices and availability
  * come from the server (staff manage them in the admin store manager).
  */
+const CATEGORY_IDS: CosmeticCategory[] = ["theme", "frame", "title", "badge"];
+const THEME_FILTERS = ["all", "team", "esports"] as const;
+const RARITY_IDS: Array<CosmeticRarity | "all"> = ["all", "mythic", "legendary", "epic", "rare", "common"];
+const pick = <T extends string>(value: string | null, allowed: readonly T[], fallback: T): T =>
+  allowed.includes(value as T) ? (value as T) : fallback;
+
 export default function StorePage() {
+  return (
+    <Suspense fallback={null}>
+      <StoreContent />
+    </Suspense>
+  );
+}
+
+function StoreContent() {
   const { t } = useLanguage();
   const ts = t.dashboard.store;
   const { user } = useSession();
   const people = useMockPeople();
-  const [activeCategory, setActiveCategory] = useState<CosmeticCategory>("theme");
-  const [themeFilter, setThemeFilter] = useState<"all" | "team" | "esports">("all");
-  const [selectedRarity, setSelectedRarity] = useState<CosmeticRarity | "all">("all");
-  const [ownedOnly, setOwnedOnly] = useState(false);
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const [activeCategory, setActiveCategory] = useState<CosmeticCategory>(() => pick(searchParams.get("cat"), CATEGORY_IDS, "theme"));
+  const [themeFilter, setThemeFilter] = useState<"all" | "team" | "esports">(() => pick(searchParams.get("theme"), THEME_FILTERS, "all"));
+  const [selectedRarity, setSelectedRarity] = useState<CosmeticRarity | "all">(() => pick(searchParams.get("rarity"), RARITY_IDS, "all"));
+  const [ownedOnly, setOwnedOnly] = useState(() => searchParams.get("owned") === "1");
   const [lastEquippedItem, setLastEquippedItem] = useState<CosmeticItem | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [checkout, setCheckout] = useState<CosmeticItem | null>(null);
+  const router = useRouter();
+
   const catalog = useStoreCatalog();
+
+  // The filters live in the URL, so leaving and coming back keeps them.
+  const query = new URLSearchParams({
+    ...(activeCategory !== "theme" ? { cat: activeCategory } : {}),
+    ...(themeFilter !== "all" ? { theme: themeFilter } : {}),
+    ...(selectedRarity !== "all" ? { rarity: selectedRarity } : {}),
+    ...(ownedOnly ? { owned: "1" } : {}),
+  }).toString();
+  const storeUrl = query ? `${pathname}?${query}` : pathname;
+  useEffect(() => {
+    router.replace(storeUrl, { scroll: false });
+  }, [router, storeUrl]);
+
+  // Back from "Try": scroll to where the user was, once the items are on the page.
+  const scrolled = useRef(false);
+  useEffect(() => {
+    if (scrolled.current || !catalog.data) return;
+    scrolled.current = true;
+    let saved: { url: string; y: number } | null = null;
+    try {
+      saved = JSON.parse(sessionStorage.getItem(STORE_RETURN_KEY) ?? "null");
+      sessionStorage.removeItem(STORE_RETURN_KEY);
+    } catch {
+      saved = null;
+    }
+    if (!saved) return;
+    const y = saved.y;
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" })));
+  }, [catalog.data]);
+
+  /** Opens the real profile with the item on, remembering where the store was. */
+  function tryOn(item: CosmeticItem) {
+    try {
+      sessionStorage.setItem(STORE_RETURN_KEY, JSON.stringify({ url: storeUrl, y: window.scrollY }));
+    } catch {
+      // Storage blocked: the store just opens at the top.
+    }
+    router.push(`/dashboard/efootball/players/${user.personId}?try=${encodeURIComponent(item.id)}`);
+  }
   const mine = useMyStore();
   const purchase = usePurchaseStoreItem();
   const equip = useEquipStoreItem();
@@ -169,7 +208,7 @@ export default function StorePage() {
 
   const person = people.find((p) => p.id === user.personId);
   const owned = new Set(mine.data?.owned ?? []);
-  const allItems = (catalog.data ?? []).map(toCosmetic);
+  const allItems = (catalog.data ?? []).map(storeItemToCosmetic);
 
   const categories: { id: CosmeticCategory; label: string }[] = [
     { id: "theme", label: t.dashboard.store.tabThemes },
@@ -531,6 +570,14 @@ export default function StorePage() {
 
                 {/* Instant Equip Action Button */}
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    // See it on your real profile: every section the item changes.
+                    onClick={() => tryOn(item)}
+                    className="rounded-full border border-surface-line-strong px-3.5 py-2 text-xs font-bold text-ink-soft transition-colors hover:border-accent hover:text-accent-ink"
+                  >
+                    {ts.try}
+                  </button>
                   {!owned.has(item.id) ? (
                     <button
                       type="button"
