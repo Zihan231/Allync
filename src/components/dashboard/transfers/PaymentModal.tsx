@@ -13,8 +13,13 @@ const METHOD_STYLE: Record<PaymentMethod, { mark: string; className: string }> =
 };
 
 const errorMessage = (err: unknown) => {
-  const data = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data;
-  return Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
+  const error = err as {
+    message?: string;
+    raw?: { message?: string | string[] };
+    response?: { data?: { message?: string | string[] } };
+  };
+  const message = error.raw?.message ?? error.response?.data?.message ?? error.message;
+  return Array.isArray(message) ? message.join(", ") : message;
 };
 
 /**

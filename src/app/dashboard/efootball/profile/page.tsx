@@ -104,6 +104,27 @@ export default function ProfilePage() {
   const ownedBadges = (person?.ownedCosmeticIds ?? [])
     .map(getCosmetic)
     .filter((c): c is CosmeticItem => c != null && c.category === "badge");
+  const profile = meQuery.data ?? user.raw ?? person;
+  const hasText = (value: unknown) => typeof value === "string" && value.trim().length > 0;
+  const missingProfileFields = [
+    [person?.dpUrl ?? user.dpUrl ?? profile?.dpUrl, "photo"],
+    [person?.coverUrl ?? user.coverUrl ?? profile?.coverUrl, "cover photo"],
+    [profile?.inGameId ?? profile?.efootballProfile?.konamiUid ?? person?.inGameId, "Konami ID"],
+    [profile?.facebookProfileName ?? person?.facebookProfileName, "Facebook name"],
+    [profile?.facebookUrl ?? person?.facebookUrl, "Facebook URL"],
+    [profile?.deviceName ?? person?.deviceName, "device name"],
+    [profile?.deviceModel ?? person?.deviceModel, "device model number"],
+    [profile?.division ?? person?.division, "division"],
+    [profile?.district ?? person?.district, "district"],
+    [profile?.permanentAddress ?? person?.permanentAddress, "permanent address"],
+  ]
+    .filter(([value]) => !hasText(value))
+    .map(([, label]) => String(label));
+  const identityType = profile?.documentType ?? person?.documentType;
+  const identityData = profile?.documentDataUrl ?? person?.documentDataUrl;
+  if (!(identityType === "national_id" || identityType === "passport") || !hasText(identityData)) {
+    missingProfileFields.push("NID or passport");
+  }
 
   return (
     <div className="relative pb-16 overflow-x-clip max-w-full">
@@ -184,6 +205,12 @@ export default function ProfilePage() {
               >
                 {user.name}
               </h1>
+
+              {missingProfileFields.length > 0 ? (
+                <p className="mt-1.5 max-w-2xl text-center text-xs font-semibold leading-relaxed text-danger-ink sm:text-left" role="status">
+                  Profile incomplete — missing: {missingProfileFields.join(", ")}.
+                </p>
+              ) : null}
 
               {/* Equipped Title Display */}
               {equippedTitle ? (

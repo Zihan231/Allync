@@ -117,6 +117,8 @@ const PRESET_TONES: Record<TournamentPreset, { idle: string; active: string; tex
 
 /** Upper limit for an entry fee or prize pool (৳1 crore). */
 const MAX_AMOUNT_BDT = 10_000_000;
+const ORGANIZER_PROFILE_ERROR =
+  "Complete your profile and submit an NID or passport before creating a club, community or tournament.";
 /** Keeps digits only, without leading zeros (Bangla digits are converted). */
 const amountDigits = (value: string) =>
   value
@@ -258,6 +260,22 @@ function CreateTournamentForm() {
   const [officials, setOfficials] = useState<{ hostId: string; ids: string[] }>({ hostId: "", ids: [] });
 
   const [errorMessage, setErrorMessage] = useState("");
+  const rawUser = user.raw ?? {};
+  const hasValue = (value: unknown) => typeof value === "string" && value.trim().length > 0;
+  const organizerProfileIncomplete =
+    ![
+      user.dpUrl ?? rawUser.dpUrl,
+      user.coverUrl ?? rawUser.coverUrl,
+      rawUser.inGameId,
+      rawUser.facebookProfileName,
+      rawUser.facebookUrl,
+      rawUser.deviceName,
+      rawUser.deviceModel,
+      rawUser.division,
+      rawUser.district,
+      rawUser.permanentAddress,
+    ].every(hasValue) ||
+    !(["national_id", "passport"].includes(rawUser.documentType) && hasValue(rawUser.documentDataUrl));
 
   // Load communities to determine President / VP roles
   useEffect(() => {
@@ -337,6 +355,11 @@ function CreateTournamentForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage("");
+
+    if (organizerProfileIncomplete) {
+      setErrorMessage(ORGANIZER_PROFILE_ERROR);
+      return;
+    }
 
     const effectiveCommunityId = hostCommunityId;
     if (!isClubHost && !isGeneralHost && !effectiveCommunityId) {
@@ -927,9 +950,17 @@ function CreateTournamentForm() {
 
             {/* Submit Button */}
             <div className="pt-4">
+              {organizerProfileIncomplete ? (
+                <div className="mb-4 rounded-xl border border-danger/40 bg-danger-soft p-4 text-sm font-semibold text-danger-ink" role="alert">
+                  <p>{ORGANIZER_PROFILE_ERROR}</p>
+                  <Link href="/dashboard/efootball/profile" className="mt-2 inline-flex font-bold underline underline-offset-4">
+                    Complete profile
+                  </Link>
+                </div>
+              ) : null}
               <button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || organizerProfileIncomplete}
                 className="w-full sm:w-auto rounded-full bg-accent px-8 py-3.5 font-display text-sm font-bold text-bg shadow-[0_0_25px_rgba(217,165,68,0.3)] transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:pointer-events-none"
               >
                 {createMutation.isPending ? tc.submitting : tc.submit}
