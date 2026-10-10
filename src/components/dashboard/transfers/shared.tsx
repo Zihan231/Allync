@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
-import type { ClubCommitment, ContractView, OfferKind, OfferStatus, PaymentMethod } from "@/lib/api/transfers";
+import type { ClubCommitment, ContractView, OfferKind, OfferStatus, PaymentMethod, PaymentStatus } from "@/lib/api/transfers";
 import { formatShortDate } from "@/components/dashboard/fixtures/labels";
 import { ClockIcon, InfoIcon, LockIcon } from "@/components/icons";
 
@@ -30,8 +30,21 @@ export function useTransferLabels() {
     reversed: tr.statusReversed,
   };
   const method: Record<PaymentMethod, string> = { bkash: tr.methodBkash, nagad: tr.methodNagad, card: tr.methodCard };
-  return { tr, kind, status, method };
+  const payment: Record<Exclude<PaymentStatus, "none">, string> = {
+    held: tr.paymentHeld,
+    paid: tr.paymentPaid,
+    refunded: tr.paymentRefunded,
+    reversed: tr.paymentReversed,
+  };
+  return { tr, kind, status, method, payment };
 }
+
+export const PAYMENT_CLASSES: Record<Exclude<PaymentStatus, "none">, string> = {
+  held: "bg-warning-soft text-warning-ink",
+  paid: "bg-success-soft text-success-ink",
+  refunded: "bg-surface-line text-ink-faint",
+  reversed: "bg-danger-soft text-danger-ink",
+};
 
 export const STATUS_CLASSES: Record<OfferStatus, string> = {
   pending: "bg-warning-soft text-warning-ink",

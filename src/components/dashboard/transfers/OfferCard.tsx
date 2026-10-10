@@ -7,12 +7,12 @@ import type { TransferOffer } from "@/lib/api/transfers";
 import { Avatar } from "@/components/common/Avatar";
 import { formatMatchTime } from "@/components/dashboard/fixtures/labels";
 import { ArrowRightIcon } from "@/components/icons";
-import { CommitmentNotice, STATUS_CLASSES, tk, useTransferLabels } from "./shared";
+import { CommitmentNotice, PAYMENT_CLASSES, STATUS_CLASSES, tk, useTransferLabels } from "./shared";
 
 /**
- * One offer, seen by the player or by a club. Actions depend on who is looking:
- * the side that has to answer gets "Review & sign" (opens the contract), the
- * sender can withdraw a pending offer, everyone can view the contract.
+ * One offer, seen by the player or by a club. Actions depend on whose turn it is:
+ * the side that has to answer gets "Review & sign" (opens the contract, where it can
+ * accept, reject or counter), the waiting side can withdraw, everyone can view it.
  */
 export function OfferCard({
   offer,
@@ -22,23 +22,22 @@ export function OfferCard({
   onToast,
 }: {
   offer: TransferOffer;
-  /** "player": the signed-in player; "club": a club page (canAct = its President / GS). */
+  /** "player": the signed-in player; "club": a club page (canAct = the President / GS of the signing club). */
   viewer: "player" | "club";
   canAct: boolean;
   onOpenContract: (offerId: string, signAs?: "player" | "club") => void;
   onToast?: (message: string, variant?: "success" | "error") => void;
 }) {
   const { locale } = useLanguage();
-  const { tr, kind: kindLabel, status: statusLabel } = useTransferLabels();
+  const { tr, kind: kindLabel, status: statusLabel, payment: paymentLabel } = useTransferLabels();
   const cancel = useCancelTransferOffer();
 
-  const fromPlayer = offer.kind === "player_proposal";
   const pending = offer.status === "pending";
-  // Who answers: the club for a proposal, the player for everything else.
-  const mustAnswer = pending && canAct && (viewer === "club" ? fromPlayer : !fromPlayer);
-  const canWithdraw = pending && canAct && (viewer === "club" ? !fromPlayer : fromPlayer);
+  // Whose turn it is answers (accept, reject or counter); the waiting side may withdraw.
+  const mustAnswer = pending && canAct && offer.turn === viewer;
+  const canWithdraw = pending && canAct && offer.turn !== viewer;
   const other = viewer === "player" ? { name: offer.toClub.name, dpUrl: offer.toClub.dpUrl, square: true } : { name: offer.player.name, dpUrl: offer.player.dpUrl, square: false };
-  const clubHeld = pending && !fromPlayer && offer.amountTk > 0;
+  const answering = offer.turn === "player" ? offer.player.name : offer.toClub.name;
 
   async function withdraw() {
     try {
@@ -68,9 +67,18 @@ export function OfferCard({
           ) : null}
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
             <span className="font-mono font-bold text-ink">{tk(offer.amountTk)}</span>
-            {clubHeld ? <span className="text-warning-ink">{format(tr.heldNote, { amount: offer.amountTk.toLocaleString("en-US") })}</span> : null}
+            {offer.paymentStatus === "held" ? (
+              <span className="text-warning-ink">{format(tr.heldNote, { amount: offer.heldTk.toLocaleString("en-US") })}</span>
+            ) : offer.paymentStatus !== "none" ? (
+              <span className={`rounded-full px-2 py-px text-[10px] font-bold ${PAYMENT_CLASSES[offer.paymentStatus]}`}>{paymentLabel[offer.paymentStatus]}</span>
+            ) : null}
             {pending ? <span className="text-ink-faint">{format(tr.expires, { time: formatMatchTime(offer.expiresAt, locale) })}</span> : null}
           </div>
+          {pending ? (
+            <p className={`mt-1 text-[11px] font-semibold ${mustAnswer ? "text-accent-ink" : "text-ink-faint"}`}>
+              {mustAnswer ? tr.yourTurn : format(tr.waitingFor, { name: answering })}
+            </p>
+          ) : null}
           {offer.message ? <p className="mt-1.5 line-clamp-2 text-xs italic text-ink-soft">“{offer.message}”</p> : null}
         </div>
       </div>

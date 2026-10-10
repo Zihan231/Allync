@@ -118,7 +118,7 @@ export default function TransfersPage() {
                 openClubIds={new Set(offers.filter((o) => o.status === "pending").map((o) => o.toClub.id))}
                 canPropose={!isClubLeader && !lockedHere}
                 onProposeAgain={(clubId) => setProposing({ clubId })}
-                onOpenContract={(offerId) => setContract({ offerId })}
+                onOpenContract={(offerId, signAs) => setContract({ offerId, signAs })}
                 onToast={toast}
               />
             </section>

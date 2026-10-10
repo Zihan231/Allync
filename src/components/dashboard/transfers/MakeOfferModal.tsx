@@ -15,7 +15,8 @@ const errorMessage = (err: unknown) => {
   return Array.isArray(data?.message) ? data.message.join(", ") : data?.message;
 };
 
-const digits = (v: string) => v.replace(/[০-৯]/g, (d) => String("০১২৩৪৫৬৭৮৯".indexOf(d))).replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 7);
+/** Keeps an amount field to whole taka: Bangla digits → ASCII, no leading zeros, at most 7 digits. */
+export const digits = (v: string) => v.replace(/[০-৯]/g, (d) => String("০১২৩৪৫৬৭৮৯".indexOf(d))).replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 7);
 
 type Props =
   | {

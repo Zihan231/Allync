@@ -11,7 +11,8 @@ import { STATUS_CLASSES, tk, useTransferLabels } from "./shared";
 
 /**
  * Every club the player has proposed to (newest first): open ones can be
- * withdrawn, closed ones (declined / expired / withdrawn) proposed to again.
+ * withdrawn (or answered, once the club has countered), closed ones
+ * (declined / expired / withdrawn) proposed to again.
  */
 export function ProposalList({
   proposals,
@@ -26,7 +27,7 @@ export function ProposalList({
   openClubIds: Set<string>;
   canPropose: boolean;
   onProposeAgain: (clubId: string) => void;
-  onOpenContract: (offerId: string) => void;
+  onOpenContract: (offerId: string, signAs?: "player" | "club") => void;
   onToast?: (message: string, variant?: "success" | "error") => void;
 }) {
   const { locale } = useLanguage();
@@ -62,7 +63,16 @@ export function ProposalList({
             </Link>
             <span className="font-mono text-sm font-bold text-ink">{tk(p.amountTk)}</span>
             <span className={`rounded-full px-2 py-px text-[10px] font-bold ${STATUS_CLASSES[p.status]}`}>{statusLabel[p.status]}</span>
-            {p.status === "pending" ? (
+            {p.status === "pending" && p.turn === "player" ? (
+              // The club countered: his turn to accept, reject or counter again.
+              <button
+                type="button"
+                onClick={() => onOpenContract(p.id, "player")}
+                className="rounded-full bg-accent px-3 py-1 text-[11px] font-bold text-bg"
+              >
+                {tr.reviewSign}
+              </button>
+            ) : p.status === "pending" ? (
               <button
                 type="button"
                 onClick={() => withdraw(p.id)}

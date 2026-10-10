@@ -3,6 +3,13 @@ import { api } from "./axios";
 export type OfferKind = "player_proposal" | "club_offer" | "renewal" | "buyout";
 export type OfferStatus = "pending" | "scheduled" | "completed" | "declined" | "cancelled" | "expired" | "reversed";
 export type PaymentMethod = "bkash" | "nagad" | "card";
+/** The two sides of a deal: the player, and the club he would sign for. */
+export type OfferParty = "player" | "club";
+/**
+ * Where the club's money is: held (taken from the club wallet, not yet with the payee),
+ * paid (transfer completed), refunded (deal closed), reversed (staff undid it) or none.
+ */
+export type PaymentStatus = "none" | "held" | "paid" | "refunded" | "reversed";
 export const PAYMENT_METHODS: PaymentMethod[] = ["bkash", "nagad", "card"];
 
 export interface ContractView {
@@ -45,7 +52,13 @@ export interface TransferOffer {
   id: string;
   kind: OfferKind;
   status: OfferStatus;
+  /** Who answers next while pending (accept, reject or counter); the other side can only withdraw. */
+  turn: OfferParty;
+  /** The amount on the table now (changes with every counter-offer). */
   amountTk: number;
+  /** Club money held for this deal right now. */
+  heldTk: number;
+  paymentStatus: PaymentStatus;
   payeeType: "player" | "club";
   message: string | null;
   player: { id: string; name: string; dpUrl: string | null };
@@ -181,6 +194,23 @@ export const createTransferOffer = async (input: CreateOfferInput) =>
   (await api.post<TransferOffer>("/transfers/offers", input)).data;
 export const respondTransferOffer = async (offerId: string, input: { accept: boolean; paymentMethod?: PaymentMethod }) =>
   (await api.post<TransferOffer>(`/transfers/offers/${offerId}/respond`, input)).data;
+/** One step of a negotiation: the opening amount, then every counter-offer. */
+export interface OfferBid {
+  id: string;
+  party: OfferParty;
+  byUserId: string;
+  byName: string | null;
+  amountTk: number;
+  message: string | null;
+  createdAt: string;
+}
+
+/** Answer with a new amount instead of accepting or rejecting (the side whose turn it is). */
+export const counterTransferOffer = async (
+  offerId: string,
+  input: { amountTk: number; message?: string; paymentMethod?: PaymentMethod },
+) => (await api.post<TransferOffer>(`/transfers/offers/${offerId}/counter`, input)).data;
+export const getOfferBids = async (offerId: string) => (await api.get<OfferBid[]>(`/transfers/offers/${offerId}/bids`)).data;
 export const cancelTransferOffer = async (offerId: string) =>
   (await api.post<TransferOffer>(`/transfers/offers/${offerId}/cancel`)).data;
 export const topUpWallet = async (clubId?: string) =>

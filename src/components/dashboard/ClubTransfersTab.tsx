@@ -43,8 +43,8 @@ export function ClubTransfersTab({ club }: { club: Club }) {
         <div className="min-w-0 space-y-6">
           {leader ? (
             <>
-              <OfferList title={tr.joinRequests} offers={data.incoming} onOpen={(id, signAs) => setContract({ offerId: id, signAs })} onToast={toast} />
-              <OfferList title={tr.ourOffers} offers={data.outgoing} onOpen={(id, signAs) => setContract({ offerId: id, signAs })} onToast={toast} />
+              <OfferList title={tr.joinRequests} offers={data.incoming} clubId={club.id} onOpen={(id, signAs) => setContract({ offerId: id, signAs })} onToast={toast} />
+              <OfferList title={tr.ourOffers} offers={data.outgoing} clubId={club.id} onOpen={(id, signAs) => setContract({ offerId: id, signAs })} onToast={toast} />
             </>
           ) : (
             <p className="rounded-xl border border-dashed border-surface-line p-4 text-xs text-ink-faint">{tr.leaderOnly}</p>
@@ -131,11 +131,13 @@ export function ClubTransfersTab({ club }: { club: Club }) {
 function OfferList({
   title,
   offers,
+  clubId,
   onOpen,
   onToast,
 }: {
   title: string;
   offers: import("@/lib/api/transfers").TransferOffer[];
+  clubId: string;
   onOpen: (offerId: string, signAs?: "player" | "club") => void;
   onToast: (message: string, variant?: "success" | "error") => void;
 }) {
@@ -148,7 +150,8 @@ function OfferList({
       {offers.length ? (
         <ul className="mt-3 space-y-3">
           {offers.map((o) => (
-            <OfferCard key={o.id} offer={o} viewer="club" canAct onOpenContract={onOpen} onToast={onToast} />
+            // Only the signing club acts; a club whose player is being bought out just follows the deal.
+            <OfferCard key={o.id} offer={o} viewer="club" canAct={o.toClub.id === clubId} onOpenContract={onOpen} onToast={onToast} />
           ))}
         </ul>
       ) : (

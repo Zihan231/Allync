@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   cancelTransferOffer,
+  counterTransferOffer,
   createTransferOffer,
+  getOfferBids,
   getClubTransfers,
   getContractDocument,
   getFreeAgents,
@@ -24,6 +26,7 @@ export const transferKeys = {
   freeAgents: (params: object) => ["transfers", "free-agents", params] as const,
   history: (params: object) => ["transfers", "history", params] as const,
   contract: (offerId: string) => ["transfers", "contract", offerId] as const,
+  bids: (offerId: string) => ["transfers", "bids", offerId] as const,
   wallet: (params: object) => ["transfers", "wallet", params] as const,
 };
 
@@ -69,6 +72,11 @@ export function useContractDocument(offerId: string | null) {
   });
 }
 
+/** A deal's negotiation: the opening amount and every counter-offer, oldest first. */
+export function useOfferBids(offerId: string | null) {
+  return useQuery({ queryKey: transferKeys.bids(offerId ?? ""), queryFn: () => getOfferBids(offerId!), enabled: Boolean(offerId) });
+}
+
 /** Any transfer action can change offers, contracts, wallets, squads and stats: refresh them all. */
 function useRefreshAfter() {
   const queryClient = useQueryClient();
@@ -90,6 +98,15 @@ export function useRespondTransferOffer() {
   return useMutation({
     mutationFn: ({ offerId, accept, paymentMethod }: { offerId: string; accept: boolean; paymentMethod?: PaymentMethod }) =>
       respondTransferOffer(offerId, { accept, paymentMethod }),
+    onSuccess: refresh,
+  });
+}
+
+export function useCounterTransferOffer() {
+  const refresh = useRefreshAfter();
+  return useMutation({
+    mutationFn: ({ offerId, ...input }: { offerId: string; amountTk: number; message?: string; paymentMethod?: PaymentMethod }) =>
+      counterTransferOffer(offerId, input),
     onSuccess: refresh,
   });
 }
