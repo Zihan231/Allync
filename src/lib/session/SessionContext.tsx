@@ -183,6 +183,22 @@ const STORAGE_KEY = "ALLYNQ-session";
 // whether to bother calling /users/me on load instead of always trying.
 const SESSION_FLAG = "ALLYNQ_HAS_SESSION";
 
+/** Keep client-only dashboard preferences when fresh account data arrives. */
+function withStoredPreferences(next: MockUser): MockUser {
+  if (typeof window === "undefined") return next;
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "null") as Partial<MockUser> | null;
+    if (stored?.id !== next.id) return next;
+    return {
+      ...next,
+      mode: stored.mode ?? next.mode,
+      activeGame: stored.activeGame ?? next.activeGame,
+    };
+  } catch {
+    return next;
+  }
+}
+
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<MockUser>(emptyUser);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -240,7 +256,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       if (meQuery.isSuccess) {
         if (meQuery.data && meQuery.data.id) {
-          persist(backendUserToMockUser(meQuery.data));
+          persist(withStoredPreferences(backendUserToMockUser(meQuery.data)));
           setIsAuthenticated(true);
         }
         setIsLoading(false);
@@ -269,7 +285,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const refreshSession = async (): Promise<MockUser | null> => {
     const result = await meQuery.refetch();
     if (result.data && result.data.id) {
-      const mock = backendUserToMockUser(result.data);
+      const mock = withStoredPreferences(backendUserToMockUser(result.data));
       persist(mock);
       setIsAuthenticated(true);
       syncFromBackend(true).catch(() => {});

@@ -44,20 +44,22 @@ export function DashboardSidebar({
   onClose: () => void;
 }) {
   const { t } = useLanguage();
-  const { user } = useSession();
+  const { user, setMode } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const isStaff = Boolean(user.systemRole);
-  // The mode follows the page: the admin panel, the organizer area, or everything else (player).
+  // Dedicated areas force their mode. Shared pages (for example Wallet and the
+  // public tournament directory) keep the mode the user explicitly selected.
   const mode: Mode =
     isStaff && pathname.startsWith("/dashboard/admin")
       ? "admin"
       : pathname.startsWith("/dashboard/organizer")
         ? "organizer"
-        : "player";
+        : user.mode;
   const { data: reportCounts } = useAdminReportCounts(mode === "admin");
 
   const handleModeChange = (next: Mode) => {
+    setMode(next);
     onClose();
     router.push(next === "admin" ? "/dashboard/admin" : next === "organizer" ? "/dashboard/organizer" : `/dashboard/${user.activeGame}`);
   };
@@ -129,10 +131,13 @@ export function DashboardSidebar({
       {items.map((item) => {
         const active = isActive(item.href);
         return (
-          <a
+          <Link
             key={item.href}
             href={item.href}
-            onClick={onClose}
+            onClick={() => {
+              setMode(mode);
+              onClose();
+            }}
             className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
               active
                 ? "bg-accent-soft text-accent-ink"
@@ -144,7 +149,7 @@ export function DashboardSidebar({
             {item.badge ? (
               <span className="rounded-full bg-danger px-1.5 py-0.5 font-mono text-[10px] font-bold leading-none text-white">{item.badge}</span>
             ) : null}
-          </a>
+          </Link>
         );
       })}
     </nav>
