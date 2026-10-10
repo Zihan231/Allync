@@ -1,15 +1,7 @@
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Club, Community } from "@/lib/mock/types";
 import type { useMockPeople } from "@/lib/mock/communityStore";
-import {
-  getCommunityCalendarEvents,
-  getCommunityNewsFeed,
-  getCommunityUpcomingFixtures,
-} from "@/lib/mock/communityInsights";
 import { CommunityMetaGrid } from "./CommunityMetaGrid";
-import { ClubUpcomingFixturesSlider } from "./ClubUpcomingFixturesSlider";
-import { ClubMatchCalendar } from "./ClubMatchCalendar";
-import { ClubNewsFeed } from "./ClubNewsFeed";
 import { SquadCompositionDonut } from "./SquadCompositionDonut";
 import { ClubTopPerformers } from "./ClubTopPerformers";
 import { GavelIcon } from "../icons";
@@ -19,7 +11,6 @@ type Person = ReturnType<typeof useMockPeople>[number];
 export function CommunityOverviewTab({
   community,
   memberClubs,
-  peopleByClub,
   clubMembers,
   allPeople,
   allCommunities,
@@ -27,17 +18,12 @@ export function CommunityOverviewTab({
 }: {
   community: Community;
   memberClubs: Club[];
-  peopleByClub: Map<string, Person[]>;
   clubMembers: Person[];
   allPeople: Person[];
   allCommunities: Community[];
   tournamentsCount?: number;
 }) {
   const { t } = useLanguage();
-
-  const upcomingFixtures = getCommunityUpcomingFixtures(memberClubs, peopleByClub);
-  const calendarEvents = getCommunityCalendarEvents(memberClubs, peopleByClub);
-  const newsFeed = getCommunityNewsFeed(community, memberClubs);
 
   const ruleItems = community.rules
     .split(/\s*\d+\.\s+/)
@@ -78,18 +64,7 @@ export function CommunityOverviewTab({
 
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="min-w-0">
-          <ClubUpcomingFixturesSlider fixtures={upcomingFixtures} />
-        </div>
-        <div className="min-w-0">
-          <ClubMatchCalendar events={calendarEvents} />
-        </div>
-      </div>
-      <div className="grid gap-5 lg:grid-cols-2">
-        <div className="min-w-0">
           <SquadCompositionDonut members={clubMembers} />
-        </div>
-        <div className="min-w-0">
-          <ClubNewsFeed items={newsFeed} title={t.dashboard.communityOverview.newsFeedTitle} />
         </div>
       </div>
       <ClubTopPerformers communityId={community.id} title={t.dashboard.communityOverview.topPerformersTitle} />

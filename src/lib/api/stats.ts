@@ -88,6 +88,18 @@ export interface PlayerProfileStats {
   };
   load: { monthly: LoadPoint[]; weekly: LoadPoint[] };
   rankTrend: { monthly: TrendPoint[]; weekly: TrendPoint[] };
+  recentGames: Array<{
+    gameId: string;
+    tournamentId: string;
+    tournamentName: string;
+    playedAt: string;
+    opponentUserId: string | null;
+    opponentName: string;
+    myGoals: number;
+    opponentGoals: number;
+    result: "W" | "D" | "L";
+  }>;
+  tournamentsPlayed: number;
 }
 
 export interface PlayerStatsParams {

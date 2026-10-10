@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockPeople, purchaseCosmetic, equipCosmetic } from "@/lib/mock/communityStore";
+import { useMockPeople, updatePersonProfile } from "@/lib/mock/communityStore";
+import { useUpdateMe } from "@/lib/api/hooks/useUsers";
 import {
   getCosmeticsByCategory,
   RARITY_CONFIG,
@@ -128,6 +129,7 @@ export default function StorePage() {
   const [themeFilter, setThemeFilter] = useState<"all" | "team" | "esports">("all");
   const [selectedRarity, setSelectedRarity] = useState<CosmeticRarity | "all">("all");
   const [lastEquippedItem, setLastEquippedItem] = useState<CosmeticItem | null>(null);
+  const updateMe = useUpdateMe();
 
   const person = people.find((p) => p.id === user.personId);
 
@@ -158,16 +160,20 @@ export default function StorePage() {
     })
     .filter((i) => (selectedRarity === "all" ? true : i.rarity === selectedRarity));
 
-  const handleInstantEquip = (item: CosmeticItem) => {
+  const handleInstantEquip = async (item: CosmeticItem) => {
     if (!person) return;
-    purchaseCosmetic(person.id, item.id);
-    equipCosmetic(person.id, item.category, item.id);
+    const ownedCosmeticIds = Array.from(new Set([...(person.ownedCosmeticIds ?? []), item.id]));
+    const field = item.category === "badge" ? "equippedBadgeId" : item.category === "title" ? "equippedTitleId" : item.category === "frame" ? "equippedFrameId" : "equippedThemeId";
+    await updateMe.mutateAsync({ ownedCosmeticIds, [field]: item.id });
+    updatePersonProfile(person.id, { ownedCosmeticIds, [field]: item.id });
     setLastEquippedItem(item);
   };
 
-  const handleUnequip = (item: CosmeticItem) => {
+  const handleUnequip = async (item: CosmeticItem) => {
     if (!person) return;
-    equipCosmetic(person.id, item.category, null);
+    const field = item.category === "badge" ? "equippedBadgeId" : item.category === "title" ? "equippedTitleId" : item.category === "frame" ? "equippedFrameId" : "equippedThemeId";
+    await updateMe.mutateAsync({ [field]: null });
+    updatePersonProfile(person.id, { [field]: null });
     if (lastEquippedItem?.id === item.id) {
       setLastEquippedItem(null);
     }

@@ -8,17 +8,20 @@ import { mapBackendClub, mapBackendCommunity } from "@/lib/api/mappers";
 import { useSyncExternalStore } from "react";
 import type { Club, Community, JoinRequest, Person } from "./types";
 import type { CosmeticCategory } from "./cosmetics";
-import { mockClubs } from "./clubs";
-import { mockCommunities } from "./communities";
-import { mockPeople } from "./people";
 
 // Same hand-rolled useSyncExternalStore pattern as ./store.ts — module-level
 // mutable arrays + a listener Set + emitChange(). Every hook below passes a
 // getServerSnapshot (the static seed) since omitting it crashes SSR.
 
-let people: Person[] = [...mockPeople];
-let clubs: Club[] = [...mockClubs];
-let communities: Community[] = [...mockCommunities];
+const EMPTY_PEOPLE: Person[] = [];
+const EMPTY_CLUBS: Club[] = [];
+const EMPTY_COMMUNITIES: Community[] = [];
+
+// Runtime entity data is backend-authoritative. Empty arrays are intentional:
+// an empty or unavailable API must never be replaced with fictional entities.
+let people: Person[] = EMPTY_PEOPLE;
+let clubs: Club[] = EMPTY_CLUBS;
+let communities: Community[] = EMPTY_COMMUNITIES;
 let joinRequests: JoinRequest[] = [];
 const EMPTY_REQUESTS: JoinRequest[] = [];
 
@@ -32,13 +35,13 @@ function subscribe(listener: () => void) {
 }
 
 export function useMockPeople() {
-  return useSyncExternalStore(subscribe, () => people, () => mockPeople);
+  return useSyncExternalStore(subscribe, () => people, () => EMPTY_PEOPLE);
 }
 export function useMockClubs() {
-  return useSyncExternalStore(subscribe, () => clubs, () => mockClubs);
+  return useSyncExternalStore(subscribe, () => clubs, () => EMPTY_CLUBS);
 }
 export function useMockCommunities() {
-  return useSyncExternalStore(subscribe, () => communities, () => mockCommunities);
+  return useSyncExternalStore(subscribe, () => communities, () => EMPTY_COMMUNITIES);
 }
 export function useMockJoinRequests() {
   return useSyncExternalStore(subscribe, () => joinRequests, () => EMPTY_REQUESTS);
@@ -74,15 +77,12 @@ export async function syncFromBackend(force = false): Promise<void> {
       getCommunities().catch(() => null),
     ]);
 
-    if (backendClubs && Array.isArray(backendClubs) && backendClubs.length > 0) {
+    if (backendClubs && Array.isArray(backendClubs)) {
       const mappedClubs: Club[] = backendClubs.map(mapBackendClub);
-
-      const backendNames = new Set(mappedClubs.map((c) => c.name.toLowerCase()));
-      const remainingMocks = mockClubs.filter((c) => !backendNames.has(c.name.toLowerCase()));
-      clubs = [...mappedClubs, ...remainingMocks];
+      clubs = mappedClubs;
     }
 
-    if (backendUsers && Array.isArray(backendUsers) && backendUsers.length > 0) {
+    if (backendUsers && Array.isArray(backendUsers)) {
       const mappedPeople: Person[] = backendUsers.map((bu) => {
         const ep = bu.efootballProfile;
         return {
@@ -129,18 +129,13 @@ export async function syncFromBackend(force = false): Promise<void> {
         } as Person; // backend roles/enums are plain strings; Person narrows them to literal unions
       });
 
-      const backendNames = new Set(mappedPeople.map((p) => p.name.toLowerCase()));
-      const remainingMockPeople = mockPeople.filter((p) => !backendNames.has(p.name.toLowerCase()));
-      people = [...mappedPeople, ...remainingMockPeople];
+      people = mappedPeople;
     }
 
     
-    if (backendCommunities && Array.isArray(backendCommunities) && backendCommunities.length > 0) {
+    if (backendCommunities && Array.isArray(backendCommunities)) {
       const mappedCommunities: Community[] = backendCommunities.map(mapBackendCommunity);
-
-      const backendNames = new Set(mappedCommunities.map((c) => c.name.toLowerCase()));
-      const remainingMocks = mockCommunities.filter((c) => !backendNames.has(c.name.toLowerCase()));
-      communities = [...mappedCommunities, ...remainingMocks];
+      communities = mappedCommunities;
     }
 
 

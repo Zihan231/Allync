@@ -7,10 +7,8 @@ import { format } from "@/lib/i18n/translations";
 import { useSession } from "@/lib/session/SessionContext";
 import { clubJoinBlockReason } from "@/lib/session/createPermissions";
 import { useQueryClient } from "@tanstack/react-query";
-import { useMockClubs, useMockPeople, leaveClub, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
+import { useMockClubs, useMockPeople, useMockCommunities, leaveClub, syncFromBackend, hasSyncedFromBackend } from "@/lib/mock/communityStore";
 import { AppLoader } from "@/components/common/AppLoader";
-import { mockCommunities } from "@/lib/mock";
-import { getClubInsights } from "@/lib/mock/clubInsights";
 import { BackButton } from "@/components/dashboard/BackButton";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
 import { Avatar } from "@/components/common/Avatar";
@@ -19,15 +17,9 @@ import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { StagePill } from "@/components/dashboard/StagePill";
 import { ClubMetaGrid } from "@/components/dashboard/ClubMetaGrid";
 import { ClubOverviewTab } from "@/components/dashboard/ClubOverviewTab";
-import { ClubFixturesTab } from "@/components/dashboard/ClubFixturesTab";
 import { ClubSquadTab } from "@/components/dashboard/ClubSquadTab";
 import { ClubTransfersTab } from "@/components/dashboard/ClubTransfersTab";
 import { ClubRankingsTab } from "@/components/dashboard/ClubRankingsTab";
-import { ClubTableTab } from "@/components/dashboard/ClubTableTab";
-import { ClubRoundsTab } from "@/components/dashboard/ClubRoundsTab";
-import { ClubRoundStatsTab } from "@/components/dashboard/ClubRoundStatsTab";
-import { ClubMatchStatsTab } from "@/components/dashboard/ClubMatchStatsTab";
-import { ClubTeamUpTab } from "@/components/dashboard/ClubTeamUpTab";
 import { ClubTeamsTab } from "@/components/dashboard/ClubTeamsTab";
 import { ClubTournamentsTab } from "@/components/dashboard/ClubTournamentsTab";
 import { ClubLatestTournaments } from "@/components/dashboard/ClubLatestTournaments";
@@ -47,30 +39,18 @@ import { FrozenNotice } from "@/components/common/FrozenNotice";
 
 type Tab =
   | "overview"
-  | "fixtures"
   | "squad"
   | "teams"
   | "transfers"
   | "rankings"
-  | "table"
-  | "rounds"
-  | "roundStats"
-  | "matchStats"
-  | "teamUp"
   | "tournaments";
 
 const CLUB_TABS: readonly Tab[] = [
   "overview",
-  "fixtures",
   "squad",
   "teams",
   "transfers",
   "rankings",
-  "table",
-  "rounds",
-  "roundStats",
-  "matchStats",
-  "teamUp",
   "tournaments",
 ];
 
@@ -88,6 +68,7 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
   const { user, setClub, refreshSession } = useSession();
   const clubs = useMockClubs();
   const people = useMockPeople();
+  const allCommunities = useMockCommunities();
   const [tab, setTab] = useUrlTab(CLUB_TABS, "overview");
   const tabsRef = useRef<HTMLDivElement>(null);
   const { confirm, confirmProps } = useConfirm();
@@ -119,11 +100,10 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
     () => people.filter((p) => p.clubId === club?.id || p.clubId === clubId),
     [people, club, clubId]
   );
-  const insights = useMemo(() => (club ? getClubInsights(club, members) : null), [club, members]);
 
   const leftoverStaff = members.filter((p) => p.clubRole === "Manager");
   const squadTeams = Array.from(new Set(members.map((p) => p.squadTeam ?? "Main")));
-  const communities = mockCommunities.filter((c) => club?.communityIds.includes(c.id));
+  const communities = allCommunities.filter((c) => club?.communityIds.includes(c.id));
 
   const currentUserPerson = useMemo(
     () => people.find((p) => p.id === user.id || p.id === user.personId),
@@ -205,16 +185,10 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: t.dashboard.club.tabOverview },
-    { key: "fixtures", label: t.dashboard.club.tabFixtures },
     { key: "squad", label: `${t.dashboard.club.tabSquad} (${members.length})` },
     { key: "teams", label: "Teams" },
     { key: "transfers", label: t.dashboard.club.tabTransfers },
     { key: "rankings", label: t.dashboard.club.tabRankings },
-    { key: "table", label: t.dashboard.club.tabTable },
-    { key: "rounds", label: t.dashboard.club.tabRounds },
-    { key: "roundStats", label: t.dashboard.club.tabRoundStats },
-    { key: "matchStats", label: t.dashboard.club.tabMatchStats },
-    { key: "teamUp", label: t.dashboard.club.tabTeamUp },
     { key: "tournaments", label: t.dashboard.club.tabTournaments },
   ];
 
@@ -222,7 +196,7 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
     return <AppLoader />;
   }
 
-  if (!club || !insights) {
+  if (!club) {
     return <EmptyState icon={UsersIcon} title={t.dashboard.clubs.emptyState} body="" />;
   }
 
@@ -430,21 +404,15 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
             {/* Club officials and key numbers */}
             <ClubMetaGrid club={club} members={members} />
             {leftoverStaff.length ? <StaffRow people={leftoverStaff} /> : null}
-            <ClubOverviewTab club={club} members={members} insights={insights} />
+            <ClubOverviewTab club={club} members={members} onViewTournaments={() => setTab("tournaments")} />
           </div>
         ) : null}
-        {tab === "fixtures" ? <ClubFixturesTab club={club} members={members} /> : null}
         {tab === "squad" ? (
           <ClubSquadTab club={club} members={members} />
         ) : null}
         {tab === "teams" ? <ClubTeamsTab clubId={club.id} canManage={canManageTeams} club={club} /> : null}
         {tab === "transfers" ? <ClubTransfersTab club={club} /> : null}
         {tab === "rankings" ? <ClubRankingsTab club={club} members={members} /> : null}
-        {tab === "table" ? <ClubTableTab club={club} /> : null}
-        {tab === "rounds" ? <ClubRoundsTab club={club} members={members} /> : null}
-        {tab === "roundStats" ? <ClubRoundStatsTab club={club} members={members} /> : null}
-        {tab === "matchStats" ? <ClubMatchStatsTab club={club} members={members} /> : null}
-        {tab === "teamUp" ? <ClubTeamUpTab club={club} members={members} /> : null}
         {tab === "tournaments" ? (
           <ClubTournamentsTab
             clubId={club.id}

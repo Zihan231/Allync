@@ -2,8 +2,6 @@ import Link from "next/link";
 import type { Club, Community } from "@/lib/mock/types";
 import type { CommunityRole } from "@/lib/session/SessionContext";
 import type { useMockPeople } from "@/lib/mock/communityStore";
-import { rankCommunities } from "@/lib/mock/rankingsData";
-import { getCommunityFreeAgents } from "@/lib/mock/communityInsights";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Avatar } from "../common/Avatar";
 
@@ -57,11 +55,11 @@ export function CommunityMetaGrid({
 
   const totalPlayers =
     allPeople.filter((p) => p.clubId && memberClubs.some((c) => c.id === p.clubId)).length +
-    getCommunityFreeAgents(community, allPeople).length;
+    allPeople.filter((p) => p.communityId === community.id && p.clubId === null && p.communityRole === "Member").length;
 
   const communityRating = community.points;
 
-  const globalRank = rankCommunities(allCommunities).find((r) => r.id === community.id)?.rank ?? "—";
+  const globalRank = [...allCommunities].sort((a, b) => b.points - a.points).findIndex((item) => item.id === community.id) + 1;
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
@@ -73,7 +71,7 @@ export function CommunityMetaGrid({
       <StatCell label={t.dashboard.community.totalClubsLabel} value={`${memberClubs.length}`} />
       <StatCell label={t.dashboard.community.totalPlayersLabel} value={`${totalPlayers}`} />
       <StatCell label={t.dashboard.community.communityRatingLabel} value={communityRating.toLocaleString()} />
-      <StatCell label={t.dashboard.community.communityGlobalRankLabel} value={`#${globalRank}`} />
+      <StatCell label={t.dashboard.community.communityGlobalRankLabel} value={globalRank > 0 ? `#${globalRank}` : "—"} />
       {tournamentsCount !== undefined ? (
         <StatCell label={t.dashboard.shell.navTournaments} value={`${tournamentsCount}`} />
       ) : (

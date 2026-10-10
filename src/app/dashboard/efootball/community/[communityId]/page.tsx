@@ -18,7 +18,6 @@ import {
   leaveCommunity,
   removePendingJoinRequest,
 } from "@/lib/mock/communityStore";
-import { useMockTournaments } from "@/lib/mock/store";
 import { useTournaments } from "@/lib/api/hooks/useTournaments";
 import { BackButton } from "@/components/dashboard/BackButton";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
@@ -82,7 +81,6 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
   const communities = useMockCommunities();
   const people = useMockPeople();
   const clubs = useMockClubs();
-  const tournaments = useMockTournaments();
   const { data: realTournaments = [], isLoading: isLoadingTournaments } = useTournaments({ communityId });
   const joinRequests = useMockJoinRequests();
   const [tab, setTab] = useUrlTab(COMMUNITY_TABS, "overview");
@@ -124,16 +122,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
     const fromClubs = clubMembers.filter((p) => !seen.has(p.id));
     return [...direct, ...fromClubs];
   }, [people, community, clubMembers]);
-  const communityTournaments = useMemo(() => {
-    const combined = [...realTournaments];
-    const realIds = new Set(realTournaments.map((t) => t.id));
-    for (const mockTour of tournaments) {
-      if (mockTour.communityId === community?.id && !realIds.has(mockTour.id)) {
-        combined.push(mockTour as any);
-      }
-    }
-    return combined;
-  }, [realTournaments, tournaments, community]);
+  const communityTournaments = realTournaments;
 
   const currentUserPerson = useMemo(
     () => people.find((p) => p.id === user.id || p.id === user.personId),
@@ -708,7 +697,6 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
           <CommunityOverviewTab
             community={community}
             memberClubs={memberClubs}
-            peopleByClub={peopleByClub}
             clubMembers={clubMembers}
             allPeople={people}
             allCommunities={communities}

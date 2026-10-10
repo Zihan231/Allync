@@ -16,7 +16,7 @@ import {
 } from "@/lib/api/auth";
 import { useMe } from "@/lib/api/hooks/useUsers";
 import { useLoginMutation, useRegisterMutation, useLogoutMutation } from "@/lib/api/hooks/useAuth";
-import { getPerson, getClub, getCommunity, syncFromBackend } from "@/lib/mock/communityStore";
+import { getCommunity, syncFromBackend } from "@/lib/mock/communityStore";
 import type { VerificationLevel } from "@/lib/mock/types";
 import type { SystemRole } from "@/lib/api/admin";
 
@@ -73,10 +73,6 @@ function initialsFromName(name: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function slugify(name: string) {
-  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-}
-
 function emptyUser(): MockUser {
   return {
     id: "",
@@ -121,7 +117,9 @@ export function backendUserToMockUser(u: any): MockUser {
     kycStatus: (u?.verificationLevel ?? 0) > 0 ? "verified" : "unverified",
     verificationStatus: (u?.verificationLevel ?? 0) > 0 ? "verified" : "unverified",
     verificationLevel: (u?.verificationLevel ?? 0) as VerificationLevel,
-    wallet: { balanceBdt: ef?.points ? Math.round(ef.points * 3.5) : 3500 },
+    // Wallet balances are loaded from the wallet API by wallet/transfer views.
+    // Session identity must not manufacture money from ranking points.
+    wallet: { balanceBdt: 0 },
     club: ef?.club
       ? {
           id: ef.club.id,
@@ -157,7 +155,6 @@ type SessionContextValue = {
   setVerificationStatus: (status: VerificationStatus) => void;
   setVerificationLevel: (level: VerificationLevel) => void;
   setDpUrl: (dpUrl: string | null) => void;
-  spendBdt: (amountBdt: number) => boolean;
   setClub: (club: MockUser["club"]) => void;
   setCommunity: (community: MockUser["community"]) => void;
   updateProfile: (input: { name?: string; email?: string }) => void;
@@ -170,7 +167,6 @@ type SessionContextValue = {
     phoneNumber: string;
     country: string;
   }) => Promise<void>;
-  switchPersona: (personId: string) => void;
   logout: () => void;
   refreshSession: () => Promise<MockUser | null>;
 };
@@ -305,11 +301,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const setVerificationLevel = (verificationLevel: VerificationLevel) =>
     persist({ ...user, verificationLevel });
   const setDpUrl = (dpUrl: string | null) => persist({ ...user, dpUrl });
-  const spendBdt = (amountBdt: number): boolean => {
-    if (amountBdt <= 0 || user.wallet.balanceBdt < amountBdt) return false;
-    persist({ ...user, wallet: { balanceBdt: user.wallet.balanceBdt - amountBdt } });
-    return true;
-  };
   const setClub = (club: MockUser["club"]) => persist({ ...user, club });
   const setCommunity = (community: MockUser["community"]) => persist({ ...user, community });
 
@@ -390,46 +381,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     syncFromBackend(true).catch(() => {});
   };
 
-  const switchPersona = (personId: string) => {
-    const person = getPerson(personId);
-    if (!person) return;
-    const personaUser: MockUser = {
-      id: personId,
-      personId,
-      name: person.name,
-      email: slugify(person.name) + "@example.com",
-      initials: initialsFromName(person.name),
-      dpUrl: person.dpUrl,
-      coverUrl: person.coverUrl,
-      bio: person.bio || null,
-      phoneNumber: person.phoneNumber || null,
-      permanentAddress: person.permanentAddress || null,
-      mode: "player",
-      activeGame: "efootball",
-      kycStatus: "verified",
-      verificationStatus: "verified",
-      verificationLevel: 3,
-      wallet: { balanceBdt: 4200 },
-      club:
-        person.clubId && person.clubRole
-          ? { id: person.clubId, name: getClub(person.clubId)?.name ?? person.clubId, role: person.clubRole }
-          : null,
-      community:
-        person.communityId && person.communityRole
-          ? {
-              id: person.communityId,
-              name: getCommunity(person.communityId)?.name ?? person.communityId,
-              role: person.communityRole,
-            }
-          : null,
-    };
-    // Demo personas are local-only and never touch the backend, so we
-    // deliberately don't set SESSION_FLAG here — that would make the
-    // /users/me query run on reload, get a 401, and wipe the persona.
-    persist(personaUser);
-    setIsAuthenticated(true);
-  };
-
   const logout = () => {
     // Fire-and-forget: clears the httpOnly cookie server-side and the
     // cached /users/me query. Local state is cleared immediately regardless
@@ -454,14 +405,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setVerificationStatus,
     setVerificationLevel,
     setDpUrl,
-    spendBdt,
     setClub,
     setCommunity,
     updateProfile,
     login,
     completeStaffTwoFactor,
     signup,
-    switchPersona,
     logout,
     refreshSession,
   };

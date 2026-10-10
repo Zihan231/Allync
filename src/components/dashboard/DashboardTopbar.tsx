@@ -6,7 +6,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
 import { games, getGame } from "@/lib/games";
-import { DEMO_PERSONAS } from "@/lib/mock/personas";
 import { LanguageSwitch } from "../LanguageSwitch";
 import { ToastContainer } from "../common/Toast";
 import { Avatar } from "../common/Avatar";

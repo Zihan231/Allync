@@ -4,10 +4,10 @@ import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMockMatches } from "@/lib/mock/store";
 import { useMockPeople, upsertPerson } from "@/lib/mock/communityStore";
 import type { Person } from "@/lib/mock/types";
 import { useMe } from "@/lib/api/hooks/useUsers";
+import { usePlayerStats } from "@/lib/api/hooks/useStats";
 import { getCosmetic, type CosmeticItem } from "@/lib/mock/cosmetics";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
@@ -35,7 +35,8 @@ export default function ProfilePage() {
   const { user, isLoading: sessionLoading } = useSession();
   const people = useMockPeople();
   const person = people.find((p) => p.id === user.id || p.id === user.personId);
-  const matches = useMockMatches().filter((m) => m.game === "efootball");
+  const statsQuery = usePlayerStats(user.id || user.personId || undefined);
+  const stats = statsQuery.data;
   // Shares the same "users","me" cache entry SessionContext uses — if that's
   // already fetched this, it comes back instantly with no extra round trip.
   const meQuery = useMe(true);
@@ -53,7 +54,7 @@ export default function ProfilePage() {
       clubRole: ep?.clubRole ?? null,
       communityId: ep?.communityId ?? null,
       communityRole: ep?.communityRole ?? null,
-      points: ep?.points ?? 1250,
+      points: ep?.points ?? 0,
       lineupStatus: ep?.lineupStatus ?? undefined,
       gamePosition: ep?.gamePosition ?? undefined,
       shirtNumber: ep?.shirtNumber ?? undefined,
@@ -93,8 +94,12 @@ export default function ProfilePage() {
 
   const effectiveId = user.id || user.personId;
   const rank = [...people].sort((a, b) => b.points - a.points).findIndex((p) => p.id === effectiveId) + 1;
-  const points = person?.points ?? user.raw?.efootballProfile?.points ?? 1250;
-  const rating = points ? Math.min(99, Math.max(65, 70 + Math.floor(points / 50))) : 94;
+  const points = person?.points ?? user.raw?.efootballProfile?.points ?? 0;
+  const allTime = stats?.periods["all-time"];
+  const rating = Math.min(99, Math.max(0, 50 + Math.round((allTime?.winPct ?? 0) / 2)));
+  const recentGames = stats?.recentGames ?? [];
+  const formPoints = recentGames.slice(0, 5).reduce((sum, game) => sum + (game.result === "W" ? 3 : game.result === "D" ? 1 : 0), 0);
+  const formRating = recentGames.length === 0 ? "—" : formPoints >= 13 ? "A+" : formPoints >= 10 ? "A" : formPoints >= 7 ? "B" : formPoints >= 4 ? "C" : "D";
 
   const equippedTitle = person?.equippedTitleId ? getCosmetic(person.equippedTitleId) : null;
   const equippedBadge = person?.equippedBadgeId ? getCosmetic(person.equippedBadgeId) : null;
@@ -175,8 +180,8 @@ export default function ProfilePage() {
             theme={equippedTheme}
             rank={rank > 0 ? rank : 1}
             points={points}
-            winRate={68}
-            totalWins={24}
+            winRate={allTime?.winPct ?? 0}
+            totalWins={allTime?.W ?? 0}
           />
         </ThemedProfileHeroBanner>
       </div>
@@ -262,10 +267,10 @@ export default function ProfilePage() {
 
       {/* Holographic eFootball Stat Overview */}
       <div className="mt-6 sm:mt-8 grid gap-2.5 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        <ThemedStatCard label={t.dashboard.overview.statWinRate} value="68%" icon={ChartIcon} tone="accent" theme={equippedTheme} />
-        <ThemedStatCard label={t.dashboard.shell.navTournaments} value="4" icon={TrophyIcon} tone="warning" theme={equippedTheme} />
-        <ThemedStatCard label={t.dashboard.profile.historyTitle} value={String(matches.length)} icon={CalendarIcon} tone="blue" theme={equippedTheme} />
-        <ThemedStatCard label="Form Rating" value="A+" icon={FlameIcon} tone="danger" theme={equippedTheme} />
+        <ThemedStatCard label={t.dashboard.overview.statWinRate} value={`${allTime?.winPct ?? 0}%`} icon={ChartIcon} tone="accent" theme={equippedTheme} />
+        <ThemedStatCard label={t.dashboard.shell.navTournaments} value={String(stats?.tournamentsPlayed ?? 0)} icon={TrophyIcon} tone="warning" theme={equippedTheme} />
+        <ThemedStatCard label={t.dashboard.profile.historyTitle} value={String(allTime?.PL ?? 0)} icon={CalendarIcon} tone="blue" theme={equippedTheme} />
+        <ThemedStatCard label="Form Rating" value={formRating} icon={FlameIcon} tone="danger" theme={equippedTheme} />
       </div>
 
       {/* Full Cosmetic Locker & Loadout Showcase Module */}
@@ -281,8 +286,19 @@ export default function ProfilePage() {
       <ThemedCard theme={equippedTheme} className="mt-8 p-5 shadow-xl">
         <SectionHeading tone="blue">{t.dashboard.profile.historyTitle}</SectionHeading>
         <div className="mt-3 space-y-2">
-          {matches.map((m) => (
-            <MiniMatchRow key={m.id} match={m} />
+          {recentGames.map((game) => (
+            <MiniMatchRow key={game.gameId} match={{
+              id: game.gameId,
+              tournamentId: game.tournamentId,
+              tournamentName: game.tournamentName,
+              game: "efootball",
+              round: `${game.tournamentName} · ${game.myGoals}–${game.opponentGoals}`,
+              opponent: game.opponentName,
+              scheduledAt: game.playedAt,
+              status: "verified",
+              myScore: game.myGoals,
+              opponentScore: game.opponentGoals,
+            }} />
           ))}
         </div>
       </ThemedCard>

@@ -534,7 +534,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
                 dpUrl={person.dpUrl}
                 name={person.name}
                 position={person.gamePosition ?? "CF"}
-                rating={94}
+                rating={Math.min(99, Math.max(0, 50 + Math.round(allTime.winPct / 2)))}
                 theme={equippedTheme}
               />
             </div>

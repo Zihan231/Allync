@@ -2,7 +2,7 @@
 
 import { Suspense, use } from "react";
 import { AppLoader } from "@/components/common/AppLoader";
-import { TournamentDetailView } from "@/app/dashboard/efootball/tournaments/[tournamentId]/page";
+import { TournamentDetailView } from "@/components/dashboard/TournamentDetailView";
 
 export default function CommunityTournamentDetailPage({
   params,
