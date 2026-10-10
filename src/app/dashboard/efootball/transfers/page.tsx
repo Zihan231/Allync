@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
-import { useMyTransfers } from "@/lib/api/hooks/useTransfers";
+import { useMyLoans, useMyTransfers } from "@/lib/api/hooks/useTransfers";
+import { format } from "@/lib/i18n/translations";
+import { formatShortDate } from "@/components/dashboard/fixtures/labels";
 import { useToast } from "@/lib/useToast";
 import { ToastContainer } from "@/components/common/Toast";
 import { PageHeader } from "@/components/dashboard/PageHeader";
@@ -22,6 +24,13 @@ export default function TransfersPage() {
   const tr = t.dashboard.transfers;
   const { user } = useSession();
   const { data, isLoading } = useMyTransfers();
+  const { data: loans } = useMyLoans();
+  const { locale } = useLanguage();
+  // His running (or about to start / end) loan, else loan talks about him.
+  const loan =
+    loans?.find((l) => l.status === "active" || l.status === "returning" || l.status === "scheduled") ??
+    loans?.find((l) => l.status === "pending") ??
+    null;
   const { toasts, toast, dismiss } = useToast();
   // Propose form: open with no club picked (null clubId) or for one club.
   const [proposing, setProposing] = useState<{ clubId?: string } | null>(null);
@@ -85,6 +94,21 @@ export default function TransfersPage() {
                 <div className="mt-3">
                   <CommitmentNotice commitment={data.commitment} playerName={user.name} />
                 </div>
+              ) : null}
+              {loan ? (
+                <p className="mt-3 rounded-xl border border-accent/40 bg-accent-soft px-3.5 py-2.5 text-xs font-semibold text-accent-ink">
+                  {loan.status === "pending"
+                    ? format(tr.loanTalks, { parent: loan.parentClub.name, club: loan.borrowClub.name, amount: loan.feeTk, matches: loan.matches })
+                    : loan.status === "scheduled"
+                      ? format(tr.loanMineScheduled, { parent: loan.parentClub.name, club: loan.borrowClub.name })
+                      : format(tr.loanMine, {
+                          club: loan.borrowClub.name,
+                          parent: loan.parentClub.name,
+                          played: loan.matchesPlayed,
+                          total: loan.matches,
+                          date: loan.endsBy ? formatShortDate(loan.endsBy, locale) : "—",
+                        })}
+                </p>
               ) : null}
               {isClubLeader ? <p className="mt-3 text-xs text-warning-ink">{tr.notTransferable}</p> : null}
             </section>

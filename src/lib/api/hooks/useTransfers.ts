@@ -14,6 +14,15 @@ import {
   type WalletTxKind,
   respondTransferOffer,
   topUpWallet,
+  buyLoan,
+  cancelLoan,
+  counterLoan,
+  createLoan,
+  getClubLoans,
+  getLoan,
+  getMyLoans,
+  respondLoan,
+  type CreateLoanInput,
   type CreateOfferInput,
   type PaymentMethod,
 } from "@/lib/api/transfers";
@@ -28,6 +37,9 @@ export const transferKeys = {
   contract: (offerId: string) => ["transfers", "contract", offerId] as const,
   bids: (offerId: string) => ["transfers", "bids", offerId] as const,
   wallet: (params: object) => ["transfers", "wallet", params] as const,
+  myLoans: () => ["transfers", "loans", "me"] as const,
+  clubLoans: (clubId: string) => ["transfers", "loans", "club", clubId] as const,
+  loan: (loanId: string) => ["transfers", "loans", loanId] as const,
 };
 
 export function useMyTransfers(enabled = true) {
@@ -107,6 +119,56 @@ export function useCounterTransferOffer() {
   return useMutation({
     mutationFn: ({ offerId, ...input }: { offerId: string; amountTk: number; message?: string; paymentMethod?: PaymentMethod }) =>
       counterTransferOffer(offerId, input),
+    onSuccess: refresh,
+  });
+}
+
+// ------------------------------------------------------------------ loans
+
+export function useMyLoans(enabled = true) {
+  return useQuery({ queryKey: transferKeys.myLoans(), queryFn: getMyLoans, enabled });
+}
+
+export function useClubLoans(clubId: string | undefined) {
+  return useQuery({ queryKey: transferKeys.clubLoans(clubId ?? ""), queryFn: () => getClubLoans(clubId!), enabled: Boolean(clubId) });
+}
+
+/** A loan with its negotiation (bids). */
+export function useLoan(loanId: string | null) {
+  return useQuery({ queryKey: transferKeys.loan(loanId ?? ""), queryFn: () => getLoan(loanId!), enabled: Boolean(loanId) });
+}
+
+export function useCreateLoan() {
+  const refresh = useRefreshAfter();
+  return useMutation({ mutationFn: (input: CreateLoanInput) => createLoan(input), onSuccess: refresh });
+}
+
+export function useRespondLoan() {
+  const refresh = useRefreshAfter();
+  return useMutation({
+    mutationFn: ({ loanId, ...input }: { loanId: string; accept: boolean; paymentMethod?: PaymentMethod }) => respondLoan(loanId, input),
+    onSuccess: refresh,
+  });
+}
+
+export function useCounterLoan() {
+  const refresh = useRefreshAfter();
+  return useMutation({
+    mutationFn: ({ loanId, ...input }: { loanId: string; feeTk: number; message?: string; paymentMethod?: PaymentMethod }) =>
+      counterLoan(loanId, input),
+    onSuccess: refresh,
+  });
+}
+
+export function useCancelLoan() {
+  const refresh = useRefreshAfter();
+  return useMutation({ mutationFn: (loanId: string) => cancelLoan(loanId), onSuccess: refresh });
+}
+
+export function useBuyLoan() {
+  const refresh = useRefreshAfter();
+  return useMutation({
+    mutationFn: ({ loanId, paymentMethod }: { loanId: string; paymentMethod?: PaymentMethod }) => buyLoan(loanId, { paymentMethod }),
     onSuccess: refresh,
   });
 }

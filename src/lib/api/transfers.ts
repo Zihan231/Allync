@@ -96,6 +96,8 @@ export interface TransferSettingsView {
   baseFeeTk: number;
   lockDays: number;
   offerExpiryDays: number;
+  maxLoanMatches: number;
+  maxLoanDays: number;
 }
 
 export interface MyTransfers {
@@ -119,6 +121,15 @@ export interface SquadMember {
   gamePosition: string | null;
   points: number;
   contract: ContractView | null;
+  /** Set while he plays here on loan from another club. */
+  onLoanFrom: {
+    loanId: string;
+    clubId: string;
+    clubName: string;
+    matches: number;
+    matchesPlayed: number;
+    endsBy: string | null;
+  } | null;
 }
 
 export interface ClubTransfers {
@@ -149,6 +160,16 @@ export interface PlayerTransferStatus {
   transferable: boolean;
   scheduled: boolean;
   commitment: ClubCommitment | null;
+  /** His current loan (scheduled, running or about to return), if any. */
+  loan: {
+    id: string;
+    status: LoanStatus;
+    parentClub: { id: string; name: string };
+    borrowClub: { id: string; name: string };
+    matches: number;
+    matchesPlayed: number;
+    endsBy: string | null;
+  } | null;
 }
 
 export interface ContractDocument {
@@ -211,6 +232,87 @@ export const counterTransferOffer = async (
   input: { amountTk: number; message?: string; paymentMethod?: PaymentMethod },
 ) => (await api.post<TransferOffer>(`/transfers/offers/${offerId}/counter`, input)).data;
 export const getOfferBids = async (offerId: string) => (await api.get<OfferBid[]>(`/transfers/offers/${offerId}/bids`)).data;
+// ------------------------------------------------------------------ loans
+
+/** The two clubs of a loan: the parent club (keeps his contract) and the borrowing club (pays the fee). */
+export type LoanParty = "parent" | "borrower";
+export type LoanStatus = "pending" | "scheduled" | "active" | "returning" | "completed" | "declined" | "cancelled" | "expired";
+export type LoanEndReason = "matches" | "time" | "bought" | "staff" | "club_deleted";
+
+export interface Loan {
+  id: string;
+  status: LoanStatus;
+  /** Which club answers next while pending. */
+  turn: LoanParty;
+  feeTk: number;
+  heldTk: number;
+  paymentStatus: PaymentStatus;
+  matches: number;
+  matchesPlayed: number;
+  maxDays: number;
+  message: string | null;
+  player: { id: string; name: string; dpUrl: string | null };
+  parentClub: ClubRef;
+  borrowClub: ClubRef;
+  createdByUserId: string;
+  expiresAt: string;
+  createdAt: string;
+  startedAt: string | null;
+  endsBy: string | null;
+  endedAt: string | null;
+  endReason: LoanEndReason | null;
+  paymentMethod: PaymentMethod | null;
+  paymentRef: string | null;
+  paidAt: string | null;
+  scheduledTournament: ClubCommitment | null;
+  /** While he's on loan: what the borrowing club pays to buy him now. */
+  buyPriceTk: number | null;
+}
+
+export interface LoanBid {
+  id: string;
+  party: LoanParty;
+  byUserId: string;
+  byName: string | null;
+  feeTk: number;
+  message: string | null;
+  createdAt: string;
+}
+
+export interface ClubLoans {
+  clubId: string;
+  isLeader: boolean;
+  /** Players the club has borrowed (or is negotiating for). */
+  loansIn: Loan[];
+  /** The club's players lent out (or being negotiated). */
+  loansOut: Loan[];
+}
+
+export interface CreateLoanInput {
+  /** The club you lead. */
+  clubId: string;
+  playerUserId: string;
+  /** Lending your own player out: the club that would borrow him. */
+  otherClubId?: string;
+  feeTk: number;
+  matches: number;
+  maxDays: number;
+  message?: string;
+  paymentMethod?: PaymentMethod;
+}
+
+export const createLoan = async (input: CreateLoanInput) => (await api.post<Loan>("/transfers/loans", input)).data;
+export const getMyLoans = async () => (await api.get<Loan[]>("/transfers/loans/me")).data;
+export const getClubLoans = async (clubId: string) => (await api.get<ClubLoans>(`/transfers/loans/clubs/${clubId}`)).data;
+export const getLoan = async (loanId: string) => (await api.get<Loan & { bids: LoanBid[] }>(`/transfers/loans/${loanId}`)).data;
+export const respondLoan = async (loanId: string, input: { accept: boolean; paymentMethod?: PaymentMethod }) =>
+  (await api.post<Loan>(`/transfers/loans/${loanId}/respond`, input)).data;
+export const counterLoan = async (loanId: string, input: { feeTk: number; message?: string; paymentMethod?: PaymentMethod }) =>
+  (await api.post<Loan>(`/transfers/loans/${loanId}/counter`, input)).data;
+export const cancelLoan = async (loanId: string) => (await api.post<Loan>(`/transfers/loans/${loanId}/cancel`)).data;
+export const buyLoan = async (loanId: string, input: { paymentMethod?: PaymentMethod }) =>
+  (await api.post<Loan>(`/transfers/loans/${loanId}/buy`, input)).data;
+
 export const cancelTransferOffer = async (offerId: string) =>
   (await api.post<TransferOffer>(`/transfers/offers/${offerId}/cancel`)).data;
 export const topUpWallet = async (clubId?: string) =>

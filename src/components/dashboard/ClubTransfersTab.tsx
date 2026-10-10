@@ -4,11 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Club } from "@/lib/mock/types";
-import { useClubTransfers, useFreeAgents } from "@/lib/api/hooks/useTransfers";
+import { useClubLoans, useClubTransfers, useFreeAgents } from "@/lib/api/hooks/useTransfers";
+import { format } from "@/lib/i18n/translations";
+import type { Loan } from "@/lib/api/transfers";
 import { useToast } from "@/lib/useToast";
 import { ToastContainer } from "@/components/common/Toast";
 import { Avatar } from "../common/Avatar";
 import { ContractDocument } from "./transfers/ContractDocument";
+import { LoanCard } from "./transfers/LoanCard";
+import { LoanModal } from "./transfers/LoanModal";
 import { OfferToPlayerModal } from "./transfers/MakeOfferModal";
 import { OfferCard } from "./transfers/OfferCard";
 import { TransferHistoryList } from "./transfers/TransferHistoryList";
@@ -31,6 +35,8 @@ export function ClubTransfersTab({ club }: { club: Club }) {
   const { toasts, toast, dismiss } = useToast();
   const [contract, setContract] = useState<{ offerId: string; signAs?: "player" | "club" } | null>(null);
   const [offerTo, setOfferTo] = useState<{ id: string; name: string } | null>(null);
+  const [lend, setLend] = useState<{ id: string; name: string } | null>(null);
+  const { data: loans } = useClubLoans(club.id);
 
   const leader = Boolean(data?.isLeader);
   const balance = data?.wallet?.balanceTk ?? null;
@@ -50,6 +56,14 @@ export function ClubTransfersTab({ club }: { club: Club }) {
             <p className="rounded-xl border border-dashed border-surface-line p-4 text-xs text-ink-faint">{tr.leaderOnly}</p>
           )}
 
+          {loans && (loans.loansIn.length || loans.loansOut.length) ? (
+            <section className="rounded-2xl border border-surface-line bg-surface/50 p-5">
+              <h3 className="font-display text-base font-black text-ink">{tr.loansTitle}</h3>
+              <LoanList title={tr.loansIn} loans={loans.loansIn} clubId={club.id} leader={leader} balanceTk={balance} onToast={toast} />
+              <LoanList title={tr.loansOut} loans={loans.loansOut} clubId={club.id} leader={leader} balanceTk={balance} onToast={toast} />
+            </section>
+          ) : null}
+
           {/* Squad contracts */}
           <section className="rounded-2xl border border-surface-line bg-surface/50 p-5">
             <h3 className="flex items-center gap-2 font-display text-base font-black text-ink">
@@ -65,18 +79,35 @@ export function ClubTransfersTab({ club }: { club: Club }) {
                       <Avatar dpUrl={m.dpUrl} name={m.name} size="sm" mode="static" />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-semibold text-ink">{m.name}</span>
-                        <span className="block text-[11px] text-ink-faint">{m.clubRole ?? "Player"}</span>
+                        <span className="block text-[11px] text-ink-faint">
+                          {m.clubRole ?? "Player"}
+                          {m.onLoanFrom ? (
+                            <span className="ml-1.5 rounded-full bg-accent-soft px-1.5 py-px text-[10px] font-bold text-accent-ink">
+                              {format(tr.loanFrom, { club: m.onLoanFrom.clubName })} ·{" "}
+                              {format(tr.loanProgress, { played: m.onLoanFrom.matchesPlayed, total: m.onLoanFrom.matches })}
+                            </span>
+                          ) : null}
+                        </span>
                       </span>
                     </Link>
                     {m.contract ? <TransferFeeBadge contract={m.contract} compact /> : <span className="text-[11px] text-ink-faint">{tr.noContractYet}</span>}
-                    {leader && !isLeaderRole ? (
-                      <button
-                        type="button"
-                        onClick={() => setOfferTo({ id: m.userId, name: m.name })}
-                        className="rounded-full border border-accent/50 px-3 py-1 text-[11px] font-bold text-accent-ink hover:bg-accent hover:text-bg"
-                      >
-                        {tr.renew}
-                      </button>
+                    {leader && !isLeaderRole && !m.onLoanFrom ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setOfferTo({ id: m.userId, name: m.name })}
+                          className="rounded-full border border-accent/50 px-3 py-1 text-[11px] font-bold text-accent-ink hover:bg-accent hover:text-bg"
+                        >
+                          {tr.renew}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLend({ id: m.userId, name: m.name })}
+                          className="rounded-full border border-surface-line-strong px-3 py-1 text-[11px] font-bold text-ink-soft hover:text-ink"
+                        >
+                          {tr.loanOut}
+                        </button>
+                      </>
                     ) : null}
                     {m.contract?.offerId ? (
                       <button type="button" onClick={() => setContract({ offerId: m.contract!.offerId! })} className="text-[11px] font-bold text-ink-soft hover:text-ink">
@@ -113,6 +144,9 @@ export function ClubTransfersTab({ club }: { club: Club }) {
           onClose={() => setOfferTo(null)}
           onToast={toast}
         />
+      ) : null}
+      {lend ? (
+        <LoanModal mode="lend" clubId={club.id} clubBalanceTk={balance} player={lend} onClose={() => setLend(null)} onToast={toast} />
       ) : null}
       {contract ? (
         <ContractDocument
@@ -158,6 +192,41 @@ function OfferList({
         <p className="mt-2 text-xs text-ink-faint">{t.dashboard.transfers.noOffers}</p>
       )}
     </section>
+  );
+}
+
+/** One direction of a club's loans (borrowed or lent). */
+function LoanList({
+  title,
+  loans,
+  clubId,
+  leader,
+  balanceTk,
+  onToast,
+}: {
+  title: string;
+  loans: Loan[];
+  clubId: string;
+  leader: boolean;
+  balanceTk: number | null;
+  onToast: (message: string, variant?: "success" | "error") => void;
+}) {
+  const { t } = useLanguage();
+  return (
+    <div className="mt-3">
+      <h4 className="mb-2 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-faint">
+        {title} · {loans.length}
+      </h4>
+      {loans.length ? (
+        <ul className="space-y-3">
+          {loans.map((l) => (
+            <LoanCard key={l.id} loan={l} viewerClubId={clubId} canAct={leader} balanceTk={balanceTk} onToast={onToast} />
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-ink-faint">{t.dashboard.transfers.noLoans}</p>
+      )}
+    </div>
   );
 }
 
