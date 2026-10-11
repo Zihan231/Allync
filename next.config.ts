@@ -12,6 +12,19 @@ const BACKEND_URL =
     : process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 const nextConfig: NextConfig = {
+  // The Playwright suite (e2e/) writes traces, videos and sessions while it runs; watching it
+  // would make the dev server rebuild mid-test and serve half-written chunks.
+  // `next build` runs Turbopack, which doesn't need the hook below.
+  turbopack: {},
+  webpack(config, { dev }) {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: ["**/node_modules/**", "**/.git/**", "**/.next/**", "**/e2e/**"],
+      };
+    }
+    return config;
+  },
   async redirects() {
     return [
       {

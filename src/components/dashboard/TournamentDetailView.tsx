@@ -330,6 +330,8 @@ export function TournamentDetailView({
   const isClubHosted = Boolean(hostClubId);
   // General tournament: no community or club; its creator organizes it and anyone can enter.
   const isGeneral = !tournament.communityId && !hostClubId;
+  // The API zeroes the fee of a free tournament (it doesn't return `isPaid`), so the fee decides.
+  const hasEntryFee = Boolean(tournament.entryFeeBdt && tournament.entryFeeBdt > 0);
   const isOrganizer =
     tournament.creatorId === user?.id ||
     tournament.createdById === user?.id ||
@@ -831,9 +833,7 @@ export function TournamentDetailView({
                 </span>
               )}
 
-              {tournament.isPaid &&
-              tournament.entryFeeBdt &&
-              tournament.entryFeeBdt > 0 ? (
+              {hasEntryFee ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/15 px-3 py-1 font-mono text-[11px] font-bold text-warning-ink">
                   <WalletIcon className="h-3 w-3 text-warning-ink" />
                   {format(td.badgeEntryFee, {
@@ -1175,9 +1175,7 @@ export function TournamentDetailView({
               : td.friendlyCup}
           </div>
           <div className="mt-1 text-xs text-amber-200/70">
-            {tournament.isPaid &&
-            tournament.entryFeeBdt &&
-            tournament.entryFeeBdt > 0
+            {hasEntryFee
               ? format(td.entryFeeAmount, {
                   amount: tournament.entryFeeBdt.toLocaleString(),
                 })
@@ -1236,7 +1234,9 @@ export function TournamentDetailView({
                 : isHostLeader
                   ? isClubHosted
                     ? td.infoClubLeadersCannotJoin
-                    : td.infoLeadersCannotJoin
+                    : isGeneral
+                      ? td.infoOrganizerCannotJoin
+                      : td.infoLeadersCannotJoin
                   : isCvC
                     ? td.infoCvcWhoRegisters
                     : !playerBelongsToCommunity
