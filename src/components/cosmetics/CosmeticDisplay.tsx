@@ -34,11 +34,14 @@ export function ThemedCoverArtwork({
   coverUrl,
   name,
   className = "h-56 sm:h-72 lg:h-80",
+  showToggle = true,
 }: {
   theme?: CosmeticItem | null;
   coverUrl?: string | null;
   name: string;
   className?: string;
+  /** The Theme Stage / Cover Photo switch (off for small previews). */
+  showToggle?: boolean;
 }) {
   const [viewMode, setViewMode] = useState<"theme" | "photo">("theme");
 
@@ -116,7 +119,7 @@ export function ThemedCoverArtwork({
           className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px]"
           style={{ background: `linear-gradient(90deg, transparent, ${primary}, ${secondary}, transparent)` }}
         />
-        {viewToggle}
+        {showToggle ? viewToggle : null}
       </div>
     );
   }

@@ -37,7 +37,7 @@ import {
   SwapIcon,
   SettingsIcon,
 } from "@/components/icons";
-import { getCosmetic, type CosmeticItem } from "@/lib/mock/cosmetics";
+import type { CosmeticItem } from "@/lib/mock/cosmetics";
 import { useToast } from "@/lib/useToast";
 import { useMyStore, useStoreCatalog } from "@/lib/api/hooks/useStore";
 import { cosmeticBySku } from "@/lib/storeCosmetics";
@@ -480,7 +480,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
   const equippedTheme = look.theme;
   const tokens = getThemeTokens(equippedTheme);
   const ownedBadges = (person.ownedCosmeticIds ?? [])
-    .map(getCosmetic)
+    .map((sku) => cosmeticBySku(sku, storeCatalog))
     .filter((c): c is CosmeticItem => c != null && c.category === "badge");
   const isOwnProfile = person.id === user.id || person.id === user.personId;
   const canMakeOffer = !isOwnProfile && Boolean(user.club?.id && leaderClub?.isLeader);

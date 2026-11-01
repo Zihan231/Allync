@@ -82,7 +82,7 @@ export function DesignPreview({
   // Themes, club themes and tournament banners: the banner as a cover, with an avatar on it.
   return (
     <div className="overflow-hidden rounded-xl border border-surface-line bg-bg-raised/70">
-      <ThemedCoverArtwork theme={assets?.bannerUrl || assets?.colors ? item : null} name={name} className={size === "sm" ? "h-24" : "h-36 sm:h-44"} />
+      <ThemedCoverArtwork theme={assets?.bannerUrl || assets?.colors ? item : null} name={name} className={size === "sm" ? "h-24" : "h-36 sm:h-44"} showToggle={false} />
       <div className="-mt-7 flex items-end gap-3 px-3 pb-3">
         <div className="rounded-full border-4 border-bg-raised">
           <Avatar dpUrl={user.dpUrl} name={user.name} size="md" mode="static" />

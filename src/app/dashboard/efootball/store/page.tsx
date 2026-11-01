@@ -88,7 +88,7 @@ function CardPreview({
     <div className="relative flex h-32 flex-col justify-between overflow-hidden rounded-xl border border-surface-line text-left shadow-inner transition-transform duration-300 hover:scale-[1.02]">
       {/* Real Animated Bespoke Themed Cover Artwork in Preview */}
       <div className="absolute inset-0">
-        <ThemedCoverArtwork theme={item} name={userName} className="h-full w-full" />
+        <ThemedCoverArtwork theme={item} name={userName} className="h-full w-full" showToggle={false} />
       </div>
 
       <div className="relative z-10 flex items-center justify-between p-2.5">
@@ -523,7 +523,16 @@ function StoreContent() {
                         color: item.color,
                       }}
                     >
-                      <Icon className="h-5 w-5" />
+                      {item.custom?.imageUrl ?? item.custom?.frameUrl ?? item.custom?.bannerUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.custom.imageUrl ?? item.custom.frameUrl ?? item.custom.bannerUrl}
+                          alt=""
+                          className={`h-full w-full rounded-xl ${item.custom.bannerUrl ? "object-cover" : "object-contain p-1"}`}
+                        />
+                      ) : (
+                        <Icon className="h-5 w-5" />
+                      )}
                     </div>
                     <div>
                       <h3 className="font-display text-base font-bold text-ink group-hover:text-accent-ink transition-colors">

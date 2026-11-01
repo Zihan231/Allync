@@ -8,7 +8,9 @@ import { useMockPeople, upsertPerson } from "@/lib/mock/communityStore";
 import type { Person } from "@/lib/mock/types";
 import { useMe } from "@/lib/api/hooks/useUsers";
 import { usePlayerStats } from "@/lib/api/hooks/useStats";
-import { getCosmetic, type CosmeticItem } from "@/lib/mock/cosmetics";
+import type { CosmeticItem } from "@/lib/mock/cosmetics";
+import { useStoreCatalog } from "@/lib/api/hooks/useStore";
+import { cosmeticBySku } from "@/lib/storeCosmetics";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
@@ -40,6 +42,7 @@ export default function ProfilePage() {
   // Shares the same "users","me" cache entry SessionContext uses — if that's
   // already fetched this, it comes back instantly with no extra round trip.
   const meQuery = useMe(true);
+  const { data: storeCatalog } = useStoreCatalog();
 
   useEffect(() => {
     const backendUser = meQuery.data;
@@ -101,13 +104,13 @@ export default function ProfilePage() {
   const formPoints = recentGames.slice(0, 5).reduce((sum, game) => sum + (game.result === "W" ? 3 : game.result === "D" ? 1 : 0), 0);
   const formRating = recentGames.length === 0 ? "—" : formPoints >= 13 ? "A+" : formPoints >= 10 ? "A" : formPoints >= 7 ? "B" : formPoints >= 4 ? "C" : "D";
 
-  const equippedTitle = person?.equippedTitleId ? getCosmetic(person.equippedTitleId) : null;
-  const equippedBadge = person?.equippedBadgeId ? getCosmetic(person.equippedBadgeId) : null;
-  const equippedFrame = person?.equippedFrameId ? getCosmetic(person.equippedFrameId) : null;
-  const equippedTheme = person?.equippedThemeId ? getCosmetic(person.equippedThemeId) : null;
+  const equippedTitle = cosmeticBySku(person?.equippedTitleId, storeCatalog);
+  const equippedBadge = cosmeticBySku(person?.equippedBadgeId, storeCatalog);
+  const equippedFrame = cosmeticBySku(person?.equippedFrameId, storeCatalog);
+  const equippedTheme = cosmeticBySku(person?.equippedThemeId, storeCatalog);
   const tokens = getThemeTokens(equippedTheme);
   const ownedBadges = (person?.ownedCosmeticIds ?? [])
-    .map(getCosmetic)
+    .map((sku) => cosmeticBySku(sku, storeCatalog))
     .filter((c): c is CosmeticItem => c != null && c.category === "badge");
   const profile = meQuery.data ?? user.raw ?? person;
   const hasText = (value: unknown) => typeof value === "string" && value.trim().length > 0;
