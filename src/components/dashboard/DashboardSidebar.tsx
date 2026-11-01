@@ -62,6 +62,7 @@ export function DashboardSidebar({
   const playerBase = `/dashboard/${user.activeGame}`;
   const playerItems: NavItem[] = [
     { href: playerBase, label: t.dashboard.shell.navOverview, icon: HomeIcon },
+    { href: "/dashboard/feed", label: t.coaching.feed.title, icon: FlameIcon },
     {
       href: `${playerBase}/clubs`,
       label: t.dashboard.clubs.browseTitle,
@@ -111,6 +112,7 @@ export function DashboardSidebar({
 
   const organizerItems: NavItem[] = [
     { href: "/dashboard/organizer", label: t.dashboard.organizerMode.navDashboard, icon: ChartIcon },
+    { href: "/dashboard/feed", label: t.coaching.feed.title, icon: FlameIcon },
     { href: "/dashboard/organizer/create", label: t.dashboard.organizerMode.navCreate, icon: TrophyIcon },
     { href: "/dashboard/organizer/profile", label: t.dashboard.shell.navProfile, icon: SettingsIcon },
     { href: `${playerBase}/tournaments/general`, label: t.dashboard.organizerMode.navGeneral, icon: FlameIcon },
@@ -120,6 +122,7 @@ export function DashboardSidebar({
   const tc = t.coaching.nav;
   const coachItems: NavItem[] = [
     { href: "/dashboard/coach", label: tc.dashboard, icon: ChartIcon },
+    { href: "/dashboard/feed", label: t.coaching.feed.title, icon: FlameIcon },
     { href: "/dashboard/coach/profile", label: t.dashboard.shell.navProfile, icon: SettingsIcon },
     { href: "/dashboard/coach/posts", label: tc.posts, icon: FlameIcon },
     { href: "/dashboard/coach/deals", label: tc.deals, icon: SwapIcon },

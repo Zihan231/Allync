@@ -93,6 +93,64 @@ function MediaGrid({ media }: { media: CoachPostMedia[] }) {
   );
 }
 
+/** A post's content: text (with See more), YouTube videos and photos edge to edge, then link previews. */
+export function PostBody({ body, links, media }: { body: string; links: string[]; media: CoachPostMedia[] }) {
+  const { t } = useLanguage();
+  const tg = t.coaching.page;
+  const [expanded, setExpanded] = useState(false);
+  const embeds = links.map((link) => ({ link, embed: youtubeEmbedUrl(link) }));
+  const long = body.length > LONG_POST;
+  const text = long && !expanded ? `${body.slice(0, LONG_POST).trimEnd()}…` : body;
+  return (
+    <>
+      {body ? (
+        <div className="px-4 pt-3 text-[15px] leading-relaxed text-ink">
+          <p className="whitespace-pre-line break-words">{text}</p>
+          {long ? (
+            <button type="button" onClick={() => setExpanded(!expanded)} className="mt-1 text-sm font-semibold text-ink-soft hover:underline">
+              {expanded ? tg.seeLess : tg.seeMore}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Videos and photos run edge to edge, like a feed. */}
+      <div className="mt-3 space-y-0.5">
+        {embeds
+          .filter((e) => e.embed)
+          .map(({ link, embed }) => (
+            <div key={link} className="aspect-video bg-black">
+              <iframe
+                src={embed!}
+                title="YouTube video"
+                className="h-full w-full"
+                loading="lazy"
+                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ))}
+        {media.length ? <MediaGrid media={media} /> : null}
+      </div>
+
+      {embeds
+        .filter((e) => !e.embed)
+        .map(({ link }) => (
+          <a
+            key={link}
+            href={link}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="mx-4 mt-3 block rounded-xl border border-surface-line bg-bg/50 px-3 py-2.5 hover:border-accent/50"
+          >
+            <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink-faint">{hostOf(link)}</div>
+            <div className="truncate text-sm font-semibold text-ink">{link}</div>
+          </a>
+        ))}
+    </>
+  );
+}
+
 /** A coach's tutorial post, styled like a social feed post: author, text, video, photos, links, actions. */
 export function CoachPostCard({
   post,
@@ -114,11 +172,7 @@ export function CoachPostCard({
   const { t, locale } = useLanguage();
   const tp = t.coaching.posts;
   const tg = t.coaching.page;
-  const [expanded, setExpanded] = useState(false);
-  const embeds = post.links.map((link) => ({ link, embed: youtubeEmbedUrl(link) }));
   const firstYoutube = post.links.find((l) => /youtu\.?be/.test(l));
-  const long = post.body.length > LONG_POST;
-  const text = long && !expanded ? `${post.body.slice(0, LONG_POST).trimEnd()}…` : post.body;
   const name = author?.name ?? post.coach?.name ?? "Coach";
   const dp = author?.dpUrl ?? post.coach?.dpUrl ?? null;
 
@@ -152,50 +206,7 @@ export function CoachPostCard({
         <p className="mx-4 mt-3 rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger-ink">{format(tp.rejectedBecause, { reason: post.rejectReason })}</p>
       ) : null}
 
-      {post.body ? (
-        <div className="px-4 pt-3 text-[15px] leading-relaxed text-ink">
-          <p className="whitespace-pre-line">{text}</p>
-          {long ? (
-            <button type="button" onClick={() => setExpanded(!expanded)} className="mt-1 text-sm font-semibold text-ink-soft hover:underline">
-              {expanded ? tg.seeLess : tg.seeMore}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-
-      {/* Videos and photos run edge to edge, like a feed. */}
-      <div className="mt-3 space-y-0.5">
-        {embeds
-          .filter((e) => e.embed)
-          .map(({ link, embed }) => (
-            <div key={link} className="aspect-video bg-black">
-              <iframe
-                src={embed!}
-                title="YouTube video"
-                className="h-full w-full"
-                loading="lazy"
-                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          ))}
-        {post.media.length ? <MediaGrid media={post.media} /> : null}
-      </div>
-
-      {embeds
-        .filter((e) => !e.embed)
-        .map(({ link }) => (
-          <a
-            key={link}
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="mx-4 mt-3 block rounded-xl border border-surface-line bg-bg/50 px-3 py-2.5 hover:border-accent/50"
-          >
-            <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink-faint">{hostOf(link)}</div>
-            <div className="truncate text-sm font-semibold text-ink">{link}</div>
-          </a>
-        ))}
+      <PostBody body={post.body} links={post.links} media={post.media} />
 
       {firstYoutube || shareUrl ? (
         <footer className="mt-3 flex border-t border-surface-line">

@@ -1,5 +1,6 @@
 "use client";
 
+import { FeedPreview } from "@/components/feed/FeedPreview";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
@@ -187,6 +188,10 @@ export default function EfootballOverviewPage() {
         <div className="mt-4">
           <ClubRankingsTable rows={topClubs} />
         </div>
+      </div>
+
+      <div className="mt-10">
+        <FeedPreview />
       </div>
     </div>
   );

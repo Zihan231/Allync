@@ -1,5 +1,6 @@
 "use client";
 
+import { FeedPreview } from "@/components/feed/FeedPreview";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
@@ -64,6 +65,7 @@ export default function CoachOverviewPage() {
                 ))}
               </div>
             ) : null}
+            <FeedPreview />
           </div>
         );
       }}

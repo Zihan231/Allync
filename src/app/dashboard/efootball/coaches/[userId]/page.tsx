@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
 import { useCoach } from "@/lib/api/hooks/useCoaching";
+import { useFollowStats, useToggleFollow } from "@/lib/api/hooks/useFeed";
 import { useSession } from "@/lib/session/SessionContext";
 import { useToast } from "@/lib/useToast";
 import { ToastContainer } from "@/components/common/Toast";
@@ -26,11 +27,13 @@ export default function CoachProfilePage() {
   const tdir = t.coaching.directory;
   const tg = t.coaching.page;
   const { userId } = useParams<{ userId: string }>();
-  const { user } = useSession();
+  const { user, isAuthenticated } = useSession();
   const { data, isLoading, isError } = useCoach(userId);
   const leader = useCoachingLeader();
   const { toasts, toast, dismiss } = useToast();
   const [offering, setOffering] = useState(false);
+  const { data: followStats } = useFollowStats(userId);
+  const follow = useToggleFollow();
 
   if (isLoading) return <CoachProfileSkeleton />;
   if (isError || !data) return <EmptyState icon={ChartIcon} title={tdir.empty} body="" />;
@@ -45,7 +48,9 @@ export default function CoachProfilePage() {
     toast(tg.copied, "success");
   };
 
+  const following = followStats?.followedByMe ?? false;
   const stats: Array<[string, string]> = [
+    [t.coaching.feed.followersLabel, String(followStats?.followers ?? 0)],
     [tg.tutorials, String(publicPosts)],
     [tg.clubsCoached, String(new Set(history.map((h) => h.clubId)).size)],
     [tg.usualFee, profile.askingFeeTk != null ? tk(profile.askingFeeTk) : "—"],
@@ -91,6 +96,18 @@ export default function CoachProfilePage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 sm:pb-2">
+              {!own && isAuthenticated ? (
+                <button
+                  type="button"
+                  onClick={() => follow.mutate({ coachId: data.user.id, on: !following })}
+                  disabled={follow.isPending}
+                  className={`rounded-full px-5 py-2.5 text-sm font-black ${
+                    following ? "border border-surface-line-strong text-ink-soft" : "bg-blue text-white"
+                  }`}
+                >
+                  {following ? t.coaching.feed.following : `+ ${t.coaching.feed.follow}`}
+                </button>
+              ) : null}
               {!own && leader.clubId && profile.available ? (
                 <button type="button" onClick={() => setOffering(true)} className="rounded-full bg-accent px-5 py-2.5 text-sm font-black text-bg">
                   {tdir.offerDeal}
@@ -121,7 +138,7 @@ export default function CoachProfilePage() {
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-3 divide-x divide-surface-line rounded-xl border border-surface-line bg-bg/40 text-center">
+          <div className="mt-5 grid grid-cols-4 divide-x divide-surface-line rounded-xl border border-surface-line bg-bg/40 text-center">
             {stats.map(([label, value]) => (
               <div key={label} className="px-2 py-3">
                 <div className="font-display text-lg font-black text-ink sm:text-xl">{value}</div>

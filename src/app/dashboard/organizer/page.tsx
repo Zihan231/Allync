@@ -1,5 +1,6 @@
 "use client";
 
+import { FeedPreview } from "@/components/feed/FeedPreview";
 import Link from "next/link";
 import { useMemo } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -100,6 +101,10 @@ export default function OrganizerDashboardPage() {
             ))}
           </ul>
         </aside>
+      </div>
+
+      <div className="mt-10">
+        <FeedPreview />
       </div>
     </div>
   );
