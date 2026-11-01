@@ -100,6 +100,27 @@ export function ThemedCoverArtwork({
     );
   }
 
+  if (theme.custom) {
+    const { primary, secondary } = theme.custom.colors ?? { primary: theme.color, secondary: theme.secondaryColor ?? theme.color };
+    return (
+      <div
+        className={`relative w-full overflow-hidden select-none ${className}`}
+        style={{ background: `linear-gradient(135deg, ${primary} 0%, #05070e 55%, ${secondary} 130%)` }}
+      >
+        {theme.custom.bannerUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={theme.custom.bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : null}
+        <div className="pointer-events-none absolute inset-0" style={{ background: `linear-gradient(180deg, transparent 45%, ${primary}55 80%, var(--bg) 100%)` }} />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px]"
+          style={{ background: `linear-gradient(90deg, transparent, ${primary}, ${secondary}, transparent)` }}
+        />
+        {viewToggle}
+      </div>
+    );
+  }
+
   // ==========================================================================
   // --- 1. REAL MADRID CF (Los Blancos · 15x European Champions) ---
   // ==========================================================================
@@ -1175,6 +1196,24 @@ export function CosmeticBadgePill({
 }) {
   const Icon = COSMETIC_ICON_MAP[item.icon] ?? ShieldIcon;
 
+  // A creator's badge is artwork only: titles and achievements stay system-granted.
+  if (item.custom?.imageUrl) {
+    return (
+      <span
+        title={item.name}
+        className={`relative inline-flex items-center gap-1.5 rounded-full border border-surface-line-strong bg-surface/80 p-1 transition-transform duration-300 hover:scale-110 ${
+          isEquipped ? "ring-2 ring-accent ring-offset-2 ring-offset-bg" : ""
+        }`}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={item.custom.imageUrl} alt={item.name} className="h-7 w-7 object-contain" />
+        {isEquipped && equippedLabel ? (
+          <span className="mr-1 rounded-full bg-accent-soft px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase text-accent-ink">{equippedLabel}</span>
+        ) : null}
+      </span>
+    );
+  }
+
   // MYTHIC BADGE (Prismatic Rainbow Wave, Outer Shockwave & Laser Glare)
   if (item.rarity === "mythic") {
     return (
@@ -1348,6 +1387,19 @@ export function CosmeticAvatarFrame({
 
   const paddingClass =
     size === "sm" ? "p-1.5" : size === "md" ? "p-2.5" : "p-3 sm:p-4";
+
+  // A creator's frame: their transparent PNG ring laid over the avatar.
+  if (frame.custom?.frameUrl) {
+    return (
+      <div className={`relative inline-flex w-fit shrink-0 items-center justify-center ${paddingClass}`}>
+        <div className="relative rounded-full">
+          <Avatar dpUrl={dpUrl} name={name} size={size} mode={mode} />
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={frame.custom.frameUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
+      </div>
+    );
+  }
 
   // --- 1. MYTHIC FRAME (Celestial Void Singularity - High-Speed Dual Vortex + 4 Orbiting Satellites) ---
   if (frame.id === "frame-void-singularity" || frame.rarity === "mythic") {
@@ -1557,6 +1609,16 @@ export function CosmeticThemeAmbient({
       <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
         <div className="glow-gold pointer-events-none absolute left-1/2 top-0 h-[450px] w-[450px] -translate-x-1/2 blur-3xl opacity-50" />
         <div className="glow-blue pointer-events-none absolute right-0 top-32 h-[350px] w-[350px] blur-3xl opacity-40" />
+      </div>
+    );
+  }
+
+  if (theme.custom) {
+    const tokens = getThemeTokens(theme);
+    return (
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden select-none max-w-[100vw]">
+        <div className="absolute left-1/2 top-0 h-[450px] w-[450px] -translate-x-1/2 rounded-full blur-3xl opacity-25" style={{ background: tokens.primary }} />
+        <div className="absolute right-0 top-32 h-[350px] w-[350px] rounded-full blur-3xl opacity-20" style={{ background: tokens.secondary }} />
       </div>
     );
   }
@@ -1979,6 +2041,8 @@ export function ThemedProfileHeroBanner({
 }) {
   const cardClass = !theme
     ? "border-surface-line shadow-2xl"
+    : theme.custom
+    ? "border-surface-line-strong shadow-2xl"
     : theme.id === "theme-real-madrid"
     ? "theme-card-legendary"
     : theme.id === "theme-fc-barcelona"
@@ -2366,6 +2430,30 @@ export function getThemeTokens(theme: CosmeticItem | null | undefined): ThemeTok
     };
   }
 
+  if (theme.custom) {
+    const primary = theme.custom.colors?.primary ?? theme.color;
+    const secondary = theme.custom.colors?.secondary ?? theme.secondaryColor ?? primary;
+    return {
+      id: theme.id,
+      name: theme.name,
+      rarity: theme.rarity,
+      primary,
+      secondary,
+      accentText: primary,
+      headingText: "var(--ink)",
+      bodyText: "var(--ink)",
+      mutedText: "var(--ink-soft)",
+      cardClass: "border-surface-line-strong bg-surface/70 text-ink",
+      innerBg: `${primary}14`,
+      innerBorder: `${primary}59`,
+      innerHoverBorder: `${secondary}99`,
+      highlightBg: `${primary}33`,
+      highlightBorder: `${primary}99`,
+      highlightText: primary,
+      glowShadow: `0 0 25px ${primary}59`,
+    };
+  }
+
   switch (theme.id) {
     // --- Official Team 1: Real Madrid CF ---
     case "theme-real-madrid":
@@ -2743,6 +2831,15 @@ export function getThemeCardClass(theme: CosmeticItem | null | undefined): strin
 
 export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
   if (!theme) return null;
+  if (theme.custom) {
+    const { primary, secondary } = getThemeTokens(theme);
+    return (
+      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
+        <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full blur-3xl" style={{ background: `${primary}55` }} />
+        <div className="absolute -bottom-20 -left-10 h-56 w-56 rounded-full blur-3xl" style={{ background: `${secondary}44` }} />
+      </div>
+    );
+  }
 
   switch (theme.id) {
     // --- Official Team 1: Real Madrid CF ---

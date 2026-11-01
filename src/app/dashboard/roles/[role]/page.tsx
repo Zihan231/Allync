@@ -1,19 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
 import { useSession, type UserRole } from "@/lib/session/SessionContext";
-import { ROLE_META } from "@/lib/roles";
+import { LIVE_ROLES, ROLE_META, homeForRole } from "@/lib/roles";
 
-/** Creative artist, Sponsor and Social media expert: picked already, their areas come later. */
+/** Sponsor and Social media expert: picked already, their areas come later (live roles go to their area). */
 export default function RoleComingSoonPage() {
   const { t } = useLanguage();
   const tr = t.coaching.roles;
   const { user } = useSession();
   const { role: raw } = useParams<{ role: string }>();
-  const role = (raw in ROLE_META ? raw : "creative") as UserRole;
+  const role = (raw in ROLE_META ? raw : "sponsor") as UserRole;
+  const router = useRouter();
+  useEffect(() => {
+    if (LIVE_ROLES.includes(role)) router.replace(homeForRole(role, user.activeGame));
+  }, [role, router, user.activeGame]);
   const { icon: Icon, color } = ROLE_META[role];
   const name = tr.names[role];
 

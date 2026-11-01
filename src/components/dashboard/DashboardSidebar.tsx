@@ -57,7 +57,9 @@ export function DashboardSidebar({
         ? t.coaching.roles.names.organizer
         : mode === "coach"
           ? t.coaching.roles.names.coach
-          : t.coaching.roles.names.player;
+          : mode === "creator"
+            ? t.coaching.roles.names.creative
+            : t.coaching.roles.names.player;
 
   const playerBase = `/dashboard/${user.activeGame}`;
   const playerItems: NavItem[] = [
@@ -92,6 +94,7 @@ export function DashboardSidebar({
     { href: "/dashboard/admin/verification", label: t.admin.nav.verification, icon: LockIcon },
     { href: "/dashboard/admin/activity", label: t.admin.nav.activity, icon: CalendarIcon },
     { href: "/dashboard/admin/coaching", label: t.coaching.admin.navTitle, icon: ChartIcon },
+    { href: "/dashboard/admin/creators", label: t.creators.nav.adminTitle, icon: StoreIcon },
     ...(hasRole(user.systemRole, "admin")
       ? [
           { href: "/dashboard/admin/content", label: t.admin.nav.content, icon: TrophyIcon },
@@ -131,14 +134,34 @@ export function DashboardSidebar({
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
   ];
 
+  const tcr = t.creators.nav;
+  const creatorItems: NavItem[] = [
+    { href: "/dashboard/creator", label: tcr.dashboard, icon: ChartIcon },
+    { href: "/dashboard/feed", label: t.coaching.feed.title, icon: FlameIcon },
+    { href: "/dashboard/creator/designs", label: tcr.designs, icon: StoreIcon },
+    { href: "/dashboard/creator/new", label: tcr.submit, icon: TrophyIcon },
+    { href: "/dashboard/creator/profile", label: t.dashboard.shell.navProfile, icon: SettingsIcon },
+    { href: `${playerBase}/store`, label: t.dashboard.shell.navStore, icon: StoreIcon },
+    { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
+  ];
+
   const items =
-    mode === "admin" ? adminItems : mode === "organizer" ? organizerItems : mode === "coach" ? coachItems : playerItems;
+    mode === "admin"
+      ? adminItems
+      : mode === "organizer"
+        ? organizerItems
+        : mode === "coach"
+          ? coachItems
+          : mode === "creator"
+            ? creatorItems
+            : playerItems;
 
   const isActive = (href: string) =>
     href === playerBase ||
     href === "/dashboard/admin" ||
     href === "/dashboard/organizer" ||
     href === "/dashboard/coach" ||
+    href === "/dashboard/creator" ||
     href === `${playerBase}/tournaments`
       ? pathname === href
       : pathname.startsWith(href);

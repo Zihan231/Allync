@@ -2,6 +2,7 @@ import { Fragment, createElement, type ReactNode } from "react";
 import { adminBn, adminEn } from "./admin";
 import { reportsBn, reportsEn } from "./reports";
 import { coachingBn, coachingEn } from "./coaching";
+import { creatorsBn, creatorsEn } from "./creators";
 
 export type Locale = "en" | "bn";
 
@@ -2491,6 +2492,7 @@ export const translations = {
     admin: adminEn,
     reports: reportsEn,
     coaching: coachingEn,
+    creators: creatorsEn,
   },
   bn: {
     nav: {
@@ -4973,6 +4975,7 @@ export const translations = {
     admin: adminBn,
     reports: reportsBn,
     coaching: coachingBn,
+    creators: creatorsBn,
   },
 } as const;
 

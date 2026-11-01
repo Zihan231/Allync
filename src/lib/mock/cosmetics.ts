@@ -21,6 +21,14 @@ export type CosmeticItem = {
   glowColor?: string;
   effect?: "shimmer" | "fire" | "cosmic" | "aurora" | "electric" | "pulse";
   priceBdt: number;
+  /** A creator's design (uploaded artwork) instead of a built-in look. */
+  custom?: {
+    imageUrl?: string;
+    frameUrl?: string;
+    bannerUrl?: string;
+    colors?: { primary: string; secondary: string };
+    creator?: { id: string; name: string } | null;
+  };
   // Official Team Specific Attachments & Metadata
   teamDetails?: {
     shortName: string;

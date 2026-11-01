@@ -36,7 +36,7 @@ export interface AdminOffersQuery {
   limit?: number;
 }
 
-export type LedgerKind = "top_up" | "hold" | "refund" | "payout_sent" | "received" | "adjustment" | "reversal";
+export type LedgerKind = "top_up" | "hold" | "refund" | "payout_sent" | "received" | "adjustment" | "reversal" | "sale";
 
 export interface LedgerRow {
   id: string;
@@ -101,6 +101,7 @@ export interface PlatformSettings {
     coachingCommissionPct: number;
     minCoachingDays: number;
     maxCoachingDays: number;
+    creatorCommissionPct: number;
   };
   admin: { binRetentionDays: number; moderatorMaxSuspendDays: number; reportDailyLimit: number; reportStrikeLimit: number };
   features: { signupsOpen: boolean; transfersOpen: boolean; reportsOpen: boolean };

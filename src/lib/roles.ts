@@ -14,18 +14,20 @@ export const ROLE_META: Record<UserRole, { icon: typeof BallIcon; color: string 
 };
 
 /** Roles with their own area today; the others show a coming-soon page. */
-export const LIVE_ROLES: UserRole[] = ["player", "organizer", "coach"];
+export const LIVE_ROLES: UserRole[] = ["player", "organizer", "coach", "creative"];
 
 /** Where the dashboard opens for a role. */
 export function homeForRole(role: UserRole, game = "efootball"): string {
   if (role === "organizer") return "/dashboard/organizer";
   if (role === "coach") return "/dashboard/coach";
+  if (role === "creative") return "/dashboard/creator";
   if (role === "player") return `/dashboard/${game}`;
   return `/dashboard/roles/${role}`;
 }
 
 /** Each mode's own profile page (the shared personal info lives on /dashboard/profile). */
-export function profileHref(mode: "player" | "organizer" | "coach" | "admin", game = "efootball"): string {
+export function profileHref(mode: "player" | "organizer" | "coach" | "creator" | "admin", game = "efootball"): string {
+  if (mode === "creator") return "/dashboard/creator/profile";
   if (mode === "organizer") return "/dashboard/organizer/profile";
   if (mode === "coach") return "/dashboard/coach/profile";
   if (mode === "admin") return "/dashboard/admin";

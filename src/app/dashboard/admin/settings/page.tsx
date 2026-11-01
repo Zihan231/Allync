@@ -64,6 +64,14 @@ export default function SystemSettingsPage() {
             busy={update.isPending}
             onSave={(patch) => save("transfers", patch)}
           />
+          <NumbersPanel
+            title={t.creators.admin.title}
+            note={t.creators.settings.cutHint}
+            labels={{ creatorCommissionPct: t.creators.settings.cutLabel }}
+            value={{ creatorCommissionPct: data.transfers.creatorCommissionPct ?? 30 }}
+            busy={update.isPending}
+            onSave={(patch) => save("transfers", patch)}
+          />
         </div>
       )}
       <ToastContainer toasts={toasts} onDismiss={dismiss} />

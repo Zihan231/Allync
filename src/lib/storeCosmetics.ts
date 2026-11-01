@@ -10,6 +10,7 @@ export const STORE_RETURN_KEY = "store:return";
  */
 export function storeItemToCosmetic(item: StoreItem): CosmeticItem {
   const base = getCosmetic(item.sku);
+  if (item.assets) return creatorCosmetic(item);
   if (base) return { ...base, name: item.name || base.name, description: item.description ?? base.description, priceBdt: item.priceTk };
   return {
     id: item.sku,
@@ -23,6 +24,27 @@ export function storeItemToCosmetic(item: StoreItem): CosmeticItem {
     tone: "accent",
     color: "#d9a544",
     priceBdt: item.priceTk,
+  };
+}
+
+/** A creator's design: its uploaded artwork, coloured by the creator's theme colours. */
+function creatorCosmetic(item: StoreItem): CosmeticItem {
+  const { assets } = item;
+  const primary = assets?.colors?.primary ?? "#d9a544";
+  return {
+    id: item.sku,
+    category: item.category as CosmeticItem["category"],
+    tier: item.priceTk > 0 ? "premium" : "free",
+    rarity: (item.metadata?.rarity as CosmeticRarity | undefined) ?? "common",
+    unlockMethod: item.priceTk > 0 ? "purchase" : "free",
+    name: item.name,
+    description: item.description ?? "",
+    icon: "shield",
+    tone: "accent",
+    color: primary,
+    secondaryColor: assets?.colors?.secondary,
+    priceBdt: item.priceTk,
+    custom: { ...assets, creator: item.creator ?? null },
   };
 }
 

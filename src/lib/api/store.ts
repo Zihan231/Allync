@@ -14,6 +14,22 @@ export interface StoreItem {
   active: boolean;
   sortOrder: number;
   metadata: { rarity?: string } & Record<string, unknown>;
+  /** Who the item is for: players, or (bought by their leaders) clubs and tournaments. */
+  target?: "player" | "club" | "tournament";
+  /** A creator's artwork (null for ALLYNQ's own items). */
+  assets?: DesignAssets | null;
+  creatorUserId?: string | null;
+  creator?: { id: string; name: string } | null;
+  salesCount?: number;
+}
+
+/** A creator's uploaded files (by design type) and theme colours. */
+export interface DesignAssets {
+  imageUrl?: string;
+  bannerUrl?: string;
+  frameUrl?: string;
+  colors?: { primary: string; secondary: string };
+  stickers?: string[];
 }
 
 /** The signed-in user's side of the store. */

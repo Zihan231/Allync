@@ -20,14 +20,14 @@ import { getCommunity, syncFromBackend } from "@/lib/mock/communityStore";
 import type { VerificationLevel } from "@/lib/mock/types";
 import type { SystemRole } from "@/lib/api/admin";
 
-/** Dashboard mode: playing, organizing general tournaments, coaching, or (staff) the admin panel. */
-export type Mode = "player" | "organizer" | "coach" | "admin";
+/** Dashboard mode: playing, organizing general tournaments, coaching, designing for the store, or (staff) the admin panel. */
+export type Mode = "player" | "organizer" | "coach" | "creator" | "admin";
 /** What a user can be on Allynq (see the role picker); the first one picked is the default. */
 export type UserRole = "player" | "organizer" | "coach" | "creative" | "sponsor" | "social";
 
 /** The dashboard mode a role opens in (roles without their own area yet open as a player). */
 export function modeForRole(role: UserRole | string | null | undefined): Mode {
-  return role === "organizer" ? "organizer" : role === "coach" ? "coach" : "player";
+  return role === "organizer" ? "organizer" : role === "coach" ? "coach" : role === "creative" ? "creator" : "player";
 }
 export type GameId = "efootball" | "pubg" | "freefire" | "valorant";
 export type KycStatus = "unverified" | "pending" | "verified";

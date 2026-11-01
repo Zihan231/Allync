@@ -155,6 +155,9 @@ function StoreContent() {
   const [themeFilter, setThemeFilter] = useState<"all" | "team" | "esports">(() => pick(searchParams.get("theme"), THEME_FILTERS, "all"));
   const [selectedRarity, setSelectedRarity] = useState<CosmeticRarity | "all">(() => pick(searchParams.get("rarity"), RARITY_IDS, "all"));
   const [ownedOnly, setOwnedOnly] = useState(() => searchParams.get("owned") === "1");
+  // Creator designs only, or one creator's (from their page).
+  const [creatorOnly, setCreatorOnly] = useState(() => searchParams.get("src") === "creators");
+  const [creatorId, setCreatorId] = useState(() => searchParams.get("creator"));
   const [lastEquippedItem, setLastEquippedItem] = useState<CosmeticItem | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -169,6 +172,8 @@ function StoreContent() {
     ...(themeFilter !== "all" ? { theme: themeFilter } : {}),
     ...(selectedRarity !== "all" ? { rarity: selectedRarity } : {}),
     ...(ownedOnly ? { owned: "1" } : {}),
+    ...(creatorOnly ? { src: "creators" } : {}),
+    ...(creatorId ? { creator: creatorId } : {}),
   }).toString();
   const storeUrl = query ? `${pathname}?${query}` : pathname;
   useEffect(() => {
@@ -236,7 +241,10 @@ function StoreContent() {
       return true;
     })
     .filter((i) => (selectedRarity === "all" ? true : i.rarity === selectedRarity))
-    .filter((i) => !ownedOnly || owned.has(i.id));
+    .filter((i) => !ownedOnly || owned.has(i.id))
+    .filter((i) => !creatorOnly || Boolean(i.custom))
+    .filter((i) => !creatorId || i.custom?.creator?.id === creatorId);
+  const tcr = t.creators.store;
 
   /** Keeps the locally cached profile (used for cosmetics around the app) in step with the server. */
   const sync = (state: MyStore) => {
@@ -358,6 +366,20 @@ function StoreContent() {
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              aria-pressed={creatorOnly || Boolean(creatorId)}
+              onClick={() => {
+                setCreatorOnly(!(creatorOnly || creatorId));
+                setCreatorId(null);
+              }}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                creatorOnly || creatorId ? "border-accent bg-accent text-bg" : "border-surface-line-strong text-ink-soft hover:text-ink"
+              }`}
+              data-testid="store-creator-filter"
+            >
+              {creatorId ? `${tcr.creatorDesigns} ✕` : tcr.creatorDesigns}
+            </button>
           </div>
           {notice ? (
             <div className="flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-3.5 py-1 text-xs font-bold text-accent-ink">
@@ -511,6 +533,14 @@ function StoreContent() {
                         <p className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">
                           {item.tagline}
                         </p>
+                      ) : null}
+                      {item.custom?.creator ? (
+                        <Link
+                          href={`/dashboard/efootball/creators/${item.custom.creator.id}`}
+                          className="text-[11px] font-semibold text-ink-soft hover:text-accent-ink"
+                        >
+                          {format(tcr.by, { name: item.custom.creator.name })}
+                        </Link>
                       ) : null}
                     </div>
                   </div>

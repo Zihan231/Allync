@@ -54,6 +54,7 @@ export default function WalletPage() {
     reversal: tr.txReversal,
     purchase: tr.txPurchase,
     commission: t.coaching.admin.ledgerCommission,
+    sale: t.creators.wallet.sale,
   };
   const filterLabel = (k: WalletTxKind | undefined) =>
     !k
@@ -68,9 +69,10 @@ export default function WalletPage() {
           reversal: tr.txReversal,
           purchase: tr.txPurchase,
           commission: t.coaching.admin.ledgerCommission,
+          sale: t.creators.wallet.sale,
         }[k];
   const kindIcon = (k: WalletTxKind) =>
-    k === "top_up" ? PlusIcon : k === "hold" ? LockIcon : k === "refund" ? ClockIcon : k === "received" ? WalletIcon : SwapIcon;
+    k === "top_up" ? PlusIcon : k === "hold" ? LockIcon : k === "refund" ? ClockIcon : k === "received" || k === "sale" ? WalletIcon : SwapIcon;
 
   async function addFunds() {
     try {
