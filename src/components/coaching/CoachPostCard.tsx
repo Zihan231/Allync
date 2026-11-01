@@ -7,6 +7,7 @@ import { youtubeEmbedUrl, type CoachPost, type CoachPostMedia } from "@/lib/api/
 import { formatShortDate } from "@/components/dashboard/fixtures/labels";
 import { StatusPill, type StatusTone } from "@/components/dashboard/StatusPill";
 import { Avatar } from "@/components/common/Avatar";
+import { AvatarLightbox } from "@/components/common/AvatarLightbox";
 import { TrashIcon } from "@/components/icons";
 
 const STATUS_TONE: Record<CoachPost["status"], StatusTone> = { pending: "warning", approved: "success", rejected: "danger" };
@@ -25,37 +26,71 @@ const hostOf = (link: string) => {
   }
 };
 
-/** Photos and videos laid out like a social feed: 1 full width, 2 side by side, 3 one big + two, 4 a grid. */
+/**
+ * Photos and videos laid out like a social feed. One photo is shown whole (its own shape,
+ * letterboxed if very tall); several are tiles: 2 side by side, 3 one big + two, 4+ a grid.
+ * Any photo opens full-size when clicked.
+ */
 function MediaGrid({ media }: { media: CoachPostMedia[] }) {
   const { t } = useLanguage();
+  const [viewing, setViewing] = useState<string | null>(null);
   const shown = media.slice(0, 4);
   const extra = media.length - shown.length;
-  const tile = (m: CoachPostMedia, className: string, overlay?: number) => (
-    <div key={m.url} className={`relative overflow-hidden bg-black ${className}`}>
-      {m.type === "video" ? (
-        <video src={mediaSrc(m.url)} controls preload="metadata" className="h-full w-full object-cover" />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
+
+  const tile = (m: CoachPostMedia, className: string, overlay?: number) =>
+    m.type === "video" ? (
+      <div key={m.url} className={`relative overflow-hidden bg-black ${className}`}>
+        <video src={mediaSrc(m.url)} controls preload="metadata" className="h-full w-full object-contain" />
+      </div>
+    ) : (
+      <button
+        key={m.url}
+        type="button"
+        onClick={() => setViewing(m.url)}
+        className={`relative block cursor-zoom-in overflow-hidden bg-black ${className}`}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={mediaSrc(m.url)} alt="" className="h-full w-full object-cover" loading="lazy" />
-      )}
-      {overlay ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60 font-display text-3xl font-black text-white">
-          {format(t.coaching.page.morePhotos, { n: overlay })}
-        </div>
-      ) : null}
-    </div>
-  );
-  if (shown.length === 1) return <div className="max-h-[520px] overflow-hidden">{tile(shown[0], "max-h-[520px]")}</div>;
-  if (shown.length === 2) return <div className="grid grid-cols-2 gap-0.5">{shown.map((m) => tile(m, "aspect-square"))}</div>;
-  if (shown.length === 3)
-    return (
-      <div className="grid grid-cols-2 gap-0.5">
-        {tile(shown[0], "row-span-2 aspect-[1/2] h-full")}
-        {tile(shown[1], "aspect-square")}
-        {tile(shown[2], "aspect-square")}
+        {overlay ? (
+          <span className="absolute inset-0 flex items-center justify-center bg-black/60 font-display text-3xl font-black text-white">
+            {format(t.coaching.page.morePhotos, { n: overlay })}
+          </span>
+        ) : null}
+      </button>
+    );
+
+  let grid;
+  if (shown.length === 1) {
+    const m = shown[0];
+    grid =
+      m.type === "video" ? (
+        <video src={mediaSrc(m.url)} controls preload="metadata" className="max-h-[640px] w-full bg-black object-contain" />
+      ) : (
+        <button type="button" onClick={() => setViewing(m.url)} className="block w-full cursor-zoom-in bg-black">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={mediaSrc(m.url)} alt="" loading="lazy" className="mx-auto block h-auto max-h-[640px] w-auto max-w-full object-contain" />
+        </button>
+      );
+  } else if (shown.length === 2) {
+    grid = <div className="grid grid-cols-2 gap-0.5">{shown.map((m) => tile(m, "aspect-[4/5]"))}</div>;
+  } else if (shown.length === 3) {
+    grid = (
+      <div className="grid aspect-[4/3] grid-cols-2 grid-rows-2 gap-0.5">
+        {tile(shown[0], "row-span-2 h-full")}
+        {tile(shown[1], "h-full")}
+        {tile(shown[2], "h-full")}
       </div>
     );
-  return <div className="grid grid-cols-2 gap-0.5">{shown.map((m, i) => tile(m, "aspect-square", i === 3 && extra > 0 ? extra : undefined))}</div>;
+  } else {
+    grid = <div className="grid grid-cols-2 gap-0.5">{shown.map((m, i) => tile(m, "aspect-square", i === 3 && extra > 0 ? extra : undefined))}</div>;
+  }
+
+  return (
+    <>
+      {grid}
+      {viewing ? <AvatarLightbox src={mediaSrc(viewing)} alt="" open onClose={() => setViewing(null)} /> : null}
+    </>
+  );
 }
 
 /** A coach's tutorial post, styled like a social feed post: author, text, video, photos, links, actions. */

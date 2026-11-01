@@ -90,10 +90,10 @@ export function CoachPostComposer({
           {previews.map((p, i) => (
             <div key={p.url} className="relative overflow-hidden rounded-lg border border-surface-line bg-black">
               {p.video ? (
-                <video src={p.url} className="aspect-square w-full object-cover" muted />
+                <video src={p.url} className="aspect-square w-full object-contain" muted />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.url} alt="" className="aspect-square w-full object-cover" />
+                <img src={p.url} alt="" className="aspect-square w-full object-contain" />
               )}
               <button
                 type="button"
