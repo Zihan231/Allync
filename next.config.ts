@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
 // The backend lives on a different site (onrender.com vs vercel.app), so its
 // auth cookie is "third-party" from the browser's point of view — Safari's
@@ -12,19 +13,6 @@ const BACKEND_URL =
     : process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 const nextConfig: NextConfig = {
-  // The Playwright suite (e2e/) writes traces, videos and sessions while it runs; watching it
-  // would make the dev server rebuild mid-test and serve half-written chunks.
-  // `next build` runs Turbopack, which doesn't need the hook below.
-  turbopack: {},
-  webpack(config, { dev }) {
-    if (dev) {
-      config.watchOptions = {
-        ...config.watchOptions,
-        ignored: ["**/node_modules/**", "**/.git/**", "**/.next/**", "**/e2e/**"],
-      };
-    }
-    return config;
-  },
   async redirects() {
     return [
       {
@@ -48,4 +36,21 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * `next dev --webpack` only: don't watch the Playwright suite (e2e/), which writes traces,
+ * videos and sessions while it runs; watching it rebuilds the app mid-test and serves
+ * half-written chunks. Production builds (Turbopack, e.g. on Vercel) get the plain config.
+ */
+export default function config(phase: string): NextConfig {
+  if (phase !== PHASE_DEVELOPMENT_SERVER) return nextConfig;
+  return {
+    ...nextConfig,
+    webpack(webpackConfig) {
+      webpackConfig.watchOptions = {
+        ...webpackConfig.watchOptions,
+        ignored: ["**/node_modules/**", "**/.git/**", "**/.next/**", "**/e2e/**"],
+      };
+      return webpackConfig;
+    },
+  };
+}
