@@ -2,6 +2,8 @@
 
 /* The tournament page body, shared by the general, community and club tournament routes. */
 
+import { TournamentBannerPicker } from "@/components/store/DesignPicker";
+import { useDesignAssets } from "@/lib/api/hooks/useStore";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -132,6 +134,9 @@ export function TournamentDetailView({
   }
 
   const { data: tournament, isLoading, refetch } = useTournament(tournamentId);
+  // The organizer's banner (a creator design) behind the header.
+  const banner = useDesignAssets(tournament?.bannerSku);
+  const [bannerPicker, setBannerPicker] = useState(false);
   const { data: tournamentStructure } = useTournamentStructure(tournamentId);
   const { data: communityMembers = [], isLoading: isLoadingCommunityMembers } =
     useCommunityMembers(tournament?.communityId ?? "");
@@ -738,6 +743,13 @@ export function TournamentDetailView({
 
       {/* HERO BANNER CARD */}
       <div className="relative overflow-hidden rounded-3xl border border-accent/40 bg-gradient-to-b from-surface-line/80 via-surface/90 to-surface p-6 sm:p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-xl">
+        {banner?.assets?.bannerUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={banner.assets.bannerUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-50" data-testid="tournament-banner" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg/30 via-surface/70 to-surface" />
+          </>
+        ) : null}
         {/* Top glowing accent line */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-accent via-blue-400 to-transparent shadow-[0_0_15px_rgba(217,165,68,0.8)]" />
 
@@ -758,6 +770,14 @@ export function TournamentDetailView({
           <div className="flex flex-wrap items-center justify-end gap-2">
             {isOrganizer && !isLocked ? (
               <>
+                <button
+                  type="button"
+                  onClick={() => setBannerPicker(true)}
+                  className="inline-flex items-center rounded-full border border-surface-line-strong bg-surface/80 px-3.5 py-1 text-xs font-bold text-ink-soft transition-colors hover:border-accent hover:text-ink"
+                  data-testid="tournament-banner-button"
+                >
+                  {t.creators.picker.banner}
+                </button>
                 <button
                   type="button"
                   onClick={() => setShowEditModal(true)}
@@ -1804,6 +1824,15 @@ export function TournamentDetailView({
           }}
         />
       ) : null}
+      {bannerPicker ? (
+        <TournamentBannerPicker
+          tournamentId={tournament.id}
+          current={tournament.bannerSku ?? null}
+          onClose={() => setBannerPicker(false)}
+          onToast={(message, variant) => (variant === "error" ? setActionError(message) : setActionSuccess(message))}
+        />
+      ) : null}
+
       {isOrganizer && !isLocked && showEditModal ? (
         <EditTournamentModal
           onClose={() => setShowEditModal(false)}

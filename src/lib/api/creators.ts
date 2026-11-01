@@ -4,8 +4,8 @@ import type { DesignAssets, StoreItem } from "./store";
 /** What a creator can design (titles stay system-granted, so they're not here). */
 export const CREATOR_CATEGORIES = ["badge", "frame", "theme", "club_theme", "tournament_banner", "sticker_pack"] as const;
 export type CreatorCategory = (typeof CREATOR_CATEGORIES)[number];
-/** Step 1 sells player items; clubs, tournaments and stickers follow. */
-export const LIVE_CREATOR_CATEGORIES: CreatorCategory[] = ["badge", "frame", "theme"];
+/** What creators can submit today (sticker packs follow). */
+export const LIVE_CREATOR_CATEGORIES: CreatorCategory[] = ["badge", "frame", "theme", "club_theme", "tournament_banner"];
 
 export const RARITIES = ["common", "rare", "epic", "legendary", "mythic"] as const;
 export type Rarity = (typeof RARITIES)[number];

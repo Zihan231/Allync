@@ -9,6 +9,7 @@ import { useMockPeople, updatePersonProfile } from "@/lib/mock/communityStore";
 import { useEquipStoreItem, useMyStore, usePurchaseStoreItem, useStoreCatalog } from "@/lib/api/hooks/useStore";
 import type { MyStore } from "@/lib/api/store";
 import { PaymentModal } from "@/components/dashboard/transfers/PaymentModal";
+import { BannerShop, ClubThemeShop } from "@/components/store/DesignShop";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { STORE_RETURN_KEY, storeItemToCosmetic } from "@/lib/storeCosmetics";
 import {
@@ -132,6 +133,7 @@ function CardPreview({
  */
 const CATEGORY_IDS: CosmeticCategory[] = ["theme", "frame", "title", "badge"];
 const THEME_FILTERS = ["all", "team", "esports"] as const;
+const SECTIONS = ["player", "club", "banner"] as const;
 const RARITY_IDS: Array<CosmeticRarity | "all"> = ["all", "mythic", "legendary", "epic", "rare", "common"];
 const pick = <T extends string>(value: string | null, allowed: readonly T[], fallback: T): T =>
   allowed.includes(value as T) ? (value as T) : fallback;
@@ -158,6 +160,9 @@ function StoreContent() {
   // Creator designs only, or one creator's (from their page).
   const [creatorOnly, setCreatorOnly] = useState(() => searchParams.get("src") === "creators");
   const [creatorId, setCreatorId] = useState(() => searchParams.get("creator"));
+  // Who the items are for: the user's profile, their club, or their tournaments.
+  const [section, setSection] = useState<"player" | "club" | "banner">(() => pick(searchParams.get("for"), SECTIONS, "player"));
+  const bannerTournamentId = searchParams.get("tournament");
   const [lastEquippedItem, setLastEquippedItem] = useState<CosmeticItem | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -174,6 +179,8 @@ function StoreContent() {
     ...(ownedOnly ? { owned: "1" } : {}),
     ...(creatorOnly ? { src: "creators" } : {}),
     ...(creatorId ? { creator: creatorId } : {}),
+    ...(section !== "player" ? { for: section } : {}),
+    ...(section === "banner" && bannerTournamentId ? { tournament: bannerTournamentId } : {}),
   }).toString();
   const storeUrl = query ? `${pathname}?${query}` : pathname;
   useEffect(() => {
@@ -396,6 +403,35 @@ function StoreContent() {
         {catalog.isError ? <p className="mt-3 text-xs font-semibold text-danger-ink">{ts.loadError}</p> : null}
       </div>
 
+      {/* Who the items are for */}
+      <div className="mt-8 flex flex-wrap gap-2" data-testid="store-sections">
+        {(
+          [
+            { id: "player", label: t.creators.shop.forYou },
+            { id: "club", label: t.creators.shop.clubThemes },
+            { id: "banner", label: t.creators.shop.banners },
+          ] as const
+        ).map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            aria-pressed={section === s.id}
+            onClick={() => setSection(s.id)}
+            className={`rounded-xl border px-4 py-2 text-sm font-bold transition-colors ${
+              section === s.id ? "border-accent bg-accent-soft text-accent-ink" : "border-surface-line bg-surface/40 text-ink-soft hover:text-ink"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {section === "club" ? (
+        <ClubThemeShop onToast={(message: string, variant?: "success" | "error") => (variant === "error" ? setError(message) : (setError(""), setNotice(message)))} />
+      ) : section === "banner" ? (
+        <BannerShop tournamentId={bannerTournamentId} onToast={(message: string, variant?: "success" | "error") => (variant === "error" ? setError(message) : (setError(""), setNotice(message)))} />
+      ) : (
+        <>
       {/* Category tabs */}
       {/* Category tabs & Theme Sub-filter */}
       <div className="mt-8 flex flex-col gap-4">
@@ -664,6 +700,9 @@ function StoreContent() {
           );
         })}
       </div>
+
+        </>
+      )}
 
       {checkout ? (
         <PaymentModal

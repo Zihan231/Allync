@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useDesignAssets } from "@/lib/api/hooks/useStore";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { format } from "@/lib/i18n/translations";
 import { useCountdown } from "@/lib/hooks/useCountdown";
@@ -23,6 +24,7 @@ export function TournamentCard({
   const { t, locale } = useLanguage();
   const tc = t.dashboard.tournamentCard;
   const dateLocale = locale === "bn" ? "bn-BD" : "en-US";
+  const bannerUrl = useDesignAssets(tournament.bannerSku)?.assets?.bannerUrl;
 
   // Normalize format
   const rawFormat = (tournament.type || tournament.format || "pvp").toLowerCase();
@@ -105,6 +107,11 @@ export function TournamentCard({
 
         {/* Diagonal high-tech accent stripes */}
         <div className="absolute inset-0 opacity-15 bg-[linear-gradient(45deg,rgba(255,255,255,0.08)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.08)_50%,rgba(255,255,255,0.08)_75%,transparent_75%,transparent)] bg-[length:24px_24px]" />
+
+        {bannerUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-80" />
+        ) : null}
 
         {/* Top edge subtle glow */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent opacity-80" />

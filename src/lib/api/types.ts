@@ -33,6 +33,9 @@ export interface BackendClub {
   location: string | null;
   motto: string | null;
   facebookUrl: string | null;
+  /** Club themes (store SKUs) the club owns, and the one on its page. */
+  ownedThemeSkus?: string[];
+  equippedThemeSku?: string | null;
   createdAt: string;
   updatedAt: string;
 }

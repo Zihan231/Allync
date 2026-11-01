@@ -22,6 +22,7 @@ export function mapBackendClub(bc: BackendClub): Club {
     location: bc.location ?? undefined,
     motto: bc.motto ?? undefined,
     facebookUrl: bc.facebookUrl ?? undefined,
+    equippedThemeSku: bc.equippedThemeSku ?? null,
   };
 }
 

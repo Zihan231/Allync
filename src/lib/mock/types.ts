@@ -122,6 +122,8 @@ export type Club = {
   location?: string;
   motto?: string;
   facebookUrl?: string;
+  /** The club theme (store SKU) on its page. */
+  equippedThemeSku?: string | null;
 };
 
 export type CommunityTier = "Featured" | "Verified" | "Regional" | "Open" | "New";

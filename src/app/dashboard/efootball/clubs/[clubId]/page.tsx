@@ -11,6 +11,10 @@ import { useMockClubs, useMockPeople, useMockCommunities, leaveClub, syncFromBac
 import { AppLoader } from "@/components/common/AppLoader";
 import { BackButton } from "@/components/dashboard/BackButton";
 import { CoverPhoto } from "@/components/common/CoverPhoto";
+import { ThemedCoverArtwork } from "@/components/cosmetics/CosmeticDisplay";
+import { ClubThemePicker } from "@/components/store/DesignPicker";
+import { useStoreCatalog } from "@/lib/api/hooks/useStore";
+import { cosmeticBySku } from "@/lib/storeCosmetics";
 import { Avatar } from "@/components/common/Avatar";
 import { StaffRow } from "@/components/dashboard/StaffRow";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
@@ -78,6 +82,10 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
   const queryClient = useQueryClient();
   const leaveMutation = useLeaveClub(clubId);
   const { toasts, toast, dismiss } = useToast();
+  const { data: storeCatalog } = useStoreCatalog();
+  // The club theme on the header: the club's, until a leader picks another here.
+  const [pickedTheme, setPickedTheme] = useState<string | null | undefined>(undefined);
+  const [themePicker, setThemePicker] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -192,6 +200,9 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
     { key: "tournaments", label: t.dashboard.club.tabTournaments },
   ];
 
+  const clubThemeSku = pickedTheme === undefined ? (club?.equippedThemeSku ?? null) : pickedTheme;
+  const clubTheme = cosmeticBySku(clubThemeSku, storeCatalog);
+
   if (loading) {
     return <AppLoader />;
   }
@@ -208,7 +219,13 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
       </div>
       <FrozenNotice kind="club" id={club.id} />
       <div className="relative">
-        <CoverPhoto coverUrl={club.coverUrl} name={club.name} color={club.color} className="h-56 rounded-xl sm:h-72 lg:h-80" />
+        {clubTheme ? (
+          <div className="overflow-hidden rounded-xl">
+            <ThemedCoverArtwork theme={clubTheme} coverUrl={club.coverUrl} name={club.name} className="h-56 sm:h-72 lg:h-80" />
+          </div>
+        ) : (
+          <CoverPhoto coverUrl={club.coverUrl} name={club.name} color={club.color} className="h-56 rounded-xl sm:h-72 lg:h-80" />
+        )}
         <div
           className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-sm"
           style={{ boxShadow: `0 0 0 1px ${club.color}66` }}
@@ -275,6 +292,17 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
               {joinRequestCount ? (
                 <span className="rounded-full bg-warning px-1.5 py-px font-mono text-[11px] font-bold text-bg">{joinRequestCount}</span>
               ) : null}
+            </button>
+          ) : null}
+
+          {canManageClub ? (
+            <button
+              type="button"
+              onClick={() => setThemePicker(true)}
+              className="inline-flex items-center gap-2 rounded-full border border-surface-line-strong px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-accent"
+              data-testid="club-theme-button"
+            >
+              {t.creators.picker.clubTheme}
             </button>
           ) : null}
 
@@ -436,6 +464,15 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
         />
       ) : null}
       <ConfirmDialog {...confirmProps} />
+      {themePicker ? (
+        <ClubThemePicker
+          clubId={club.id}
+          current={clubThemeSku}
+          onChanged={setPickedTheme}
+          onClose={() => setThemePicker(false)}
+          onToast={toast}
+        />
+      ) : null}
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );

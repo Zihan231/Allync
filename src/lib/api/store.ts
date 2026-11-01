@@ -49,3 +49,26 @@ export const purchaseStoreItem = async (sku: string, equip = true) =>
 /** Wears an owned item, or takes a category off (`sku` null). */
 export const equipStoreItem = async (category: StoreCategory, sku: string | null) =>
   (await api.post<MyStore>("/store/equip", { category, sku })).data;
+
+/** A club's themes and wallet, for its President / General Secretary. */
+export interface ClubStore {
+  clubId: string;
+  /** Club themes are paid from the club wallet. */
+  balanceTk: number;
+  owned: string[];
+  equipped: string | null;
+}
+
+export const getClubStore = async (clubId: string) => (await api.get<ClubStore>(`/store/clubs/${clubId}`)).data;
+/** A club leader buys a club theme from the club wallet (and puts it on the club page). */
+export const purchaseClubTheme = async (clubId: string, sku: string, equip = true) =>
+  (await api.post<ClubStore>("/store/purchase", { sku, clubId, equip })).data;
+/** Puts one of the club's themes on its page, or (null) none. */
+export const setClubTheme = async (clubId: string, sku: string | null) =>
+  (await api.post<ClubStore>(`/store/clubs/${clubId}/theme`, { sku })).data;
+/** Buys a tournament banner; with `tournamentId` it goes on that tournament. */
+export const purchaseBanner = async (sku: string, tournamentId?: string) =>
+  (await api.post<MyStore>("/store/purchase", { sku, tournamentId })).data;
+/** Puts a banner I own on a tournament I manage, or (null) takes it off. */
+export const setTournamentBanner = async (tournamentId: string, sku: string | null) =>
+  (await api.post<{ tournamentId: string; bannerSku: string | null }>(`/store/tournaments/${tournamentId}/banner`, { sku })).data;
