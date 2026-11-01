@@ -1,0 +1,25 @@
+import { BallIcon, ChartIcon, FlameIcon, SpikeIcon, TrophyIcon, WalletIcon } from "@/components/icons";
+import type { UserRole } from "@/lib/session/SessionContext";
+
+export const ROLE_ORDER: UserRole[] = ["player", "organizer", "coach", "creative", "sponsor", "social"];
+
+/** Icon and colour of each role in the picker and on the profile. */
+export const ROLE_META: Record<UserRole, { icon: typeof BallIcon; color: string }> = {
+  player: { icon: BallIcon, color: "#22c55e" },
+  organizer: { icon: TrophyIcon, color: "#f59e0b" },
+  coach: { icon: ChartIcon, color: "#3b82f6" },
+  creative: { icon: SpikeIcon, color: "#ec4899" },
+  sponsor: { icon: WalletIcon, color: "#a855f7" },
+  social: { icon: FlameIcon, color: "#f97316" },
+};
+
+/** Roles with their own area today; the others show a coming-soon page. */
+export const LIVE_ROLES: UserRole[] = ["player", "organizer", "coach"];
+
+/** Where the dashboard opens for a role. */
+export function homeForRole(role: UserRole, game = "efootball"): string {
+  if (role === "organizer") return "/dashboard/organizer";
+  if (role === "coach") return "/dashboard/coach";
+  if (role === "player") return `/dashboard/${game}`;
+  return `/dashboard/roles/${role}`;
+}

@@ -20,6 +20,7 @@ import { WalletCard } from "./transfers/WalletCard";
 import { TransferFeeBadge } from "./transfers/shared";
 import { Pagination } from "./Pagination";
 import { SearchIcon, SwapIcon } from "../icons";
+import { ClubCoachingPanel } from "../coaching/ClubCoachingPanel";
 
 const LEADERS = ["President", "General Secretary"];
 
@@ -63,6 +64,9 @@ export function ClubTransfersTab({ club }: { club: Club }) {
               <LoanList title={tr.loansOut} loans={loans.loansOut} clubId={club.id} leader={leader} balanceTk={balance} onToast={toast} />
             </section>
           ) : null}
+
+          {/* Coach: requests and offers for leaders, the current coach for everyone */}
+          <ClubCoachingPanel clubId={club.id} />
 
           {/* Squad contracts */}
           <section className="rounded-2xl border border-surface-line bg-surface/50 p-5">

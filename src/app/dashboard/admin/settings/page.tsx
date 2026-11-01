@@ -44,11 +44,26 @@ export default function SystemSettingsPage() {
             title={ts.transfers}
             note={ts.transfersNote}
             labels={ts.transferFields}
-            value={data.transfers}
+            value={marketNumbers(data.transfers)}
             busy={update.isPending}
             onSave={(patch) => save("transfers", patch)}
           />
           <NumbersPanel title={ts.moderation} labels={ts.adminFields} value={data.admin} busy={update.isPending} onSave={(patch) => save("admin", patch)} />
+          <NumbersPanel
+            title={t.coaching.admin.settingsTitle}
+            labels={{
+              coachingCommissionPct: t.coaching.admin.commissionPct,
+              minCoachingDays: t.coaching.admin.minDays,
+              maxCoachingDays: t.coaching.admin.maxDays,
+            }}
+            value={{
+              coachingCommissionPct: data.transfers.coachingCommissionPct ?? 10,
+              minCoachingDays: data.transfers.minCoachingDays ?? 7,
+              maxCoachingDays: data.transfers.maxCoachingDays ?? 90,
+            }}
+            busy={update.isPending}
+            onSave={(patch) => save("transfers", patch)}
+          />
         </div>
       )}
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
@@ -114,6 +129,18 @@ function FeaturesPanel({ value, busy, onSave }: { value: PlatformSettings["featu
       </div>
     </Panel>
   );
+}
+
+/** The market numbers of the transfer settings (the coaching ones have their own panel). */
+function marketNumbers(v: PlatformSettings["transfers"]) {
+  return {
+    baseFeeTk: v.baseFeeTk,
+    lockDays: v.lockDays,
+    offerExpiryDays: v.offerExpiryDays,
+    clubStartingBalanceTk: v.clubStartingBalanceTk,
+    playerStartingBalanceTk: v.playerStartingBalanceTk,
+    demoTopUpTk: v.demoTopUpTk,
+  };
 }
 
 function NumbersPanel<T extends Record<string, number>>({

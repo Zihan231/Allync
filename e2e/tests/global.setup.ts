@@ -10,14 +10,29 @@ import { ROLE_KEYS, saveCast, type Actor, type Cast, type RoleKey } from "../lib
  * funded wallets, and a browser session per user.
  */
 setup("build the e2e cast", async () => {
-  setup.setTimeout(10 * 60_000);
+  // Generous: against a remote database each sign-up is a dozen round trips.
+  setup.setTimeout(30 * 60_000);
   const runId = `${Date.now().toString(36)}${Math.floor(Math.random() * 36 ** 2).toString(36)}`;
   const actors = {} as Record<RoleKey, Actor>;
 
-  for (const [key, name] of Object.entries(ROLE_KEYS) as Array<[RoleKey, string]>) {
-    actors[key] = await signUp(runId, key, name);
+  // Sign everyone up a few at a time (independent accounts).
+  const entries = Object.entries(ROLE_KEYS) as Array<[RoleKey, string]>;
+  for (let i = 0; i < entries.length; i += 6) {
+    const batch = await Promise.all(entries.slice(i, i + 6).map(([key, name]) => signUp(runId, key, name)));
+    for (const actor of batch) actors[actor.key as RoleKey] = actor;
   }
   const as = (key: RoleKey) => new Api(actors[key].token);
+
+  // The coach: coach first (his default), player too, with a coach profile.
+  await as("coach").put("/users/me/roles", { roles: ["coach", "player"], primaryRole: "coach" });
+  await as("coach").put("/coaching/me/profile", {
+    headline: `E2E ${runId} tactics coach`,
+    bio: "Automated test coach",
+    youtubeChannelUrl: "https://youtube.com/@e2e-coach",
+    specialities: ["Pressing", "Set pieces"],
+    askingFeeTk: 200,
+    available: true,
+  });
 
   // Console player (the rest play on mobile).
   await as("consolePlayer").patch("/users/me", { gamingPlatform: "console" });

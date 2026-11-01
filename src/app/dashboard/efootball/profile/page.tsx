@@ -15,6 +15,7 @@ import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import { ProfileEditForm } from "@/components/dashboard/ProfileEditForm";
 import { ChartIcon, TrophyIcon, CalendarIcon, StoreIcon, FlameIcon } from "@/components/icons";
 import { AppLoader } from "@/components/common/AppLoader";
+import { MyRolesCard } from "@/components/roles/MyRolesCard";
 import {
   CosmeticBadgePill,
   CosmeticTitleText,
@@ -302,6 +303,11 @@ export default function ProfilePage() {
           ))}
         </div>
       </ThemedCard>
+
+      {/* What the user does on ALLYNQ (role picker) */}
+      <div className="mt-8">
+        <MyRolesCard />
+      </div>
 
       {/* Profile Edit Form */}
       <div className="mt-8">

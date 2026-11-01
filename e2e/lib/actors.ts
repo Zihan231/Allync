@@ -43,6 +43,8 @@ export async function signUp(runId: string, key: string, name: string): Promise<
   const token: string = res.accessToken;
   const api = new Api(token);
   await api.patch("/users/me", COMPLETE_PROFILE);
+  // Answer "What suits you best?" (Player), so the dashboard doesn't send them to the picker.
+  await api.put("/users/me/roles", { roles: ["player"], primaryRole: "player" });
   const me = await api.me();
   const profile = await api.get(`/users/${me.id}/efootball-profile`);
   return { key, email, password, name: `E2E ${name}`, userId: me.id, profileId: profile.id, token };

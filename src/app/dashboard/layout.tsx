@@ -30,6 +30,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [isLoading, isAuthenticated, router]);
 
+  // Accounts that never answered "What suits you best?" see it once (staff and view-as sessions skip it).
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && !user.rolesChosen && !user.systemRole && !user.raw?.viewAs) {
+      router.replace("/welcome");
+    }
+  }, [isLoading, isAuthenticated, user.rolesChosen, user.systemRole, user.raw?.viewAs, router]);
+
   // Staff sign in to operate the platform, so the dashboard root is their
   // control centre. They can still switch to a specific player game view.
   useEffect(() => {

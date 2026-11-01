@@ -13,6 +13,16 @@ import {
   type TwoFactorSetup,
 } from "@/lib/api/auth";
 import { FormField } from "./FormField";
+import { homeForRole } from "@/lib/roles";
+import type { UserRole } from "@/lib/session/SessionContext";
+
+/** Staff open the admin panel; others the area of their default role (or the role picker, once). */
+function afterLogin(user: { systemRole?: string | null; rolesChosenAt?: string | null; primaryRole?: string | null }): string {
+  if (user.systemRole) return "/dashboard/admin";
+  if (!user.rolesChosenAt) return "/welcome";
+  const role = (user.primaryRole ?? "player") as UserRole;
+  return role === "player" ? "/dashboard" : homeForRole(role);
+}
 import { ArrowRightIcon } from "../icons";
 
 export function LoginForm() {
@@ -75,7 +85,7 @@ export function LoginForm() {
           setTwoFactorSetup(await setupStaffTwoFactor(result.challengeToken));
         }
       } else {
-        router.push(result.user.systemRole ? "/dashboard/admin" : "/dashboard");
+        router.push(afterLogin(result.user));
       }
     } catch (err: any) {
       let msg = err?.message ?? "Invalid email or password";

@@ -34,6 +34,7 @@ export function WalletCard({
     adjustment: tr.txAdjustment,
     reversal: tr.txReversal,
     purchase: tr.txPurchase,
+    commission: t.coaching.admin.ledgerCommission,
   } as const;
 
   async function addFunds() {

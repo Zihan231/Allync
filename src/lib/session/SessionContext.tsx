@@ -20,8 +20,15 @@ import { getCommunity, syncFromBackend } from "@/lib/mock/communityStore";
 import type { VerificationLevel } from "@/lib/mock/types";
 import type { SystemRole } from "@/lib/api/admin";
 
-/** Dashboard mode: playing, organizing general tournaments, or (staff) the admin panel. */
-export type Mode = "player" | "organizer" | "admin";
+/** Dashboard mode: playing, organizing general tournaments, coaching, or (staff) the admin panel. */
+export type Mode = "player" | "organizer" | "coach" | "admin";
+/** What a user can be on Allynq (see the role picker); the first one picked is the default. */
+export type UserRole = "player" | "organizer" | "coach" | "creative" | "sponsor" | "social";
+
+/** The dashboard mode a role opens in (roles without their own area yet open as a player). */
+export function modeForRole(role: UserRole | string | null | undefined): Mode {
+  return role === "organizer" ? "organizer" : role === "coach" ? "coach" : "player";
+}
 export type GameId = "efootball" | "pubg" | "freefire" | "valorant";
 export type KycStatus = "unverified" | "pending" | "verified";
 export type VerificationStatus = "unverified" | "pending" | "verified";
@@ -63,6 +70,10 @@ export type MockUser = {
   community: { id: string; name: string; role: CommunityRole } | null;
   /** Allync staff role; null for everyone else. */
   systemRole?: SystemRole | null;
+  /** Roles picked in "What suits you best?", the default one, and whether the picker was answered. */
+  roles: UserRole[];
+  primaryRole: UserRole;
+  rolesChosen: boolean;
   raw?: any;
 };
 
@@ -94,6 +105,9 @@ function emptyUser(): MockUser {
     club: null,
     community: null,
     systemRole: null,
+    roles: ["player"],
+    primaryRole: "player",
+    rolesChosen: true,
   };
 }
 
@@ -112,7 +126,7 @@ export function backendUserToMockUser(u: any): MockUser {
     bio: u?.bio || null,
     phoneNumber: u?.phoneNumber || null,
     permanentAddress: u?.permanentAddress || null,
-    mode: "player",
+    mode: modeForRole(u?.primaryRole),
     activeGame: "efootball",
     kycStatus: (u?.verificationLevel ?? 0) > 0 ? "verified" : "unverified",
     verificationStatus: (u?.verificationLevel ?? 0) > 0 ? "verified" : "unverified",
@@ -141,6 +155,9 @@ export function backendUserToMockUser(u: any): MockUser {
           }
         : null),
     systemRole: (u?.systemRole as SystemRole | null) ?? null,
+    roles: Array.isArray(u?.roles) && u.roles.length ? (u.roles as UserRole[]) : ["player"],
+    primaryRole: (u?.primaryRole as UserRole) || "player",
+    rolesChosen: Boolean(u?.rolesChosenAt),
     raw: u,
   };
 }

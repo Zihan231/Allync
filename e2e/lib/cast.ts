@@ -63,6 +63,7 @@ export const ROLE_KEYS = {
   entrant1: "Entrant One",
   entrant2: "Entrant Two",
   banTarget: "Ban Target",
+  coach: "Coach",
   // Staff
   moderator: "Staff Moderator",
   admin: "Staff Admin",

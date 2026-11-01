@@ -6,6 +6,7 @@ import { useClubStats } from "@/lib/api/hooks/useStats";
 import { ClubLatestTournaments } from "./ClubLatestTournaments";
 import { SquadCompositionDonut } from "./SquadCompositionDonut";
 import { ClubTopPerformers } from "./ClubTopPerformers";
+import { ClubCoachingPanel } from "../coaching/ClubCoachingPanel";
 
 type Person = ReturnType<typeof useMockPeople>[number];
 
@@ -24,6 +25,7 @@ export function ClubOverviewTab({ club, members, onViewTournaments }: { club: Cl
         <div className="mt-1.5 font-display text-xl font-bold text-accent-ink">{isLoading ? "…" : value}</div>
       </div>)}
     </div>
+    <ClubCoachingPanel clubId={club.id} />
     <div className="grid gap-5 lg:grid-cols-2"><SquadCompositionDonut members={members} /></div>
     <ClubLatestTournaments clubId={club.id} onViewAll={onViewTournaments} />
     <ClubTopPerformers clubId={club.id} />

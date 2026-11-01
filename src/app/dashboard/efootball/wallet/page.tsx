@@ -53,6 +53,7 @@ export default function WalletPage() {
     adjustment: tr.txAdjustment,
     reversal: tr.txReversal,
     purchase: tr.txPurchase,
+    commission: t.coaching.admin.ledgerCommission,
   };
   const filterLabel = (k: WalletTxKind | undefined) =>
     !k
@@ -66,6 +67,7 @@ export default function WalletPage() {
           adjustment: tr.txAdjustment,
           reversal: tr.txReversal,
           purchase: tr.txPurchase,
+          commission: t.coaching.admin.ledgerCommission,
         }[k];
   const kindIcon = (k: WalletTxKind) =>
     k === "top_up" ? PlusIcon : k === "hold" ? LockIcon : k === "refund" ? ClockIcon : k === "received" ? WalletIcon : SwapIcon;

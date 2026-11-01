@@ -10,8 +10,9 @@ import { API_URL, APP_URL, BACKEND_DIR, FRONTEND_DIR } from "./lib/env";
 export default defineConfig({
   testDir: "./tests",
   outputDir: "./test-results",
-  timeout: 60_000,
-  expect: { timeout: 10_000 },
+  // Remote databases make each API call slower; flows chain many of them.
+  timeout: 120_000,
+  expect: { timeout: 20_000 },
   fullyParallel: false,
   // Money, transfers and loans share clubs and wallets: one worker keeps the numbers exact.
   workers: 1,

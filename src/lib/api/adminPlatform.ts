@@ -91,7 +91,17 @@ export async function runPlatformAction(a: PlatformAction): Promise<unknown> {
 // ------------------------------------------------------------------ settings
 
 export interface PlatformSettings {
-  transfers: { baseFeeTk: number; lockDays: number; offerExpiryDays: number; clubStartingBalanceTk: number; playerStartingBalanceTk: number; demoTopUpTk: number };
+  transfers: {
+    baseFeeTk: number;
+    lockDays: number;
+    offerExpiryDays: number;
+    clubStartingBalanceTk: number;
+    playerStartingBalanceTk: number;
+    demoTopUpTk: number;
+    coachingCommissionPct: number;
+    minCoachingDays: number;
+    maxCoachingDays: number;
+  };
   admin: { binRetentionDays: number; moderatorMaxSuspendDays: number; reportDailyLimit: number; reportStrikeLimit: number };
   features: { signupsOpen: boolean; transfersOpen: boolean; reportsOpen: boolean };
   maintenance: { enabled: boolean; message: string };

@@ -106,7 +106,8 @@ export function SignupForm() {
     setLoading(true);
     try {
       await signup({ name, email, password, phoneNumber: toE164(national, country), country: country.name });
-      router.push("/dashboard");
+      // New accounts first pick what they do on ALLYNQ.
+      router.push("/welcome");
     } catch (err: any) {
       let msg = err?.message ?? "Registration failed";
       try {

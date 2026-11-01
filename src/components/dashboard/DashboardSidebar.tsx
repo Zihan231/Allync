@@ -48,6 +48,7 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const isStaff = Boolean(user.systemRole);
+  const isCoach = user.roles.includes("coach");
   // Dedicated areas force their mode. Shared pages (for example Wallet and the
   // public tournament directory) keep the mode the user explicitly selected.
   const mode: Mode =
@@ -55,13 +56,25 @@ export function DashboardSidebar({
       ? "admin"
       : pathname.startsWith("/dashboard/organizer")
         ? "organizer"
-        : user.mode;
+        : pathname.startsWith("/dashboard/coach")
+          ? "coach"
+          : user.mode === "coach" && !isCoach
+            ? "player"
+            : user.mode;
   const { data: reportCounts } = useAdminReportCounts(mode === "admin");
 
   const handleModeChange = (next: Mode) => {
     setMode(next);
     onClose();
-    router.push(next === "admin" ? "/dashboard/admin" : next === "organizer" ? "/dashboard/organizer" : `/dashboard/${user.activeGame}`);
+    router.push(
+      next === "admin"
+        ? "/dashboard/admin"
+        : next === "organizer"
+          ? "/dashboard/organizer"
+          : next === "coach"
+            ? "/dashboard/coach"
+            : `/dashboard/${user.activeGame}`,
+    );
   };
 
   const playerBase = `/dashboard/${user.activeGame}`;
@@ -95,6 +108,7 @@ export function DashboardSidebar({
     { href: "/dashboard/admin/disputes", label: t.admin.nav.disputes, icon: GavelIcon },
     { href: "/dashboard/admin/verification", label: t.admin.nav.verification, icon: LockIcon },
     { href: "/dashboard/admin/activity", label: t.admin.nav.activity, icon: CalendarIcon },
+    { href: "/dashboard/admin/coaching", label: t.coaching.admin.navTitle, icon: ChartIcon },
     ...(hasRole(user.systemRole, "admin")
       ? [
           { href: "/dashboard/admin/content", label: t.admin.nav.content, icon: TrophyIcon },
@@ -120,12 +134,29 @@ export function DashboardSidebar({
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
   ];
 
-  const items = mode === "admin" ? adminItems : mode === "organizer" ? organizerItems : playerItems;
+  const tc = t.coaching.nav;
+  const coachItems: NavItem[] = [
+    { href: "/dashboard/coach", label: tc.dashboard, icon: ChartIcon },
+    { href: "/dashboard/coach?tab=posts", label: tc.posts, icon: FlameIcon },
+    { href: "/dashboard/coach?tab=deals", label: tc.deals, icon: SwapIcon },
+    { href: "/dashboard/coach?tab=clubs", label: tc.findClubs, icon: UsersIcon },
+    { href: `${playerBase}/coaches`, label: tc.coaches, icon: ShieldIcon },
+    { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
+  ];
+
+  const items =
+    mode === "admin" ? adminItems : mode === "organizer" ? organizerItems : mode === "coach" ? coachItems : playerItems;
 
   const isActive = (href: string) =>
-    href === playerBase || href === "/dashboard/admin" || href === "/dashboard/organizer" || href === `${playerBase}/tournaments`
-      ? pathname === href
-      : pathname.startsWith(href);
+    href.includes("?")
+      ? false
+      : href === playerBase ||
+          href === "/dashboard/admin" ||
+          href === "/dashboard/organizer" ||
+          href === "/dashboard/coach" ||
+          href === `${playerBase}/tournaments`
+        ? pathname === href
+        : pathname.startsWith(href);
 
   const content = (
     <nav className="flex flex-col gap-1 p-3">
@@ -160,7 +191,7 @@ export function DashboardSidebar({
     <>
       <aside className="fixed top-14 min-[400px]:top-16 left-0 bottom-0 z-20 hidden w-60 shrink-0 overflow-y-auto border-r border-surface-line/70 bg-bg/95 backdrop-blur-md lg:block">
         <div className="border-b border-surface-line/70 p-3">
-          <RoleToggle value={mode} onChange={handleModeChange} staff={isStaff} className="w-full" />
+          <RoleToggle value={mode} onChange={handleModeChange} staff={isStaff} coach={isCoach} className="w-full" />
         </div>
         {content}
       </aside>
@@ -178,7 +209,7 @@ export function DashboardSidebar({
               </Link>
             </div>
             <div className="border-b border-surface-line/70 p-3">
-              <RoleToggle value={mode} onChange={handleModeChange} staff={isStaff} className="w-full" />
+              <RoleToggle value={mode} onChange={handleModeChange} staff={isStaff} coach={isCoach} className="w-full" />
             </div>
             {content}
           </div>

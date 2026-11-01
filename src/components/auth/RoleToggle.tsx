@@ -8,12 +8,15 @@ export function RoleToggle({
   value,
   onChange,
   staff = false,
+  coach = false,
   className = "",
 }: {
   value: Mode;
   onChange: (mode: Mode) => void;
   /** Show the Admin option. */
   staff?: boolean;
+  /** Show the Coach option (users with the coach role). */
+  coach?: boolean;
   className?: string;
 }) {
   const { t } = useLanguage();
@@ -21,6 +24,7 @@ export function RoleToggle({
   const options: { value: Mode; label: string }[] = [
     { value: "player", label: t.admin.modePlayer },
     { value: "organizer", label: t.admin.modeOrganizer },
+    ...(coach ? [{ value: "coach" as const, label: t.coaching.roles.names.coach }] : []),
     ...(staff ? [{ value: "admin" as const, label: t.admin.modeAdmin }] : []),
   ];
 
@@ -46,7 +50,13 @@ export function RoleToggle({
         ))}
       </div>
       <p className="mt-1.5 text-xs text-ink-faint">
-        {value === "player" ? t.auth.joinAsPlayerHint : value === "organizer" ? t.admin.modeOrganizerHint : t.admin.modeHint}
+        {value === "player"
+          ? t.auth.joinAsPlayerHint
+          : value === "organizer"
+            ? t.admin.modeOrganizerHint
+            : value === "coach"
+              ? t.coaching.roles.blurbs.coach
+              : t.admin.modeHint}
       </p>
     </div>
   );

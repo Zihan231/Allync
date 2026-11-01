@@ -18,7 +18,7 @@ The servers are started automatically (backend `npm run start:dev` on 3001, fron
 
 ## Test data
 
-- `setup` signs up a fresh cast each run: every club role (President, GS, Captain, Vice-Captain, Academy Captain, Manager, Player), every community role, free agents, a console player, an organizer, match official, and staff (Moderator, Admin, Super Admin, with real 2FA codes).
+- `setup` signs up a fresh cast each run: every club role (President, GS, Captain, Vice-Captain, Academy Captain, Manager, Player), every community role, free agents, a console player, an organizer, a coach, match official, and staff (Moderator, Admin, Super Admin, with real 2FA codes).
 - Every account is `e2e+<runId>-<role>@allynq.test` with a generated password; clubs and tournaments are named `E2E <runId> …`. Money comes from the demo top-up only.
 - `teardown` cancels open deals, deletes the run's tournaments, clubs and community, deactivates test store items, and soft-deletes the run's users.
 - The only direct SQL (`lib/db.ts`) gives e2e users a staff role and soft-deletes e2e users; both refuse any non-`e2e+…@allynq.test` email.
@@ -30,6 +30,7 @@ Keep the data for debugging: `E2E_KEEP=1 npm test`, then `npm run teardown` (or 
 | File | Covers |
 |---|---|
 | `tests/api/permissions.spec.ts` | action × role matrix (club, community, staff tiers, rank rule, guests) |
+| `tests/api/coaching.spec.ts` | roles API, coach profile, posts hidden until staff approve, coaching deals both ways with the platform cut, one club at a time |
 | `tests/api/rules.spec.ts` | business rules on two fresh clubs: one club per player, buyout-only for contracted players, contract lock and fee, leaders can't move or leave, locked players can't leave, offer expiry, moves wait for a running tournament (and complete by themselves), cup-tied loans, roster limit |
 | `tests/api/privacy.spec.ts` | no public endpoint exposes another user's email, phone, address, ID document or account fields |
 | `tests/api/transfers-loans.spec.ts` | offers, counters, buyout, holds/refunds, loans, limits, staff end |
@@ -41,6 +42,7 @@ Keep the data for debugging: `E2E_KEEP=1 npm test`, then `npm run teardown` (or 
 | `tests/ui/permissions.spec.ts` | what each role sees: club & community settings, staff menu, organizer mode |
 | `tests/ui/loans.spec.ts` | request-loan button + info, borrow form, squad Borrowed / Lent out filters |
 | `tests/ui/store.spec.ts` | store filters, Try preview, Back to store, checkout |
+| `tests/ui/coaching.spec.ts` | "What suits you best?" picker (once), roles on the profile, coach post with a photo → moderator approval → public, a club hiring the coach through checkout |
 | `tests/ui/organizer.spec.ts` | create a general tournament with a prize, listings |
 
 Not covered end to end: playing matches to a champion (match times are hours ahead): the prize payout is covered by backend unit tests. The scheduled-move test waits for the transfer job, which runs every minute.

@@ -7,7 +7,7 @@ import { expect, expectHealthy, settle, test, watch } from "../../lib/ui";
 const { cast, actor } = castApis();
 
 test.describe("sign up", () => {
-  test("a new player signs up through the form and lands in the dashboard", async ({ pageAs }) => {
+  test("a new player signs up, picks what suits him, and lands in the dashboard", async ({ pageAs }) => {
     const page = await pageAs("guest");
     const problems = watch(page);
     await page.goto("/signup");
@@ -20,6 +20,11 @@ test.describe("sign up", () => {
     const terms = page.getByRole("checkbox");
     if (await terms.count()) await terms.first().check();
     await page.getByRole("button", { name: /create|sign up/i }).last().click();
+    // New accounts first answer "What suits you best?".
+    await expect(page).toHaveURL(/\/welcome/, { timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "What suits you best?" })).toBeVisible();
+    await page.getByRole("checkbox", { name: "Player" }).click();
+    await page.getByRole("button", { name: "Continue" }).click();
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
     expectHealthy(problems, "signup");
   });
