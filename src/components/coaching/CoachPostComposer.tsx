@@ -15,7 +15,14 @@ const errorMessage = (err: unknown) => {
 };
 
 /** New tutorial post: text, video links and up to 4 photos / videos. It waits for staff review. */
-export function CoachPostComposer({ onToast }: { onToast?: (message: string, variant?: "success" | "error") => void }) {
+export function CoachPostComposer({
+  onToast,
+  onSubmitted,
+}: {
+  onToast?: (message: string, variant?: "success" | "error") => void;
+  /** After a successful submit (e.g. go back to the list). */
+  onSubmitted?: () => void;
+}) {
   const { t } = useLanguage();
   const tp = t.coaching.posts;
   const create = useCreateCoachPost();
@@ -51,6 +58,7 @@ export function CoachPostComposer({ onToast }: { onToast?: (message: string, var
       setLinks("");
       setFiles([]);
       onToast?.(tp.submitted, "success");
+      onSubmitted?.();
     } catch (err) {
       setError(errorMessage(err) || t.coaching.deals.errGeneric);
     }

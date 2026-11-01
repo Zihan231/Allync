@@ -10,12 +10,15 @@ export function CoverPhoto({
   color,
   className = "",
   mode = "lightbox",
+  hideInitial = false,
 }: {
   coverUrl: string | null | undefined;
   name: string;
   color?: string;
   className?: string;
   mode?: "lightbox" | "static";
+  /** No big first letter on the placeholder (e.g. when a profile photo overlaps that corner). */
+  hideInitial?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [broken, setBroken] = useState(false);
@@ -32,12 +35,14 @@ export function CoverPhoto({
           background: `radial-gradient(120% 140% at 20% 0%, ${brand}3d 0%, var(--bg-raised) 70%)`,
         }}
       >
-        <span
-          className="pointer-events-none select-none pb-2 pl-2 font-display text-[6rem] font-bold leading-none opacity-[0.14]"
-          style={{ color: brand }}
-        >
-          {name.slice(0, 1).toUpperCase()}
-        </span>
+        {hideInitial ? null : (
+          <span
+            className="pointer-events-none select-none pb-2 pl-2 font-display text-[6rem] font-bold leading-none opacity-[0.14]"
+            style={{ color: brand }}
+          >
+            {name.slice(0, 1).toUpperCase()}
+          </span>
+        )}
       </div>
     );
   }

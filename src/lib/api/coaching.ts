@@ -86,8 +86,27 @@ export type CoachCard = {
   currentClub: { id: string; name: string; endsAt: string | null } | null;
 };
 
+export type CoachHistoryEntry = {
+  clubId: string;
+  name: string;
+  dpUrl: string | null;
+  status: "active" | "completed" | "ended";
+  days: number;
+  startedAt: string | null;
+  endedAt: string | null;
+};
+
 export type CoachDetail = {
-  user: { id: string; name: string; dpUrl: string | null; coverUrl: string | null; roles: string[] };
+  user: {
+    id: string;
+    name: string;
+    dpUrl: string | null;
+    coverUrl: string | null;
+    roles: string[];
+    country?: string | null;
+    joinedAt?: string | null;
+  };
+  history?: CoachHistoryEntry[];
   profile: CoachProfile;
   posts: CoachPost[];
   currentClub: { id: string; name: string; dpUrl: string | null; endsAt: string | null } | null;
