@@ -65,7 +65,7 @@ test.describe("coach posts need approval", () => {
   test("the coach posts a tutorial with a photo; it waits for review", async ({ pageAs }) => {
     const page = await pageAs("coach");
     const problems = watch(page);
-    await page.goto("/dashboard/coach?tab=posts");
+    await page.goto("/dashboard/coach/posts");
     await settle(page);
     await page.getByRole("textbox", { name: "New post" }).fill(body);
     await page.getByPlaceholder("One link per line").fill("https://youtu.be/dQw4w9WgXcQ");
@@ -117,7 +117,7 @@ test.describe("a club hires the coach", () => {
     expectHealthy(problems, "offer a coach");
 
     const coach = await pageAs("coach");
-    await coach.goto("/dashboard/coach?tab=deals");
+    await coach.goto("/dashboard/coach/deals");
     await settle(coach);
     const deal = coach.getByTestId("coaching-deal").filter({ hasText: "E2E " + cast.runId + " Alpha" }).filter({ hasText: "Negotiating" }).first();
     await expect(deal).toBeVisible();

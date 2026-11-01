@@ -137,9 +137,10 @@ export function DashboardSidebar({
   const tc = t.coaching.nav;
   const coachItems: NavItem[] = [
     { href: "/dashboard/coach", label: tc.dashboard, icon: ChartIcon },
-    { href: "/dashboard/coach?tab=posts", label: tc.posts, icon: FlameIcon },
-    { href: "/dashboard/coach?tab=deals", label: tc.deals, icon: SwapIcon },
-    { href: "/dashboard/coach?tab=clubs", label: tc.findClubs, icon: UsersIcon },
+    { href: "/dashboard/coach/profile", label: t.coaching.coach.tabs.profile, icon: SettingsIcon },
+    { href: "/dashboard/coach/posts", label: tc.posts, icon: FlameIcon },
+    { href: "/dashboard/coach/deals", label: tc.deals, icon: SwapIcon },
+    { href: "/dashboard/coach/clubs", label: tc.findClubs, icon: UsersIcon },
     { href: `${playerBase}/coaches`, label: tc.coaches, icon: ShieldIcon },
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
   ];
@@ -148,15 +149,13 @@ export function DashboardSidebar({
     mode === "admin" ? adminItems : mode === "organizer" ? organizerItems : mode === "coach" ? coachItems : playerItems;
 
   const isActive = (href: string) =>
-    href.includes("?")
-      ? false
-      : href === playerBase ||
-          href === "/dashboard/admin" ||
-          href === "/dashboard/organizer" ||
-          href === "/dashboard/coach" ||
-          href === `${playerBase}/tournaments`
-        ? pathname === href
-        : pathname.startsWith(href);
+    href === playerBase ||
+    href === "/dashboard/admin" ||
+    href === "/dashboard/organizer" ||
+    href === "/dashboard/coach" ||
+    href === `${playerBase}/tournaments`
+      ? pathname === href
+      : pathname.startsWith(href);
 
   const content = (
     <nav className="flex flex-col gap-1 p-3">
