@@ -160,6 +160,7 @@ export const creatorsEn = {
     bannerUpdated: "Banner updated.",
     empty: "No designs here yet.",
     viewClub: "View club page",
+    yours: "Your design",
   },
   picker: {
     clubTheme: "Club theme",
@@ -341,6 +342,7 @@ export const creatorsBn: CreatorsDict = {
     bannerUpdated: "ব্যানার আপডেট হয়েছে।",
     empty: "এখানে এখনো কোনো ডিজাইন নেই।",
     viewClub: "ক্লাব পেজ দেখুন",
+    yours: "আপনার ডিজাইন",
   },
   picker: {
     clubTheme: "ক্লাব থিম",

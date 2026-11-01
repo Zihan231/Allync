@@ -95,7 +95,9 @@ export function ClubThemeShop({ onToast }: { onToast: (message: string, variant?
                 key={item.id}
                 item={item}
                 action={
-                  !isLeader ? null : onPage ? (
+                  !isLeader ? null : item.creatorUserId === user.id ? (
+                    <span className="text-xs font-semibold text-ink-faint">{ts.yours}</span>
+                  ) : onPage ? (
                     <span className="text-xs font-bold text-success-ink">✓ {ts.onPage}</span>
                   ) : owned ? (
                     <button type="button" disabled={setTheme.isPending} onClick={() => use(item.sku)} className={`${pill} border border-accent text-accent-ink hover:bg-accent hover:text-bg`}>
@@ -142,6 +144,7 @@ export function BannerShop({
 }) {
   const { t } = useLanguage();
   const ts = t.creators.shop;
+  const { user } = useSession();
   const items = (useStoreCatalog().data ?? []).filter((i) => i.target === "tournament");
   const mine = useMyStore();
   const { data: tournament } = useTournament(tournamentId ?? "");
@@ -160,7 +163,9 @@ export function BannerShop({
               key={item.id}
               item={item}
               action={
-                mine.data?.owned.includes(item.sku) ? (
+                item.creatorUserId === user.id ? (
+                  <span className="text-xs font-semibold text-ink-faint">{ts.yours}</span>
+                ) : mine.data?.owned.includes(item.sku) ? (
                   <span className="text-xs font-bold text-success-ink">✓ {ts.owned}</span>
                 ) : (
                   <button type="button" onClick={() => setCheckout(item)} className={`${pill} bg-accent text-bg hover:brightness-110`}>

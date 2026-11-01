@@ -742,14 +742,15 @@ export function TournamentDetailView({
       <div className="pointer-events-none absolute top-96 left-10 -z-10 h-72 w-72 rounded-full bg-emerald-500/10 blur-[120px]" />
 
       {/* HERO BANNER CARD */}
-      <div className="relative overflow-hidden rounded-3xl border border-accent/40 bg-gradient-to-b from-surface-line/80 via-surface/90 to-surface p-6 sm:p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-xl">
-        {banner?.assets?.bannerUrl ? (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={banner.assets.bannerUrl} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-50" data-testid="tournament-banner" />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg/30 via-surface/70 to-surface" />
-          </>
-        ) : null}
+      <div
+        className="relative overflow-hidden rounded-3xl border border-accent/40 bg-gradient-to-b from-surface-line/80 via-surface/90 to-surface bg-cover bg-center p-6 sm:p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-xl"
+        style={
+          banner?.assets?.bannerUrl
+            ? { backgroundImage: `linear-gradient(180deg, rgb(0 0 0 / 0.25), rgb(0 0 0 / 0.75)), url("${banner.assets.bannerUrl}")` }
+            : undefined
+        }
+        data-testid={banner?.assets?.bannerUrl ? "tournament-banner" : undefined}
+      >
         {/* Top glowing accent line */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-accent via-blue-400 to-transparent shadow-[0_0_15px_rgba(217,165,68,0.8)]" />
 
