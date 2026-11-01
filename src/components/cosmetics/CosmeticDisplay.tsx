@@ -2780,7 +2780,7 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
           <div className="absolute -bottom-16 -left-16 h-64 w-64 rounded-full bg-blue-600/20 blur-3xl" />
           <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
             <img
-              src="/barca/vecteezy_fc-barcelona-logo-on-transparent-background_14414712.jpg"
+              src="/barca/barca-logo-transparent.png"
               alt=""
               className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(237,187,0,0.6)]"
             />
@@ -2830,7 +2830,7 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
           <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-red-600/25 blur-3xl" />
           <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-25">
             <img
-              src="/arsenal/vecteezy_arsenal-logo-on-transparent-background_15863617.jpg"
+              src="/arsenal/arsenal-logo-transparent.png"
               alt=""
               className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(219,0,7,0.6)]"
             />
@@ -2969,7 +2969,7 @@ export function ThemeSectionArt({ theme }: { theme?: CosmeticItem | null }) {
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-red-600/30 blur-3xl" />
           <div className="absolute -right-4 -bottom-4 h-44 w-44 opacity-20">
             <img
-              src="/bayern/vecteezy_fc-bayern-munchen-logo-on-transparent-background_14414704.jpg"
+              src="/bayern/bayern-logo-transparent.png"
               alt=""
               className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(255,215,0,0.6)]"
             />
