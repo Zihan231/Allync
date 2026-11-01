@@ -101,6 +101,9 @@ export const coachingEn = {
     delete: "Delete",
     deleteConfirm: "Delete this post?",
     publicEmpty: "No tutorials yet.",
+    overview: "Your posts",
+    tipsTitle: "Tips for a good post",
+    tips: "Say what the drill teaches in the first line. · One video per post works best. · Add a photo of the formation or setup. · Posts go public once staff approve them, usually within a day.",
   },
   deals: {
     title: "Coaching deals",
@@ -320,6 +323,9 @@ export const coachingBn: CoachingDict = {
     delete: "মুছুন",
     deleteConfirm: "পোস্টটি মুছে ফেলবেন?",
     publicEmpty: "এখনো কোনো টিউটোরিয়াল নেই।",
+    overview: "আপনার পোস্ট",
+    tipsTitle: "ভালো পোস্টের টিপস",
+    tips: "প্রথম লাইনেই বলুন ড্রিলটি কী শেখায়। · প্রতি পোস্টে একটি ভিডিও সবচেয়ে ভালো। · ফরমেশন বা সেটআপের ছবি যোগ করুন। · স্টাফ অনুমোদন দিলেই পোস্ট পাবলিক হয়, সাধারণত এক দিনের মধ্যে।",
   },
   deals: {
     title: "কোচিং ডিল",

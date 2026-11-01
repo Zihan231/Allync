@@ -69,10 +69,14 @@ test.describe("coach posts need approval", () => {
     const problems = watch(page);
     await page.goto("/dashboard/coach/posts");
     await settle(page);
+    await page.getByRole("link", { name: "New post" }).click();
+    await expect(page).toHaveURL(/\/dashboard\/coach\/posts\/new/);
     await page.getByRole("textbox", { name: "New post" }).fill(body);
     await page.getByPlaceholder("One link per line").fill("https://youtu.be/dQw4w9WgXcQ");
     await page.getByTestId("coach-post-files").setInputFiles({ name: "drill.png", mimeType: "image/png", buffer: PNG });
     await page.getByRole("button", { name: "Submit for review" }).click();
+    // Back on the list.
+    await expect(page).toHaveURL(/\/dashboard\/coach\/posts\?sent=1/);
     const post = page.getByTestId("coach-post").filter({ hasText: body });
     await expect(post).toBeVisible();
     await expect(post.getByText("In review")).toBeVisible();
