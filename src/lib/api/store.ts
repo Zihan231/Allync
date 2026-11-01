@@ -21,6 +21,18 @@ export interface StoreItem {
   creatorUserId?: string | null;
   creator?: { id: string; name: string } | null;
   salesCount?: number;
+  /** False for designs no longer sold (owners still show them). */
+  onSale?: boolean;
+  /** The approved look's number, and earlier looks owners may keep. */
+  version?: number;
+  versions?: DesignVersion[];
+}
+
+/** An earlier approved look of a creator's design. */
+export interface DesignVersion {
+  version: number;
+  assets: DesignAssets;
+  approvedAt: string | null;
 }
 
 /** A creator's uploaded files (by design type) and theme colours. */
@@ -39,6 +51,8 @@ export interface MyStore {
   owned: string[];
   /** Equipped SKU per category. */
   equipped: Record<StoreCategory, string | null>;
+  /** Creator designs kept on an earlier look: SKU → version (missing = latest). */
+  versions: Record<string, number>;
 }
 
 export const getStoreCatalog = async () => (await api.get<StoreItem[]>("/store/catalog")).data;
@@ -57,6 +71,7 @@ export interface ClubStore {
   balanceTk: number;
   owned: string[];
   equipped: string | null;
+  versions: Record<string, number>;
 }
 
 export const getClubStore = async (clubId: string) => (await api.get<ClubStore>(`/store/clubs/${clubId}`)).data;
@@ -69,6 +84,9 @@ export const setClubTheme = async (clubId: string, sku: string | null) =>
 /** Buys a tournament banner; with `tournamentId` it goes on that tournament. */
 export const purchaseBanner = async (sku: string, tournamentId?: string) =>
   (await api.post<MyStore>("/store/purchase", { sku, tournamentId })).data;
+/** Keeps an earlier look of a design I (or, with clubId, my club) own; null follows the latest. */
+export const setDesignVersion = async (sku: string, version: number | null, clubId?: string) =>
+  (await api.post<MyStore | ClubStore>("/store/version", { sku, version, clubId })).data;
 /** Puts a banner I own on a tournament I manage, or (null) takes it off. */
 export const setTournamentBanner = async (tournamentId: string, sku: string | null) =>
   (await api.post<{ tournamentId: string; bannerSku: string | null }>(`/store/tournaments/${tournamentId}/banner`, { sku })).data;

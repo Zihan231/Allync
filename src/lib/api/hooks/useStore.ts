@@ -12,7 +12,9 @@ import {
   type ClubStore,
   type MyStore,
   type StoreCategory,
+  setDesignVersion,
 } from "@/lib/api/store";
+import { designAssetsAt } from "@/lib/storeCosmetics";
 
 export const storeKeys = {
   catalog: ["store", "catalog"] as const,
@@ -54,10 +56,11 @@ export function useEquipStoreItem() {
   });
 }
 
-/** A design's artwork by SKU (from the catalogue), e.g. a club theme or tournament banner. */
-export function useDesignAssets(sku: string | null | undefined) {
+/** A design's artwork by SKU (at `version`, else the latest), e.g. a tournament banner. */
+export function useDesignAssets(sku: string | null | undefined, version?: number | null) {
   const { data } = useStoreCatalog();
-  return sku ? (data?.find((i) => i.sku === sku) ?? null) : null;
+  const item = sku ? data?.find((i) => i.sku === sku) : undefined;
+  return item ? { ...item, assets: designAssetsAt(item, version) } : null;
 }
 
 export function useClubStore(clubId: string | undefined, enabled = true) {
@@ -108,5 +111,20 @@ export function useSetTournamentBanner() {
   return useMutation({
     mutationFn: ({ tournamentId, sku }: { tournamentId: string; sku: string | null }) => setTournamentBanner(tournamentId, sku),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["tournaments"] }),
+  });
+}
+
+/** Keep an earlier look of a design (or follow the latest); with clubId, for the club's theme. */
+export function useSetDesignVersion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sku, version, clubId }: { sku: string; version: number | null; clubId?: string }) => setDesignVersion(sku, version, clubId),
+    onSuccess: (state, { clubId }) => {
+      if (clubId) queryClient.setQueryData(storeKeys.club(clubId), state);
+      else queryClient.setQueryData(storeKeys.me, state);
+      void queryClient.invalidateQueries({ queryKey: ["clubs"] });
+      void queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+      void queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
   });
 }

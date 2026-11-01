@@ -19,15 +19,17 @@ import type { StoreItem } from "@/lib/api/store";
 import { tk } from "@/components/dashboard/transfers/shared";
 import { PaymentModal } from "@/components/dashboard/transfers/PaymentModal";
 import { DesignPreview } from "@/components/creators/DesignPreview";
+import { designAssetsAt } from "@/lib/storeCosmetics";
+import { VersionSwitcher } from "./VersionSwitcher";
 
 const CLUB_LEADERS = ["President", "General Secretary"];
 
 /** One club theme or banner for sale: its look in place, its creator, price and action. */
-function ShopCard({ item, action }: { item: StoreItem; action: ReactNode }) {
+function ShopCard({ item, action, version }: { item: StoreItem; action: ReactNode; version?: number }) {
   const { t } = useLanguage();
   return (
     <article className="flex flex-col gap-3 rounded-2xl border border-surface-line bg-surface/60 p-4" data-testid="design-shop-card">
-      <DesignPreview category={item.category as CreatorCategory} name={item.name} assets={item.assets} rarity={item.metadata?.rarity} />
+      <DesignPreview category={item.category as CreatorCategory} name={item.name} assets={designAssetsAt(item, version)} rarity={item.metadata?.rarity} />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="truncate font-display text-base font-bold text-ink">{item.name}</h3>
@@ -54,8 +56,10 @@ export function ClubThemeShop({ onToast }: { onToast: (message: string, variant?
   const { user } = useSession();
   const club = user.club;
   const isLeader = Boolean(club && CLUB_LEADERS.includes(club.role));
-  const items = (useStoreCatalog().data ?? []).filter((i) => i.target === "club");
   const clubStore = useClubStore(club?.id, isLeader);
+  const items = (useStoreCatalog().data ?? []).filter(
+    (i) => i.target === "club" && (i.onSale !== false || clubStore.data?.owned.includes(i.sku)),
+  );
   const buy = usePurchaseClubTheme();
   const setTheme = useSetClubTheme();
   const [checkout, setCheckout] = useState<StoreItem | null>(null);
@@ -94,15 +98,21 @@ export function ClubThemeShop({ onToast }: { onToast: (message: string, variant?
               <ShopCard
                 key={item.id}
                 item={item}
+                version={owned ? clubStore.data?.versions[item.sku] : undefined}
                 action={
                   !isLeader ? null : item.creatorUserId === user.id ? (
                     <span className="text-xs font-semibold text-ink-faint">{ts.yours}</span>
-                  ) : onPage ? (
-                    <span className="text-xs font-bold text-success-ink">✓ {ts.onPage}</span>
                   ) : owned ? (
-                    <button type="button" disabled={setTheme.isPending} onClick={() => use(item.sku)} className={`${pill} border border-accent text-accent-ink hover:bg-accent hover:text-bg`}>
-                      {ts.use}
-                    </button>
+                    <>
+                      <VersionSwitcher item={item} chosen={clubStore.data?.versions[item.sku]} clubId={club!.id} onToast={onToast} />
+                      {onPage ? (
+                        <span className="text-xs font-bold text-success-ink">✓ {ts.onPage}</span>
+                      ) : (
+                        <button type="button" disabled={setTheme.isPending} onClick={() => use(item.sku)} className={`${pill} border border-accent text-accent-ink hover:bg-accent hover:text-bg`}>
+                          {ts.use}
+                        </button>
+                      )}
+                    </>
                   ) : (
                     <button type="button" onClick={() => setCheckout(item)} className={`${pill} bg-accent text-bg hover:brightness-110`}>
                       {item.priceTk ? format(ts.buyFor, { amount: tk(item.priceTk) }) : t.dashboard.store.getFree}
@@ -145,8 +155,10 @@ export function BannerShop({
   const { t } = useLanguage();
   const ts = t.creators.shop;
   const { user } = useSession();
-  const items = (useStoreCatalog().data ?? []).filter((i) => i.target === "tournament");
   const mine = useMyStore();
+  const items = (useStoreCatalog().data ?? []).filter(
+    (i) => i.target === "tournament" && (i.onSale !== false || mine.data?.owned.includes(i.sku)),
+  );
   const { data: tournament } = useTournament(tournamentId ?? "");
   const buy = usePurchaseBanner();
   const [checkout, setCheckout] = useState<StoreItem | null>(null);
@@ -162,11 +174,15 @@ export function BannerShop({
             <ShopCard
               key={item.id}
               item={item}
+              version={mine.data?.versions[item.sku]}
               action={
                 item.creatorUserId === user.id ? (
                   <span className="text-xs font-semibold text-ink-faint">{ts.yours}</span>
                 ) : mine.data?.owned.includes(item.sku) ? (
-                  <span className="text-xs font-bold text-success-ink">✓ {ts.owned}</span>
+                  <>
+                    <VersionSwitcher item={item} chosen={mine.data.versions[item.sku]} onToast={onToast} />
+                    <span className="text-xs font-bold text-success-ink">✓ {ts.owned}</span>
+                  </>
                 ) : (
                   <button type="button" onClick={() => setCheckout(item)} className={`${pill} bg-accent text-bg hover:brightness-110`}>
                     {item.priceTk ? format(ts.buyFor, { amount: tk(item.priceTk) }) : t.dashboard.store.getFree}

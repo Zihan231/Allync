@@ -24,7 +24,7 @@ export function TournamentCard({
   const { t, locale } = useLanguage();
   const tc = t.dashboard.tournamentCard;
   const dateLocale = locale === "bn" ? "bn-BD" : "en-US";
-  const bannerUrl = useDesignAssets(tournament.bannerSku)?.assets?.bannerUrl;
+  const bannerUrl = useDesignAssets(tournament.bannerSku, tournament.bannerVersion)?.assets?.bannerUrl;
 
   // Normalize format
   const rawFormat = (tournament.type || tournament.format || "pvp").toLowerCase();

@@ -157,6 +157,8 @@ export interface BackendTournament {
   participantCount?: number;
   /** The banner (a store design) on its page and card. */
   bannerSku?: string | null;
+  /** The banner's look (an earlier version the organizer kept; null = latest). */
+  bannerVersion?: number | null;
   /** List endpoint: winner of a completed tournament. */
   champion?: { name: string; dpUrl: string | null } | null;
   /** List endpoint: the viewer (or their club) entered it. */

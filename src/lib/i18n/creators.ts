@@ -42,7 +42,7 @@ export const creatorsEn = {
   status: {
     pending: "In review",
     approved: "Live",
-    paused: "Paused",
+    paused: "Off sale",
     rejected: "Rejected",
     changePending: "Change in review",
   },
@@ -61,7 +61,7 @@ export const creatorsEn = {
   wizard: {
     title: "Submit a design",
     editTitle: "Change the design",
-    editHint: "The new look goes to review. Until staff approve it, the current look keeps selling.",
+    editHint: "The new look goes to review. Until staff approve it, the current look keeps selling. Buyers keep the look they have and can update to the new one.",
     steps: { type: "Type", artwork: "Artwork", details: "Details" },
     pickType: "What are you designing?",
     upload: "Upload",
@@ -92,7 +92,7 @@ export const creatorsEn = {
   },
   designs: {
     title: "My designs",
-    subtitle: "Price changes and pausing apply at once. A new look goes back to review.",
+    subtitle: "Price changes apply at once. A new look goes to review; buyers choose whether to update to it.",
     all: "All",
     salesCount: "Sold: {n}",
     revenue: "Revenue {amount}",
@@ -104,7 +104,8 @@ export const creatorsEn = {
     resumed: "Back on sale.",
     changeLook: "Change look",
     remove: "Remove",
-    removeConfirm: "Remove this design? If it has sold, it's taken off sale and owners keep it.",
+    removeConfirm: "Remove this design? This can't be undone.",
+    soldStays: "Sold designs stay in the store: their owners keep using them.",
     removed: "Design removed.",
     delisted: "Taken off sale. Owners keep it.",
     rejectedBecause: "Staff: {reason}",
@@ -171,6 +172,14 @@ export const creatorsEn = {
     getBanners: "Get banners",
     close: "Close",
   },
+  versions: {
+    look: "Look",
+    latest: "Latest (v{n})",
+    version: "Version {n}",
+    newLook: "New look available",
+    updated: "Updated to the latest look.",
+    kept: "Keeping this look.",
+  },
   wallet: { sale: "Design sale" },
   settings: {
     cutLabel: "Creator sales cut (%)",
@@ -224,7 +233,7 @@ export const creatorsBn: CreatorsDict = {
   status: {
     pending: "রিভিউতে",
     approved: "লাইভ",
-    paused: "বিরতিতে",
+    paused: "বিক্রি বন্ধ",
     rejected: "বাতিল",
     changePending: "পরিবর্তন রিভিউতে",
   },
@@ -243,7 +252,7 @@ export const creatorsBn: CreatorsDict = {
   wizard: {
     title: "ডিজাইন জমা দিন",
     editTitle: "ডিজাইন পরিবর্তন",
-    editHint: "নতুন লুক রিভিউতে যাবে। স্টাফ অনুমোদন না করা পর্যন্ত বর্তমান লুক বিক্রি হতে থাকবে।",
+    editHint: "নতুন লুক রিভিউতে যাবে। স্টাফ অনুমোদন না করা পর্যন্ত বর্তমান লুক বিক্রি হতে থাকবে। ক্রেতারা তাদের লুক রাখতে বা নতুনটিতে আপডেট করতে পারবেন।",
     steps: { type: "ধরন", artwork: "আর্টওয়ার্ক", details: "বিস্তারিত" },
     pickType: "আপনি কী ডিজাইন করছেন?",
     upload: "আপলোড",
@@ -274,7 +283,7 @@ export const creatorsBn: CreatorsDict = {
   },
   designs: {
     title: "আমার ডিজাইন",
-    subtitle: "দাম পরিবর্তন ও বিরতি সঙ্গে সঙ্গে কার্যকর হয়। নতুন লুক আবার রিভিউতে যায়।",
+    subtitle: "দাম পরিবর্তন সঙ্গে সঙ্গে কার্যকর হয়। নতুন লুক রিভিউতে যায়; ক্রেতারা ঠিক করেন আপডেট নেবেন কিনা।",
     all: "সব",
     salesCount: "বিক্রি: {n}",
     revenue: "আয় {amount}",
@@ -286,7 +295,8 @@ export const creatorsBn: CreatorsDict = {
     resumed: "আবার বিক্রিতে।",
     changeLook: "লুক বদলান",
     remove: "সরান",
-    removeConfirm: "এই ডিজাইন সরাবেন? বিক্রি হয়ে থাকলে এটি বিক্রি থেকে সরানো হবে, মালিকরা রেখে দেবে।",
+    removeConfirm: "এই ডিজাইন সরাবেন? এটি আর ফেরানো যাবে না।",
+    soldStays: "বিক্রি হওয়া ডিজাইন স্টোরে থাকে: মালিকরা এগুলো ব্যবহার করতে থাকেন।",
     removed: "ডিজাইন সরানো হয়েছে।",
     delisted: "বিক্রি থেকে সরানো হয়েছে। মালিকরা রেখে দেবে।",
     rejectedBecause: "স্টাফ: {reason}",
@@ -352,6 +362,14 @@ export const creatorsBn: CreatorsDict = {
     noBanner: "ব্যানার নেই",
     getBanners: "ব্যানার নিন",
     close: "বন্ধ",
+  },
+  versions: {
+    look: "লুক",
+    latest: "সর্বশেষ (v{n})",
+    version: "ভার্সন {n}",
+    newLook: "নতুন লুক এসেছে",
+    updated: "সর্বশেষ লুকে আপডেট হয়েছে।",
+    kept: "এই লুকটি রাখা হলো।",
   },
   wallet: { sale: "ডিজাইন বিক্রি" },
   settings: {

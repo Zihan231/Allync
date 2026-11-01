@@ -6,6 +6,7 @@ import { useClubStore, useMyStore, useSetClubTheme, useSetTournamentBanner, useS
 import { apiMessage, type CreatorCategory } from "@/lib/api/creators";
 import type { StoreItem } from "@/lib/api/store";
 import { DesignPreview } from "@/components/creators/DesignPreview";
+import { designAssetsAt } from "@/lib/storeCosmetics";
 
 type Toast = (message: string, variant?: "success" | "error") => void;
 
@@ -16,6 +17,7 @@ function PickerSheet({
   moreLabel,
   moreHref,
   items,
+  versions,
   current,
   busy,
   onPick,
@@ -26,6 +28,8 @@ function PickerSheet({
   moreLabel: string;
   moreHref: string;
   items: StoreItem[];
+  /** The owner's chosen looks (SKU → version). */
+  versions?: Record<string, number>;
   current: string | null;
   busy: boolean;
   onPick: (sku: string | null) => void;
@@ -55,7 +59,7 @@ function PickerSheet({
           </button>
           {items.map((item) => (
             <button key={item.sku} type="button" disabled={busy} onClick={() => onPick(item.sku)} className={option(current === item.sku)}>
-              <DesignPreview category={item.category as CreatorCategory} name={item.name} assets={item.assets} size="sm" />
+              <DesignPreview category={item.category as CreatorCategory} name={item.name} assets={designAssetsAt(item, versions?.[item.sku])} size="sm" />
               <div className="mt-2 truncate px-1 text-sm font-bold text-ink">{item.name}</div>
             </button>
           ))}
@@ -96,6 +100,7 @@ export function ClubThemePicker({
       moreLabel={tp.getThemes}
       moreHref="/dashboard/efootball/store?for=club"
       items={owned}
+      versions={data?.versions}
       current={data?.equipped ?? current}
       busy={setTheme.isPending}
       onClose={onClose}
@@ -139,6 +144,7 @@ export function TournamentBannerPicker({
       moreLabel={tp.getBanners}
       moreHref={`/dashboard/efootball/store?for=banner&tournament=${tournamentId}`}
       items={owned}
+      versions={mine.data?.versions}
       current={current}
       busy={setBanner.isPending}
       onClose={onClose}

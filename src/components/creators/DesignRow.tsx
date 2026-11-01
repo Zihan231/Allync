@@ -19,10 +19,9 @@ export function DesignRow({ design, onToast }: { design: CreatorDesign; onToast:
   const update = useUpdateDesign();
   const remove = useDeleteDesign();
   const [price, setPrice] = useState(design.priceTk);
-  const approved = design.reviewStatus === "approved";
   const fail = (err: unknown) => onToast(apiMessage(err, t.coaching.deals.errGeneric), "error");
 
-  const save = async (input: { priceTk?: number; active?: boolean }, message: string) => {
+  const save = async (input: { priceTk?: number }, message: string) => {
     try {
       await update.mutateAsync({ id: design.id, input });
       onToast(message, "success");
@@ -70,22 +69,15 @@ export function DesignRow({ design, onToast }: { design: CreatorDesign; onToast:
         </button>
       </div>
       <div className="flex flex-wrap gap-2 border-t border-surface-line pt-3">
-        {approved ? (
-          <button
-            type="button"
-            disabled={update.isPending}
-            onClick={() => save({ active: !design.active }, design.active ? td.paused : td.resumed)}
-            className="rounded-full border border-surface-line-strong px-3 py-1.5 text-xs font-semibold text-ink-soft hover:text-ink"
-          >
-            {design.active ? td.pause : td.resume}
-          </button>
-        ) : null}
         <Link
           href={`/dashboard/creator/new?edit=${design.id}`}
           className="rounded-full border border-surface-line-strong px-3 py-1.5 text-xs font-semibold text-ink-soft hover:text-ink"
         >
           {td.changeLook}
         </Link>
+        {design.salesCount > 0 ? (
+          <span className="ml-auto self-center text-[11px] text-ink-faint">{td.soldStays}</span>
+        ) : (
         <button
           type="button"
           disabled={remove.isPending}
@@ -93,7 +85,7 @@ export function DesignRow({ design, onToast }: { design: CreatorDesign; onToast:
             if (!window.confirm(td.removeConfirm)) return;
             try {
               const res = await remove.mutateAsync(design.id);
-              onToast(res.delisted ? td.delisted : td.removed, "success");
+              onToast(td.removed, "success");
             } catch (err) {
               fail(err);
             }
@@ -102,6 +94,7 @@ export function DesignRow({ design, onToast }: { design: CreatorDesign; onToast:
         >
           {td.remove}
         </button>
+        )}
       </div>
     </article>
   );

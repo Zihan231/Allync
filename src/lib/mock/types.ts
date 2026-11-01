@@ -52,6 +52,8 @@ export type Person = {
   documentDataUrl?: string;
   verificationLevel?: VerificationLevel;
   ownedCosmeticIds?: string[];
+  /** Creator designs kept on an earlier look: SKU → version. */
+  designVersions?: Record<string, number>;
   equippedBadgeId?: string | null;
   equippedTitleId?: string | null;
   equippedFrameId?: string | null;
@@ -124,6 +126,7 @@ export type Club = {
   facebookUrl?: string;
   /** The club theme (store SKU) on its page. */
   equippedThemeSku?: string | null;
+  designVersions?: Record<string, number>;
 };
 
 export type CommunityTier = "Featured" | "Verified" | "Regional" | "Open" | "New";

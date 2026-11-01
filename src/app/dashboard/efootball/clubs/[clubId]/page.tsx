@@ -201,7 +201,7 @@ function ClubDetailContent({ params }: { params: Promise<{ clubId: string }> }) 
   ];
 
   const clubThemeSku = pickedTheme === undefined ? (club?.equippedThemeSku ?? null) : pickedTheme;
-  const clubTheme = cosmeticBySku(clubThemeSku, storeCatalog);
+  const clubTheme = cosmeticBySku(clubThemeSku, storeCatalog, club?.designVersions);
 
   if (loading) {
     return <AppLoader />;

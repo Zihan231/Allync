@@ -10,6 +10,7 @@ import { useEquipStoreItem, useMyStore, usePurchaseStoreItem, useStoreCatalog } 
 import type { MyStore } from "@/lib/api/store";
 import { PaymentModal } from "@/components/dashboard/transfers/PaymentModal";
 import { BannerShop, ClubThemeShop } from "@/components/store/DesignShop";
+import { VersionSwitcher } from "@/components/store/VersionSwitcher";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { STORE_RETURN_KEY, storeItemToCosmetic } from "@/lib/storeCosmetics";
 import {
@@ -220,7 +221,13 @@ function StoreContent() {
 
   const person = people.find((p) => p.id === user.personId);
   const owned = new Set(mine.data?.owned ?? []);
-  const allItems = (catalog.data ?? []).map(storeItemToCosmetic);
+  // Profile items: those on sale, plus designs taken off sale that the user owns (in the look they keep).
+  const playerItems = (catalog.data ?? []).filter(
+    (i) => (i.target ?? "player") === "player" && (i.onSale !== false || owned.has(i.sku)),
+  );
+  const allItems = playerItems.map((i) => storeItemToCosmetic(i, owned.has(i.sku) ? mine.data?.versions[i.sku] : undefined));
+  const storeItemBySku = new Map(playerItems.map((i) => [i.sku, i]));
+  const toast = (message: string, variant?: "success" | "error") => (variant === "error" ? setError(message) : (setError(""), setNotice(message)));
 
   const categories: { id: CosmeticCategory; label: string }[] = [
     { id: "theme", label: t.dashboard.store.tabThemes },
@@ -427,9 +434,9 @@ function StoreContent() {
       </div>
 
       {section === "club" ? (
-        <ClubThemeShop onToast={(message: string, variant?: "success" | "error") => (variant === "error" ? setError(message) : (setError(""), setNotice(message)))} />
+        <ClubThemeShop onToast={toast} />
       ) : section === "banner" ? (
-        <BannerShop tournamentId={bannerTournamentId} onToast={(message: string, variant?: "success" | "error") => (variant === "error" ? setError(message) : (setError(""), setNotice(message)))} />
+        <BannerShop tournamentId={bannerTournamentId} onToast={toast} />
       ) : (
         <>
       {/* Category tabs */}
@@ -632,6 +639,11 @@ function StoreContent() {
               </div>
 
               {/* Bottom Action Footer */}
+              {owned.has(item.id) && storeItemBySku.get(item.id)?.versions?.length ? (
+                <div className="mt-4">
+                  <VersionSwitcher item={storeItemBySku.get(item.id)!} chosen={mine.data?.versions[item.id]} onToast={toast} />
+                </div>
+              ) : null}
               <div className="mt-5 border-t border-surface-line pt-4 flex items-center justify-between gap-3">
                 {owned.has(item.id) ? (
                   <span className="font-mono text-[11px] font-bold text-emerald-400 flex items-center gap-1">
@@ -653,7 +665,9 @@ function StoreContent() {
                   >
                     {ts.try}
                   </button>
-                  {!owned.has(item.id) ? (
+                  {!owned.has(item.id) && item.custom?.creator?.id === user.id ? (
+                    <span className="text-xs font-semibold text-ink-faint">{t.creators.shop.yours}</span>
+                  ) : !owned.has(item.id) ? (
                     <button
                       type="button"
                       onClick={() => handleBuy(item)}

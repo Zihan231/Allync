@@ -465,11 +465,12 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
 
   // On your own profile the server's store state is the truth; others show their saved look.
   const myEquipped = isOwnProfileEarly ? myStore?.equipped : undefined;
+  const lookVersions = isOwnProfileEarly && myStore ? myStore.versions : person.designVersions;
   const wearing = {
-    title: cosmeticBySku(myEquipped ? myEquipped.title : person.equippedTitleId, storeCatalog),
-    badge: cosmeticBySku(myEquipped ? myEquipped.badge : person.equippedBadgeId, storeCatalog),
-    frame: cosmeticBySku(myEquipped ? myEquipped.frame : person.equippedFrameId, storeCatalog),
-    theme: cosmeticBySku(myEquipped ? myEquipped.theme : person.equippedThemeId, storeCatalog),
+    title: cosmeticBySku(myEquipped ? myEquipped.title : person.equippedTitleId, storeCatalog, lookVersions),
+    badge: cosmeticBySku(myEquipped ? myEquipped.badge : person.equippedBadgeId, storeCatalog, lookVersions),
+    frame: cosmeticBySku(myEquipped ? myEquipped.frame : person.equippedFrameId, storeCatalog, lookVersions),
+    theme: cosmeticBySku(myEquipped ? myEquipped.theme : person.equippedThemeId, storeCatalog, lookVersions),
   };
   // "Try" from the store (?try=<sku>, own profile only): the tried item replaces its category everywhere.
   const tryItem = isOwnProfileEarly ? cosmeticBySku(trySku, storeCatalog) : null;
@@ -480,7 +481,7 @@ export default function PlayerProfilePage({ params }: { params: Promise<{ player
   const equippedTheme = look.theme;
   const tokens = getThemeTokens(equippedTheme);
   const ownedBadges = (person.ownedCosmeticIds ?? [])
-    .map((sku) => cosmeticBySku(sku, storeCatalog))
+    .map((sku) => cosmeticBySku(sku, storeCatalog, lookVersions))
     .filter((c): c is CosmeticItem => c != null && c.category === "badge");
   const isOwnProfile = person.id === user.id || person.id === user.personId;
   const canMakeOffer = !isOwnProfile && Boolean(user.club?.id && leaderClub?.isLeader);

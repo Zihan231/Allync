@@ -135,7 +135,7 @@ export function TournamentDetailView({
 
   const { data: tournament, isLoading, refetch } = useTournament(tournamentId);
   // The organizer's banner (a creator design) behind the header.
-  const banner = useDesignAssets(tournament?.bannerSku);
+  const banner = useDesignAssets(tournament?.bannerSku, tournament?.bannerVersion);
   const [bannerPicker, setBannerPicker] = useState(false);
   const { data: tournamentStructure } = useTournamentStructure(tournamentId);
   const { data: communityMembers = [], isLoading: isLoadingCommunityMembers } =

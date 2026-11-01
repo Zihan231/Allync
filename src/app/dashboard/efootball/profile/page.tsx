@@ -84,6 +84,7 @@ export default function ProfilePage() {
       documentDataUrl: backendUser.documentDataUrl ?? undefined,
       verificationLevel: backendUser.verificationLevel ?? 0,
       ownedCosmeticIds: backendUser.ownedCosmeticIds ?? undefined,
+      designVersions: backendUser.designVersions ?? {},
       equippedBadgeId: backendUser.equippedBadgeId ?? null,
       equippedTitleId: backendUser.equippedTitleId ?? null,
       equippedFrameId: backendUser.equippedFrameId ?? null,
@@ -104,13 +105,13 @@ export default function ProfilePage() {
   const formPoints = recentGames.slice(0, 5).reduce((sum, game) => sum + (game.result === "W" ? 3 : game.result === "D" ? 1 : 0), 0);
   const formRating = recentGames.length === 0 ? "—" : formPoints >= 13 ? "A+" : formPoints >= 10 ? "A" : formPoints >= 7 ? "B" : formPoints >= 4 ? "C" : "D";
 
-  const equippedTitle = cosmeticBySku(person?.equippedTitleId, storeCatalog);
-  const equippedBadge = cosmeticBySku(person?.equippedBadgeId, storeCatalog);
-  const equippedFrame = cosmeticBySku(person?.equippedFrameId, storeCatalog);
-  const equippedTheme = cosmeticBySku(person?.equippedThemeId, storeCatalog);
+  const equippedTitle = cosmeticBySku(person?.equippedTitleId, storeCatalog, person?.designVersions);
+  const equippedBadge = cosmeticBySku(person?.equippedBadgeId, storeCatalog, person?.designVersions);
+  const equippedFrame = cosmeticBySku(person?.equippedFrameId, storeCatalog, person?.designVersions);
+  const equippedTheme = cosmeticBySku(person?.equippedThemeId, storeCatalog, person?.designVersions);
   const tokens = getThemeTokens(equippedTheme);
   const ownedBadges = (person?.ownedCosmeticIds ?? [])
-    .map((sku) => cosmeticBySku(sku, storeCatalog))
+    .map((sku) => cosmeticBySku(sku, storeCatalog, person?.designVersions))
     .filter((c): c is CosmeticItem => c != null && c.category === "badge");
   const profile = meQuery.data ?? user.raw ?? person;
   const hasText = (value: unknown) => typeof value === "string" && value.trim().length > 0;

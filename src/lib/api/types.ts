@@ -36,6 +36,7 @@ export interface BackendClub {
   /** Club themes (store SKUs) the club owns, and the one on its page. */
   ownedThemeSkus?: string[];
   equippedThemeSku?: string | null;
+  designVersions?: Record<string, number>;
   createdAt: string;
   updatedAt: string;
 }
@@ -91,6 +92,8 @@ export interface BackendUser {
   /** Platform staff access level; null for ordinary player accounts. */
   systemRole: "moderator" | "admin" | "super_admin" | null;
   ownedCosmeticIds: string[] | null;
+  /** Creator designs kept on an earlier look: SKU → version. */
+  designVersions?: Record<string, number>;
   equippedBadgeId: string | null;
   equippedTitleId: string | null;
   equippedFrameId: string | null;

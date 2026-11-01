@@ -122,6 +122,7 @@ export async function syncFromBackend(force = false): Promise<void> {
           documentDataUrl: bu.documentDataUrl ?? undefined,
           verificationLevel: bu.verificationLevel ?? 0,
           ownedCosmeticIds: bu.ownedCosmeticIds ?? undefined,
+          designVersions: bu.designVersions ?? {},
           equippedBadgeId: bu.equippedBadgeId ?? null,
           equippedTitleId: bu.equippedTitleId ?? null,
           equippedFrameId: bu.equippedFrameId ?? null,
