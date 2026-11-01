@@ -13,6 +13,7 @@ import { Pagination } from "@/components/dashboard/Pagination";
 import { StatusPill } from "@/components/dashboard/StatusPill";
 import { CoachingDealModal } from "@/components/coaching/CoachingDealModal";
 import { useCoachingLeader } from "@/components/coaching/useCoachingLeader";
+import { CoachCardSkeleton } from "@/components/coaching/CoachCardSkeleton";
 import { ChartIcon, SearchIcon } from "@/components/icons";
 
 /** Coaches clubs can approach; club leaders offer a deal straight from the list. */
@@ -63,7 +64,13 @@ export default function CoachesPage() {
         </button>
       </div>
 
-      {isLoading ? null : data?.data.length ? (
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="coaches-loading">
+          {Array.from({ length: 6 }, (_, i) => (
+            <CoachCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : data?.data.length ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.data.map((c) => (
             <div key={c.userId} className="flex flex-col rounded-2xl border border-surface-line bg-surface/50 p-4" data-testid="coach-card">
