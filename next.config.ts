@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/onboarding/verify",
-        destination: "/dashboard/efootball/profile",
+        destination: "/dashboard/profile",
         permanent: true,
       },
     ];

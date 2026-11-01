@@ -12,6 +12,8 @@ import { Avatar } from "../common/Avatar";
 import { BellIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, UsersIcon } from "../icons";
 import { useRealtimeNotifications } from "@/lib/hooks/useRealtimeNotifications";
 import { NotificationEntry } from "./NotificationEntry";
+import { useCurrentMode } from "../roles/useCurrentMode";
+import { profileHref } from "@/lib/roles";
 
 export function DashboardTopbar({
   onMenuClick,
@@ -22,6 +24,8 @@ export function DashboardTopbar({
 }) {
   const { t } = useLanguage();
   const { user, logout } = useSession();
+  // Profile opens the profile of the mode you are in (player, organizer, coach).
+  const mode = useCurrentMode();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -176,7 +180,7 @@ export function DashboardTopbar({
             <div className="absolute right-0 top-full z-40 mt-2 w-52 rounded-xl border border-surface-line bg-surface p-1.5 shadow-2xl">
               <div className="px-2.5 py-2 text-sm font-medium text-ink">{user.name}</div>
               <Link
-                href={`/dashboard/${user.activeGame}/profile`}
+                href={profileHref(mode, user.activeGame)}
                 onClick={() => setUserMenuOpen(false)}
                 className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-ink-soft hover:bg-bg-raised hover:text-ink"
               >
@@ -184,7 +188,7 @@ export function DashboardTopbar({
                 {t.dashboard.shell.userMenuProfile}
               </Link>
               <Link
-                href="/dashboard/organizer/settings"
+                href="/dashboard/profile"
                 onClick={() => setUserMenuOpen(false)}
                 className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-ink-soft hover:bg-bg-raised hover:text-ink"
               >

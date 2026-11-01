@@ -23,3 +23,11 @@ export function homeForRole(role: UserRole, game = "efootball"): string {
   if (role === "player") return `/dashboard/${game}`;
   return `/dashboard/roles/${role}`;
 }
+
+/** Each mode's own profile page (the shared personal info lives on /dashboard/profile). */
+export function profileHref(mode: "player" | "organizer" | "coach" | "admin", game = "efootball"): string {
+  if (mode === "organizer") return "/dashboard/organizer/profile";
+  if (mode === "coach") return "/dashboard/coach/profile";
+  if (mode === "admin") return "/dashboard/admin";
+  return `/dashboard/${game}/profile`;
+}

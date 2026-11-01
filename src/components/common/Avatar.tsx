@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { colorFromString, initialsFromName } from "@/lib/colorHash";
-import { stockAvatarUrl } from "@/lib/stockImage";
 import { AvatarLightbox } from "./AvatarLightbox";
 
 const sizeClasses: Record<string, string> = {
@@ -31,8 +30,10 @@ export function Avatar({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const src = dpUrl || stockAvatarUrl(name);
+  const [broken, setBroken] = useState(false);
+  // No photo uploaded (or it won't load): initials on the name's colour, never a stock picture.
+  const src = dpUrl || "";
+  const failed = !src || broken;
   const color = colorFromString(name);
   const initials = initialsFromName(name);
   const radius = shape === "square" ? "rounded-xl" : "rounded-full";
@@ -50,7 +51,7 @@ export function Avatar({
       src={src}
       alt={name}
       className={`h-full w-full object-cover ${radius}`}
-      onError={() => setFailed(true)}
+      onError={() => setBroken(true)}
     />
   );
 

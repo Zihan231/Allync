@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession, type Mode } from "@/lib/session/SessionContext";
 import { hasRole } from "@/lib/api/admin";
 import { useAdminReportCounts } from "@/lib/api/hooks/useReports";
-import { RoleToggle } from "../auth/RoleToggle";
+import { useCurrentMode } from "../roles/useCurrentMode";
+import { profileHref } from "@/lib/roles";
 import {
   HomeIcon,
   UsersIcon,
@@ -46,36 +46,18 @@ export function DashboardSidebar({
   const { t } = useLanguage();
   const { user, setMode } = useSession();
   const pathname = usePathname();
-  const router = useRouter();
-  const isStaff = Boolean(user.systemRole);
-  const isCoach = user.roles.includes("coach");
-  // Dedicated areas force their mode. Shared pages (for example Wallet and the
-  // public tournament directory) keep the mode the user explicitly selected.
-  const mode: Mode =
-    isStaff && pathname.startsWith("/dashboard/admin")
-      ? "admin"
-      : pathname.startsWith("/dashboard/organizer")
-        ? "organizer"
-        : pathname.startsWith("/dashboard/coach")
-          ? "coach"
-          : user.mode === "coach" && !isCoach
-            ? "player"
-            : user.mode;
+  // Modes are switched from the profile ("Profile as"); the menu follows the current one.
+  const mode: Mode = useCurrentMode();
   const { data: reportCounts } = useAdminReportCounts(mode === "admin");
 
-  const handleModeChange = (next: Mode) => {
-    setMode(next);
-    onClose();
-    router.push(
-      next === "admin"
-        ? "/dashboard/admin"
-        : next === "organizer"
-          ? "/dashboard/organizer"
-          : next === "coach"
-            ? "/dashboard/coach"
-            : `/dashboard/${user.activeGame}`,
-    );
-  };
+  const modeLabel =
+    mode === "admin"
+      ? t.admin.modeAdmin
+      : mode === "organizer"
+        ? t.coaching.roles.names.organizer
+        : mode === "coach"
+          ? t.coaching.roles.names.coach
+          : t.coaching.roles.names.player;
 
   const playerBase = `/dashboard/${user.activeGame}`;
   const playerItems: NavItem[] = [
@@ -130,6 +112,7 @@ export function DashboardSidebar({
   const organizerItems: NavItem[] = [
     { href: "/dashboard/organizer", label: t.dashboard.organizerMode.navDashboard, icon: ChartIcon },
     { href: "/dashboard/organizer/create", label: t.dashboard.organizerMode.navCreate, icon: TrophyIcon },
+    { href: "/dashboard/organizer/profile", label: t.dashboard.shell.navProfile, icon: SettingsIcon },
     { href: `${playerBase}/tournaments/general`, label: t.dashboard.organizerMode.navGeneral, icon: FlameIcon },
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
   ];
@@ -137,7 +120,7 @@ export function DashboardSidebar({
   const tc = t.coaching.nav;
   const coachItems: NavItem[] = [
     { href: "/dashboard/coach", label: tc.dashboard, icon: ChartIcon },
-    { href: "/dashboard/coach/profile", label: t.coaching.coach.tabs.profile, icon: SettingsIcon },
+    { href: "/dashboard/coach/profile", label: t.dashboard.shell.navProfile, icon: SettingsIcon },
     { href: "/dashboard/coach/posts", label: tc.posts, icon: FlameIcon },
     { href: "/dashboard/coach/deals", label: tc.deals, icon: SwapIcon },
     { href: "/dashboard/coach/clubs", label: tc.findClubs, icon: UsersIcon },
@@ -190,7 +173,14 @@ export function DashboardSidebar({
     <>
       <aside className="fixed top-14 min-[400px]:top-16 left-0 bottom-0 z-20 hidden w-60 shrink-0 overflow-y-auto border-r border-surface-line/70 bg-bg/95 backdrop-blur-md lg:block">
         <div className="border-b border-surface-line/70 p-3">
-          <RoleToggle value={mode} onChange={handleModeChange} staff={isStaff} coach={isCoach} className="w-full" />
+          <Link
+            href={profileHref(mode, user.activeGame)}
+            onClick={onClose}
+            className="flex items-center justify-between rounded-lg px-2 py-1.5 text-xs text-ink-soft hover:bg-surface hover:text-ink"
+          >
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-ink">{modeLabel}</span>
+            <span className="text-[11px] text-ink-faint">{t.coaching.profile.profileAs} →</span>
+          </Link>
         </div>
         {content}
       </aside>
@@ -208,7 +198,14 @@ export function DashboardSidebar({
               </Link>
             </div>
             <div className="border-b border-surface-line/70 p-3">
-              <RoleToggle value={mode} onChange={handleModeChange} staff={isStaff} coach={isCoach} className="w-full" />
+              <Link
+                href={profileHref(mode, user.activeGame)}
+                onClick={onClose}
+                className="flex items-center justify-between rounded-lg px-2 py-1.5 text-xs text-ink-soft hover:bg-surface hover:text-ink"
+              >
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-ink">{modeLabel}</span>
+                <span className="text-[11px] text-ink-faint">{t.coaching.profile.profileAs} →</span>
+              </Link>
             </div>
             {content}
           </div>

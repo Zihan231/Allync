@@ -34,6 +34,9 @@ setup("build the e2e cast", async () => {
     available: true,
   });
 
+  // The organizer also has the Organizer profile.
+  await as("organizer").put("/users/me/roles", { roles: ["organizer", "player"], primaryRole: "organizer" });
+
   // Console player (the rest play on mobile).
   await as("consolePlayer").patch("/users/me", { gamingPlatform: "console" });
 

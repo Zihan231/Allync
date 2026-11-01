@@ -910,7 +910,7 @@ export function TournamentDetailView({
                   <div className="flex items-center gap-2 rounded-full border border-violet-400/40 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200">
                     <span>{td.consoleOnly}</span>
                     <Link
-                      href="/dashboard/efootball/profile"
+                      href="/dashboard/profile"
                       className="underline text-accent-ink hover:text-white"
                     >
                       {td.setConsolePlatform}
@@ -1294,7 +1294,7 @@ export function TournamentDetailView({
                   <div className="flex items-center gap-2 rounded-full border border-violet-400/40 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200">
                     <span>{td.consoleOnly}</span>
                     <Link
-                      href="/dashboard/efootball/profile"
+                      href="/dashboard/profile"
                       className="underline text-accent-ink hover:text-white"
                     >
                       {td.setConsolePlatform}

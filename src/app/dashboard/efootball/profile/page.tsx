@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession } from "@/lib/session/SessionContext";
@@ -12,10 +12,9 @@ import { getCosmetic, type CosmeticItem } from "@/lib/mock/cosmetics";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { MiniMatchRow } from "@/components/dashboard/MiniMatchRow";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
-import { ProfileEditForm } from "@/components/dashboard/ProfileEditForm";
 import { ChartIcon, TrophyIcon, CalendarIcon, StoreIcon, FlameIcon } from "@/components/icons";
 import { AppLoader } from "@/components/common/AppLoader";
-import { MyRolesCard } from "@/components/roles/MyRolesCard";
+import { ProfileModeBar } from "@/components/roles/ProfileModeBar";
 import {
   CosmeticBadgePill,
   CosmeticTitleText,
@@ -160,6 +159,11 @@ export default function ProfilePage() {
         }
       />
 
+      {/* One account: shared key info and the switch between the user's profiles */}
+      <div className="mt-4">
+        <ProfileModeBar current="player" />
+      </div>
+
       {/* Grand Themed Profile Hero Banner with Pro HUD Telemetry */}
       <div className="mt-4 sm:mt-6">
         <ThemedProfileHeroBanner theme={equippedTheme}>
@@ -213,9 +217,13 @@ export default function ProfilePage() {
               </h1>
 
               {missingProfileFields.length > 0 ? (
-                <p className="mt-1.5 max-w-2xl text-center text-xs font-semibold leading-relaxed text-danger-ink sm:text-left" role="status">
+                <Link
+                  href="/dashboard/profile"
+                  className="mt-1.5 block max-w-2xl text-center text-xs font-semibold leading-relaxed text-danger-ink underline-offset-2 hover:underline sm:text-left"
+                  role="status"
+                >
                   Profile incomplete — missing: {missingProfileFields.join(", ")}.
-                </p>
+                </Link>
               ) : null}
 
               {/* Equipped Title Display */}
@@ -303,18 +311,6 @@ export default function ProfilePage() {
           ))}
         </div>
       </ThemedCard>
-
-      {/* What the user does on ALLYNQ (role picker) */}
-      <div className="mt-8">
-        <MyRolesCard />
-      </div>
-
-      {/* Profile Edit Form */}
-      <div className="mt-8">
-        <Suspense fallback={<AppLoader />}>
-          <ProfileEditForm />
-        </Suspense>
-      </div>
     </div>
   );
 }

@@ -44,12 +44,14 @@ test.describe("what suits you best", () => {
     await ctx.close();
   });
 
-  test("roles can be changed from the profile; Coach shows in the mode switch", async ({ pageAs }) => {
+  test("roles are changed on the central profile; the coach switches to his coach profile", async ({ pageAs }) => {
     const page = await pageAs("coach");
-    await page.goto("/dashboard/efootball/profile");
+    await page.goto("/dashboard/profile");
     await settle(page);
     await expect(page.getByTestId("my-roles")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Coach", exact: true }).first()).toBeVisible();
+    // The profile switch offers his Coach profile.
+    await page.getByTestId("profile-mode-bar").getByRole("button", { name: "Coach" }).click();
+    await expect(page).toHaveURL(/\/dashboard\/coach\/profile/);
   });
 
   test("the other new roles open a coming-soon page", async ({ pageAs }) => {

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { colorFromString } from "@/lib/colorHash";
-import { stockCoverUrl } from "@/lib/stockImage";
 import { AvatarLightbox } from "./AvatarLightbox";
 
 export function CoverPhoto({
@@ -19,8 +18,10 @@ export function CoverPhoto({
   mode?: "lightbox" | "static";
 }) {
   const [open, setOpen] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const src = coverUrl || stockCoverUrl(name);
+  const [broken, setBroken] = useState(false);
+  // No cover uploaded (or it won't load): a gradient in the brand colour, never a stock picture.
+  const src = coverUrl || "";
+  const failed = !src || broken;
   const brand = color ?? colorFromString(name);
 
   if (failed) {
@@ -48,7 +49,7 @@ export function CoverPhoto({
         src={src}
         alt={`${name} cover`}
         className="h-full w-full object-cover"
-        onError={() => setFailed(true)}
+        onError={() => setBroken(true)}
       />
       <div
         className="pointer-events-none absolute inset-0"

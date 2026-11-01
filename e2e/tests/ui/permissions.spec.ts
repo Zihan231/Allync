@@ -1,7 +1,7 @@
 import { castApis, type RoleKey } from "../../lib/cast";
 import { expect, settle, test } from "../../lib/ui";
 
-/** What each role sees: club settings for leaders, the staff menu by tier, organizer mode for everyone. */
+/** What each role sees: club settings for leaders, the staff menu by tier, and the profile switch. */
 const { cast } = castApis();
 const A = cast.clubs.alpha;
 const C = cast.communityId;
@@ -74,26 +74,44 @@ test.describe("staff menu by tier", () => {
   }
 });
 
-test.describe("organizer mode", () => {
-  test("any player can switch to organizer mode and back", async ({ pageAs }) => {
-    const page = await pageAs("entrant1");
-    await page.goto("/dashboard/efootball");
+test.describe("profiles and modes", () => {
+  test("an organizer switches profiles from his profile; Profile follows the mode", async ({ pageAs }) => {
+    const page = await pageAs("organizer");
+    await page.goto("/dashboard/efootball/profile");
     await settle(page);
-    await page.getByRole("button", { name: "Organizer", exact: true }).first().click();
-    await expect(page).toHaveURL(/\/dashboard\/organizer/);
-    await expect(page.locator('a[href="/dashboard/organizer/create"]').first()).toBeVisible();
-    await page.getByRole("button", { name: "Player", exact: true }).first().click();
-    await expect(page).toHaveURL(/\/dashboard\/efootball/);
+    const bar = page.getByTestId("profile-mode-bar");
+    await bar.getByRole("button", { name: "Organizer" }).click();
+    await expect(page).toHaveURL(/\/dashboard\/organizer\/profile/);
+    await expect(page.getByRole("heading", { name: "Organizer profile" })).toBeVisible();
+    // The sidebar is the organizer menu now, with its own Profile.
+    await expect(page.locator('aside a[href="/dashboard/organizer/create"]')).toBeVisible();
+    // The top-bar menu opens the organizer profile too.
+    await page.locator("header").getByRole("button").last().click();
+    await expect(page.locator('header a[href="/dashboard/organizer/profile"]')).toBeVisible();
+
+    await page.getByTestId("profile-mode-bar").getByRole("button", { name: "Player" }).click();
+    await expect(page).toHaveURL(/\/dashboard\/efootball\/profile/);
   });
 
-  test("only staff get the Admin mode", async ({ pageAs }) => {
+  test("the switch only offers the user's own profiles; Admin only for staff", async ({ pageAs }) => {
     const player = await pageAs("entrant1");
-    await player.goto("/dashboard/efootball");
+    await player.goto("/dashboard/profile");
     await settle(player);
-    await expect(player.getByRole("button", { name: "Admin", exact: true })).toHaveCount(0);
+    const bar = player.getByTestId("profile-mode-bar");
+    await expect(bar.getByRole("button", { name: "Player" })).toBeVisible();
+    await expect(bar.getByRole("button", { name: "Organizer" })).toHaveCount(0);
+    await expect(bar.getByRole("button", { name: "Admin" })).toHaveCount(0);
+
     const staff = await pageAs("moderator");
-    await staff.goto("/dashboard/admin");
+    await staff.goto("/dashboard/profile");
     await settle(staff);
-    await expect(staff.getByRole("button", { name: "Admin", exact: true }).first()).toBeVisible();
+    await expect(staff.getByTestId("profile-mode-bar").getByRole("button", { name: "Admin" })).toBeVisible();
+  });
+
+  test("the sidebar has no mode switch any more", async ({ pageAs }) => {
+    const page = await pageAs("organizer");
+    await page.goto("/dashboard/efootball");
+    await settle(page);
+    await expect(page.locator("aside").getByRole("button", { name: "Organizer", exact: true })).toHaveCount(0);
   });
 });

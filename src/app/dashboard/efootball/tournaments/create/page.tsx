@@ -953,7 +953,7 @@ function CreateTournamentForm() {
               {organizerProfileIncomplete ? (
                 <div className="mb-4 rounded-xl border border-danger/40 bg-danger-soft p-4 text-sm font-semibold text-danger-ink" role="alert">
                   <p>{ORGANIZER_PROFILE_ERROR}</p>
-                  <Link href="/dashboard/efootball/profile" className="mt-2 inline-flex font-bold underline underline-offset-4">
+                  <Link href="/dashboard/profile" className="mt-2 inline-flex font-bold underline underline-offset-4">
                     Complete profile
                   </Link>
                 </div>
