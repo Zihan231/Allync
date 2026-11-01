@@ -48,7 +48,7 @@ function creatorCosmetic(item: StoreItem): CosmeticItem {
   };
 }
 
-/** A creator design's look at `version` (an earlier one its owner kept), else the latest. */
+/** A creator design's look at `version` (an earlier one its owner kept); 0 or none = the latest. */
 export function designAssetsAt(item: StoreItem, version?: number | null) {
   if (!version || version === item.version) return item.assets;
   return item.versions?.find((v) => v.version === version)?.assets ?? item.assets;

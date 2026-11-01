@@ -17,7 +17,7 @@ export function VersionSwitcher({
   onToast,
 }: {
   item: StoreItem;
-  /** The owner's pinned version (undefined = follows the latest). */
+  /** The owner's chosen version (0 or undefined = follows the latest). */
   chosen: number | undefined;
   clubId?: string;
   onToast: (message: string, variant?: "success" | "error") => void;
@@ -27,8 +27,9 @@ export function VersionSwitcher({
   const setVersion = useSetDesignVersion();
   const latest = item.version ?? 1;
   if (!item.versions?.length) return null;
-  const outdated = chosen !== undefined && chosen < latest;
-  const value = chosen === undefined || chosen === latest ? "latest" : String(chosen);
+  const followsLatest = !chosen || chosen === latest;
+  const outdated = !followsLatest;
+  const value = followsLatest ? "latest" : String(chosen);
 
   return (
     <div className="flex flex-wrap items-center gap-2" data-testid="version-switcher">
