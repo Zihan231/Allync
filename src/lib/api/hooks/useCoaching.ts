@@ -27,7 +27,7 @@ export const coachingKeys = {
   coaches: (params: object) => ["coaching", "coaches", params] as const,
   coach: (userId: string) => ["coaching", "coach", userId] as const,
   club: (clubId: string) => ["coaching", "club", clubId] as const,
-  adminPosts: (status: string, page: number) => ["coaching", "admin", "posts", status, page] as const,
+  adminPosts: (status: string, page: number, author = "all") => ["coaching", "admin", "posts", status, page, author] as const,
 };
 
 export function useMyCoaching(enabled = true) {
@@ -46,8 +46,11 @@ export function useClubCoaching(clubId: string | undefined) {
   return useQuery({ queryKey: coachingKeys.club(clubId ?? ""), queryFn: () => getClubCoaching(clubId!), enabled: Boolean(clubId) });
 }
 
-export function useAdminCoachPosts(status: CoachPostStatus, page: number) {
-  return useQuery({ queryKey: coachingKeys.adminPosts(status, page), queryFn: () => getAdminCoachPosts({ status, page, limit: 10 }) });
+export function useAdminCoachPosts(status: CoachPostStatus, page: number, author?: "coach" | "sponsor") {
+  return useQuery({
+    queryKey: coachingKeys.adminPosts(status, page, author ?? "all"),
+    queryFn: () => getAdminCoachPosts({ status, page, limit: 10, author }),
+  });
 }
 
 /** Anything coaching (and wallets, which deals move money in) refreshes after a change. */

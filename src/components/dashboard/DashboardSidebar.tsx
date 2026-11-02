@@ -59,7 +59,9 @@ export function DashboardSidebar({
           ? t.coaching.roles.names.coach
           : mode === "creator"
             ? t.coaching.roles.names.creative
-            : t.coaching.roles.names.player;
+            : mode === "sponsor"
+              ? t.coaching.roles.names.sponsor
+              : t.coaching.roles.names.player;
 
   const playerBase = `/dashboard/${user.activeGame}`;
   const playerItems: NavItem[] = [
@@ -93,8 +95,9 @@ export function DashboardSidebar({
     { href: "/dashboard/admin/disputes", label: t.admin.nav.disputes, icon: GavelIcon },
     { href: "/dashboard/admin/verification", label: t.admin.nav.verification, icon: LockIcon },
     { href: "/dashboard/admin/activity", label: t.admin.nav.activity, icon: CalendarIcon },
-    { href: "/dashboard/admin/coaching", label: t.coaching.admin.navTitle, icon: ChartIcon },
+    { href: "/dashboard/admin/coaching", label: t.sponsors.admin.reviewTitle, icon: ChartIcon },
     { href: "/dashboard/admin/creators", label: t.creators.nav.adminTitle, icon: StoreIcon },
+    { href: "/dashboard/admin/sponsors", label: t.sponsors.nav.adminTitle, icon: WalletIcon },
     ...(hasRole(user.systemRole, "admin")
       ? [
           { href: "/dashboard/admin/content", label: t.admin.nav.content, icon: TrophyIcon },
@@ -118,6 +121,7 @@ export function DashboardSidebar({
     { href: "/dashboard/feed", label: t.coaching.feed.title, icon: FlameIcon },
     { href: "/dashboard/organizer/create", label: t.dashboard.organizerMode.navCreate, icon: TrophyIcon },
     { href: "/dashboard/organizer/profile", label: t.dashboard.shell.navProfile, icon: SettingsIcon },
+    { href: `${playerBase}/sponsors`, label: t.sponsors.nav.directory, icon: ShieldIcon },
     { href: `${playerBase}/tournaments/general`, label: t.dashboard.organizerMode.navGeneral, icon: FlameIcon },
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
   ];
@@ -145,6 +149,18 @@ export function DashboardSidebar({
     { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
   ];
 
+  const tsp = t.sponsors.nav;
+  const sponsorItems: NavItem[] = [
+    { href: "/dashboard/sponsor", label: tsp.dashboard, icon: ChartIcon },
+    { href: "/dashboard/feed", label: t.coaching.feed.title, icon: FlameIcon },
+    { href: "/dashboard/sponsor/posts", label: tsp.posts, icon: FlameIcon },
+    { href: "/dashboard/sponsor/deals", label: tsp.deals, icon: SwapIcon },
+    { href: "/dashboard/sponsor/opportunities", label: tsp.opportunities, icon: TrophyIcon },
+    { href: "/dashboard/sponsor/profile", label: t.dashboard.shell.navProfile, icon: SettingsIcon },
+    { href: `${playerBase}/sponsors`, label: tsp.directory, icon: ShieldIcon },
+    { href: `${playerBase}/wallet`, label: t.dashboard.shell.navWallet, icon: WalletIcon },
+  ];
+
   const items =
     mode === "admin"
       ? adminItems
@@ -154,7 +170,9 @@ export function DashboardSidebar({
           ? coachItems
           : mode === "creator"
             ? creatorItems
-            : playerItems;
+            : mode === "sponsor"
+              ? sponsorItems
+              : playerItems;
 
   const isActive = (href: string) =>
     href === playerBase ||
@@ -162,6 +180,7 @@ export function DashboardSidebar({
     href === "/dashboard/organizer" ||
     href === "/dashboard/coach" ||
     href === "/dashboard/creator" ||
+    href === "/dashboard/sponsor" ||
     href === `${playerBase}/tournaments`
       ? pathname === href
       : pathname.startsWith(href);

@@ -2,6 +2,7 @@
 
 /* The tournament page body, shared by the general, community and club tournament routes. */
 
+import { PresentedBy, SponsorsSection } from "@/components/sponsors/SponsorsSection";
 import { TournamentBannerPicker } from "@/components/store/DesignPicker";
 import { useDesignAssets } from "@/lib/api/hooks/useStore";
 import { useEffect, useMemo, useState } from "react";
@@ -817,6 +818,7 @@ export function TournamentDetailView({
             <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white drop-shadow-[0_2px_15px_rgba(0,0,0,0.8)]">
               {tournament.name}
             </h1>
+            {!isClubHosted ? <PresentedBy type="tournament" id={tournament.id} /> : null}
             {isGeneral && tournament.creator?.name ? (
               <p className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
                 <span className="rounded-full border border-accent/40 bg-accent-soft px-2.5 py-0.5 text-[11px] font-bold text-accent-ink">
@@ -1229,6 +1231,18 @@ export function TournamentDetailView({
           </div>
         </div>
       </div>
+
+      {/* Sponsors: tiered logos and banners; organizers find sponsors and answer requests here. */}
+      {!isClubHosted ? (
+        <div className="mt-8">
+          <SponsorsSection
+            type="tournament"
+            id={tournament.id}
+            name={tournament.name}
+            onToast={(message, variant) => (variant === "error" ? setActionError(message) : setActionSuccess(message))}
+          />
+        </div>
+      ) : null}
 
       {/* PARTICIPATION / LINEUP ACTION BANNER */}
       <div className="mt-8 rounded-3xl border border-surface-line bg-gradient-to-r from-surface/90 via-surface-line/40 to-surface/90 p-6 md:p-8 backdrop-blur-md shadow-lg">

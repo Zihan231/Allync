@@ -1,5 +1,6 @@
 "use client";
 
+import { PresentedBy, SponsorsSection } from "@/components/sponsors/SponsorsSection";
 import { Suspense, use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -407,6 +408,7 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-2xl font-bold text-ink">{community.name}</h1>
               <CommunityTierPill tier={community.tier} />
+              <PresentedBy type="community" id={community.id} className="!border-surface-line-strong !bg-surface !text-ink" />
             </div>
             <p className="font-mono text-xs text-ink-faint">
               {community.points.toLocaleString()} pts
@@ -702,6 +704,11 @@ function CommunityDetailContent({ params }: { params: Promise<{ communityId: str
             allCommunities={communities}
             tournamentsCount={isLoadingTournaments ? undefined : communityTournaments.length}
           />
+        ) : null}
+        {tab === "overview" ? (
+          <div className="mt-6">
+            <SponsorsSection type="community" id={community.id} name={community.name} onToast={(message, variant) => toast(message, variant ?? "success")} />
+          </div>
         ) : null}
         {tab === "members" ? <CommunityMembersTab members={allMembers} memberClubs={memberClubs} /> : null}
         {tab === "clubs" ? <CommunityClubsTab community={community} memberClubs={memberClubs} allPeople={people} /> : null}

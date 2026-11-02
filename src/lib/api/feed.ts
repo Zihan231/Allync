@@ -22,7 +22,9 @@ export type FeedItem = {
   saveCount: number;
   likedByMe: boolean;
   savedByMe: boolean;
+  /** The author: a coach, or (role "sponsor") a sponsor, shown with their brand. */
   coach: { id: string; name: string; dpUrl: string | null; headline: string; specialities: string[]; followedByMe: boolean };
+  author?: { role: "coach" | "sponsor"; brand: { name: string; logoUrl: string | null; verified: boolean } | null };
   comments: FeedComment[];
 };
 

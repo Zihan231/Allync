@@ -12,9 +12,11 @@ export function useCurrentMode(): Mode {
   if (pathname.startsWith("/dashboard/organizer")) return "organizer";
   if (pathname.startsWith("/dashboard/coach")) return "coach";
   if (pathname.startsWith("/dashboard/creator")) return "creator";
+  if (pathname.startsWith("/dashboard/sponsor")) return "sponsor";
   if (user.mode === "coach" && !user.roles.includes("coach")) return "player";
   if (user.mode === "organizer" && !user.roles.includes("organizer")) return "player";
   if (user.mode === "creator" && !user.roles.includes("creative")) return "player";
+  if (user.mode === "sponsor" && !user.roles.includes("sponsor")) return "player";
   if (user.mode === "admin" && !user.systemRole) return "player";
   return user.mode;
 }

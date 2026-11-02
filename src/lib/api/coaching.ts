@@ -30,6 +30,8 @@ export type CoachPost = {
   reviewedAt: string | null;
   createdAt: string;
   coach?: { id: string; name: string; dpUrl: string | null };
+  /** Who posted it: a coach (tutorial) or a sponsor (sponsored post). */
+  authorRole?: "coach" | "sponsor";
 };
 
 export type CoachingParty = "coach" | "club";
@@ -200,7 +202,7 @@ export async function endCoachingDeal(id: string): Promise<CoachingDeal> {
 
 // ------------------------------------------------------------------- staff
 
-export async function getAdminCoachPosts(params: { status?: CoachPostStatus; page?: number; limit?: number }): Promise<
+export async function getAdminCoachPosts(params: { status?: CoachPostStatus; author?: "coach" | "sponsor"; page?: number; limit?: number }): Promise<
   Paged<CoachPost> & { counts: Partial<Record<CoachPostStatus, number>> }
 > {
   return (await api.get("/admin/coaching/posts", { params })).data;

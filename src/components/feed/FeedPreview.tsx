@@ -5,6 +5,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { youtubeEmbedUrl } from "@/lib/api/coaching";
 import { useFeed } from "@/lib/api/hooks/useFeed";
 import { Avatar } from "@/components/common/Avatar";
+import { BrandLogo } from "@/components/sponsors/BrandLogo";
 import { HeartIcon, CommentIcon } from "./FeedIcons";
 
 /** YouTube thumbnail for a link, for the compact preview. */
@@ -51,8 +52,12 @@ export function FeedPreview() {
                   ) : null}
                   <div className="flex flex-1 flex-col p-3">
                     <div className="flex items-center gap-2">
-                      <Avatar dpUrl={item.coach.dpUrl} name={item.coach.name} size="sm" mode="static" className="!h-7 !w-7 !text-[10px]" />
-                      <span className="truncate text-xs font-bold text-ink">{item.coach.name}</span>
+                      {item.author?.brand ? (
+                        <BrandLogo name={item.author.brand.name} logoUrl={item.author.brand.logoUrl} size="xs" className="!h-7 !w-7" />
+                      ) : (
+                        <Avatar dpUrl={item.coach.dpUrl} name={item.coach.name} size="sm" mode="static" className="!h-7 !w-7 !text-[10px]" />
+                      )}
+                      <span className="truncate text-xs font-bold text-ink">{item.author?.brand?.name ?? item.coach.name}</span>
                     </div>
                     <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{item.body}</p>
                     <div className="mt-auto flex gap-3 pt-2 text-[11px] text-ink-faint">

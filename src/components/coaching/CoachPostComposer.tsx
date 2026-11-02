@@ -18,10 +18,19 @@ const errorMessage = (err: unknown) => {
 export function CoachPostComposer({
   onToast,
   onSubmitted,
+  submit: submitPost,
+  title,
+  hint,
+  submittedText,
 }: {
   onToast?: (message: string, variant?: "success" | "error") => void;
   /** After a successful submit (e.g. go back to the list). */
   onSubmitted?: () => void;
+  /** Posts somewhere else than the coach's posts (a sponsor's), with its own texts. */
+  submit?: (input: { body: string; links: string[]; files: File[] }) => Promise<unknown>;
+  title?: string;
+  hint?: string;
+  submittedText?: string;
 }) {
   const { t } = useLanguage();
   const tp = t.coaching.posts;
@@ -30,6 +39,7 @@ export function CoachPostComposer({
   const [links, setLinks] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const previews = useMemo(() => files.map((f) => ({ file: f, url: URL.createObjectURL(f), video: f.type.startsWith("video/") })), [files]);
 
@@ -53,11 +63,13 @@ export function CoachPostComposer({
     const linkList = links.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     if (!body.trim() && !linkList.length && !files.length) return setError(tp.bodyPlaceholder);
     try {
-      await create.mutateAsync({ body: body.trim(), links: linkList, files });
+      const input = { body: body.trim(), links: linkList, files };
+      setBusy(true);
+      await (submitPost ? submitPost(input) : create.mutateAsync(input)).finally(() => setBusy(false));
       setBody("");
       setLinks("");
       setFiles([]);
-      onToast?.(tp.submitted, "success");
+      onToast?.(submittedText ?? tp.submitted, "success");
       onSubmitted?.();
     } catch (err) {
       setError(errorMessage(err) || t.coaching.deals.errGeneric);
@@ -68,8 +80,8 @@ export function CoachPostComposer({
 
   return (
     <section className="rounded-2xl border border-surface-line bg-surface/50 p-4 sm:p-5">
-      <h3 className="font-display text-base font-black text-ink">{tp.composerTitle}</h3>
-      <p className="mt-1 text-xs text-ink-soft">{tp.composerHint}</p>
+      <h3 className="font-display text-base font-black text-ink">{title ?? tp.composerTitle}</h3>
+      <p className="mt-1 text-xs text-ink-soft">{hint ?? tp.composerHint}</p>
 
       <textarea
         aria-label={tp.composerTitle}
@@ -136,10 +148,10 @@ export function CoachPostComposer({
         <button
           type="button"
           onClick={submit}
-          disabled={create.isPending}
+          disabled={create.isPending || busy}
           className="rounded-full bg-accent px-5 py-2.5 font-display text-sm font-black text-bg disabled:opacity-50"
         >
-          {create.isPending ? tp.submitting : tp.submit}
+          {create.isPending || busy ? tp.submitting : tp.submit}
         </button>
       </div>
       {error ? (

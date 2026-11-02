@@ -24,9 +24,10 @@ export function ProfileModeBar({ current }: { current: Mode | "central" }) {
     ...(user.roles.includes("organizer") ? [{ mode: "organizer" as const, label: tr.names.organizer, role: "organizer" as const }] : []),
     ...(user.roles.includes("coach") ? [{ mode: "coach" as const, label: tr.names.coach, role: "coach" as const }] : []),
     ...(user.roles.includes("creative") ? [{ mode: "creator" as const, label: tr.names.creative, role: "creative" as const }] : []),
+    ...(user.roles.includes("sponsor") ? [{ mode: "sponsor" as const, label: tr.names.sponsor, role: "sponsor" as const }] : []),
     ...(user.systemRole ? [{ mode: "admin" as const, label: t.admin.modeAdmin }] : []),
   ];
-  const otherRoles = user.roles.filter((r) => !["player", "organizer", "coach", "creative"].includes(r));
+  const otherRoles = user.roles.filter((r) => !["player", "organizer", "coach", "creative", "sponsor"].includes(r));
 
   const go = (mode: Mode) => {
     setMode(mode);

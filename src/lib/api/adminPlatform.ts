@@ -102,6 +102,7 @@ export interface PlatformSettings {
     minCoachingDays: number;
     maxCoachingDays: number;
     creatorCommissionPct: number;
+    sponsorCommissionPct: number;
   };
   admin: { binRetentionDays: number; moderatorMaxSuspendDays: number; reportDailyLimit: number; reportStrikeLimit: number };
   features: { signupsOpen: boolean; transfersOpen: boolean; reportsOpen: boolean };

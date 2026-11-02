@@ -3,6 +3,7 @@ import { adminBn, adminEn } from "./admin";
 import { reportsBn, reportsEn } from "./reports";
 import { coachingBn, coachingEn } from "./coaching";
 import { creatorsBn, creatorsEn } from "./creators";
+import { sponsorsBn, sponsorsEn } from "./sponsors";
 
 export type Locale = "en" | "bn";
 
@@ -2493,6 +2494,7 @@ export const translations = {
     reports: reportsEn,
     coaching: coachingEn,
     creators: creatorsEn,
+    sponsors: sponsorsEn,
   },
   bn: {
     nav: {
@@ -4976,6 +4978,7 @@ export const translations = {
     reports: reportsBn,
     coaching: coachingBn,
     creators: creatorsBn,
+    sponsors: sponsorsBn,
   },
 } as const;
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLogo, VerifiedTick } from "@/components/sponsors/BrandLogo";
 import { memo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -70,7 +71,8 @@ export const FeedCard = memo(function FeedCard({
   const input = useRef<HTMLTextAreaElement>(null);
   const thread = useComments(item.id, showAll);
   const own = user.id === item.coach.id;
-  const coachHref = `/dashboard/efootball/coaches/${item.coach.id}`;
+  const brand = item.author?.role === "sponsor" ? item.author.brand : null;
+  const coachHref = brand ? `/dashboard/efootball/sponsors/${item.coach.id}` : `/dashboard/efootball/coaches/${item.coach.id}`;
 
   const needSignIn = () => {
     if (isAuthenticated) return false;
@@ -122,13 +124,23 @@ export const FeedCard = memo(function FeedCard({
     >
       <header className="flex items-center gap-3 px-4 pt-4">
         <Link href={coachHref} className="shrink-0">
-          <Avatar dpUrl={item.coach.dpUrl} name={item.coach.name} size="sm" mode="static" className="!h-10 !w-10" />
+          {brand ? (
+            <BrandLogo name={brand.name} logoUrl={brand.logoUrl} size="sm" className="!h-10 !w-10" />
+          ) : (
+            <Avatar dpUrl={item.coach.dpUrl} name={item.coach.name} size="sm" mode="static" className="!h-10 !w-10" />
+          )}
         </Link>
         <div className="min-w-0 flex-1">
-          <Link href={coachHref} className="block truncate text-sm font-bold text-ink hover:underline">
-            {item.coach.name}
+          <Link href={coachHref} className="flex items-center gap-1.5 truncate text-sm font-bold text-ink hover:underline">
+            <span className="truncate">{brand ? brand.name : item.coach.name}</span>
+            {brand?.verified ? <VerifiedTick label={t.sponsors.profile.verified} /> : null}
           </Link>
           <div className="truncate text-[11px] text-ink-faint">
+            {brand ? (
+              <span className="mr-1 rounded bg-accent-soft px-1.5 py-px font-bold text-accent-ink" data-testid="sponsored-label">
+                {t.sponsors.feed.sponsored}
+              </span>
+            ) : null}
             {item.coach.headline ? `${item.coach.headline} · ` : ""}
             {timeAgo(item.createdAt, locale)} · 🌐
           </div>

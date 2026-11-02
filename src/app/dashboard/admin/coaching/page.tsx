@@ -18,7 +18,9 @@ export default function AdminCoachingPage() {
   const ta = t.coaching.admin;
   const [status, setStatus] = useState<CoachPostStatus>("pending");
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useAdminCoachPosts(status, page);
+  const [author, setAuthor] = useState<"coach" | "sponsor" | undefined>(undefined);
+  const { data, isLoading } = useAdminCoachPosts(status, page, author);
+  const ts = t.sponsors.admin;
   const review = useReviewCoachPost();
   const { toasts, toast, dismiss } = useToast();
   const [rejecting, setRejecting] = useState<CoachPost | null>(null);
@@ -36,7 +38,31 @@ export default function AdminCoachingPage() {
   return (
     <div>
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
-      <PageHeader eyebrow={t.admin.eyebrow} title={ta.title} description={ta.subtitle} />
+      <PageHeader eyebrow={t.admin.eyebrow} title={ts.reviewTitle} description={ta.subtitle} />
+      <div className="mt-4 flex flex-wrap gap-2" data-testid="post-author-filter">
+        {(
+          [
+            [undefined, ts.postsFilterAll],
+            ["coach", ts.postsFilterCoach],
+            ["sponsor", ts.postsFilterSponsor],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={label}
+            type="button"
+            aria-pressed={author === value}
+            onClick={() => {
+              setAuthor(value);
+              setPage(1);
+            }}
+            className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold ${
+              author === value ? "border-accent bg-accent text-bg" : "border-surface-line-strong text-ink-soft hover:text-ink"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="mt-6">
         <Tabs
           value={status}
@@ -56,6 +82,9 @@ export default function AdminCoachingPage() {
             <div key={post.id} className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px]">
               <CoachPostCard post={post} author={post.coach} showStatus />
               <div className="flex flex-col gap-2">
+                {post.authorRole === "sponsor" ? (
+                  <span className="w-fit rounded bg-accent-soft px-1.5 py-px text-[10px] font-bold text-accent-ink">{t.sponsors.feed.sponsored}</span>
+                ) : null}
                 {post.coach ? (
                   <Link href={`/dashboard/admin/users/${post.coach.id}`} className="truncate text-xs text-blue-ink underline">
                     {post.coach.name}
