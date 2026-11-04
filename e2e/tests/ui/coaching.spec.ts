@@ -55,10 +55,18 @@ test.describe("what suits you best", () => {
     await expect(page).toHaveURL(/\/dashboard\/coach\/profile/);
   });
 
-  test("the other new roles open a coming-soon page", async ({ pageAs }) => {
-    const page = await pageAs("entrant1");
-    await page.goto("/dashboard/roles/sponsor");
-    await expect(page.getByRole("heading", { name: "Sponsor: coming soon" })).toBeVisible();
+  test("the social media expert area is coming soon; sponsor and esports professional go to a real page", async ({ pageAs }) => {
+    const page = await pageAs("social");
+    await page.goto("/dashboard/roles/social");
+    await expect(page.getByRole("heading", { name: "Social media expert: coming soon" })).toBeVisible();
+
+    const sponsor = await pageAs("sponsor");
+    await sponsor.goto("/dashboard/roles/sponsor");
+    await expect(sponsor).toHaveURL(/\/dashboard\/sponsor/);
+
+    const coach = await pageAs("coach");
+    await coach.goto("/dashboard/roles/esports_professional");
+    await expect(coach).toHaveURL(/\/dashboard\/coach/);
   });
 });
 

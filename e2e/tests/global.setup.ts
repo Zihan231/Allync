@@ -34,6 +34,26 @@ setup("build the e2e cast", async () => {
     available: true,
   });
 
+  // A second coach for the coach-flows specs, so their deals never meet coach's.
+  await as("coach2").put("/users/me/roles", { roles: ["esports_professional", "coach", "player"], primaryRole: "coach" });
+  await as("coach2").put("/coaching/me/profile", {
+    headline: `E2E ${runId} second coach`,
+    bio: "Automated test coach two",
+    specialities: ["Defending"],
+    askingFeeTk: 100,
+    available: true,
+  });
+
+  // Creative artist, social media expert and the two sponsors (sponsors need a brand and a funded wallet).
+  await as("creator").put("/users/me/roles", { roles: ["esports_professional", "creative", "player"], primaryRole: "creative" });
+  await as("social").put("/users/me/roles", { roles: ["esports_professional", "social", "player"], primaryRole: "player" });
+  for (const [key, brand] of [["sponsor", "Alpha Gear"], ["sponsor2", "Beta Energy"]] as const) {
+    await as(key).put("/users/me/roles", { roles: ["sponsor", "player"], primaryRole: "sponsor" });
+    await as(key).put("/sponsors/me", { brandName: `E2E ${runId} ${brand}`, tagline: "Automated test sponsor", industry: "Gaming" });
+    await as(key).topUp();
+    await as(key).topUp();
+  }
+
   // The organizer also has the Organizer profile.
   await as("organizer").put("/users/me/roles", { roles: ["organizer", "player"], primaryRole: "organizer" });
 

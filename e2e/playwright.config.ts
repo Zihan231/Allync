@@ -57,6 +57,8 @@ export default defineConfig({
     {
       command: "npm run dev",
       cwd: FRONTEND_DIR,
+      // lib/env.ts loads the backend's .env (PORT=3001) into this process; Next would listen there too.
+      env: { PORT: new URL(APP_URL).port || "3000" },
       url: `${APP_URL}/login`,
       reuseExistingServer: true,
       timeout: 180_000,

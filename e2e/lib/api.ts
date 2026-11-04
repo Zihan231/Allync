@@ -59,6 +59,17 @@ export class Api {
   myWallet = async () => (await this.get("/transfers/me")).wallet as { balanceTk: number; heldTk: number };
   clubWallet = async (clubId: string) => (await this.get(`/transfers/clubs/${clubId}`)).wallet as { balanceTk: number; heldTk: number };
   topUp = (clubId?: string) => this.post("/transfers/wallets/top-up", clubId ? { clubId } : {});
+
+  /** This user's notifications; the list endpoint answers with an array, `.data` or `.items`. */
+  notifications = async (): Promise<Array<{ code?: string; message?: string; link?: string; createdAt?: string }>> => {
+    const body = await this.get("/notifications");
+    return Array.isArray(body) ? body : (body.data ?? body.items ?? []);
+  };
+}
+
+/** How many notifications with this code a user has (compare before / after an action). */
+export async function countNotes(api: Api, code: string): Promise<number> {
+  return (await api.notifications()).filter((n) => n.code === code).length;
 }
 
 export const anon = new Api();

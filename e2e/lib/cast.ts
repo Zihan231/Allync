@@ -64,6 +64,12 @@ export const ROLE_KEYS = {
   entrant2: "Entrant Two",
   banTarget: "Ban Target",
   coach: "Coach",
+  // Esports professionals and sponsors with their own flows (coach2 keeps the coach-flows deals apart from coach's)
+  coach2: "Coach Two",
+  creator: "Creative Artist",
+  social: "Social Media Expert",
+  sponsor: "Sponsor",
+  sponsor2: "Sponsor Two",
   // Staff
   moderator: "Staff Moderator",
   admin: "Staff Admin",
