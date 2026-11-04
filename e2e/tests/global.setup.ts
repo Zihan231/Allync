@@ -171,6 +171,11 @@ setup("build the e2e cast", async () => {
     "/dashboard/efootball/tournaments/general", "/dashboard/efootball/store", "/dashboard/efootball/wallet",
     "/dashboard/efootball/transfers", `/dashboard/efootball/players/${actors.alphaPlayer.userId}`, "/dashboard/organizer",
     "/dashboard/organizer/create", "/dashboard/admin", "/dashboard/admin/users",
+    // Esports professionals and sponsors
+    "/welcome", "/dashboard/feed", "/dashboard/coach", "/dashboard/coach/profile", "/dashboard/coach/posts", "/dashboard/coach/posts/new",
+    "/dashboard/coach/deals", "/dashboard/coach/clubs", "/dashboard/efootball/coaches", `/dashboard/efootball/coaches/${actors.coach.userId}`,
+    "/dashboard/creator", "/dashboard/creator/designs", "/dashboard/creator/new", "/dashboard/sponsor", "/dashboard/sponsor/deals",
+    "/dashboard/sponsor/opportunities", "/dashboard/sponsor/posts", "/dashboard/sponsor/profile", "/dashboard/efootball/sponsors",
   ];
   for (const path of warm) await fetch(`${APP_URL}${path}`).catch(() => undefined);
   console.log(`e2e cast ${runId}: ${Object.keys(actors).length} users, clubs ${alpha} / ${beta}, community ${communityId}`);
