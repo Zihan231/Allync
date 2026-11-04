@@ -35,7 +35,7 @@ export default function WelcomePage() {
     try {
       await save.mutateAsync(toSave);
       await refreshSession();
-      router.replace(homeForRole(toSave.primaryRole, user.activeGame));
+      router.replace(homeForRole(toSave.primaryRole, user.activeGame, toSave.roles));
     } catch {
       setError(tr.saveError);
     }

@@ -8,7 +8,7 @@ import { format } from "@/lib/i18n/translations";
 import { useSession, type UserRole } from "@/lib/session/SessionContext";
 import { LIVE_ROLES, ROLE_META, homeForRole } from "@/lib/roles";
 
-/** Sponsor and Social media expert: picked already, their areas come later (live roles go to their area). */
+/** Roles without an area yet (Social media expert): picked already, the area comes later. Live roles and Esports Professional go to a real area. */
 export default function RoleComingSoonPage() {
   const { t } = useLanguage();
   const tr = t.coaching.roles;
@@ -16,9 +16,11 @@ export default function RoleComingSoonPage() {
   const { role: raw } = useParams<{ role: string }>();
   const role = (raw in ROLE_META ? raw : "sponsor") as UserRole;
   const router = useRouter();
+  const redirects = LIVE_ROLES.includes(role) || role === "esports_professional";
   useEffect(() => {
-    if (LIVE_ROLES.includes(role)) router.replace(homeForRole(role, user.activeGame));
-  }, [role, router, user.activeGame]);
+    if (redirects) router.replace(homeForRole(role, user.activeGame, user.roles));
+  }, [redirects, role, router, user.activeGame, user.roles]);
+  if (redirects) return null;
   const { icon: Icon, color } = ROLE_META[role];
   const name = tr.names[role];
 

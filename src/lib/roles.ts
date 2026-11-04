@@ -35,8 +35,15 @@ export function rolesToSave(picked: UserRole[]): { roles: UserRole[]; primaryRol
 /** Roles with their own area today; the others show a coming-soon page. */
 export const LIVE_ROLES: UserRole[] = ["player", "organizer", "coach", "creative", "sponsor"];
 
-/** Where the dashboard opens for a role. */
-export function homeForRole(role: UserRole, game = "efootball"): string {
+/**
+ * Where the dashboard opens for a role. Esports Professional is only a group with no area
+ * of its own, so it opens the first of the user's `roles` that has one (else the player area).
+ */
+export function homeForRole(role: UserRole, game = "efootball", roles: UserRole[] = []): string {
+  if (role === "esports_professional") {
+    const sub = ESPORTS_PRO_SUBROLES.find((r) => LIVE_ROLES.includes(r) && roles.includes(r));
+    return homeForRole(sub ?? "player", game, roles);
+  }
   if (role === "organizer") return "/dashboard/organizer";
   if (role === "coach") return "/dashboard/coach";
   if (role === "creative") return "/dashboard/creator";

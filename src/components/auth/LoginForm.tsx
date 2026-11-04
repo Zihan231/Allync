@@ -17,11 +17,11 @@ import { homeForRole } from "@/lib/roles";
 import type { UserRole } from "@/lib/session/SessionContext";
 
 /** Staff open the admin panel; others the area of their default role (or the role picker, once). */
-function afterLogin(user: { systemRole?: string | null; rolesChosenAt?: string | null; primaryRole?: string | null }): string {
+function afterLogin(user: { systemRole?: string | null; rolesChosenAt?: string | null; primaryRole?: string | null; roles?: string[] | null }): string {
   if (user.systemRole) return "/dashboard/admin";
   if (!user.rolesChosenAt) return "/welcome";
   const role = (user.primaryRole ?? "player") as UserRole;
-  return role === "player" ? "/dashboard" : homeForRole(role);
+  return role === "player" ? "/dashboard" : homeForRole(role, undefined, (user.roles ?? []) as UserRole[]);
 }
 import { ArrowRightIcon } from "../icons";
 

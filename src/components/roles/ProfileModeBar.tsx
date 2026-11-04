@@ -27,7 +27,8 @@ export function ProfileModeBar({ current }: { current: Mode | "central" }) {
     ...(user.roles.includes("sponsor") ? [{ mode: "sponsor" as const, label: tr.names.sponsor, role: "sponsor" as const }] : []),
     ...(user.systemRole ? [{ mode: "admin" as const, label: t.admin.modeAdmin }] : []),
   ];
-  const otherRoles = user.roles.filter((r) => !["player", "organizer", "coach", "creative", "sponsor"].includes(r));
+  // Esports Professional is only the group of coach / creative / social, so it has no page of its own.
+  const otherRoles = user.roles.filter((r) => !["player", "organizer", "coach", "creative", "sponsor", "esports_professional"].includes(r));
 
   const go = (mode: Mode) => {
     setMode(mode);

@@ -32,7 +32,8 @@ test.describe("roles", () => {
 
   test("coach, creative and social need esports professional, and it needs one of them", async () => {
     expect((await as("entrant1").raw("PUT", "/users/me/roles", { roles: ["coach"], primaryRole: "coach" })).status).toBe(400);
-    expect((await as("entrant1").raw("PUT", "/users/me/roles", { roles: ["esports_professional"], primaryRole: "esports_professional" })).status).toBe(400);
+    expect((await as("entrant1").raw("PUT", "/users/me/roles", { roles: ["player", "esports_professional"], primaryRole: "player" })).status).toBe(400);
+    expect((await as("entrant1").raw("PUT", "/users/me/roles", { roles: ["esports_professional", "coach"], primaryRole: "esports_professional" })).status).toBe(400);
   });
 
   test("the default must be one of the picked roles, and roles are from the list", async () => {
