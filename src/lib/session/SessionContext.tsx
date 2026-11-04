@@ -23,7 +23,7 @@ import type { SystemRole } from "@/lib/api/admin";
 /** Dashboard mode: playing, organizing general tournaments, coaching, designing for the store, or (staff) the admin panel. */
 export type Mode = "player" | "organizer" | "coach" | "creator" | "sponsor" | "admin";
 /** What a user can be on Allynq (see the role picker); the first one picked is the default. */
-export type UserRole = "player" | "organizer" | "coach" | "creative" | "sponsor" | "social";
+export type UserRole = "player" | "organizer" | "sponsor" | "esports_professional" | "coach" | "creative" | "social";
 
 /** The dashboard mode a role opens in (roles without their own area yet open as a player). */
 export function modeForRole(role: UserRole | string | null | undefined): Mode {

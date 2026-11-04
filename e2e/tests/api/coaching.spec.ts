@@ -25,13 +25,18 @@ test.beforeAll(async () => {
 test.describe("roles", () => {
   test("a user saves the roles he picked; the first is the default", async () => {
     const me = await as("coach").me();
-    expect(me.roles).toEqual(["coach", "player"]);
+    expect(me.roles).toEqual(["esports_professional", "coach", "player"]);
     expect(me.primaryRole).toBe("coach");
     expect(me.rolesChosenAt).toBeTruthy();
   });
 
+  test("coach, creative and social need esports professional, and it needs one of them", async () => {
+    expect((await as("entrant1").raw("PUT", "/users/me/roles", { roles: ["coach"], primaryRole: "coach" })).status).toBe(400);
+    expect((await as("entrant1").raw("PUT", "/users/me/roles", { roles: ["esports_professional"], primaryRole: "esports_professional" })).status).toBe(400);
+  });
+
   test("the default must be one of the picked roles, and roles are from the list", async () => {
-    expect((await as("entrant1").raw("PUT", "/users/me/roles", { roles: ["player"], primaryRole: "coach" })).status).toBe(400);
+    expect((await as("entrant1").raw("PUT", "/users/me/roles", { roles: ["player"], primaryRole: "organizer" })).status).toBe(400);
     expect((await as("entrant1").raw("PUT", "/users/me/roles", { roles: ["wizard"], primaryRole: "wizard" })).status).toBe(400);
     expect((await as("entrant1").raw("PUT", "/users/me/roles", { roles: [], primaryRole: "player" })).status).toBe(400);
   });

@@ -2,7 +2,7 @@ import { api } from "./axios";
 import type { PaymentMethod } from "./transfers";
 
 /** What a user can be on Allynq (picked at sign-up, changed from the profile). */
-export const USER_ROLES = ["player", "organizer", "coach", "creative", "sponsor", "social"] as const;
+export const USER_ROLES = ["player", "organizer", "sponsor", "esports_professional", "coach", "creative", "social"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export type CoachProfile = {

@@ -43,7 +43,7 @@ export function CoachShell({
           type="button"
           disabled={addRole.isPending}
           onClick={async () => {
-            await addRole.mutateAsync({ roles: [...user.roles, "coach"], primaryRole: user.primaryRole });
+            await addRole.mutateAsync({ roles: [...new Set([...user.roles, "esports_professional", "coach"] as const)], primaryRole: user.primaryRole });
             await refreshSession();
           }}
           className="rounded-full bg-accent px-5 py-2.5 font-display text-sm font-black text-bg disabled:opacity-50"

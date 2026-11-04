@@ -24,7 +24,7 @@ setup("build the e2e cast", async () => {
   const as = (key: RoleKey) => new Api(actors[key].token);
 
   // The coach: coach first (his default), player too, with a coach profile.
-  await as("coach").put("/users/me/roles", { roles: ["coach", "player"], primaryRole: "coach" });
+  await as("coach").put("/users/me/roles", { roles: ["esports_professional", "coach", "player"], primaryRole: "coach" });
   await as("coach").put("/coaching/me/profile", {
     headline: `E2E ${runId} tactics coach`,
     bio: "Automated test coach",

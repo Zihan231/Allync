@@ -25,7 +25,8 @@ test.describe("what suits you best", () => {
 
     await page.goto("/dashboard/efootball");
     await expect(page).toHaveURL(/\/welcome/);
-    await page.getByRole("checkbox", { name: "Coach" }).click();
+    await page.getByRole("checkbox", { name: "Esports professional" }).click();
+    await page.getByTestId("esports-pro-roles").getByRole("checkbox", { name: "Coach" }).click();
     await page.getByRole("checkbox", { name: "Player" }).click();
     // Coach was picked first: it's the default.
     await expect(page.getByText("Default").first()).toBeVisible();
@@ -33,7 +34,7 @@ test.describe("what suits you best", () => {
     await expect(page).toHaveURL(/\/dashboard\/coach/);
 
     const me = await new Api(res.accessToken).me();
-    expect(me.roles).toEqual(["coach", "player"]);
+    expect(me.roles).toEqual(["esports_professional", "coach", "player"]);
     expect(me.primaryRole).toBe("coach");
 
     // Never again.

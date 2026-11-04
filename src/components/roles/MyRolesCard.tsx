@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession, type UserRole } from "@/lib/session/SessionContext";
 import { useSetMyRoles } from "@/lib/api/hooks/useCoaching";
+import { rolesToSave } from "@/lib/roles";
 import { RolePicker } from "./RolePicker";
 
 /** Profile: the roles the user takes on and the default one (where the dashboard opens). */
@@ -21,8 +22,10 @@ export function MyRolesCard({ onSaved }: { onSaved?: (message: string) => void }
   async function submit() {
     setError("");
     if (!picked.length) return setError(tr.pickOne);
+    const toSave = rolesToSave(picked);
+    if (!toSave) return setError(tr.pickSub);
     try {
-      await save.mutateAsync({ roles: picked, primaryRole: picked[0] });
+      await save.mutateAsync(toSave);
       await refreshSession();
       setSaved(true);
       onSaved?.(tr.saved);

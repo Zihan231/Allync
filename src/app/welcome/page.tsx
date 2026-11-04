@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSession, type UserRole } from "@/lib/session/SessionContext";
 import { useSetMyRoles } from "@/lib/api/hooks/useCoaching";
-import { homeForRole } from "@/lib/roles";
+import { homeForRole, rolesToSave } from "@/lib/roles";
 import { AppLoader } from "@/components/common/AppLoader";
 import { RolePicker } from "@/components/roles/RolePicker";
 
@@ -30,10 +30,12 @@ export default function WelcomePage() {
   async function submit() {
     setError("");
     if (!current.length) return setError(tr.pickOne);
+    const toSave = rolesToSave(current);
+    if (!toSave) return setError(tr.pickSub);
     try {
-      await save.mutateAsync({ roles: current, primaryRole: current[0] });
+      await save.mutateAsync(toSave);
       await refreshSession();
-      router.replace(homeForRole(current[0], user.activeGame));
+      router.replace(homeForRole(toSave.primaryRole, user.activeGame));
     } catch {
       setError(tr.saveError);
     }

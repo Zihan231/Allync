@@ -9,10 +9,13 @@ export const coachingEn = {
     continue: "Continue",
     saving: "Saving…",
     pickOne: "Pick at least one.",
+    pickSub: "Pick at least one esports professional role: creative artist, social media expert or coach.",
+    proPrompt: "Which esports professional are you?",
     saveError: "Couldn't save your roles. Try again.",
     names: {
       player: "Player",
       organizer: "Organizer",
+      esports_professional: "Esports professional",
       coach: "Coach",
       creative: "Creative artist",
       sponsor: "Sponsor",
@@ -21,6 +24,7 @@ export const coachingEn = {
     blurbs: {
       player: "Join a club, play tournaments and climb the rankings.",
       organizer: "Run your own tournaments, open to everyone.",
+      esports_professional: "Work in esports as a creative artist, social media expert or coach.",
       coach: "Share tutorials and coach clubs for a fee.",
       creative: "Design badges, frames and themes, and sell them in the store.",
       sponsor: "Sponsor communities and tournaments, and post to players.",
@@ -267,10 +271,13 @@ export const coachingBn: CoachingDict = {
     continue: "এগিয়ে যান",
     saving: "সেভ হচ্ছে…",
     pickOne: "অন্তত একটি বেছে নিন।",
+    pickSub: "এস্পোর্টস প্রফেশনালের অন্তত একটি রোল বেছে নিন: ক্রিয়েটিভ আর্টিস্ট, সোশ্যাল মিডিয়া এক্সপার্ট বা কোচ।",
+    proPrompt: "আপনি কোন ধরনের এস্পোর্টস প্রফেশনাল?",
     saveError: "রোল সেভ করা যায়নি। আবার চেষ্টা করুন।",
     names: {
       player: "প্লেয়ার",
       organizer: "অর্গানাইজার",
+      esports_professional: "এস্পোর্টস প্রফেশনাল",
       coach: "কোচ",
       creative: "ক্রিয়েটিভ আর্টিস্ট",
       sponsor: "স্পনসর",
@@ -279,6 +286,7 @@ export const coachingBn: CoachingDict = {
     blurbs: {
       player: "ক্লাবে যোগ দিন, টুর্নামেন্ট খেলুন, র‍্যাংকিংয়ে উঠুন।",
       organizer: "সবার জন্য খোলা নিজের টুর্নামেন্ট চালান।",
+      esports_professional: "ক্রিয়েটিভ আর্টিস্ট, সোশ্যাল মিডিয়া এক্সপার্ট বা কোচ হিসেবে এস্পোর্টসে কাজ করুন।",
       coach: "টিউটোরিয়াল শেয়ার করুন আর ফি নিয়ে ক্লাবকে কোচিং দিন।",
       creative: "ব্যাজ, ফ্রেম আর থিম ডিজাইন করে স্টোরে বিক্রি করুন।",
       sponsor: "কমিউনিটি ও টুর্নামেন্ট স্পনসর করুন, প্লেয়ারদের জন্য পোস্ট করুন।",
